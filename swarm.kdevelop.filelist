@@ -1,0 +1,7 @@
+# KDevelop Custom Project File List
+Makefile
+integrators.h
+swarm.cpp
+swarm.cu
+swarm.h
+swarmlib.cpp
