@@ -103,7 +103,7 @@ void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the 
 	memcpyToHost(m_vx, src.m_vx, m_nbod*m_nsys);
 	memcpyToHost(m_vy, src.m_vy, m_nbod*m_nsys);
 	memcpyToHost(m_vz, src.m_vz, m_nbod*m_nsys);
-	memcpyToHost(m_m, src.m_m, m_nsys);
+	memcpyToHost(m_m, src.m_m, m_nbod*m_nsys);
 	memcpyToHost(m_active, src.m_active, m_nsys);
 	memcpyToHost(m_systemIndices, src.m_systemIndices, m_nsys);
 
@@ -189,7 +189,7 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 	memcpyToGPU(m_vx, src.m_vx, m_nbod*m_nsys);
 	memcpyToGPU(m_vy, src.m_vy, m_nbod*m_nsys);
 	memcpyToGPU(m_vz, src.m_vz, m_nbod*m_nsys);
-	memcpyToGPU(m_m, src.m_m, m_nsys);
+	memcpyToGPU(m_m, src.m_m, m_nbod*m_nsys);
 	memcpyToGPU(m_active, src.m_active, m_nsys);
 	memcpyToGPU(m_systemIndices, src.m_systemIndices, m_nsys);
 
@@ -267,9 +267,11 @@ bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynSh
 	find_best_factorization(gridDim.x, gridDim.y, nblocks);
 	gridDim.z = 1;
 
-	std::cerr << "Grid: Threads requested = " << nthreads << " with shmem/thread = " << dynShmemPerThread << " and shmem/blk = " << staticShmemPerBlock << "\n";
+	std::cerr << "+ Grid configuration =========================\n";
+	std::cerr << "      Threads requested = " << nthreads << " with shmem/thread = " << dynShmemPerThread << " and shmem/blk = " << staticShmemPerBlock << "\n";
 	std::cerr << "      Grid configured as (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") array of blocks with " << threadsPerBlock << " threads per block.\n";
 	std::cerr << "      Total threads to execute = " << nthreadsEx << "\n";
+	std::cerr << "- Grid configuration =========================\n";
 
 	return true;
 }
