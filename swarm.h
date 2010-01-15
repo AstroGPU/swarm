@@ -25,14 +25,20 @@ class ensemble
 		float *m_T;
 
 		// m_nsys*m_nbod wide arrays
-		double	*m_x, *m_y, *m_z;
-		double	*m_vx, *m_vy, *m_vz;
+		double  *m_xyz, *m_vxyz;
 		float	*m_m;
 		int	*m_active;
 
 		// m_nsys wide array
 		int *m_systemIndices;		// map from original systemID to sys index in m_* arrays
 		integrator *m_last_integrator;
+
+	public:
+		// DEPRECATED: For Young In's code ONLY!!!
+		double *xyz()  { return m_xyz; }
+		double *vxyz() { return m_vxyz; }
+		const double *xyz()  const { return m_xyz; }
+		const double *vxyz() const { return m_vxyz; }
 
 	protected:
 		void construct_base()
@@ -44,13 +50,13 @@ class ensemble
 		// non-const versions
 		__host__ __device__ float&   T(int sys) { return m_T[sys]; }
 	
-		__host__ __device__ double&  x(int sys, int bod) { return m_x[bod*m_nsys + sys]; }
-		__host__ __device__ double&  y(int sys, int bod) { return m_y[bod*m_nsys + sys]; }
-		__host__ __device__ double&  z(int sys, int bod) { return m_z[bod*m_nsys + sys]; }
+		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
+		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ double&  z(int sys, int bod) { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ double& vx(int sys, int bod) { return m_vx[bod*m_nsys + sys]; }
-		__host__ __device__ double& vy(int sys, int bod) { return m_vy[bod*m_nsys + sys]; }
-		__host__ __device__ double& vz(int sys, int bod) { return m_vz[bod*m_nsys + sys]; }
+		__host__ __device__ double& vx(int sys, int bod) { return m_vxyz[bod*m_nsys + sys]; }
+		__host__ __device__ double& vy(int sys, int bod) { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ double& vz(int sys, int bod) { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 		__host__ __device__ float& m(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
@@ -66,13 +72,13 @@ class ensemble
 		// const versions
 		__host__ __device__ float   T(int sys) const { return m_T[sys]; }
 	
-		__host__ __device__ double  x(int sys, int bod) const { return m_x[bod*m_nsys + sys]; }
-		__host__ __device__ double  y(int sys, int bod) const { return m_y[bod*m_nsys + sys]; }
-		__host__ __device__ double  z(int sys, int bod) const { return m_z[bod*m_nsys + sys]; }
+		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
+		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ double  z(int sys, int bod) const { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ double vx(int sys, int bod) const { return m_vx[bod*m_nsys + sys]; }
-		__host__ __device__ double vy(int sys, int bod) const { return m_vy[bod*m_nsys + sys]; }
-		__host__ __device__ double vz(int sys, int bod) const { return m_vz[bod*m_nsys + sys]; }
+		__host__ __device__ double vx(int sys, int bod) const { return m_vxyz[bod*m_nsys + sys]; }
+		__host__ __device__ double vy(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ double vz(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 		__host__ __device__ float m(int sys, int bod)   const { return m_m[bod*m_nsys + sys]; }
 
@@ -87,27 +93,13 @@ class ensemble
 
 
 		// convenience
-		__host__ __device__ float3 pos(int sys, int bod) const
-		{
-			int idx = bod*m_nsys + sys;
-
-			return make_float3(m_x[idx], m_y[idx], m_z[idx]);
-		}
-
-		__host__ __device__ float3 vel(int sys, int bod) const
-		{
-			int idx = bod*m_nsys + sys;
-
-			return make_float3(m_vx[idx], m_vy[idx], m_vz[idx]);
-		}
-
 		__host__ __device__ void set_body(int sys, int bod,  float m, double x, double y, double z, double vx, double vy, double vz)
 		{
 			int idx = bod*m_nsys + sys;
 
-			 m_m[idx] =  m;
-			 m_x[idx] =  x;  m_y[idx] =  y;  m_z[idx] =  z;
-			m_vx[idx] = vx; m_vy[idx] = vy; m_vz[idx] = vz;
+			m_m[idx]   =  m;
+			m_xyz[idx] =  x; m_xyz[m_nbod*m_nsys + idx] =  y;  m_xyz[m_nbod*m_nsys*2 + idx] =  z;
+			m_vxyz[idx]  = vx;  m_vxyz[m_nbod*m_nsys + idx] = vy;   m_vxyz[m_nbod*m_nsys*2 + idx] = vz;
 		}
 
 		__host__ __device__ void get_body(int sys, int bod, float &m, double &x, double &y, double &z, double &vx, double &vy, double &vz) const
@@ -115,8 +107,8 @@ class ensemble
 			int idx = bod*m_nsys + sys;
 			
 			 m = m_m[idx];
-			 x = m_x[idx];   y = m_y[idx];   z = m_z[idx];
-			vx = m_vx[idx]; vy = m_vy[idx]; vz = m_vz[idx];
+			 x = m_xyz[idx];   y = m_xyz[m_nbod*m_nsys + idx];   z = m_xyz[m_nbod*m_nsys*2 + idx];
+			vx = m_vxyz[idx]; vy = m_vxyz[m_nbod*m_nsys + idx]; vz = m_vxyz[m_nbod*m_nsys*2 + idx];
 		}
 	public:
 		integrator *last_integrator() { return m_last_integrator; }

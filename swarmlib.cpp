@@ -54,12 +54,8 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	if(m_nsys != nsys || m_nbod != nbod)
 	{
 		m_T = (float*)realloc(m_T, nsys*sizeof(*m_T));
-		m_x = (double*)realloc(m_x, nsys*nbod*sizeof(*m_x));
-		m_y = (double*)realloc(m_y, nsys*nbod*sizeof(*m_y));
-		m_z = (double*)realloc(m_z, nsys*nbod*sizeof(*m_z));
-		m_vx = (double*)realloc(m_vx, nsys*nbod*sizeof(*m_vx));
-		m_vy = (double*)realloc(m_vy, nsys*nbod*sizeof(*m_vy));
-		m_vz = (double*)realloc(m_vz, nsys*nbod*sizeof(*m_vz));
+		m_xyz = (double*)realloc(m_xyz, 3*nsys*nbod*sizeof(*m_xyz));
+		m_vxyz = (double*)realloc(m_vxyz, 3*nsys*nbod*sizeof(*m_vxyz));
 		m_m = (float*)realloc(m_m, nsys*nbod*sizeof(*m_m));
 		m_active = (int*)realloc(m_active, nsys*sizeof(*m_active));
 		m_systemIndices = (int*)realloc(m_systemIndices, nsys*sizeof(*m_systemIndices));
@@ -80,12 +76,8 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 void cpu_ensemble::free()			// Deallocate CPU memory
 {
 	::free(m_T); m_T = NULL;
-	::free(m_x); m_x = NULL;
-	::free(m_y); m_y = NULL;
-	::free(m_z); m_z = NULL;
-	::free(m_vx); m_vx = NULL;
-	::free(m_vy); m_vy = NULL;
-	::free(m_vz); m_vz = NULL;
+	::free(m_xyz); m_xyz = NULL;
+	::free(m_vxyz); m_vxyz = NULL;
 	::free(m_m); m_m = NULL;
 	::free(m_active); m_active = NULL;
 	::free(m_systemIndices); m_systemIndices = NULL;
@@ -97,12 +89,8 @@ void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the 
 
 	// low-level copy from host to device memory
 	memcpyToHost(m_T, src.m_T, m_nsys);
-	memcpyToHost(m_x, src.m_x, m_nbod*m_nsys);
-	memcpyToHost(m_y, src.m_y, m_nbod*m_nsys);
-	memcpyToHost(m_z, src.m_z, m_nbod*m_nsys);
-	memcpyToHost(m_vx, src.m_vx, m_nbod*m_nsys);
-	memcpyToHost(m_vy, src.m_vy, m_nbod*m_nsys);
-	memcpyToHost(m_vz, src.m_vz, m_nbod*m_nsys);
+	memcpyToHost(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
+	memcpyToHost(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToHost(m_m, src.m_m, m_nbod*m_nsys);
 	memcpyToHost(m_active, src.m_active, m_nsys);
 	memcpyToHost(m_systemIndices, src.m_systemIndices, m_nsys);
@@ -137,12 +125,8 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 		free();
 
 		cudaMalloc((void**)&m_T, nsys*sizeof(*m_T));
-		cudaMalloc((void**)&m_x, nsys*nbod*sizeof(*m_x));
-		cudaMalloc((void**)&m_y, nsys*nbod*sizeof(*m_y));
-		cudaMalloc((void**)&m_z, nsys*nbod*sizeof(*m_z));
-		cudaMalloc((void**)&m_vx, nsys*nbod*sizeof(*m_vx));
-		cudaMalloc((void**)&m_vy, nsys*nbod*sizeof(*m_vy));
-		cudaMalloc((void**)&m_vz, nsys*nbod*sizeof(*m_vz));
+		cudaMalloc((void**)&m_xyz, 3*nsys*nbod*sizeof(*m_xyz));
+		cudaMalloc((void**)&m_vxyz, 3*nsys*nbod*sizeof(*m_vxyz));
 		cudaMalloc((void**)&m_m, nsys*nbod*sizeof(*m_m));
 		cudaMalloc((void**)&m_active, nsys*sizeof(*m_active));
 		cudaMalloc((void**)&m_systemIndices, nsys*sizeof(*m_systemIndices));
@@ -166,12 +150,8 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 void gpu_ensemble::free()			// Deallocate CPU memory
 {
 	cudaFree(m_T); m_T = NULL;
-	cudaFree(m_x); m_x = NULL;
-	cudaFree(m_y); m_y = NULL;
-	cudaFree(m_z); m_z = NULL;
-	cudaFree(m_vx); m_vx = NULL;
-	cudaFree(m_vy); m_vy = NULL;
-	cudaFree(m_vz); m_vz = NULL;
+	cudaFree(m_xyz); m_xyz = NULL;
+	cudaFree(m_vxyz); m_vxyz = NULL;
 	cudaFree(m_m); m_m = NULL;
 	cudaFree(m_active); m_active = NULL;
 	cudaFree(m_systemIndices); m_systemIndices = NULL;
@@ -183,12 +163,8 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 	
 	// low-level copy from host to device memory
 	memcpyToGPU(m_T, src.m_T, m_nsys);
-	memcpyToGPU(m_x, src.m_x, m_nbod*m_nsys);
-	memcpyToGPU(m_y, src.m_y, m_nbod*m_nsys);
-	memcpyToGPU(m_z, src.m_z, m_nbod*m_nsys);
-	memcpyToGPU(m_vx, src.m_vx, m_nbod*m_nsys);
-	memcpyToGPU(m_vy, src.m_vy, m_nbod*m_nsys);
-	memcpyToGPU(m_vz, src.m_vz, m_nbod*m_nsys);
+	memcpyToGPU(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
+	memcpyToGPU(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToGPU(m_m, src.m_m, m_nbod*m_nsys);
 	memcpyToGPU(m_active, src.m_active, m_nsys);
 	memcpyToGPU(m_systemIndices, src.m_systemIndices, m_nsys);
