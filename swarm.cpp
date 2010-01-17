@@ -65,8 +65,10 @@ int main()
 	// set up the integrator and integrator config (TODO: load from config file)
 	config cfg;
 	cfg["integrator"] = "gpu_euler";
+	//cfg["integrator"] = "gpu_mvs";
+	//cfg["integrator"] = "gpu_does_not_exist";
 	cfg["h"] = "0.001";
-	std::auto_ptr<integrator> integ( create_integrator(cfg["integrator"], cfg) );
+	std::auto_ptr<integrator> integ( integrator::create(cfg) );
 
 	// perform the integration
 	const float dT = 1;	// duration of integration (TODO: read from config file)

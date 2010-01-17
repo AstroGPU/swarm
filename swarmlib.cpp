@@ -1,8 +1,8 @@
 #include <cuda_runtime_api.h>
 #include "swarm.h"
-#include "integrators.h"
 #include <vector>
 #include <iostream>
+#include <dlfcn.h>
 
 //
 // Utilities
@@ -175,21 +175,37 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 
 
 //
-// Integrator support
+// Integrator instantiation support
 //
 
-integrator *create_integrator(const std::string &type, const config &cfg)
+integrator *integrator::create(const config &cfg)
 {
-	if(type == "gpu_euler") { return new gpu_euler_integrator(cfg); }
-	else return NULL;
-}
+	std::auto_ptr<integrator> integ;
 
-gpu_euler_integrator::gpu_euler_integrator(const config &cfg)
-{
-	assert(cfg.count("h"));
-	h = atof(cfg.at("h").c_str());
-}
+	// try loading using a factory function
+	void *me = dlopen(NULL, RTLD_LAZY);
+	if(me == NULL)
+	{
+		ERROR(dlerror());
+	}
 
+	if(!cfg.count("integrator")) ERROR("Integrator type has to be chosen with 'integrator=xxx' keyword");
+	
+	std::string name = cfg.at("integrator");
+	std::string factory_name = "create_" + name;
+
+	integratorFactory_t factory = (integratorFactory_t)dlsym(me, factory_name.c_str());
+	if(factory)
+	{
+		integ.reset(factory(cfg));
+	}
+	else
+	{
+		ERROR("Integrator " + name + " unknown (" + dlerror() + ").");
+	}
+
+	return integ.release();
+}
 
 //
 // Find the dimensions (bx,by) of a 2D grid of blocks that 

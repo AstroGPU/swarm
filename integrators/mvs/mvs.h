@@ -1,10 +1,9 @@
-#ifndef integrators_h__
-#define integrators_h__
+#ifndef integ_mvs_h__
+#define integ_mvs_h__
 
 #include "swarm.h"
-#include <cassert>
 
-class gpu_euler_integrator : public integrator
+class gpu_mvs_integrator : public integrator
 {
 protected:
 	float h;
@@ -13,7 +12,7 @@ protected:
 	int threadsPerBlock;
 
 public:
-	gpu_euler_integrator(const config &cfg);
+	gpu_mvs_integrator(const config &cfg);
 
 public:
 	void integrate(gpu_ensemble &ens, float T);

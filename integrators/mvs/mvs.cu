@@ -1,35 +1,37 @@
 #include "swarm.h"
-#include "integrators.h"
+#include "mvs.h"
 
-////////// Utilities (should ultimately be moved elsewhere)
+//
+// FIXME: This is just a dummy placeholder (a copy of euler.cu).
+//
 
-// Computes the global linear ID of the thread. Used from kernels.
-// NOTE: Supports 3D grids with 1D blocks of threads
-inline __device__ uint32_t threadId()
+namespace gpu_mvs_aux
 {
-	const uint32_t id = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-	return id;
+	//
+	// Wrap all aux. functions in a separate namespace, to avoid
+	// collisions with equally named functions from other integrators.
+	//
+
+	__device__ float3 operator*(const float3 &a, const float &b)
+	{
+		return make_float3(a.x*b, a.y*b, a.z*b);
+	}
+
+	__device__ float3 operator+(const float3 &a, const float3 &b)
+	{
+		return make_float3(a.x+b.x, a.y+b.y, a.z+b.z);
+	}
 }
 
-////////// Euler integrator kernel
-
-__device__ float3 operator*(const float3 &a, const float &b)
+__constant__ ensemble gpu_mvs_ens;
+__global__ void gpu_mvs_integrator_kernel(float dT, float h)
 {
-	return make_float3(a.x*b, a.y*b, a.z*b);
-}
+	using namespace gpu_mvs_aux;
 
-__device__ float3 operator+(const float3 &a, const float3 &b)
-{
-	return make_float3(a.x+b.x, a.y+b.y, a.z+b.z);
-}
-
-__constant__ ensemble gpu_euler_ens;
-__global__ void gpu_euler_integrator_kernel(float dT, float h)
-{
-	ensemble &ens = gpu_euler_ens;
+	ensemble &ens = gpu_mvs_ens;
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
-	
+
 	float    T = ens.T(sys);
 	float Tend = T + dT;
 
@@ -85,17 +87,20 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 	ens.T(sys) = T;
 }
 
-void gpu_euler_integrator::integrate(gpu_ensemble &ens, float dT)
+void gpu_mvs_integrator::integrate(gpu_ensemble &ens, float dT)
 {
+	ERROR("MVS integrator has not yet been implemented.");
+
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)
 	{
 		ens.set_last_integrator(this);
 		configure_grid(gridDim, threadsPerBlock, ens.nsys());
 
-		cudaMemcpyToSymbol(gpu_euler_ens, &ens, sizeof(gpu_euler_ens));
+		cudaMemcpyToSymbol(gpu_mvs_ens, &ens, sizeof(gpu_mvs_ens));
 	}
 
 	// execute the kernel
-	gpu_euler_integrator_kernel<<<gridDim, threadsPerBlock>>>(dT, h);
+	gpu_mvs_integrator_kernel<<<gridDim, threadsPerBlock>>>(dT, h);
 }
+
