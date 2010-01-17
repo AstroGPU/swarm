@@ -1,28 +1,28 @@
 CCUDA=/usr/local/cuda/bin/nvcc
 CXX=g++
 #CCUDAFLAGS=--device-emulation -DTHROW_IS_ABORT
-CXXFLAGS=-g -O0 -I /usr/local/cuda/include -I .
+CXXFLAGS=-g -O0 -I /usr/local/cuda/include -I ./src
 LDFLAGS=-L /usr/local/cuda/lib
 
-OBJECTS=swarm.o swarm.cu_o swarmlib.o
+OBJECTS=src/swarm.o src/swarmlib.o src/swarm.cu_o
 
-all: swarm
+all: bin/swarm
 
 #### Integrators
 include integrators/*/Makefile.mk
 ####
 
-swarm: $(OBJECTS)
+bin/swarm: $(OBJECTS)
 	$(CXX) -rdynamic -o $@ $(LDFLAGS) -lcuda -lcudart $(OBJECTS)
 
-swarm.o: swarm.h
-swarmlib.o: swarm.h
-swarm.cu: swarm.h $(CUDA_DEPS)
+src/swarm.o: src/swarm.h
+src/swarmlib.o: src/swarm.h
+src/swarm.cu: src/swarm.h $(CUDA_DEPS)
 	echo "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
-	./combine_cu_files.sh swarmlib.cu integrators/*/*.cu >> $@
+	./bin/combine_cu_files.sh src/swarmlib.cu integrators/*/*.cu >> $@
 
 clean:
-	rm -f $(OBJECTS) *.linkinfo swarm.cu swarm integrators/*/*.o
+	rm -f $(OBJECTS) *.linkinfo src/swarm.cu bin/swarm integrators/*/*.o
 
 tidy: clean
 	rm -f *~ integrators/*/*~ DEADJOE

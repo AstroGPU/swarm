@@ -1,6 +1,8 @@
 # KDevelop Custom Project File List
 Makefile
-euler.mk
+bin
+bin/combine_cu_files.sh
+bin/tarball_head.sh
 integrators
 integrators/euler
 integrators/euler/Makefile.mk
@@ -12,7 +14,8 @@ integrators/mvs/Makefile.mk
 integrators/mvs/mvs.cpp
 integrators/mvs/mvs.cu
 integrators/mvs/mvs.h
-swarm.cpp
-swarm.h
-swarmlib.cpp
-swarmlib.cu
+src
+src/swarm.cpp
+src/swarm.h
+src/swarmlib.cpp
+src/swarmlib.cu
