@@ -16,10 +16,10 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/gpu_integ/swarm/swarm</mainprogram>
+      <mainprogram>/home/mjuric/projects/gpu_integ/swarm/bin/swarm</mainprogram>
       <programargs></programargs>
       <globaldebugarguments></globaldebugarguments>
-      <globalcwd>/home/mjuric/projects/gpu_integ/swarm</globalcwd>
+      <globalcwd>/home/mjuric/projects/gpu_integ/swarm/run</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
@@ -43,6 +43,8 @@
       <filetype>Makefile</filetype>
       <filetype>CMakeLists.txt</filetype>
       <filetype>*.cu</filetype>
+      <filetype>*.mk</filetype>
+      <filetype>*.sh</filetype>
     </filetypes>
     <blacklist/>
     <build>

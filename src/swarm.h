@@ -199,10 +199,14 @@ class gpu_ensemble : public ensemble
 		~gpu_ensemble() { free(); }
 };
 
+/// Load ensemble residing in files "name.XXX" where XXX \elem [0,nsys)
+void load_ensemble(const std::string &name, cpu_ensemble &ens);
+
+
 typedef std::map<std::string, std::string> config;
 
 /**
-	\brief Interface to various integration methods
+	\brief Abstract integrator interface
 
 	Specific integrators must derive from this class (as well as define a
 	create_XXXX(const config &cfg) factory function (where XXXX is the name

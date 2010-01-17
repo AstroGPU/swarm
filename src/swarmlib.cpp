@@ -3,6 +3,8 @@
 #include <vector>
 #include <iostream>
 #include <dlfcn.h>
+#include <sstream>
+#include <fstream>
 
 //
 // Utilities
@@ -173,6 +175,68 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 	m_nactive = src.m_nactive;
 }
 
+//
+// Ensemble loading support
+//
+void load_ensemble(const std::string &name, cpu_ensemble &ens)
+{
+	// Assume filenames are of the form "$name.xx" where xx is a sequence of
+	// numbers 0..(NSYS-1).
+	//
+	// Initial conditions file format:
+	// <nbod>
+	// <m1> <x1> <y1> <z1> <vx1> <vy1> <vz1>
+	// <m2> <x2> <y2> <z2> <vx2> <vy2> <vz2>
+	// ... (through nbod) ..
+	//
+
+	// determine the number of systems
+	int nsys;
+	for(nsys = 0; true; nsys++)
+	{
+		std::ostringstream ss; ss << nsys;
+		std::string fn = name + "." + ss.str();
+		if(access(fn.c_str(), R_OK) != 0) { break; }
+	}
+	if(nsys == 0) ERROR("Failed to find the datafiles for ensemble " + name + " (cannot access " + name + ".0)");
+
+	int nbod = -1;
+	for(int i = 0; i != nsys; i++)
+	{
+		std::ostringstream ss; ss << i;
+		std::string fn = name + "." + ss.str();
+		std::ifstream in(fn.c_str());
+
+		// load the number of bodies
+		int nbod1;
+		in >> nbod1;
+		if(nbod == -1)
+		{
+			nbod = nbod1;
+			ens.reset(nsys, nbod);
+		}
+		else if(nbod != nbod1)
+		{
+			std::ostringstream err;
+			err << "The number of bodies must be the same for all systems. Found nbod=" << nbod1 << " in " << fn
+			    << " while expecting nbod=" << nbod << ".";
+			ERROR(err.str());
+		}
+
+		// load the planets
+		double m, x, y, z, vx, vy, vz;
+		for(int j = 0; j != nbod; j++)
+		{
+			if(!(in >> m >> x >> y >> z >> vx >> vy >> vz))
+			{
+				ERROR("Error loading bodies from " + fn + ".");
+			}
+			ens.set_body(i, j, m, x, y, z, vx, vy, vz);
+		}
+	}
+
+	std::cerr << "Loaded " << nsys << " systems of " << nbod << " bodies each.\n";
+}
 
 //
 // Integrator instantiation support

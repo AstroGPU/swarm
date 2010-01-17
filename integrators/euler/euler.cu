@@ -35,7 +35,7 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 	// propagate the system until we match or exceed Tend
 	while(T < Tend)
 	{
-		for(int i = 0; i != ens.nbod(); i++)
+		for(int i = 1; i != ens.nbod(); i++) // starting from 1, assuming 0 is the central body
 		{
 			// load
 			double x = ens.x(sys, i);
