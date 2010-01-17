@@ -323,11 +323,14 @@ bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynSh
 	find_best_factorization(gridDim.x, gridDim.y, nblocks);
 	gridDim.z = 1;
 
+#if 0
 	std::cerr << "+ Grid configuration =========================\n";
 	std::cerr << "      Threads requested = " << nthreads << " with shmem/thread = " << dynShmemPerThread << " and shmem/blk = " << staticShmemPerBlock << "\n";
 	std::cerr << "      Grid configured as (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") array of blocks with " << threadsPerBlock << " threads per block.\n";
 	std::cerr << "      Total threads to execute = " << nthreadsEx << "\n";
 	std::cerr << "- Grid configuration =========================\n";
-
+#else
+	std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
+#endif
 	return true;
 }

@@ -95,6 +95,7 @@ int main()
 	cpu_ensemble ens;
 	load_ensemble("data", ens);
 	std::valarray<double> E;
+	std::cerr << "Initial conditions of a first few systems:\n";
 	write_output(ens, E);
 
 	// set up the integrator and integrator config (TODO: load from config file)
@@ -106,13 +107,26 @@ int main()
 	std::auto_ptr<integrator> integ( integrator::create(cfg) );
 
 	// perform the integration
+	stopwatch swatch_kernel, swatch_all;
 	const float dT = 1;	// duration of integration (TODO: read from config file)
-	gpu_ensemble gpu_ens(ens);
-	integ->integrate(gpu_ens, dT);
-	ens.copy_from(gpu_ens);
+	
+	swatch_all.start();
+	gpu_ensemble gpu_ens(ens);				// upload to GPU
+	swatch_kernel.start();
+	integ->integrate(gpu_ens, dT);				// integrate
+	cudaThreadSynchronize(); swatch_kernel.stop();
+	ens.copy_from(gpu_ens);					// download to host
+	cudaThreadSynchronize(); swatch_all.stop();
 
 	// store output
+	std::cerr << "Final state of a first few systems:\n";
 	write_output(ens, E);
+
+	// print out timings
+	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
+	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000;
+	std::cerr << "Time per system (integration): " << us_per_sys_kernel << " us.\n";
+	std::cerr << "Time per system (mem+integr.): " << us_per_sys_all << " us.\n";
 
 	// both the integrator & the ensembles are automatically deallocated on exit
 	// so there's nothing special we have to do here.

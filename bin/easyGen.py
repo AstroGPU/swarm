@@ -11,7 +11,7 @@ import random as R
 # this does not consider stability whatsoever
 #
 # 
-nSystems=128
+nSystems=1000
 mPrimary=1. # mass of the primary
 massMin=.001/330. # 1 earth-mass minimum
 minPlanets=2 # keeps these the same
@@ -54,7 +54,7 @@ def createObservingFile():
 def main():
 	R.seed()
 	for i in xrange(nSystems):
-		print "Working on system ",i
+		# print "Working on system ",i
 		nPlanets=R.randint(minPlanets,maxPlanets)
 		buffer="data."+repr(i)
 		f=open(buffer,"w")
@@ -89,6 +89,7 @@ def main():
 			f.write(buffer)
 		f.close()		
 
+	print "Generated",i+1,"systems."
 	test=createObservingFile()
         if test!=0:
 		print "Error when creating observing file."
@@ -97,5 +98,4 @@ def main():
 	return 0
 
 test=main()
-if test==0: print "Program exited sucessfully."
-else: "Error in main. Results may be unreliable."
+if test!=0: print "Error in main. Results may be unreliable."

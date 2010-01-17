@@ -7,6 +7,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "stopwatch.h"
+
 class integrator;
 class gpu_ensemble;
 class cpu_ensemble;

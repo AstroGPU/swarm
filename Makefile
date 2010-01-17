@@ -28,7 +28,7 @@ clean:
 	rm -f $(OBJECTS) *.linkinfo src/swarm.cu bin/swarm integrators/*/*.o
 
 tidy: clean
-	rm -f *~ src/*~ integrators/*/*~ DEADJOE
+	rm -f *~ bin/*~ src/*~ integrators/*/*~ DEADJOE
 	rm -f run/data.* run/observeTimes.dat
 
 %.cu_o:%.cu

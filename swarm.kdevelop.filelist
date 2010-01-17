@@ -15,6 +15,7 @@ integrators/mvs/mvs.cpp
 integrators/mvs/mvs.cu
 integrators/mvs/mvs.h
 src
+src/stopwatch.h
 src/swarm.cpp
 src/swarm.h
 src/swarmlib.cpp
