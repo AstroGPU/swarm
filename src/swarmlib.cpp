@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 #include <sstream>
 #include <fstream>
+#include <valarray>
 
 //
 // Utilities
@@ -55,12 +56,12 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	// do we need to realloc?
 	if(m_nsys != nsys || m_nbod != nbod)
 	{
-		m_T = (float*)realloc(m_T, nsys*sizeof(*m_T));
-		m_xyz = (double*)realloc(m_xyz, 3*nsys*nbod*sizeof(*m_xyz));
-		m_vxyz = (double*)realloc(m_vxyz, 3*nsys*nbod*sizeof(*m_vxyz));
-		m_m = (float*)realloc(m_m, nsys*nbod*sizeof(*m_m));
-		m_active = (int*)realloc(m_active, nsys*sizeof(*m_active));
-		m_systemIndices = (int*)realloc(m_systemIndices, nsys*sizeof(*m_systemIndices));
+		m_T = hostAlloc(m_T, nsys);
+		m_xyz = hostAlloc(m_xyz, 3*nsys*nbod);
+		m_vxyz = hostAlloc(m_vxyz, 3*nsys*nbod);
+		m_m = hostAlloc(m_m, nsys*nbod);
+		m_active = hostAlloc(m_active, nsys);
+		m_systemIndices = hostAlloc(m_systemIndices, nsys);
 
 		m_nsys = nsys;
 		m_nbod = nbod;
@@ -70,6 +71,9 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	{
 		// reinitialize system indices
 		for(int i = 0; i != nsys; i++) { m_systemIndices[i] = i; }
+
+		// Set all systems to active
+		for(int sys = 0; sys != nsys; sys++) { active(sys) = true; }
 	}
 
 	m_last_integrator = NULL;
@@ -142,7 +146,12 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 		// reinitialize system indices
 		std::vector<int> tmp(nsys);
 		for(int i = 0; i != nsys; i++) { tmp[i] = i; }
-		cudaMemcpy(m_systemIndices, &tmp[0], nsys, cudaMemcpyHostToDevice);
+		cudaMemcpy(m_systemIndices, &tmp[0], tmp.size()*sizeof(tmp[0]), cudaMemcpyHostToDevice);
+
+		// Set all bodies active
+		std::valarray<int> tmp2(nsys);
+		tmp2 = 1;
+		cudaMemcpy(m_active, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);
 	}
 
 	// clear the m_last_integrator field
@@ -222,6 +231,9 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 			    << " while expecting nbod=" << nbod << ".";
 			ERROR(err.str());
 		}
+
+		// set the initial time to 0 (NOTE: should we also load this from the config file?)
+		ens.T(i) = 0.;
 
 		// load the planets
 		double m, x, y, z, vx, vy, vz;

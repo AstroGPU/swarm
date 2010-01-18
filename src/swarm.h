@@ -59,10 +59,10 @@ class ensemble
 
 		// m_nsys*m_nbod wide arrays
 		float	*m_m;
-		int	*m_active;
 
-		// m_nsys wide array
-		int *m_systemIndices;		// map from original systemID to sys index in m_* arrays
+		// m_nsys wide arrays
+		int	*m_active;			// is a given system active
+		int	*m_systemIndices;		// map from original systemID to sys index in m_* arrays
 		integrator *m_last_integrator;
 
 	public:
@@ -92,7 +92,7 @@ class ensemble
 
 		__host__ __device__ float& m(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
-		__host__ __device__ int& active(int sys, int bod){ return m_active[bod*m_nsys + sys]; }
+		__host__ __device__ int& active(int sys)	{ return m_active[sys]; }
 
 		__host__ __device__ int& nactive() { return m_nactive; }
 		__host__ __device__ int& nsys() { return m_nsys; }
@@ -114,7 +114,7 @@ class ensemble
 
 		__host__ __device__ float m(int sys, int bod)   const { return m_m[bod*m_nsys + sys]; }
 
-		__host__ __device__ int active(int sys, int bod)const { return m_active[bod*m_nsys + sys]; }
+		__host__ __device__ int active(int sys) 	const { return m_active[sys]; }
 
 		__host__ __device__ int nactive() const { return m_nactive; }
 		__host__ __device__ int nsys() const { return m_nsys; }
@@ -239,5 +239,13 @@ typedef integrator *(*integratorFactory_t)(const config &cfg);
 // The default for staticShmemPerBlock is reasonable (for small kernels), but not necessarily optimal.
 bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynShmemPerThread = 0, int staticShmemPerBlock = 128);
 
+// Typesafe re-allocator (convenience)
+template<typename T>
+T* hostAlloc(T* var, int nelem)
+{
+	T* tmp = (T*)realloc(var, nelem*sizeof(T));
+	if(tmp == NULL) ERROR("Out of host memory.");
+	return tmp;
+}
 
 #endif
