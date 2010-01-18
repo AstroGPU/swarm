@@ -36,14 +36,6 @@ void cpu_hermite_cpu_integrator::alloc_state(cpu_ensemble &ens)
 	ens.set_last_integrator(this);
 }
 
-// // Destructor  
-// // MARIO: Does this fit with the way you intended?
-// cpu_hermite_cpu_integrator::~cpu_hermite_cpu_integrator()
-// {
-//   deallocate_workspace();
-// }
-// 
-
 // Actual calculations
 void cpu_hermite_cpu_integrator::predict(cpu_ensemble &ens, const unsigned int sys)
 {
@@ -231,11 +223,6 @@ void cpu_hermite_cpu_integrator::integrate(cpu_ensemble &ens, real_time dT)
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{
-// mjuric: The time should be set on load of initial conditions (or by the previous integrator)
-// 		// WARNING:  I SHOULD BE DOING THIS HERE
-// 		// THERE SEEMS TO BE SOME MEMORY PROBLEM
-// 		ens.T ( sys ) = 0.;
-
 		real_time Tend = ens.time( sys ) + dT;
 		UpdateAccJerk ( ens,sys );
 		// propagate the system until we match or exceed Tend

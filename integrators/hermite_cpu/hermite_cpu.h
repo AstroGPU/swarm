@@ -57,12 +57,13 @@ protected:
 	std::valarray<real_acc>		m_acc, m_acc_old;
 	std::valarray<real_jerk>	m_jerk, m_jerk_old;
 	int				m_nsys, m_nbod;
+
+	// function to (re)allocate the integration state
 	void alloc_state(cpu_ensemble &ens);
 
 public:
 
 	cpu_hermite_cpu_integrator(const config &cfg);
-//	~cpu_hermite_cpu_integrator();
 
 public:
 	// No support for GPU execution. Note: we could make this function
@@ -73,44 +74,7 @@ public:
 
 	void predict(cpu_ensemble &ens, const unsigned int sys);
 	
-
-// 	virtual void allocate_workspace_for_ensemble(const ensemble &ens)
-// 	{
-// 	  if(m_nsys != ens.nsys() || m_nbod != ens.nbod())
-// 	    {
-// 
-// 	      m_xyz_old = (double*)realloc(m_xyz_old, 3*m_nsys*m_nbod*sizeof(*m_xyz_old));
-// 	      m_vxyz_old = (double*)realloc(m_vxyz_old, 3*m_nsys*m_nbod*sizeof(*m_vxyz_old));
-// 	      m_acc = (double*)realloc(m_acc, 3*m_nsys*m_nbod*sizeof(*m_acc));
-// 	      m_jerk = (double*)realloc(m_jerk, 3*m_nsys*m_nbod*sizeof(*m_jerk));
-// 	      m_acc_old = (double*)realloc(m_acc_old, 3*m_nsys*m_nbod*sizeof(*m_acc_old));
-// 	      m_jerk_old = (double*)realloc(m_jerk_old, 3*m_nsys*m_nbod*sizeof(*m_jerk_old));
-// 	      
-// 	      if(m_xyz_old==NULL) ERROR("CPU memory allocation failed!\n");
-// 	      if(m_vxyz_old==NULL) ERROR("CPU memory allocation failed!\n");
-// 	      if(m_acc==NULL) ERROR("CPU memory allocation failed!\n");
-// 	      if(m_jerk==NULL) ERROR("CPU memory allocation failed!\n");
-// 	      if(m_acc_old==NULL) ERROR("CPU memory allocation failed!\n");
-// 	      if(m_jerk_old==NULL) ERROR("CPU memory allocation failed!\n");
-// 
-// 	      m_nsys = ens.nsys();
-// 	      m_nbod = ens.nbod();
-// 	    }
-// 	}
-
-/*	void deallocate_workspace()
-	{
-
-	  fprintf(stderr, "Warning: Deallocating workspace for cpu_hermite\n");
-	  ::free(m_xyz_old); m_xyz_old = NULL;
-	  ::free(m_vxyz_old);m_vxyz_old = NULL;
-	  ::free(m_acc); m_acc = NULL;
-	  ::free(m_jerk); m_jerk = NULL;
-	  ::free(m_acc_old); m_acc_old = NULL;
-	  ::free(m_jerk_old); m_jerk_old = NULL;
-	}
-*/
- protected:
+protected:
 	void Correct(cpu_ensemble &ens, const unsigned int sys);
 	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys);
 
@@ -119,62 +83,60 @@ public:
 	void Evolve(cpu_ensemble &ens, const unsigned int sys);
 	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys);
 	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys);
-  
+ 
 	void CopyToOld(cpu_ensemble &ens, const unsigned int sys);
 
 	public:
 	// non-const versions
-	 double&  ax(int sys, int bod) { return m_acc[bod*m_nsys + sys]; }
-	 double&  ay(int sys, int bod) { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double&  az(int sys, int bod) { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	 double& jx(int sys, int bod) { return m_jerk[bod*m_nsys + sys]; }
-	 double& jy(int sys, int bod) { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double& jz(int sys, int bod) { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	double&  ax(int sys, int bod) { return m_acc[bod*m_nsys + sys]; }
+	double&  ay(int sys, int bod) { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double&  az(int sys, int bod) { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	 double&  x_old(int sys, int bod) { return m_xyz_old[bod*m_nsys + sys]; }
-	 double&  y_old(int sys, int bod) { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double&  z_old(int sys, int bod) { return m_xyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-       
-	 double& vx_old(int sys, int bod) { return m_vxyz_old[bod*m_nsys + sys]; }
-	 double& vy_old(int sys, int bod) { return m_vxyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double& vz_old(int sys, int bod) { return m_vxyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	double& jx(int sys, int bod) { return m_jerk[bod*m_nsys + sys]; }
+	double& jy(int sys, int bod) { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double& jz(int sys, int bod) { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	 double&  ax_old(int sys, int bod) { return m_acc_old[bod*m_nsys + sys]; }
-	 double&  ay_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double&  az_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	 double& jx_old(int sys, int bod) { return m_jerk_old[bod*m_nsys + sys]; }
-	 double& jy_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double& jz_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	
-	// const versions
-	 double  ax(int sys, int bod) const { return m_acc[bod*m_nsys + sys]; }
-	 double  ay(int sys, int bod) const { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double  az(int sys, int bod) const { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	 double jx(int sys, int bod) const { return m_jerk[bod*m_nsys + sys]; }
-	 double jy(int sys, int bod) const { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double jz(int sys, int bod) const { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	double&  x_old(int sys, int bod) { return m_xyz_old[bod*m_nsys + sys]; }
+	double&  y_old(int sys, int bod) { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double&  z_old(int sys, int bod) { return m_xyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	 double  x_old(int sys, int bod) const { return m_xyz_old[bod*m_nsys + sys]; }
-	 double  y_old(int sys, int bod) const { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double  z_old(int sys, int bod) const { return m_xyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	 double vx_old(int sys, int bod) const { return m_vxyz_old[bod*m_nsys + sys]; }
-	 double vy_old(int sys, int bod) const { return m_vxyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double vz_old(int sys, int bod) const { return m_vxyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	double& vx_old(int sys, int bod) { return m_vxyz_old[bod*m_nsys + sys]; }
+	double& vy_old(int sys, int bod) { return m_vxyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double& vz_old(int sys, int bod) { return m_vxyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	 double  ax_old(int sys, int bod) const { return m_acc_old[bod*m_nsys + sys]; }
-	 double  ay_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double  az_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
-	
-	 double jx_old(int sys, int bod) const { return m_jerk_old[bod*m_nsys + sys]; }
-	 double jy_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	 double jz_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	double&  ax_old(int sys, int bod) { return m_acc_old[bod*m_nsys + sys]; }
+	double&  ay_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double&  az_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double& jx_old(int sys, int bod) { return m_jerk_old[bod*m_nsys + sys]; }
+	double& jy_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double& jz_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 
+// const versions
+	double  ax(int sys, int bod) const { return m_acc[bod*m_nsys + sys]; }
+	double  ay(int sys, int bod) const { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double  az(int sys, int bod) const { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double jx(int sys, int bod) const { return m_jerk[bod*m_nsys + sys]; }
+	double jy(int sys, int bod) const { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double jz(int sys, int bod) const { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double  x_old(int sys, int bod) const { return m_xyz_old[bod*m_nsys + sys]; }
+	double  y_old(int sys, int bod) const { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double  z_old(int sys, int bod) const { return m_xyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double vx_old(int sys, int bod) const { return m_vxyz_old[bod*m_nsys + sys]; }
+	double vy_old(int sys, int bod) const { return m_vxyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double vz_old(int sys, int bod) const { return m_vxyz_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double  ax_old(int sys, int bod) const { return m_acc_old[bod*m_nsys + sys]; }
+	double  ay_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double  az_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+
+	double jx_old(int sys, int bod) const { return m_jerk_old[bod*m_nsys + sys]; }
+	double jy_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
+	double jz_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 };
 
 #endif
