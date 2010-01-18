@@ -112,8 +112,7 @@ protected:
 	double& jy_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double& jz_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-
-// const versions
+	// const versions
 	double  ax(int sys, int bod) const { return m_acc[bod*m_nsys + sys]; }
 	double  ay(int sys, int bod) const { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double  az(int sys, int bod) const { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }

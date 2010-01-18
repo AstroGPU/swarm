@@ -52,7 +52,7 @@ class ensemble
 		int m_nactive, m_nsys, m_nbod;
 
 		// m_nsys wide array
-		float *m_T;
+		double *m_T;
 
 		// m_nsys*m_nbod*3 wide arrays
 		double  *m_xyz, *m_vxyz;
@@ -80,7 +80,7 @@ class ensemble
 
 	public:
 		// non-const versions
-		__host__ __device__ float&   time(int sys) { return m_T[sys]; }
+		__host__ __device__ double&   time(int sys) { return m_T[sys]; }
 	
 		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -102,7 +102,7 @@ class ensemble
 
 
 		// const versions
-		__host__ __device__ float   time(int sys) const { return m_T[sys]; }
+		__host__ __device__ double  time(int sys) const { return m_T[sys]; }
 	
 		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
