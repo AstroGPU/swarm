@@ -29,7 +29,7 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
 
-	float    T = ens.T(sys);
+	float    T = ens.time(sys);
 	float Tend = T + dT;
 
 	// propagate the system until we match or exceed Tend
@@ -81,7 +81,7 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 		T += h;
 	}
 
-	ens.T(sys) = T;
+	ens.time(sys) = T;
 }
 
 void gpu_euler_integrator::integrate(gpu_ensemble &ens, float dT)

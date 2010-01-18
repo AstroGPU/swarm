@@ -53,7 +53,7 @@ void write_output_aux(const std::vector<std::pair<int,int> > &idx, const int N, 
 		float m; double x[3], v[3];
 		ens.get_body(sys, bod, m, x[0], x[1], x[2], v[0], v[1], v[2]);
 
-		printf("%5d %5d  T=%f  m=%f  pos=(% 9.5f % 9.5f % 9.5f)  vel=(% 9.5f % 9.5f % 9.5f)  E=% 9.5f dE/E=% 9.5f\n", sys, bod, ens.T(sys), m, x[0], x[1], x[2], v[0], v[1], v[2], E[sys*ens.nbod() + bod], dEoverE[sys*ens.nbod() + bod]);
+		printf("%5d %5d  T=%f  m=%f  pos=(% 9.5f % 9.5f % 9.5f)  vel=(% 9.5f % 9.5f % 9.5f)  E=% 9.5f dE/E=% 9.5f\n", sys, bod, ens.time(sys), m, x[0], x[1], x[2], v[0], v[1], v[2], E[sys*ens.nbod() + bod], dEoverE[sys*ens.nbod() + bod]);
 	}
 }
 

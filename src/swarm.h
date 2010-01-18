@@ -80,7 +80,7 @@ class ensemble
 
 	public:
 		// non-const versions
-		__host__ __device__ float&   T(int sys) { return m_T[sys]; }
+		__host__ __device__ float&   time(int sys) { return m_T[sys]; }
 	
 		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -90,7 +90,7 @@ class ensemble
 		__host__ __device__ double& vy(int sys, int bod) { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
 		__host__ __device__ double& vz(int sys, int bod) { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ float& m(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
+		__host__ __device__ float& mass(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
 		__host__ __device__ int& active(int sys)	{ return m_active[sys]; }
 
@@ -102,7 +102,7 @@ class ensemble
 
 
 		// const versions
-		__host__ __device__ float   T(int sys) const { return m_T[sys]; }
+		__host__ __device__ float   time(int sys) const { return m_T[sys]; }
 	
 		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -112,9 +112,9 @@ class ensemble
 		__host__ __device__ double vy(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
 		__host__ __device__ double vz(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ float m(int sys, int bod)   const { return m_m[bod*m_nsys + sys]; }
+		__host__ __device__ float mass(int sys, int bod) const { return m_m[bod*m_nsys + sys]; }
 
-		__host__ __device__ int active(int sys) 	const { return m_active[sys]; }
+		__host__ __device__ int active(int sys)		const { return m_active[sys]; }
 
 		__host__ __device__ int nactive() const { return m_nactive; }
 		__host__ __device__ int nsys() const { return m_nsys; }

@@ -233,7 +233,7 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 		}
 
 		// set the initial time to 0 (NOTE: should we also load this from the config file?)
-		ens.T(i) = 0.;
+		ens.time(i) = 0.;
 
 		// load the planets
 		double m, x, y, z, vx, vy, vz;

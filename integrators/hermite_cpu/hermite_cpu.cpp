@@ -129,7 +129,7 @@ void cpu_hermite_cpu_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned
 	  real rv = dot(dx,dv);
 	  real rinv = 1./sqrt(r2);
 	  rv *= 3./r2;
-	  rinv *= ens.m(sys,j); // mMass[j];
+	  rinv *= ens.mass(sys,j); // mMass[j];
 	  real rinv3 = rinv/r2;
 	  
 	  dx *= rinv3;
@@ -164,7 +164,7 @@ void cpu_hermite_cpu_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned
 	  real rv = dot(dx,dv);
 	  real rinv = 1./sqrt(r2);
 	  rv *= 3./r2;
-	  rinv *= ens.m(sys,j); // mMass[j];
+	  rinv *= ens.mass(sys,j); // mMass[j];
 	  real rinv3 = rinv/r2;
 	  
 	  dx *= rinv3;
@@ -186,7 +186,7 @@ void cpu_hermite_cpu_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned
 	real rv = dot(dx,dv);
 	real rinv = 1./sqrt(r2);
 	rv *= 3./r2;
-	rinv *= ens.m(sys,j); // mMass[j];
+	rinv *= ens.mass(sys,j); // mMass[j];
 	real rinv3 = rinv/r2;
 	
 	dx *= rinv3;
@@ -236,13 +236,13 @@ void cpu_hermite_cpu_integrator::integrate(cpu_ensemble &ens, real_time dT)
 // 		// THERE SEEMS TO BE SOME MEMORY PROBLEM
 // 		ens.T ( sys ) = 0.;
 
-		real_time Tend = ens.T ( sys ) + dT;
+		real_time Tend = ens.time( sys ) + dT;
 		UpdateAccJerk ( ens,sys );
 		// propagate the system until we match or exceed Tend
-		while ( ens.T ( sys ) < Tend )
+		while ( ens.time( sys ) < Tend )
 		{
 			Evolve ( ens,sys );
-			ens.T ( sys ) += h;
+			ens.time( sys ) += h;
 		}
 	} // end loop over systems
 }

@@ -42,7 +42,7 @@ void write_output(const cpu_ensemble &ens, const int sys, double& Eold)
       float m; double x[3], v[3];
       ens.get_body(sys, bod, m, x[0], x[1], x[2], v[0], v[1], v[2]);
       
-      printf("%5d %5d  T=%f  m=%f  pos=(% 9.5f % 9.5f % 9.5f)  vel=(% 9.5f % 9.5f % 9.5f)  E=%g", sys, bod, ens.T(sys), m, x[0], x[1], x[2], v[0], v[1], v[2],Enew);
+      printf("%5d %5d  T=%f  m=%f  pos=(% 9.5f % 9.5f % 9.5f)  vel=(% 9.5f % 9.5f % 9.5f)  E=%g", sys, bod, ens.time(sys), m, x[0], x[1], x[2], v[0], v[1], v[2],Enew);
       if(Eold!=0)
 	printf("  dE/E=%g\n",(Enew-Eold)/Eold);
       else
