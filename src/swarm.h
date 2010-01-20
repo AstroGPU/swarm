@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <cassert>
+#include <cmath>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -150,6 +151,37 @@ class ensemble
 			 x = m_xyz[idx];   y = m_xyz[m_nbod*m_nsys + idx];   z = m_xyz[m_nbod*m_nsys*2 + idx];
 			vx = m_vxyz[idx]; vy = m_vxyz[m_nbod*m_nsys + idx]; vz = m_vxyz[m_nbod*m_nsys*2 + idx];
 		}
+
+		// utilities
+		__host__ __device__ double calc_total_energy(int sys) const
+		{
+			double E = 0.;
+			for (int bod1 = 0; bod1 != nbod(); bod1++)
+			{
+				float m1; double x1[3], v1[3];
+				get_body(sys, bod1, m1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2]);
+				E += 0.5 * m1 * (v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
+
+				for (int bod2 = 0; bod2 < bod1; bod2++)
+				{
+					float m2; double x2[3], v2[3];
+					get_body(sys, bod2, m2, x2[0], x2[1], x2[2], v2[0], v2[1], v2[2]);
+					double dist = sqrt((x2[0] - x1[0]) * (x2[0] - x1[0]) + (x2[1] - x1[1]) * (x2[1] - x1[1]) + (x2[2] - x1[2]) * (x2[2] - x1[2]));
+
+					E -= m1 * m2 / dist;
+				}
+			}
+			return E;
+		}
+
+		__host__ __device__ void calc_total_energy(double *E) const
+		{
+			for (int sys = 0; sys != nsys(); sys++)
+			{
+				E[sys] = calc_total_energy(sys);
+			}
+		}
+
 	public:
 		integrator *last_integrator() { return m_last_integrator; }
 		void set_last_integrator(integrator *li) { m_last_integrator = li; }
@@ -283,5 +315,15 @@ T* hostAlloc(T* var, int nelem, bool usePinned = true)
 		return var;
 	}
 }
+
+// NOTE: The ifdef here is a workaround for CUDA 2.2 device emulation mode bug, where C++
+// is disabled in emulation mode. If you want to use the functions below, use them only
+// from units compiled with g++
+#ifndef __CUDACC__
+
+	#include <valarray>
+	void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E);
+
+#endif
 
 #endif

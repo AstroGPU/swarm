@@ -185,6 +185,17 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 }
 
 //
+// Commonly needed functions
+//
+
+// compute the total energy of each system in the ensemble and return it as valarray
+void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E)
+{
+	E.resize(ens.nsys());
+	ens.calc_total_energy(&E[0]);
+}
+
+//
 // Ensemble loading support
 //
 void load_ensemble(const std::string &name, cpu_ensemble &ens)
