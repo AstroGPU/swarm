@@ -14,6 +14,11 @@ integrators/hermite_cpu/Makefile.mk
 integrators/hermite_cpu/ThreeVector.hpp
 integrators/hermite_cpu/hermite_cpu.cpp
 integrators/hermite_cpu/hermite_cpu.h
+integrators/hermite_gpu
+integrators/hermite_gpu/Makefile.mk
+integrators/hermite_gpu/hermite_gpu.cpp
+integrators/hermite_gpu/hermite_gpu.cu
+integrators/hermite_gpu/hermite_gpu.h
 integrators/mvs
 integrators/mvs/Makefile.mk
 integrators/mvs/mvs.cpp
@@ -24,5 +29,6 @@ src/stopwatch.h
 src/swarm.cpp
 src/swarm.h
 src/swarm_test_hermite_cpu.cpp
+src/swarm_test_hermite_gpu.cpp
 src/swarmlib.cpp
 src/swarmlib.cu
