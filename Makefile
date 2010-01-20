@@ -28,7 +28,7 @@ bin/swarm: $(OBJECTS) src/swarm.o
 src/swarm.o: src/swarm.h
 
 test: all
-	(cd run && ../bin/easyGen.py && ../bin/swarm_test_hermite_cpu)
+	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm_test_hermite_cpu)
 
 
 bin/swarm_test_hermite_cpu: $(OBJECTS) src/swarm_test_hermite_cpu.o 
