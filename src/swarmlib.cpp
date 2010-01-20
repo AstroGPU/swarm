@@ -81,12 +81,12 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 
 void cpu_ensemble::free()			// Deallocate CPU memory
 {
-	::free(m_T); m_T = NULL;
-	::free(m_xyz); m_xyz = NULL;
-	::free(m_vxyz); m_vxyz = NULL;
-	::free(m_m); m_m = NULL;
-	::free(m_active); m_active = NULL;
-	::free(m_systemIndices); m_systemIndices = NULL;
+	hostFree(m_T); m_T = NULL;
+	hostFree(m_xyz); m_xyz = NULL;
+	hostFree(m_vxyz); m_vxyz = NULL;
+	hostFree(m_m); m_m = NULL;
+	hostFree(m_active); m_active = NULL;
+	hostFree(m_systemIndices); m_systemIndices = NULL;
 }
 
 void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the GPU
@@ -148,7 +148,7 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 		for(int i = 0; i != nsys; i++) { tmp[i] = i; }
 		cudaMemcpy(m_systemIndices, &tmp[0], tmp.size()*sizeof(tmp[0]), cudaMemcpyHostToDevice);
 
-		// Set all bodies active
+		// Set all systems active
 		std::valarray<int> tmp2(nsys);
 		tmp2 = 1;
 		cudaMemcpy(m_active, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);

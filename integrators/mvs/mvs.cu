@@ -24,7 +24,7 @@ namespace gpu_mvs_aux
 }
 
 __constant__ ensemble gpu_mvs_ens;
-__global__ void gpu_mvs_integrator_kernel(float dT, float h)
+__global__ void gpu_mvs_integrator_kernel(double dT, float h)
 {
 	using namespace gpu_mvs_aux;
 
@@ -32,8 +32,8 @@ __global__ void gpu_mvs_integrator_kernel(float dT, float h)
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
 
-	float    T = ens.time(sys);
-	float Tend = T + dT;
+	double    T = ens.time(sys);
+	double Tend = T + dT;
 
 	// propagate the system until we match or exceed Tend
 	while(T < Tend)
@@ -87,7 +87,7 @@ __global__ void gpu_mvs_integrator_kernel(float dT, float h)
 	ens.time(sys) = T;
 }
 
-void gpu_mvs_integrator::integrate(gpu_ensemble &ens, float dT)
+void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT)
 {
 	ERROR("MVS integrator has not yet been implemented.");
 

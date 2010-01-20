@@ -1,47 +1,15 @@
 #ifndef integ_hermite_cpu_h__
 #define integ_hermite_cpu_h__
 
-#include "ThreeVector.hpp"
 #include "swarm.h"
 #include <valarray>
 
-#if 0  
-// Eventually, we'll combine my hermite_cpu with the class that Young
-// In writes for his gpu-based hermite integrator.  I hope  my code
-// can be integrated by searching for hermite_cpu and replacing it
-// with hermite.
 
-class gpu_hermite_cpu_integrator : public integrator
-{
- protected:
-	float h;
-	
-	dim3 gridDim;
-	int threadsPerBlock;
-
-public:
-	gpu_hermite_cpu_integrator(const config &cfg);
-
-public:
-	// Young In will put his code into a similar place 
-	// but initially in a class with a different name
-	// eventually we'll merge these two, so his code would go here
-	void integrate(gpu_ensemble &ens, float T)  { abort(); }
-
-	// No support for CPU execution. Note: we could make this function
-	// transparently copy the CPU ensemble to the GPU, and back once
-	// the integration is done
-	void integrate(cpu_ensemble &ens, float T) { abort(); }
-};
-#endif
-
-
-
-class cpu_hermite_cpu_integrator : public integrator
+class cpu_hermite_integrator : public integrator
 {
 public:
 	typedef double real;
-	typedef float  real_time;
+	typedef real   real_time;
 	typedef real   real_mass;
 	typedef real   real_pos;
 	typedef real   real_vel;
@@ -49,7 +17,7 @@ public:
 	typedef real   real_jerk;
 
 protected:
-	float h;
+	real_time h;
 
 	// Integration state
 	std::valarray<real_pos>		m_xyz_old;
@@ -57,13 +25,13 @@ protected:
 	std::valarray<real_acc>		m_acc, m_acc_old;
 	std::valarray<real_jerk>	m_jerk, m_jerk_old;
 	int				m_nsys, m_nbod;
+	int                             m_is_old_good;
 
 	// function to (re)allocate the integration state
 	void alloc_state(cpu_ensemble &ens);
 
 public:
-
-	cpu_hermite_cpu_integrator(const config &cfg);
+	cpu_hermite_integrator(const config &cfg);
 
 public:
 	// No support for GPU execution. Note: we could make this function
@@ -72,9 +40,14 @@ public:
 	virtual void integrate(gpu_ensemble &ens, real_time T) { abort(); }
 	virtual void integrate(cpu_ensemble &ens, real_time T);
 
-	void predict(cpu_ensemble &ens, const unsigned int sys);
+	// Is it dangerous to provide these as public?
+	// If not, people could use them to interpolate to some specific time
+	void set_timestep(const real_time hnew) { h = hnew; };
+
+	int is_old_good() const { return m_is_old_good; };
 	
 protected:
+	void predict(cpu_ensemble &ens, const unsigned int sys);
 	void Correct(cpu_ensemble &ens, const unsigned int sys);
 	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys);
 

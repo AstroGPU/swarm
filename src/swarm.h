@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <map>
+#include <cassert>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -46,19 +47,26 @@ public:
 */
 class ensemble
 {
+	public:
+		typedef double real_time;
+		typedef float  real_mass;
+		typedef double real_pos;
+		typedef double real_vel;
+
 	protected:
 		// number of active (currently integrating) systems, total number of systems
 		// and number of bodies per system
 		int m_nactive, m_nsys, m_nbod;
 
 		// m_nsys wide array
-		double *m_T;
+		real_time *m_T;
 
 		// m_nsys*m_nbod*3 wide arrays
-		double  *m_xyz, *m_vxyz;
+		real_pos  *m_xyz;
+		real_vel  *m_vxyz;
 
 		// m_nsys*m_nbod wide arrays
-		float	*m_m;
+		real_mass *m_m;
 
 		// m_nsys wide arrays
 		int	*m_active;			// is a given system active
@@ -219,8 +227,8 @@ typedef std::map<std::string, std::string> config;
 class integrator
 {
 	public:
-		virtual void integrate(gpu_ensemble &ens, float T) = 0;	// for GPU based integrators
-		virtual void integrate(cpu_ensemble &ens, float T) = 0;	// for CPU based integrators
+		virtual void integrate(gpu_ensemble &ens, double T) = 0;	// for GPU based integrators
+		virtual void integrate(cpu_ensemble &ens, double T) = 0;	// for CPU based integrators
 
 		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 
@@ -239,13 +247,41 @@ typedef integrator *(*integratorFactory_t)(const config &cfg);
 // The default for staticShmemPerBlock is reasonable (for small kernels), but not necessarily optimal.
 bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynShmemPerThread = 0, int staticShmemPerBlock = 128);
 
+// Typesafe de-allocator (convenience)
+template<typename T>
+void hostFree(T* var, bool usePinned = true)
+{
+	assert(var!=NULL);
+	if(!usePinned)
+	{
+		::free(var); 
+	}
+	else
+	{
+		cudaThreadSynchronize();	 // To prevent getting confused over other errors
+		cudaError_t cudaMemStatus = cudaFreeHost(var);
+		if(cudaMemStatus!=cudaSuccess) ERROR("Couldn't free host memory.");
+	}
+}
+
 // Typesafe re-allocator (convenience)
 template<typename T>
-T* hostAlloc(T* var, int nelem)
+T* hostAlloc(T* var, int nelem, bool usePinned = true)
 {
-	T* tmp = (T*)realloc(var, nelem*sizeof(T));
-	if(tmp == NULL) ERROR("Out of host memory.");
-	return tmp;
+	if(!usePinned)
+	{
+		T* tmp = (T*)realloc(var, nelem*sizeof(T));
+		if(tmp == NULL) ERROR("Out of host memory.");
+		return tmp;
+	}
+	else
+	{
+		cudaThreadSynchronize();   // To prevent getting confused over other errors
+		if(var!=NULL) hostFree(var);
+		cudaError_t cudaMemStatus = cudaMallocHost((void**)&var,nelem*sizeof(T));
+		if(cudaMemStatus!=cudaSuccess) ERROR("Out of host memory.");
+		return var;
+	}
 }
 
 #endif

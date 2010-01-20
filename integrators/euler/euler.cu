@@ -21,7 +21,7 @@ namespace gpu_euler_aux
 }
 
 __constant__ ensemble gpu_euler_ens;
-__global__ void gpu_euler_integrator_kernel(float dT, float h)
+__global__ void gpu_euler_integrator_kernel(double dT, float h)
 {
 	using namespace gpu_euler_aux;
 
@@ -29,8 +29,8 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
 
-	float    T = ens.time(sys);
-	float Tend = T + dT;
+	double    T = ens.time(sys);
+	double Tend = T + dT;
 
 	// propagate the system until we match or exceed Tend
 	while(T < Tend)
@@ -84,7 +84,7 @@ __global__ void gpu_euler_integrator_kernel(float dT, float h)
 	ens.time(sys) = T;
 }
 
-void gpu_euler_integrator::integrate(gpu_ensemble &ens, float dT)
+void gpu_euler_integrator::integrate(gpu_ensemble &ens, double dT)
 {
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)

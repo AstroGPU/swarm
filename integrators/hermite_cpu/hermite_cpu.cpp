@@ -1,29 +1,28 @@
 #include "swarm.h"
 #include "hermite_cpu.h"
+#include "ThreeVector.hpp"
 #include <cassert>
 #include <cmath>
 
-// Do we need to use this for CPU integrators?
-// ensemble cpu_hermite_cpu_ens;
+// We don't need to use this for CPU integrators
+// ensemble cpu_hermite_ens;
 
 // factory
-extern "C" integrator *create_cpu_hermite_cpu(const config &cfg)
+extern "C" integrator *create_cpu_hermite(const config &cfg)
 {
-	return new cpu_hermite_cpu_integrator(cfg);
+	return new cpu_hermite_integrator(cfg);
 }
 
 // Constructor
-cpu_hermite_cpu_integrator::cpu_hermite_cpu_integrator(const config &cfg) : 
-  m_nbod(0), m_nsys(0), m_xyz_old(NULL), m_vxyz_old(NULL), m_acc(NULL),m_acc_old(NULL), m_jerk(NULL), m_jerk_old(NULL)
+cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) : 
+  m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
-	if(!cfg.count("h")) ERROR("Integrator cpu_hermite_cpu needs a timestep ('h' keyword in the config file).");
+	if(!cfg.count("h")) ERROR("Integrator cpu_hermite needs a timestep ('h' keyword in the config file).");
 	h = atof(cfg.at("h").c_str());
 }
 
-void cpu_hermite_cpu_integrator::alloc_state(cpu_ensemble &ens)
+void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 {
-	if(ens.last_integrator() == this) return;
-
 	// allocate memory where we'll keep the integration state
 	m_nsys = ens.nsys();
 	m_nbod = ens.nbod();
@@ -32,17 +31,16 @@ void cpu_hermite_cpu_integrator::alloc_state(cpu_ensemble &ens)
 	m_vxyz_old.resize(len);
 	m_acc.resize(len); m_acc_old.resize(len);
 	m_jerk.resize(len); m_jerk_old.resize(len);
-
-	ens.set_last_integrator(this);
+	m_is_old_good = 0;
 }
 
 // Actual calculations
-void cpu_hermite_cpu_integrator::predict(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
       const real_time hby2 = h/2., hby3 = h/3.;
-      ens.x(sys,i)  += h*(ens.vx(sys,i) +hby2*(ax(sys,i)+hby3*jx(sys,i)));
+      ens.x(sys,i)  += h*(ens.vx(sys,i)+hby2*(ax(sys,i)+hby3*jx(sys,i)));
       ens.y(sys,i)  += h*(ens.vy(sys,i)+hby2*(ay(sys,i)+hby3*jy(sys,i)));
       ens.z(sys,i)  += h*(ens.vz(sys,i)+hby2*(az(sys,i)+hby3*jz(sys,i)));
       ens.vx(sys,i) += h*(ax(sys,i)+hby2*jx(sys,i));
@@ -51,7 +49,7 @@ void cpu_hermite_cpu_integrator::predict(cpu_ensemble &ens, const unsigned int s
     }
 };
 
-void cpu_hermite_cpu_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
@@ -70,7 +68,7 @@ void cpu_hermite_cpu_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int
     }
 };
 
-void cpu_hermite_cpu_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
@@ -96,12 +94,12 @@ void cpu_hermite_cpu_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsig
 
 
 // Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
-void cpu_hermite_cpu_integrator::Correct(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys)
 {
   CorrectAlpha7by6(ens,sys);
 }
 
-void cpu_hermite_cpu_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys)
 {
   // Use's double precission
   ThreeVector<real> dx(0.,0.,0.), dv(0.,0.,0.);
@@ -199,7 +197,7 @@ void cpu_hermite_cpu_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned
 }
 
 
-void cpu_hermite_cpu_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys)
 {
   CopyToOld(ens,sys);
   predict(ens,sys);
@@ -211,25 +209,31 @@ void cpu_hermite_cpu_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned in
 
   
 // See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
-void cpu_hermite_cpu_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys)
 {
   EvolvePEC2(ens,sys);
+  m_is_old_good = 1;
 };
 
-void cpu_hermite_cpu_integrator::integrate(cpu_ensemble &ens, real_time dT)
+void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 {
 	// Allocate integration state (if not already there)
-	alloc_state(ens);
+	if(ens.last_integrator() != this) 
+	  {
+	    alloc_state(ens);
+	    ens.set_last_integrator(this);
+	  }
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{
-		real_time Tend = ens.time( sys ) + dT;
-		UpdateAccJerk ( ens,sys );
-		// propagate the system until we match or exceed Tend
-		while ( ens.time( sys ) < Tend )
-		{
-			Evolve ( ens,sys );
-			ens.time( sys ) += h;
-		}
+	  if(!ens.active(sys)) continue;
+	  real_time Tend = ens.time( sys ) + dT;
+	  UpdateAccJerk ( ens,sys );
+	  // propagate the system until we match or exceed Tend
+	  while ( ens.time( sys ) < Tend )
+	    {
+	      Evolve ( ens,sys );
+	      ens.time( sys ) += h;
+	    }
 	} // end loop over systems
 }

@@ -108,7 +108,7 @@ int main()
 
 	// perform the integration
 	stopwatch swatch_kernel, swatch_all;
-	const float dT = 1;	// duration of integration (TODO: read from config file)
+	const double dT = 1;	// duration of integration (TODO: read from config file)
 	
 	swatch_all.start();
 	gpu_ensemble gpu_ens(ens);				// upload to GPU
