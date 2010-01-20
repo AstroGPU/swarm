@@ -65,7 +65,7 @@ int main()
 
 	// set up the integrator and integrator config (TODO: load from config file)
 	config cfg;
-	cfg["integrator"] = "cpu_hermite_cpu";
+	cfg["integrator"] = "cpu_hermite";
 	//cfg["integrator"] = "gpu_mvs";
 	//cfg["integrator"] = "gpu_does_not_exist";
 	cfg["h"] = "0.001";

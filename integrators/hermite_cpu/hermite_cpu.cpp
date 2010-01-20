@@ -75,11 +75,11 @@ void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned 
       const real_time hby2 = h/2., hby6 = h/6.;
       const real_time h7by30 = h*7./30, hby7 = h/7.;
       ens.vx(sys,i) = vx_old(sys,i) + hby2*((ax_old(sys,i)+ax(sys,i)
-					 + hby6*(jx_old(sys,i)+jx(sys,i))));
+					 + hby6*(jx_old(sys,i)-jx(sys,i))));
       ens.vy(sys,i) = vy_old(sys,i) + hby2*((ay_old(sys,i)+ay(sys,i)
-					 + hby6*(jy_old(sys,i)+jy(sys,i))));
+					 + hby6*(jy_old(sys,i)-jy(sys,i))));
       ens.vz(sys,i) = vz_old(sys,i) + hby2*((az_old(sys,i)+az(sys,i)
-					 + hby6*(jz_old(sys,i)+jz(sys,i))));
+					 + hby6*(jz_old(sys,i)-jz(sys,i))));
       ens.x(sys,i) = x_old(sys,i) + hby2*((vx_old(sys,i)+ens.vx(sys,i))
 				      + h7by30*((ax_old(sys,i)-ax(sys,i))
 				      + hby7*(jx_old(sys,i)+jx(sys,i))));
