@@ -1,13 +1,14 @@
-#CCUDA=/opt/cuda/bin/nvcc
+CCUDA=/opt/cuda/bin/nvcc -arch=sm_13
+CXX=g++
+CCUDAFLAGS=  -DTHROW_IS_ABORT
+#CCUDAFLAGS= --device-emulation -DTHROW_IS_ABORT
+CXXFLAGS=-g -O0 -I /opt/cuda/include -I ./src
+LDFLAGS=-L /opt/cuda/lib64 
+#CCUDA=/usr/local/cuda/bin/nvcc
 #CXX=g++
 #CCUDAFLAGS=--device-emulation -DTHROW_IS_ABORT
-#CXXFLAGS=-g -O0 -I /opt/cuda/include -I ./src
-#LDFLAGS=-L /opt/cuda/lib64 
-CCUDA=/usr/local/cuda/bin/nvcc
-CXX=g++
-CCUDAFLAGS=--device-emulation -DTHROW_IS_ABORT
-CXXFLAGS=-g -O0 -I /usr/local/cuda/include -I ./src
-LDFLAGS=-L /usr/local/cuda/lib
+#CXXFLAGS=-g -O0 -I /usr/local/cuda/include -I ./src
+#LDFLAGS=-L /usr/local/cuda/lib
 
 OBJECTS= src/swarmlib.o src/swarm.cu_o  # removed swarm.o since not common to different test program
 EXEOBJECTS = src/swarm.o src/swarm_test_hermite_cpu.o src/swarm_test_hermite_gpu.o
