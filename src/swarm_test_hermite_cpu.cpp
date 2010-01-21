@@ -92,7 +92,7 @@ int main()
 	std::auto_ptr<integrator> integ( integrator::create(cfg) );
 
 	// perform the integration
-	const float dT = 1;	// duration of integration (TODO: read from config file)
+	const float dT = 0.5;	// duration of integration (TODO: read from config file)
 
 	swatch_kernel.start();
 	integ->integrate(ens, dT);
