@@ -32,9 +32,10 @@ namespace gpu_hermite_aux
 //typedef float real;
 //#endif
 
-inline __device__ void copyArray(real *target, real *source, int numArray)
+template<unsigned int N, typename destT, typename srcT>
+inline __device__ void copyArray(destT *target, srcT *source)
 {
-	if(numArray==9){
+	if(N==9){
 		target[0]=source[0];
 		target[1]=source[1];
 		target[2]=source[2];
@@ -46,47 +47,21 @@ inline __device__ void copyArray(real *target, real *source, int numArray)
 		target[8]=source[8];
 	}
 	else {
-		for(int i=0; i<numArray; i++)
+		for(int i=0; i<N; i++)
 			target[i]=source[i];
 	}
 }
 
-inline __device__ void doubleTofloat(float *floatA, real *doubleA, int numArray)
+template<unsigned int N> 
+inline __device__ void doubleTofloat(float *floatA, real *doubleA)
 {
-	if(numArray==9){
-		floatA[0]=__double2float_rn(doubleA[0]);
-		floatA[1]=__double2float_rn(doubleA[1]);
-		floatA[2]=__double2float_rn(doubleA[2]);
-		floatA[3]=__double2float_rn(doubleA[3]);
-		floatA[4]=__double2float_rn(doubleA[4]);
-		floatA[5]=__double2float_rn(doubleA[5]);
-		floatA[6]=__double2float_rn(doubleA[6]);
-		floatA[7]=__double2float_rn(doubleA[7]);
-		floatA[8]=__double2float_rn(doubleA[8]);
-	}
-	else {
-		for(int i=0; i<numArray; i++)
-			floatA[i]=__double2float_rn(doubleA[i]);
-	}
+	copyArray<N,float,real>(floatA,doubleA);
 }
 
-inline __device__ void floatTodouble(double *doubleA, float *floatA, int numArray)
+template<unsigned int N>
+inline __device__ void floatTodouble(double *doubleA, float *floatA)
 {
-	if(numArray==9){
-		doubleA[0]=(double)floatA[0];
-		doubleA[1]=(double)floatA[1];
-		doubleA[2]=(double)floatA[2];
-		doubleA[3]=(double)floatA[3];
-		doubleA[4]=(double)floatA[4];
-		doubleA[5]=(double)floatA[5];
-		doubleA[6]=(double)floatA[6];
-		doubleA[7]=(double)floatA[7];
-		doubleA[8]=(double)floatA[8];
-	}
-	else {
-		for(int i=0; i<numArray; i++)
-			doubleA[i]=(double)floatA[i];
-	}
+	copyArray<N,real,float>(doubleA,floatA);
 }
 
 inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h, int numArray)
@@ -521,11 +496,11 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 	else
 	{
-		doubleTofloat(sPos, mPos,9);
-		doubleTofloat(sVel, mVel,9);
+		doubleTofloat<9>(sPos, mPos);
+		doubleTofloat<9>(sVel, mVel);
 		UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-		floatTodouble(mAcc,sAcc,9);
-		floatTodouble(mJerk,sJerk,9);
+		floatTodouble<9>(mAcc,sAcc);
+		floatTodouble<9>(mJerk,sJerk);
 	}
 
 	while(T<Tend)
@@ -533,10 +508,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		////Evolve(DeltaT);
 		//CopyToOld();
 
-		copyArray(mPosOld,mPos,9);
-		copyArray(mVelOld,mVel,9);
-		copyArray(mAccOld,mAcc,9);
-		copyArray(mJerkOld,mJerk,9);
+		copyArray<9>(mPosOld,mPos);
+		copyArray<9>(mVelOld,mVel);
+		copyArray<9>(mAccOld,mAcc);
+		copyArray<9>(mJerkOld,mJerk);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mPosOld[i]=mPos[i];
 		//	mVelOld[i]=mVel[i];
@@ -555,11 +530,11 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat(sPos, mPos,9);
-			doubleTofloat(sVel, mVel,9);
+			doubleTofloat<9>(sPos, mPos);
+			doubleTofloat<9>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble(mAcc,sAcc,9);
-			floatTodouble(mJerk,sJerk,9);
+			floatTodouble<9>(mAcc,sAcc);
+			floatTodouble<9>(mJerk,sJerk);
 		}
 
 		//Correct(dt);
@@ -575,11 +550,11 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat(sPos, mPos,9);
-			doubleTofloat(sVel, mVel,9);
+			doubleTofloat<9>(sPos, mPos);
+			doubleTofloat<9>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble(mAcc,sAcc,9);
-			floatTodouble(mJerk,sJerk,9);
+			floatTodouble<9>(mAcc,sAcc);
+			floatTodouble<9>(mJerk,sJerk);
 		}
 
 		//Correct(dt);
