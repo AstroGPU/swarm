@@ -26,11 +26,6 @@ namespace gpu_hermite_aux
 #define SQRT(x)   sqrtf(x)
 //typedef double real;
 //#else
-//// Single or Mixed precision
-//#define RSQRT(x) rsqrtf(x)
-//#define SQRT(x)   sqrtf(x)
-//typedef float real;
-//#endif
 
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
