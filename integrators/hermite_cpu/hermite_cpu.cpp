@@ -222,6 +222,7 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	  {
 	    alloc_state(ens);
 	    ens.set_last_integrator(this);
+	    if(dT == 0.) { return; }
 	  }
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )

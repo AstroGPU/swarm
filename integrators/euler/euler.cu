@@ -93,6 +93,7 @@ void gpu_euler_integrator::integrate(gpu_ensemble &ens, double dT)
 		configure_grid(gridDim, threadsPerBlock, ens.nsys());
 
 		cudaMemcpyToSymbol(gpu_euler_ens, &ens, sizeof(gpu_euler_ens));
+		if(dT == 0.) { return; }
 	}
 
 	// execute the kernel

@@ -16,11 +16,6 @@ public:
 
 public:
 	void integrate(gpu_ensemble &ens, double T);
-
-	// No support for CPU execution. Note: we could make this function
-	// transparently copy the CPU ensemble to the GPU, and back once
-	// the integration is done
-	void integrate(cpu_ensemble &ens, double T) { abort(); }
 };
 
 #endif
