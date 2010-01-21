@@ -64,6 +64,7 @@ int main()
 	//cfg["integrator"] = "gpu_mvs";
 	//cfg["integrator"] = "gpu_does_not_exist";
 	cfg["h"] = "0.001";
+	cfg["precision"] = "1";
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
 
 	// perform the integration

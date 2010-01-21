@@ -5,7 +5,7 @@
 
 typedef double real;
 typedef real   real_time;
-typedef real   real_mass;
+typedef float   real_mass;
 typedef real   real_pos;
 typedef real   real_vel;
 typedef real   real_acc;
@@ -29,6 +29,7 @@ class gpu_hermite_integrator : public integrator, public gpu_hermite_integrator_
 {
 protected:
 	float h;
+	int prec;
 	
 	dim3 gridDim;
 	int threadsPerBlock;
