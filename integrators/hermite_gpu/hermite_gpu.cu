@@ -608,6 +608,7 @@ void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
 			gpu_hermite_integrator_kernel<3><<<gridDim, threadsPerBlock>>>(dT, h);
 			break;
 	}
+	printf("%s\n", cudaGetErrorString(cudaGetLastError()));
 
 }
 
