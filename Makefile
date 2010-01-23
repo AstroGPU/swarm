@@ -11,34 +11,27 @@ LDFLAGS=-L /usr/local/cuda/lib
 
 LIBPEYTON=src/astro/BinaryStream.o
 OBJECTS= src/swarmlib.o src/swarm.cu_o $(LIBPEYTON)
-EXEOBJECTS = src/swarm.o src/swarmdump.o src/swarm_test_hermite_gpu.o
+EXEOBJECTS = src/swarm.o src/swarmdump.o
 ALLOBJECTS = $(OBJECTS) $(EXEOBJECTS)
 
-all: bin/swarm bin/swarmdump bin/swarm_test_hermite_gpu
+all: bin/swarm bin/swarmdump
 
 #### Integrators
 include integrators/*/Makefile.mk
 ####
 
-bench: all
-	(cd run && ../bin/easyGen.py && ../bin/swarm)
-
-bin/swarm: $(OBJECTS) src/swarm.o 
+bin/swarm: $(OBJECTS) src/swarm.o
 	$(CXX) -rdynamic -o $@ $(LDFLAGS) -lcuda -lcudart $(OBJECTS) src/swarm.o
 
 src/swarm.o: src/swarm.h
 
 test: all
-	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm_test_hermite_gpu && ../bin/swarmdump)
+	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm && ../bin/swarmdump)
 
 
 bin/swarmdump: $(OBJECTS) src/swarmdump.o
 	$(CXX) -rdynamic -o $@ $(LDFLAGS) -lcuda -lcudart $(OBJECTS)  src/swarmdump.o
 bin/swarmdump.o: src/swarm.h src/swarmio.h
-
-bin/swarm_test_hermite_gpu: $(OBJECTS) src/swarm_test_hermite_gpu.o 
-	$(CXX) -rdynamic -o $@ $(LDFLAGS) -lcuda -lcudart $(OBJECTS)  src/swarm_test_hermite_gpu.o
-bin/swarm_test_hermite_gpu.o: src/swarm.h src/swarmio.h
 
 
 src/swarmlib.o: src/swarm.h src/swarmio.h
@@ -47,7 +40,7 @@ src/swarm.cu: src/swarm.h $(CUDA_DEPS)
 	./bin/combine_cu_files.sh src/swarmlib.cu integrators/*/*.cu >> $@
 
 clean:
-	rm -f $(ALLOBJECTS) *.linkinfo src/astro/*.o src/swarm.cu bin/swarmdump bin/swarm integrators/*/*.o bin/swarm_test_hermite_gpu
+	rm -f $(ALLOBJECTS) *.linkinfo src/astro/*.o src/swarm.cu bin/swarmdump bin/swarm integrators/*/*.o
 
 tidy: clean
 	rm -f *~ src/*~ src/astro/*~ integrators/*/*~ DEADJOE
