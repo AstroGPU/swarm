@@ -16,7 +16,7 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/gpu_integ/swarm/bin/swarm_test_hermite_gpu</mainprogram>
+      <mainprogram>/home/mjuric/projects/gpu_integ/swarm/bin/swarmdump</mainprogram>
       <programargs></programargs>
       <globaldebugarguments></globaldebugarguments>
       <globalcwd>/home/mjuric/projects/gpu_integ/swarm/run</globalcwd>

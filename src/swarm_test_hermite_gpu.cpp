@@ -8,38 +8,6 @@
 #include <fstream>
 #include <vector>
 
-// aux class to sort indices by energy error (biggest first)
-struct energy_sorter
-{
-	const std::valarray<double> &dE;
-
-	energy_sorter(const std::valarray<double> &dE_) : dE(dE_) {};
-	bool operator()(const int  &a, const int  &b) const
-	{
-		double dEa = fabs(dE[a]);
-		double dEb = fabs(dE[b]);
-		if (isnan(dEa)) { dEa = 0.; }
-		if (isnan(dEb)) { dEb = 0.; }
-		return dEa > dEb;
-	}
-};
-
-// just a simple dump to stdout of one system
-void write_output(const cpu_ensemble &ens, const int sys, std::valarray<double>  &Eold, std::valarray<double> &Enew)
-{
-	for (int bod = 0; bod != ens.nbod(); bod++)
-	{
-		float m; double x[3], v[3];
-		ens.get_body(sys, bod, m, x[0], x[1], x[2], v[0], v[1], v[2]);
-
-		printf("%5d %5d  T=%f  m=%f  pos=(% 9.5f % 9.5f % 9.5f)  vel=(% 9.5f % 9.5f % 9.5f)  E=%g", sys, bod, ens.time(sys), m, x[0], x[1], x[2], v[0], v[1], v[2], Enew[sys]);
-		if (Enew[sys] != 0)
-			printf("  dE/E=%g\n", (Enew[sys] - Eold[sys]) / Eold[sys]);
-		else
-			printf("\n");
-	}
-}
-
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
@@ -52,16 +20,6 @@ int main()
 
 	ens_writer out("output.bin");
 	out << ens;
-
-#if 0
-	// Calculate energy at beginning of integration
-	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
-	calc_total_energy(ens, Einit);
-
-	printf("Initial conditions...\n");
-	for (unsigned int i = 0;i < nprint;++i)
-		write_output(ens, i, Einit, Efinal);
-#endif
 
 	// performance stopwatches
 	stopwatch swatch_kernel, swatch_mem, swatch_temps, swatch_all;
@@ -112,24 +70,6 @@ int main()
 	}
 	SWATCH_STOP(swatch_all);
 
-#if 0
-	// Calculate energy at end of integration
-	calc_total_energy(ens, Efinal);
-
-	// store output
-	printf("Final conditions...\n");
-	for (unsigned int i = 0;i < nprint;++i)
-		write_output(ens, i, Einit, Efinal);
-
-	// find systems with worst E conservation
-	std::valarray<double> dEoverE = Efinal / Einit - 1.;
-	std::vector<int > idx; idx.reserve(ens.nsys());
-	for (int i = 0; i != ens.nsys(); i++) idx.push_back(i);
-	std::sort(idx.begin(), idx.end(), energy_sorter(dEoverE));
-	std::cerr << "Systems with worst energy conservation (excluding those w. infinite energy):\n";
-	for (unsigned int i = 0;i < nprint;++i)
-		write_output(ens, idx[i], Einit, Efinal);
-#endif
 	out << ens;
 
 	// print out timings
