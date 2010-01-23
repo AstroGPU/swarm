@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <valarray>
+#include "swarmio.h"
 
 //
 // Utilities
@@ -15,6 +16,43 @@ void die(const std::string &msg)
 {
 	std::cerr << msg << "\n";
 	abort();
+}
+
+void trim(std::string& str)
+{
+	std::string::size_type pos = str.find_last_not_of(" \t");
+	if (pos != std::string::npos)
+	{
+		str.erase(pos + 1);
+		pos = str.find_first_not_of(" \t");
+		if (pos != std::string::npos) str.erase(0, pos);
+	}
+	else str.erase(str.begin(), str.end());
+}
+
+// load a configuration file
+void load_config(config &cfg, const std::string &fn)
+{
+	std::ifstream in(fn.c_str());
+	if(!in) ERROR("Cannot open configuration file '" + fn + "'.");
+
+	std::string line;
+	int iline = 0;
+	while(std::getline(in, line))
+	{
+		iline++;
+		trim(line);
+		if(line.empty()) { continue; }
+		if(line[0] == '#') { continue; }
+
+		size_t eqpos = line.find(' ');
+		if(eqpos == std::string::npos) ERROR("Error on line " + str(line) + ": '=' sign expected.");
+
+		std::string key = line.substr(0, eqpos), val = line.substr(eqpos+2);
+		trim(key); trim(val);
+
+		cfg[key] = val;
+	}
 }
 
 template<typename T>
@@ -356,4 +394,63 @@ bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynSh
 	std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
 #endif
 	return true;
+}
+
+//
+// I/O and snapshotting functions
+//
+ens_writer::ens_writer(const std::string &fn)
+	: out(fn.c_str()), bout(new obstream(out))
+{
+	if(!out) ERROR("Problem opening output file '" + fn + "'");
+}
+
+ens_writer &ens_writer::operator <<(const cpu_ensemble &ens)
+{
+	*bout << ens.nsys() << ens.nbod() << ens.nactive();
+
+	for(int sysID=0; sysID != ens.nsys(); sysID++)
+	{
+		int sys = ens.index_of_system(sysID);
+
+		*bout << ens.time(sys);
+		*bout << ens.active(sys);
+
+		for(int bod = 0; bod != ens.nbod(); bod++)
+		{
+			*bout << ens.mass(sys, bod);
+			*bout << ens.x(sys, bod) << ens.y(sys, bod) << ens.z(sys, bod);
+			*bout << ens.vx(sys, bod) << ens.vy(sys, bod) << ens.vz(sys, bod);
+		}
+	}
+
+	return *this;
+}
+
+ens_reader::ens_reader(const std::string &fn)
+	: in(fn.c_str()), bin(new ibstream(in))
+{
+	if(!in) ERROR("Problem opening input file '" + fn + "'");
+}
+
+ens_reader &ens_reader::operator >>(cpu_ensemble &ens)
+{
+	int nsys, nbod, nactive;
+	*bin >> nsys >> nbod >> nactive;
+	ens.reset(nsys, nbod);
+
+	for(int sys=0; sys != ens.nsys(); sys++)
+	{
+		*bin >> ens.time(sys);
+		*bin >> ens.active(sys);
+
+		for(int bod = bod; bod != ens.nbod(); bod++)
+		{
+			*bin >> ens.mass(sys, bod);
+			*bin >> ens.x(sys, bod) >> ens.y(sys, bod) >> ens.z(sys, bod);
+			*bin >> ens.vx(sys, bod) >> ens.vy(sys, bod) >> ens.vz(sys, bod);
+		}
+	}
+
+	return *this;
 }

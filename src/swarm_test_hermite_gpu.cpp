@@ -1,4 +1,5 @@
 #include "swarm.h"
+#include "swarmio.h"
 #include <memory>
 #include <cmath>
 #include <iostream>
@@ -39,64 +40,6 @@ void write_output(const cpu_ensemble &ens, const int sys, std::valarray<double> 
 	}
 }
 
-// Convert a variable of arbitrary type to a string.
-// NOTE: heavy (unoptimized) function, use sparingly
-template<typename T>
-std::string str(const T& var)
-{
-	std::ostringstream ss;
-	ss << var;
-	return ss.str();
-}
-
-// trim whitespaces from the beginning and the end of a string
-void trim(std::string& str)
-{
-	std::string::size_type pos = str.find_last_not_of(" \t");
-	if (pos != std::string::npos)
-	{
-		str.erase(pos + 1);
-		pos = str.find_first_not_of(" \t");
-		if (pos != std::string::npos) str.erase(0, pos);
-	}
-	else str.erase(str.begin(), str.end());
-}
-
-// load a configuration file
-void load_config(config &cfg, const std::string &fn)
-{
-	std::ifstream in(fn.c_str());
-	if(!in) ERROR("Cannot open configuration file '" + fn + "'.");
-
-	std::string line;
-	int iline = 0;
-	while(std::getline(in, line))
-	{
-		iline++;
-		trim(line);
-		if(line.empty()) { continue; }
-		if(line[0] == '#') { continue; }
-
-		size_t eqpos = line.find(' ');
-		if(eqpos == std::string::npos) ERROR("Error on line " + str(line) + ": '=' sign expected.");
-
-		std::string key = line.substr(0, eqpos), val = line.substr(eqpos+2);
-		trim(key); trim(val);
-
-		cfg[key] = val;
-	}
-}
-
-// get a configuration value for 'key', throwing an error if it doesn't exist
-// NOTE: heavy (unoptimized) function, use sparingly
-template<typename T>
-void get_config(T &val, const config &cfg, const std::string &key)
-{
-	if(!cfg.count(key)) { ERROR("Configuration key '" + key + "' missing."); }
-	std::istringstream ss(cfg.at(key));
-	ss >> val;
-}
-
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
@@ -107,6 +50,10 @@ int main()
 	load_ensemble("data", ens);
 	unsigned int nprint = std::min(2, ens.nsys());
 
+	ens_writer out("output.bin");
+	out << ens;
+
+#if 0
 	// Calculate energy at beginning of integration
 	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
 	calc_total_energy(ens, Einit);
@@ -114,6 +61,7 @@ int main()
 	printf("Initial conditions...\n");
 	for (unsigned int i = 0;i < nprint;++i)
 		write_output(ens, i, Einit, Efinal);
+#endif
 
 	// performance stopwatches
 	stopwatch swatch_kernel, swatch_mem, swatch_temps, swatch_all;
@@ -164,6 +112,7 @@ int main()
 	}
 	SWATCH_STOP(swatch_all);
 
+#if 0
 	// Calculate energy at end of integration
 	calc_total_energy(ens, Efinal);
 
@@ -180,6 +129,8 @@ int main()
 	std::cerr << "Systems with worst energy conservation (excluding those w. infinite energy):\n";
 	for (unsigned int i = 0;i < nprint;++i)
 		write_output(ens, idx[i], Einit, Efinal);
+#endif
+	out << ens;
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;

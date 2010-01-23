@@ -241,11 +241,22 @@ class gpu_ensemble : public ensemble
 		~gpu_ensemble() { free(); }
 };
 
+typedef std::map<std::string, std::string> config;
+
 /// Load ensemble residing in files "name.XXX" where XXX \elem [0,nsys)
 void load_ensemble(const std::string &name, cpu_ensemble &ens);
+/// Load configuration from file fn
+void load_config(config &cfg, const std::string &fn);
 
-
-typedef std::map<std::string, std::string> config;
+// get a configuration value for 'key', throwing an error if it doesn't exist
+// NOTE: heavy (unoptimized) function, use sparingly
+template<typename T>
+void get_config(T &val, const config &cfg, const std::string &key)
+{
+	if(!cfg.count(key)) { ERROR("Configuration key '" + key + "' missing."); }
+	std::istringstream ss(cfg.at(key));
+	ss >> val;
+}
 
 /**
 	\brief Abstract integrator interface
@@ -317,6 +328,13 @@ T* hostAlloc(T* var, int nelem, bool usePinned = true)
 		return var;
 	}
 }
+
+//
+// Utilities
+//
+
+/// trim whitespaces from the beginning and the end of a string
+void trim(std::string& str);
 
 // NOTE: The ifdef here is a workaround for CUDA 2.2 device emulation mode bug, where C++
 // is disabled in emulation mode. If you want to use the functions below, use them only

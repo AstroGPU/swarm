@@ -30,5 +30,6 @@ src/swarm.cpp
 src/swarm.h
 src/swarm_test_hermite_cpu.cpp
 src/swarm_test_hermite_gpu.cpp
+src/swarmio.h
 src/swarmlib.cpp
 src/swarmlib.cu

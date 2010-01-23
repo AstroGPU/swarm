@@ -9,7 +9,8 @@ CCUDAFLAGS=--device-emulation -DTHROW_IS_ABORT
 CXXFLAGS=-g -O0 -I /usr/local/cuda/include -I ./src
 LDFLAGS=-L /usr/local/cuda/lib
 
-OBJECTS= src/swarmlib.o src/swarm.cu_o  # removed swarm.o since not common to different test program
+LIBPEYTON=src/astro/BinaryStream.o
+OBJECTS= src/swarmlib.o src/swarm.cu_o $(LIBPEYTON)
 EXEOBJECTS = src/swarm.o src/swarm_test_hermite_cpu.o src/swarm_test_hermite_gpu.o
 ALLOBJECTS = $(OBJECTS) $(EXEOBJECTS)
 
@@ -46,10 +47,10 @@ src/swarm.cu: src/swarm.h $(CUDA_DEPS)
 	./bin/combine_cu_files.sh src/swarmlib.cu integrators/*/*.cu >> $@
 
 clean:
-	rm -f $(ALLOBJECTS) *.linkinfo src/swarm.cu bin/swarm integrators/*/*.o bin/swarm_test_hermite_cpu bin/swarm_test_hermite_gpu
+	rm -f $(ALLOBJECTS) *.linkinfo src/astro/*.o src/swarm.cu bin/swarm integrators/*/*.o bin/swarm_test_hermite_cpu bin/swarm_test_hermite_gpu
 
 tidy: clean
-	rm -f *~ src/*~ integrators/*/*~ DEADJOE
+	rm -f *~ src/*~ src/astro/*~ integrators/*/*~ DEADJOE
 	rm -f run/data.* run/observeTimes.dat
 
 %.cu_o:%.cu
