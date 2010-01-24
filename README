@@ -1,7 +1,13 @@
 == Compiling and running the code ==
 
+To build and run the executable:
+
 	make
-	./swarm
+	./bin/swarm
+
+or to build and immediately run a test in ./run subdirectory:
+
+	make test
 
 == General layout ==
 

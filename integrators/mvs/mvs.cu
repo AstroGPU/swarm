@@ -98,6 +98,7 @@ void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT)
 		configure_grid(gridDim, threadsPerBlock, ens.nsys());
 
 		cudaMemcpyToSymbol(gpu_mvs_ens, &ens, sizeof(gpu_mvs_ens));
+		if(dT == 0.) { return; }
 	}
 
 	// execute the kernel

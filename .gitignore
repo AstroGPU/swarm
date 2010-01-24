@@ -1,1 +1,14 @@
 run/data*
+tarballs
+Makefile.user
+bin/swarm
+bin/swarmdump
+integrators/*/*.o
+src/*.o
+run/output.bin
+src/astro/*.o
+src/swarm.cu*
+swarm.kdevelop.pcs
+swarm.kdevses
+*~
+src/*~
