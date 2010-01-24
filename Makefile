@@ -4,7 +4,7 @@
 #
 # Note: you should override these in Makefile.user
 #
-CCUDA?=/opt/cuda/bin/nvcc
+CCUDA?=/opt/cuda/bin/nvcc -arch=sm_13
 CXX?=g++
 CCUDAFLAGS?=--device-emulation -DTHROW_IS_ABORT
 CXXFLAGS?=-g -O0 -I /opt/cuda/include -I ./src
