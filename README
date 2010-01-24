@@ -42,3 +42,10 @@ Your integrator must:
 		return new gpu_euler_integrator(cfg);
 	}
 
+== Existing integrators: description and configuration parameters ==
+
+* Hermite
+	- h (real number)
+		Timestep of the integrator
+	- precision (integer)
+		1 == double precision, 3 == mixed precision
