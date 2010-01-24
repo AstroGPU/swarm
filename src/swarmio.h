@@ -22,21 +22,25 @@ std::string str(const T& var)
 class ens_writer
 {
 protected:
+	std::string fn;
 	std::ofstream out;
-	std::auto_ptr<obstream> bout;
+	obstream bout;
 public:
 	ens_writer(const std::string &fn);
 	ens_writer &operator <<(const cpu_ensemble &ens);
+	operator bool() const { return bout; }
 };
 
 class ens_reader
 {
 protected:
+	std::string fn;
 	std::ifstream in;
-	std::auto_ptr<ibstream> bin;
+	ibstream bin;
 public:
 	ens_reader(const std::string &fn);
 	ens_reader &operator >>(cpu_ensemble &ens);
+	operator bool() const { return bin; }
 };
 
 #endif
