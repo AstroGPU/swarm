@@ -365,7 +365,7 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
 {
 	const int shmemPerMP =  16384;
-	threadsPerBlock = 192; // HACK: should compute this dynamically, based on memory requirements
+	threadsPerBlock = 64; // HACK: should compute this dynamically, based on memory requirements
 
 	int dyn_shared_mem_required = dynShmemPerThread*threadsPerBlock;
 	int shared_mem_required = staticShmemPerBlock + dyn_shared_mem_required;
