@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <map>
 #include <cassert>
 #include <cmath>
@@ -254,7 +255,8 @@ template<typename T>
 void get_config(T &val, const config &cfg, const std::string &key)
 {
 	if(!cfg.count(key)) { ERROR("Configuration key '" + key + "' missing."); }
-	std::istringstream ss(cfg.at(key));
+	std::istringstream ss;
+	ss.str(cfg.at(key));
 	ss >> val;
 }
 

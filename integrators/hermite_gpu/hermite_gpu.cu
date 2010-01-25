@@ -450,10 +450,12 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	float sVel       [9];
 	float sAcc       [9];
 	float sJerk      [9];
+/*      These appear to be unused.
 	float sPosOld    [9];
 	float sVelOld    [9];
 	float sAccOld    [9];
 	float sJerkOld   [9];
+*/
 
 	//const float s_mass[]={d_mass[t_start], d_mass[t_start+1],d_mass[t_start+2]};
 	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
@@ -491,11 +493,11 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 	else
 	{
-		doubleTofloat<9>(sPos, mPos);
-		doubleTofloat<9>(sVel, mVel);
+		doubleTofloat<nData>(sPos, mPos);
+		doubleTofloat<nData>(sVel, mVel);
 		UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-		floatTodouble<9>(mAcc,sAcc);
-		floatTodouble<9>(mJerk,sJerk);
+		floatTodouble<nData>(mAcc,sAcc);
+		floatTodouble<nData>(mJerk,sJerk);
 	}
 
 	while(T<Tend)
@@ -503,10 +505,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		////Evolve(DeltaT);
 		//CopyToOld();
 
-		copyArray<9>(mPosOld,mPos);
-		copyArray<9>(mVelOld,mVel);
-		copyArray<9>(mAccOld,mAcc);
-		copyArray<9>(mJerkOld,mJerk);
+		copyArray<nData>(mPosOld,mPos);
+		copyArray<nData>(mVelOld,mVel);
+		copyArray<nData>(mAccOld,mAcc);
+		copyArray<nData>(mJerkOld,mJerk);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mPosOld[i]=mPos[i];
 		//	mVelOld[i]=mVel[i];
@@ -514,7 +516,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		//	mJerkOld[i]=mJerk[i];
 		//}
 
-		predict(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h, 9);
+		predict(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h, nData);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
 		//	mVel[i] += h* ( mAcc[i]+ dtby2*mJerk[i]);
@@ -525,15 +527,15 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat<9>(sPos, mPos);
-			doubleTofloat<9>(sVel, mVel);
+			doubleTofloat<nData>(sPos, mPos);
+			doubleTofloat<nData>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble<9>(mAcc,sAcc);
-			floatTodouble<9>(mJerk,sJerk);
+			floatTodouble<nData>(mAcc,sAcc);
+			floatTodouble<nData>(mJerk,sJerk);
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, 9);
+		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
 		
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
@@ -545,15 +547,15 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat<9>(sPos, mPos);
-			doubleTofloat<9>(sVel, mVel);
+			doubleTofloat<nData>(sPos, mPos);
+			doubleTofloat<nData>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble<9>(mAcc,sAcc);
-			floatTodouble<9>(mJerk,sJerk);
+			floatTodouble<nData>(mAcc,sAcc);
+			floatTodouble<nData>(mJerk,sJerk);
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, 9);
+		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
 		//	mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
