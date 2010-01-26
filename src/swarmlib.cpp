@@ -45,10 +45,10 @@ void load_config(config &cfg, const std::string &fn)
 		if(line.empty()) { continue; }
 		if(line[0] == '#') { continue; }
 
-		size_t eqpos = line.find(' ');
+		size_t eqpos = line.find('=');
 		if(eqpos == std::string::npos) ERROR("Error on line " + str(line) + ": '=' sign expected.");
 
-		std::string key = line.substr(0, eqpos), val = line.substr(eqpos+2);
+		std::string key = line.substr(0, eqpos-1), val = line.substr(eqpos+1);
 		trim(key); trim(val);
 
 		cfg[key] = val;
@@ -385,10 +385,9 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 // Returns false if the requested number of threads are impossible to fit to
 // shared memory.
 //
-bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
+bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
 {
 	const int shmemPerMP =  16384;
-	threadsPerBlock = 64; // HACK: should compute this dynamically, based on memory requirements
 
 	int dyn_shared_mem_required = dynShmemPerThread*threadsPerBlock;
 	int shared_mem_required = staticShmemPerBlock + dyn_shared_mem_required;

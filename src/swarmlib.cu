@@ -180,6 +180,7 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 	: H(cfg), stop(cfg), nactive_gpu(1)
 {
 	steps_per_kernel_run = cfg.count("steps per kernel run") ? atof(cfg.at("steps per kernel run").c_str()) : 100;
+	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }
 
 ///////////////
