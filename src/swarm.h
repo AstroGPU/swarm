@@ -290,7 +290,7 @@ typedef integrator *(*integratorFactory_t)(const config &cfg);
 // configure grid for nthreads intependent threads, each requiring dynShmemPerThread of shared memory, and
 // with each block needing staticShmemPerBlock of shared memory (usually to pass kernel invocation args.)
 // The default for staticShmemPerBlock is reasonable (for small kernels), but not necessarily optimal.
-bool configure_grid(dim3 &gridDim, int &threadsPerBlock, int nthreads, int dynShmemPerThread = 0, int staticShmemPerBlock = 128);
+bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread = 0, int staticShmemPerBlock = 128);
 
 // Typesafe de-allocator (convenience)
 template<typename T>

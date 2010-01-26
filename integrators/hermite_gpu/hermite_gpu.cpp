@@ -9,6 +9,8 @@ gpu_hermite_integrator::gpu_hermite_integrator(const config &cfg)
 
 	if(!cfg.count("precision")) ERROR("Integrator gpu_hermite needs precision ('precision' keyword in the config file).");
 	prec = atoi(cfg.at("precision").c_str());
+
+	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }
 
 // factory
