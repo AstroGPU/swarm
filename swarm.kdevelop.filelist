@@ -25,6 +25,7 @@ integrators/mvs/mvs.cpp
 integrators/mvs/mvs.cu
 integrators/mvs/mvs.h
 src
+src/ThreeVector.hpp
 src/astro
 src/astro/BinaryStream.cpp
 src/astro/binarystream.h
@@ -32,13 +33,15 @@ src/astro/constants.h
 src/astro/macros.h
 src/astro/types.h
 src/astro/util.h
+src/cux
+src/cux/cuda_rng.h
+src/cux/cux.cpp
+src/cux/cux.h
+src/cux/cux_lowlevel.h
 src/stopwatch.h
 src/swarm.cpp
 src/swarm.h
-src/swarm_test_hermite_cpu.cpp
-src/swarm_test_hermite_gpu.cpp
 src/swarmdump.cpp
 src/swarmio.h
 src/swarmlib.cpp
 src/swarmlib.cu
-src/swarmtest.cpp

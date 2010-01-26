@@ -35,9 +35,14 @@ int main()
 	else if(runon == "cpu") { ongpu = false; }
 	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
 	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
-	// duration of integration
+
+	// end time of integration
 	double dT;
 	get_config(dT, cfg, "dT");
+	for(int sys = 0; sys != ens.nsys(); sys++)
+	{
+		ens.time_end(sys) = ens.time(sys) + dT;
+	}
 
 	// perform the integration
 	if(ongpu)

@@ -1,102 +1,291 @@
 #include "swarm.h"
 #include "euler.h"
 
-namespace gpu_euler_aux
-{
+/*
+
+	\brief gpu_generic_integrator - Versatile GPU integrator template
+
+	gpu_generic_integrator is a template class designed to make it easy to implement
+	powerful GPU-based integrators by supplying a 'propagator' class (that provides
+	a function to advance the ensemble by one timestep), and a 'stopper' class (that
+	tests whether the integration should stop for a particular system in the
+	ensemble). Given the two classes, gpu_generic_integrator acts as a driver
+	routine repeatedly calling the GPU kernel until all systems in the ensemble have
+	finished the integration. It does this in an optimized manner, taking care to
+	compactify() the ensemble when needed to efficiently utilize GPU resources
+	(NOTE: compactification not yet implemented).
+
+	For a cannonical example of how to build an integrator using
+	gpu_generic_integrator, look at the gpu_euler integrator.
+
+	Integration loop outline (I == gpu_generic_integrator object, H == propagator
+	object, stop == stopper object):
+
+	I.integrate(ens):
+		if(ens.last_integrator() != this):
+			H.initialize(ens);
+			stop.initialize(ens);
+		do:
+			gpu_integrate<<<>>>(max_step, ens, (gpu_t)H, (gpu_t)stop)	[m'threaded execution on the GPU]
+				while step < max_step:
+					if(T < Tend || stop()):
+						ens(sys).flags |= INACTIVE
+						break;
+					H.advance():			[ implementation supplied by the developer ]
+						foreach(bod in sys):
+							advance bod
+							call stop.test_body
+						return new time T
+			if(beneficial):
+				ens.compactify();
+		while(active_systems > 0)
+
+	To build an integrator using gpu_generic_integrator, the developer must supply a
+	propagator and a stopper class that conform to the following interfaces:
+
+	// propagator class: advance the system by one time step
 	//
-	// Wrap all aux. functions in a separate namespace, to avoid
-	// collisions with equally named functions from other integrators.
-	//
-
-	__device__ float3 operator*(const float3 &a, const float &b)
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that needs
+	// to reside on the CPU here.
+	struct propagator
 	{
-		return make_float3(a.x*b, a.y*b, a.z*b);
-	}
-
-	__device__ float3 operator+(const float3 &a, const float3 &b)
-	{
-		return make_float3(a.x+b.x, a.y+b.y, a.z+b.z);
-	}
-
-}
-
-__constant__ ensemble gpu_euler_ens;
-__global__ void gpu_euler_integrator_kernel(double dT, float h)
-{
-	using namespace gpu_euler_aux;
-
-	ensemble &ens = gpu_euler_ens;
-	int sys = threadId();
-	if(sys >= ens.nsys()) { return; }
-
-	double    T = ens.time(sys);
-	double Tend = T + dT;
-
-	// propagate the system until we match or exceed Tend
-	while(T < Tend)
-	{
-		for(int i = 1; i != ens.nbod(); i++) // starting from 1, assuming 0 is the central body
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
 		{
-			// load
-			double x = ens.x(sys, i);
-			double y = ens.y(sys, i);
-			double z = ens.z(sys, i);
-			double vx = ens.vx(sys, i);
-			double vy = ens.vy(sys, i);
-			double vz = ens.vz(sys, i);
-#if 0
-			float E1 = (vx*vx + vy*vy + vz*vz) / 2. + 1. / sqrt(x*x + y*y + z*z);
-#endif
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend);
+			};
 
-			// compute acceleration
-			float r2 = x*x + y*y + z*z;
-			float aux = - 1.f / (r2 * sqrt(r2)) * h;
-			float dvx = x * aux;
-			float dvy = y * aux;
-			float dvz = z * aux;
+			// Advance the system - this function must advance the system
+			// sys by one timestep, making sure that T does not exceed Tend.
+			// Must return the new time of the system.
+			//
+			// This function MUST also call stop.test_body() for every body
+			// in the system, after that body has been advanced by a timestep.
+			template<typename stop_t>
+			__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		};
 
-			// advance
-			x += vx * h;
-			y += vy * h;
-			z += vz * h;
-			vx += dvx;
-			vy += dvy;
-			vz += dvz;
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		propagator(const config &cfg);
 
-			// store
-			ens.x(sys, i) = x;
-			ens.y(sys, i) = y;
-			ens.z(sys, i) = z;
-			ens.vx(sys, i) = vx;
-			ens.vy(sys, i) = vy;
-			ens.vz(sys, i) = vz;
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
 
-#if 0
-			float E2 = (vx*vx + vy*vy + vz*vz) / 2. + 1. / sqrt(x*x + y*y + z*z);
-			float err = (E2-E1)/E1;
-			printf("(%d, %d) dE/E = %f\n", sys, i, err);
-#endif
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
+
+	// stopper class: mark a system inactive if conditions are met
+	//
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that needs
+	// to reside on the CPU here.
+	struct stopper
+	{
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
+		{
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend);
+			};
+
+			// test any per-body stopping criteria for body (sys,bod). If 
+			// your stopping criterion only depends on (x,v), test for it 
+			// here. This will save you the unnecessary memory accesses 
+			// that would otherwise be made if the test was made from 
+			// operator().
+			//
+			// Called _after_ the body 'bod' has advanced a timestep.
+			//
+			// Note: you must internally store the result of your test,
+			// and use/return it in subsequent call to operator().
+			//
+			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double x, double y, double z, double vx, double vy, double vz);
+
+			// Called after a system sys has been advanced by a timestep.
+			// Must return true if the system sys is to be flagged as
+			// INACTIVE (thus stopping further integration)
+			__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T);
+		};
+
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		stopper(const config &cfg);
+
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
+
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
+*/
+
+
+struct prop_euler
+{
+	// GPU state and interface (per-grid)
+	struct gpu_t
+	{
+		// any per-block variables
+		double h;
+		cuxDevicePtr<double, 3> aa;
+
+		// GPU per-thread state and interface
+		struct thread_state_t
+		{
+			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+			{ }
+		};
+
+		// advance the system
+		template<typename stop_t>
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		{
+			if(T >= Tend) { return T; }
+			double h = T + this->h <= Tend ? this->h : Tend - T;
+
+			// compute accelerations
+			compute_acc(ens, sys, aa);
+
+			for(int bod = 1; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			{
+				// load
+				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
+				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
+
+				// advance
+				x += vx * h;
+				y += vy * h;
+				z += vz * h;
+				vx += aa(sys, bod, 0) * h;
+				vy += aa(sys, bod, 1) * h;
+				vz += aa(sys, bod, 2) * h;
+
+				stop.test_body(stop_ts, ens, sys, bod, x, y, z, vx, vy, vz);
+
+				// store
+				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
+				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
+			}
+
+			return T + h;
+		}
+	};
+
+	// CPU state and interface
+	cuxDeviceAutoPtr<double, 3> aa;
+	gpu_t gpu_obj;
+
+	void initialize(ensemble &ens)
+	{
+		// Here you'd initialize the object to be passed to the kernel, or
+		// upload any temporary data you need to constant/texture/global memory
+		aa.realloc(ens.nsys(), ens.nbod(), 3);
+		gpu_obj.aa = aa;
+	}
+
+	prop_euler(const config &cfg)
+	{
+		if(!cfg.count("h")) ERROR("Integrator gpu_euler needs a timestep ('h' keyword in the config file).");
+		gpu_obj.h = atof(cfg.at("h").c_str());
+	}
+
+	operator gpu_t()
+	{
+		return gpu_obj;
+	}
+};
+
+struct stop_on_ejection
+{
+	// GPU state and interface (per-grid)
+	struct gpu_t
+	{
+		float rmax;
+
+		// GPU per-thread state and interface
+		struct thread_state_t
+		{
+			bool eject;
+
+			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend)
+			{
+				eject = false;
+			}
+		};
+
+		// called _after_ the body 'bod' has advanced a timestep.
+		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double x, double y, double z, double vx, double vy, double vz)
+		{
+			float r = sqrtf(x*x + y*y + z*z);
+			if(r < rmax) { return; }
+			ts.eject = true;
 		}
 
-		T += h;
-	}
+		// called after the entire system has completed a single timestep advance.
+		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
+		{
+			return ts.eject;
+		}
+	};
 
-	ens.time(sys) = T;
-}
+	// CPU state and interface
+	gpu_t gpu_obj;
 
-void gpu_euler_integrator::integrate(gpu_ensemble &ens, double dT)
-{
-	// Upload the kernel parameters
-	if(ens.last_integrator() != this)
+	stop_on_ejection(const config &cfg)
 	{
-		ens.set_last_integrator(this);
-		configure_grid(gridDim, threadsPerBlock, ens.nsys());
-
-		cudaMemcpyToSymbol(gpu_euler_ens, &ens, sizeof(gpu_euler_ens));
-		if(dT == 0.) { return; }
+		if(!cfg.count("rmax")) ERROR("Stopping condition 'stop_on_ejection' requires 'rmax' parameter.");
+		gpu_obj.rmax = atof(cfg.at("rmax").c_str());
 	}
 
-	// execute the kernel
-	gpu_euler_integrator_kernel<<<gridDim, threadsPerBlock>>>(dT, h);
-}
+	void initialize(ensemble &ens)
+	{
+		// Here you'd upload any temporary data you need to constant/texture/global memory
+	}
 
+	operator gpu_t()
+	{
+		return gpu_obj;
+	}
+};
+
+// factory
+extern "C" integrator *create_gpu_euler(const config &cfg)
+{
+	return new gpu_generic_integrator<stop_on_ejection, prop_euler>(cfg);
+}

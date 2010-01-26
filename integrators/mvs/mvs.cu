@@ -89,8 +89,9 @@ __global__ void gpu_mvs_integrator_kernel(double dT, float h)
 
 void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT)
 {
+#if 1
 	ERROR("MVS integrator has not yet been implemented.");
-
+#else
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)
 	{
@@ -103,5 +104,6 @@ void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT)
 
 	// execute the kernel
 	gpu_mvs_integrator_kernel<<<gridDim, threadsPerBlock>>>(dT, h);
+#endif
 }
 

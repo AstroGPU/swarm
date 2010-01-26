@@ -55,18 +55,6 @@ void load_config(config &cfg, const std::string &fn)
 	}
 }
 
-template<typename T>
-inline void memcpyToGPU(T *dest, const T *src, int nelem)
-{
-	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice);
-}
-
-template<typename T>
-inline void memcpyToHost(T *dest, const T *src, int nelem)
-{
-	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost);
-}
-
 //
 // Ensemble class plumbing (mostly memory management)
 //
@@ -95,12 +83,14 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	if(m_nsys != nsys || m_nbod != nbod)
 	{
 		m_T = hostAlloc(m_T, nsys);
+		m_Tend = hostAlloc(m_Tend, nsys);
 		m_xyz = hostAlloc(m_xyz, 3*nsys*nbod);
 		m_vxyz = hostAlloc(m_vxyz, 3*nsys*nbod);
 		m_m = hostAlloc(m_m, nsys*nbod);
-		m_active = hostAlloc(m_active, nsys);
+		m_flags = hostAlloc(m_flags, nsys);
 		m_systemIndices = hostAlloc(m_systemIndices, nsys);
 
+//		m_nactive = hostAlloc(m_nactive, 1);
 		m_nsys = nsys;
 		m_nbod = nbod;
 	}
@@ -111,7 +101,7 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 		for(int i = 0; i != nsys; i++) { m_systemIndices[i] = i; }
 
 		// Set all systems to active
-		for(int sys = 0; sys != nsys; sys++) { active(sys) = true; }
+		for(int sys = 0; sys != nsys; sys++) { flags(sys) = 0; }
 	}
 
 	m_last_integrator = NULL;
@@ -119,11 +109,13 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 
 void cpu_ensemble::free()			// Deallocate CPU memory
 {
+//	hostFree(m_nactive); m_nactive = NULL;
 	hostFree(m_T); m_T = NULL;
+	hostFree(m_Tend); m_Tend = NULL;
 	hostFree(m_xyz); m_xyz = NULL;
 	hostFree(m_vxyz); m_vxyz = NULL;
 	hostFree(m_m); m_m = NULL;
-	hostFree(m_active); m_active = NULL;
+	hostFree(m_flags); m_flags = NULL;
 	hostFree(m_systemIndices); m_systemIndices = NULL;
 }
 
@@ -133,32 +125,42 @@ void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the 
 
 	// low-level copy from host to device memory
 	memcpyToHost(m_T, src.m_T, m_nsys);
+	memcpyToHost(m_Tend, src.m_Tend, m_nsys);
 	memcpyToHost(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
 	memcpyToHost(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToHost(m_m, src.m_m, m_nbod*m_nsys);
-	memcpyToHost(m_active, src.m_active, m_nsys);
+	memcpyToHost(m_flags, src.m_flags, m_nsys);
 	memcpyToHost(m_systemIndices, src.m_systemIndices, m_nsys);
+//	memcpyToHost(m_nactive, src.m_nactive, 1);
 
 	m_last_integrator = src.m_last_integrator;
-	m_nactive = src.m_nactive;
 }
 
 // GPU Ensembles ////////////////////////////////
 gpu_ensemble::gpu_ensemble()
 {
 	construct_base();
+	nactive_gpu = NULL;
 }
 
 gpu_ensemble::gpu_ensemble(int nsys, int nbod)
 {
 	construct_base();
 	reset(nsys, nbod);
+	nactive_gpu = NULL;
 }
 
 gpu_ensemble::gpu_ensemble(const cpu_ensemble &source)
 {
 	construct_base();
 	copy_from(source);
+	nactive_gpu = NULL;
+}
+
+gpu_ensemble::~gpu_ensemble()
+{
+	free();
+	cudaFree(nactive_gpu);
 }
 
 void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU memory for nsys systems of nbod planets each
@@ -168,11 +170,13 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	{
 		free();
 
+//		cudaMalloc((void**)&m_nactive, sizeof(*m_nactive));
 		cudaMalloc((void**)&m_T, nsys*sizeof(*m_T));
+		cudaMalloc((void**)&m_Tend, nsys*sizeof(*m_Tend));
 		cudaMalloc((void**)&m_xyz, 3*nsys*nbod*sizeof(*m_xyz));
 		cudaMalloc((void**)&m_vxyz, 3*nsys*nbod*sizeof(*m_vxyz));
 		cudaMalloc((void**)&m_m, nsys*nbod*sizeof(*m_m));
-		cudaMalloc((void**)&m_active, nsys*sizeof(*m_active));
+		cudaMalloc((void**)&m_flags, nsys*sizeof(*m_flags));
 		cudaMalloc((void**)&m_systemIndices, nsys*sizeof(*m_systemIndices));
 
 		m_nsys = nsys;
@@ -188,8 +192,12 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 
 		// Set all systems active
 		std::valarray<int> tmp2(nsys);
-		tmp2 = 1;
-		cudaMemcpy(m_active, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);
+		tmp2 = 0;
+		cudaMemcpy(m_flags, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);
+
+		// nactive
+//		int tmp3 = nsys;
+//		cudaMemcpy(m_nactive, &tmp3, sizeof(tmp3), cudaMemcpyHostToDevice);
 	}
 
 	// clear the m_last_integrator field
@@ -198,12 +206,26 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 
 void gpu_ensemble::free()			// Deallocate CPU memory
 {
+//	cudaFree(m_nactive); m_nactive = NULL;
 	cudaFree(m_T); m_T = NULL;
+	cudaFree(m_Tend); m_Tend = NULL;
 	cudaFree(m_xyz); m_xyz = NULL;
 	cudaFree(m_vxyz); m_vxyz = NULL;
 	cudaFree(m_m); m_m = NULL;
-	cudaFree(m_active); m_active = NULL;
+	cudaFree(m_flags); m_flags = NULL;
 	cudaFree(m_systemIndices); m_systemIndices = NULL;
+}
+
+//int gpu_ensemble::get_nactive() const
+//{
+//	int nactive;
+//	memcpyToHost(&nactive, m_nactive, 1);
+//	return nactive;
+//}
+
+void debugger_stop()
+{
+	std::cerr << "Block for debugger here!\n";
 }
 
 void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the GPU
@@ -212,14 +234,15 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 	
 	// low-level copy from host to device memory
 	memcpyToGPU(m_T, src.m_T, m_nsys);
+	memcpyToGPU(m_Tend, src.m_Tend, m_nsys);
 	memcpyToGPU(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
 	memcpyToGPU(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToGPU(m_m, src.m_m, m_nbod*m_nsys);
-	memcpyToGPU(m_active, src.m_active, m_nsys);
+	memcpyToGPU(m_flags, src.m_flags, m_nsys);
 	memcpyToGPU(m_systemIndices, src.m_systemIndices, m_nsys);
+//	memcpyToGPU(m_nactive, src.m_nactive, 1);
 
 	m_last_integrator = src.m_last_integrator;
-	m_nactive = src.m_nactive;
 }
 
 //
@@ -407,14 +430,14 @@ ens_writer::ens_writer(const std::string &fn_)
 
 ens_writer &ens_writer::operator <<(const cpu_ensemble &ens)
 {
-	bout << ens.nsys() << ens.nbod() << ens.nactive();
+	bout << ens.nsys() << ens.nbod();// << ens.nactive();
 
 	for(int sysID=0; sysID != ens.nsys(); sysID++)
 	{
 		int sys = ens.index_of_system(sysID);
 
-		bout << ens.time(sys);
-		bout << ens.active(sys);
+		bout << ens.time(sys) << ens.time_end(sys);
+		bout << ens.flags(sys);
 
 		for(int bod = 0; bod != ens.nbod(); bod++)
 		{
@@ -435,7 +458,7 @@ ens_reader::ens_reader(const std::string &fn_)
 
 ens_reader &ens_reader::operator >>(cpu_ensemble &ens)
 {
-	int nsys, nbod, nactive;
+	int nsys, nbod;//, nactive;
 	if(!(bin >> nsys))
 	{
 		//if(in.eof())
@@ -443,15 +466,15 @@ ens_reader &ens_reader::operator >>(cpu_ensemble &ens)
 		//ERROR("Data file " + fn + " corrupted.");
 	}
 
-	if(!(bin >> nbod >> nactive))
+	if(!(bin >> nbod/* >> nactive*/))
 		ERROR("Data file " + fn + " corrupted.");
 
 	ens.reset(nsys, nbod);
 
 	for(int sys=0; sys != ens.nsys(); sys++)
 	{
-		bin >> ens.time(sys);
-		bin >> ens.active(sys);
+		bin >> ens.time(sys) >> ens.time_end(sys);
+		bin >> ens.flags(sys);
 
 		for(int bod = 0; bod != ens.nbod(); bod++)
 		{

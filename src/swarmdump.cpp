@@ -11,9 +11,19 @@ struct energy_sorter
 	{
 		double dEa = fabs(dE[a]);
 		double dEb = fabs(dE[b]);
-		if (isnan(dEa)) { dEa = 0.; }
-		if (isnan(dEb)) { dEb = 0.; }
 		return dEa > dEb;
+	}
+};
+
+// aux class to sort indices by time (smallest first)
+struct time_sorter
+{
+	ensemble &ens;
+
+	time_sorter(ensemble &ens_) : ens(ens_) {};
+	bool operator()(const int  &a, const int  &b) const
+	{
+		return ens.time(a) < ens.time(b);
 	}
 };
 
@@ -69,7 +79,13 @@ int main()
 	std::vector<int > idx; idx.reserve(ens.nsys());
 	for (int i = 0; i != ens.nsys(); i++) idx.push_back(i);
 	std::sort(idx.begin(), idx.end(), energy_sorter(dEoverE));
-	std::cerr << "Systems with worst energy conservation (excluding those w. infinite energy):\n";
+	printf("Systems with worst energy conservation:\n");
+	for (unsigned int i = 0;i < nprint;++i)
+		write_output(ens, idx[i], Einit, Efinal);
+
+	// find systems with smallest end-of-integration time
+	std::sort(idx.begin(), idx.end(), time_sorter(ens));
+	printf("\nSystems with smallest time:\n");
 	for (unsigned int i = 0;i < nprint;++i)
 		write_output(ens, idx[i], Einit, Efinal);
 
