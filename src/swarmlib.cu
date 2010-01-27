@@ -71,8 +71,15 @@ int gpu_ensemble::get_nactive() const
 
 __constant__ ensemble gpu_integ_ens;
 
+// generic GPU integrator return value
+struct retval_t
+{
+	int nactive;
+	int needflush;
+};
+
 template<typename stopper_t, typename propagator_t>
-__device__ void generic_integrate_system(ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop)
+__device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop)
 {
 	// initialize propagator and stopper per-thread states
 	double T = ens.time(sys);
@@ -98,17 +105,18 @@ __device__ void generic_integrate_system(ensemble &ens, int sys, int max_steps, 
 }
 
 template<typename stopper_t, typename propagator_t>
-__global__ void gpu_integ_driver(int max_steps, int *nactive, propagator_t H, stopper_t stop)
+__global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop)
 {
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens;
 	int sys = threadId();
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
 	{
-		generic_integrate_system(ens, sys, max_steps, H, stop);
+		generic_integrate_system(retval, ens, sys, max_steps, H, stop);
 	}
 
-	count_nactive(nactive, ens);
+	count_nactive(&retval->nactive, ens);
+	retval->needflush |= glog.needflush();
 }
 
 template<typename stopper_t, typename propagator_t>
@@ -123,7 +131,7 @@ protected:
 	dim3 gridDim;
 	int threadsPerBlock;
 
-	cuxDeviceAutoPtr<int> nactive_gpu;
+	cuxDeviceAutoPtr<retval_t> retval_gpu;	// temp variable for return values (gpu pointer)
 
 public:
 	gpu_generic_integrator(const config &cfg);
@@ -156,32 +164,39 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	int iter = 0;
 	do
 	{
-		nactive_gpu.memset(0);
-		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(steps_per_kernel_run, nactive_gpu, H, stop);
+		retval_gpu.memset(0);
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
 		iter++;
 
-		dump_gpu_events();
+		retval_t retval;
+		retval_gpu.get(&retval);
+		if(nactive0 == -1) { nactive0 = retval.nactive; }
 
-		int nactive;
-		nactive_gpu.get(&nactive);
-		if(nactive0 == -1) { nactive0 = nactive; }
+		// check if we should download and clear the output buffers
+		if(retval.needflush)
+		{
+			dump_gpu_events();
+		}
 
 		// check if we should compactify or stop
-		if(nactive == 0)
+		if(retval.nactive == 0)
 		{
 			break;
 		}
-		if(nactive - nactive0 > 128)
+		if(retval.nactive - nactive0 > 128)
 		{
 			// TODO: compactify here
-			nactive0 = nactive;
+			nactive0 = retval.nactive;
 		}
 	} while(true);
+
+	// print out remaining events
+	dump_gpu_events();
 }
 
 template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
-	: H(cfg), stop(cfg), nactive_gpu(1)
+	: H(cfg), stop(cfg), retval_gpu(1)
 {
 	steps_per_kernel_run = cfg.count("steps per kernel run") ? atof(cfg.at("steps per kernel run").c_str()) : 100;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;

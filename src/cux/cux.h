@@ -312,10 +312,10 @@ template<typename T, int dim = 1, int align = 128>
 			assert(dim == 1); // TODO: implement for higher-D arrays
 			memcpyToHost(val, this->ptr, n);
 		}
-		void memset(T val, int n = 1)
+		void memset(int val, int n = 1)
 		{
 			assert(dim == 1); // TODO: implement for higher-D arrays
-			cudaMemset(this->ptr, val, sizeof(T)*1);
+			cudaMemset(this->ptr, val, sizeof(T)*n);
 		}
 	};
 

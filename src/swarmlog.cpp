@@ -34,7 +34,7 @@ ieventstream::ieventstream(bool syncNew)
 	assert(cpueventlog_initialized);
 
 	if(syncNew) { clog.sync(); }
-	init(clog.events, clog.ctr->nevt / eventlog::MAX_MSG_LEN, clog.ctr->ecap / eventlog::MAX_MSG_LEN);
+	init(clog.events, clog.ctr->nevtX, clog.ecapX);
 }
 
 // advance to next message
@@ -138,8 +138,8 @@ void cpueventlog::sync()
 	memcpyToHost(ctr, glog.ctr);
 
 	// download the data
-	events = hostAlloc(events, ctr->ecap);
-	memcpyToHost(events, glog.events, ctr->ecap);
+	events = hostAlloc(events, ecapX * MAX_MSG_LEN);
+	memcpyToHost(events, glog.events, ecapX * MAX_MSG_LEN);
 
 	// reset GPU counters
 	counters tmp = *ctr;
@@ -147,21 +147,27 @@ void cpueventlog::sync()
 	memcpyToGPU(glog.ctr, &tmp);
 }
 
-void cpueventlog::initialize(int ecap, int bcap, int scap)
+void cpueventlog::initialize(int ecap_, int bcap_, int scap_)
 {
 	if(cpueventlog_initialized) { return; }
 	cpueventlog_initialized = true;
 
+	// buffer sizes
+	bcap = scap = 0; ecapX = ecap_;
+	btresh = stresh = 0; etresh = (int)(0.9 * ecapX);
+
+	// copy self to GPU version
+	glog = *this;
+
+	// now update the GPU version with its own pointers
 	// initialize counters/pointers
 	ctr = new eventlog::counters;
-	ctr->nbod = ctr->nsys = ctr->nevt = 0;
-	ctr->bcap = ctr->scap = 0;
-	ctr->ecap = ecap;
+	ctr->reset();
 	glog.ctr = cuxNew<eventlog::counters>(1);
 	memcpyToGPU(glog.ctr, ctr);
 
 	// initialize buffers & eventlog structure
-	glog.events = cuxNew<char>(ctr->ecap);
+	glog.events = cuxNew<char>(ecapX * MAX_MSG_LEN);
 	glog.bodies = NULL;
 	glog.systems = NULL;
 
@@ -306,5 +312,9 @@ void dump_gpu_events()
 	if(es.nlost())
 	{
 		std::cout << "==== Ran out of GPU event buffer space. " << es.nlost() << " events lost at this point.\n";
+	}
+	else
+	{
+		std::cout << "====\n";
 	}
 }

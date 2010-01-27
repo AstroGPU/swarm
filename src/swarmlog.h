@@ -43,17 +43,23 @@ public:
 protected:
 	struct counters
 	{
-		int nbod, nsys, nevt;	// current buffer position (in bytes, for nevt, in structures for others)
-		int bcap, scap, ecap;	// buffer capacities (in bytes, for nevt, in structures for others)
+		int nbod, nsys, nevtX;	// current buffer position
+		int needflush;		// a kernel will set this flag to request buffer flushing
 
-		__device__ __host__ void reset() { nbod = nsys = nevt = 0; }
+		__device__ __host__ void reset() { nbod = nsys = nevtX = 0; needflush = 0; }
 	};
+
+	// buffer capacities
+	int bcap, scap, ecapX;
+	int btresh, stresh, etresh;
 
 	// data
 	counters *ctr;
 	char *events;
 
 public:
+	int needflush() const { return ctr->needflush; }
+
 	//
 	// General event logging facility
 	//
@@ -185,7 +191,7 @@ public:
 };
 
 void debug_hook();
-void initialize_eventlog(int ecap = 512*eventlog::MAX_MSG_LEN, int bcap = 1024*1024, int scap = 1024*1024);
+void initialize_eventlog(int ecap = 64, int bcap = 1024*1024, int scap = 1024*1024);
 ieventstream get_gpu_events();
 void dump_gpu_events();
 
@@ -232,9 +238,18 @@ __device__ void eventlog::push_data(int &nevt, int mend, const char *c)
 
 __device__ bool eventlog::evt_start(int &nevt, int &mend)
 {
-	nevt = atomicAdd(&ctr->nevt, MAX_MSG_LEN);
-	if(nevt >= ctr->ecap) { return false; }
-	mend = nevt + MAX_MSG_LEN;
+	nevt = atomicAdd(&ctr->nevtX, 1);
+	if(nevt >= ecapX) { return false; }
+	
+	// request flushing if we're getting close to the
+	// end of the buffer
+	if(nevt == etresh)
+	{
+		ctr->needflush = 1;
+	}
+
+	nevt *= MAX_MSG_LEN;
+	mend  = nevt + MAX_MSG_LEN;
 
 	// leave room for evt_hdr, which will be written
 	// by evt_end
