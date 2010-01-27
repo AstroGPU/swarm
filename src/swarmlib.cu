@@ -11,6 +11,8 @@ inline __device__ uint32_t threadId()
 	return id;
 }
 
+#include "swarmlog.h"
+
 // compute and store the number of systems that remain active
 // NOTE: assumes 64 threads per block
 // NOTE: assumes *nactive = 0 on input
@@ -157,6 +159,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		nactive_gpu.memset(0);
 		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(steps_per_kernel_run, nactive_gpu, H, stop);
 		iter++;
+
+		dump_gpu_events();
 
 		int nactive;
 		nactive_gpu.get(&nactive);

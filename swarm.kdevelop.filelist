@@ -45,3 +45,5 @@ src/swarmdump.cpp
 src/swarmio.h
 src/swarmlib.cpp
 src/swarmlib.cu
+src/swarmlog.cpp
+src/swarmlog.h

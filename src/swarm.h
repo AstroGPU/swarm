@@ -46,15 +46,16 @@ public:
 	Note that it has no constructors/destructors/virtuals, to allow its
 	instantiation in __constant__ memory on the GPU.
 */
+typedef double real_time;
+typedef float  real_mass;
+typedef double real_pos;
+typedef double real_vel;
+
 class ensemble
 {
 	public:
-		typedef double real_time;
-		typedef float  real_mass;
-		typedef double real_pos;
-		typedef double real_vel;
-
 		enum { INACTIVE = 0x01 };
+
 	protected:
 		// number of active (currently integrating) systems, total number of systems
 		// and number of bodies per system
@@ -275,13 +276,13 @@ void get_config(T &val, const config &cfg, const std::string &key)
 }
 
 template<typename T>
-inline void memcpyToGPU(T *dest, const T *src, int nelem)
+inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
 {
 	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice);
 }
 
 template<typename T>
-inline void memcpyToHost(T *dest, const T *src, int nelem)
+inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 {
 	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost);
 }

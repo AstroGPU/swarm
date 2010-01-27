@@ -1,5 +1,6 @@
 #include "swarm.h"
 #include "euler.h"
+#include "swarmlog.h"
 
 /*
 
@@ -125,7 +126,7 @@
 			// Note: you must internally store the result of your test,
 			// and use/return it in subsequent call to operator().
 			//
-			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double x, double y, double z, double vx, double vy, double vz);
+			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz);
 
 			// Called after a system sys has been advanced by a timestep.
 			// Must return true if the system sys is to be flagged as
@@ -196,7 +197,7 @@ struct prop_euler
 				vy += aa(sys, bod, 1) * h;
 				vz += aa(sys, bod, 2) * h;
 
-				stop.test_body(stop_ts, ens, sys, bod, x, y, z, vx, vy, vz);
+				stop.test_body(stop_ts, ens, sys, bod, T+h, x, y, z, vx, vy, vz);
 
 				// store
 				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
@@ -250,11 +251,12 @@ struct stop_on_ejection
 		};
 
 		// called _after_ the body 'bod' has advanced a timestep.
-		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double x, double y, double z, double vx, double vy, double vz)
+		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
 		{
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
 			ts.eject = true;
+			glog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
 		}
 
 		// called after the entire system has completed a single timestep advance.

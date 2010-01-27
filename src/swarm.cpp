@@ -1,5 +1,6 @@
 #include "swarm.h"
 #include "swarmio.h"
+#include "swarmlog.h"
 #include <memory>
 #include <cmath>
 #include <iostream>
@@ -47,6 +48,8 @@ int main()
 	// perform the integration
 	if(ongpu)
 	{
+		initialize_eventlog();
+
 		SWATCH_START(swatch_mem);
 		gpu_ensemble gpu_ens(ens);				// upload to GPU
 		SWATCH_STOP(swatch_mem);
