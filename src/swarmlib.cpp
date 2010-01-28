@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include <vector>
+#include <memory>
 #include <iostream>
 #include <dlfcn.h>
 #include <sstream>

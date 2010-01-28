@@ -3,6 +3,7 @@
 #include <astro/binarystream.h>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 void debug_hook()
 {

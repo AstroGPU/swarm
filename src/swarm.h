@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <cstring>
 #include <map>
 #include <cassert>
 #include <cmath>
@@ -269,9 +270,9 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens);
 /// Load configuration from file fn
 void load_config(config &cfg, const std::string &fn);
 
-#ifndef __DEVICE_EMULATION__ // CUDA 2.2 C++ bug workaround
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
 #include <sstream>
-#endif
+
 // get a configuration value for 'key', throwing an error if it doesn't exist
 // NOTE: heavy (unoptimized) function, use sparingly
 template<typename T>
@@ -281,6 +282,7 @@ void get_config(T &val, const config &cfg, const std::string &key)
 	std::istringstream ss(cfg.at(key));
 	ss >> val;
 }
+#endif
 
 template<typename T>
 inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
