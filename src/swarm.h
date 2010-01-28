@@ -12,6 +12,8 @@
 #include "stopwatch.h"
 
 class integrator;
+class ieventstream;
+class writer;
 class gpu_ensemble;
 class cpu_ensemble;
 
@@ -65,6 +67,9 @@ class ensemble
 		real_time *m_T;
 		real_time *m_Tend;
 
+		// m_nsys*2 wide arrays
+		real_time *m_Toutput;
+
 		// m_nsys*m_nbod*3 wide arrays
 		real_pos  *m_xyz;
 		real_vel  *m_vxyz;
@@ -97,6 +102,7 @@ class ensemble
 		// non-const versions
 		__host__ __device__ double&   time(int sys) { return m_T[sys]; }
 		__host__ __device__ double&   time_end(int sys) { return m_Tend[sys]; }
+		__host__ __device__ double&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
 	
 		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -118,8 +124,9 @@ class ensemble
 
 
 		// const versions
-		__host__ __device__ double  time(int sys) const { return m_T[sys]; }
-		__host__ __device__ double& time_end(int sys) const { return m_Tend[sys]; }
+		__host__ __device__ double time(int sys) const { return m_T[sys]; }
+		__host__ __device__ double time_end(int sys) const { return m_Tend[sys]; }
+		__host__ __device__ double time_output(int sys, int k) const { return m_Toutput[k*m_nsys + sys]; }
 	
 		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -287,6 +294,27 @@ inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost);
 }
 
+/**
+	\brief Abstract output writer interface
+
+	The method process() is called whenever the GPU output buffers are filled,
+	and should proces/store the accumulated output data and logs (usually by
+	writing them out to a file).
+*/
+class writer
+{
+	public:
+		virtual void process(ieventstream &es) = 0;
+		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
+
+	public:
+		// Integrator factory functions (and supporting typedefs)
+		static writer *create(const std::string &cfg);
+
+	protected:
+		writer() {};		// hide the constructor.and force integrator instantiation with integrator::create
+};
+typedef writer *(*writerFactory_t)(const std::string &cfg);
 
 /**
 	\brief Abstract integrator interface
@@ -300,9 +328,9 @@ inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 class integrator
 {
 	public:
-		virtual void integrate(gpu_ensemble &ens, double T)	// for GPU based integrators
+		virtual void integrate(gpu_ensemble &ens, double T, writer &w)	// for GPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
-		virtual void integrate(cpu_ensemble &ens, double T)	// for CPU based integrators
+		virtual void integrate(cpu_ensemble &ens, double T, writer &w)	// for CPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
 
 		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)

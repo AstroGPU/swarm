@@ -1,5 +1,8 @@
 #include "swarmlog.h"
 #include <iostream>
+#include <astro/binarystream.h>
+#include <fstream>
+#include <sstream>
 
 void debug_hook()
 {
@@ -18,11 +21,18 @@ public:
 
 	void sync();
 
-	friend ieventstream get_gpu_events();
+	friend class ieventstream;
 };
 
 static cpueventlog clog;
 static bool cpueventlog_initialized = 0;
+
+const eventlog::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
+{
+	nbod = std::min(clog.ctr->nbodX, clog.bcapX);
+	ndropped = std::max(clog.ctr->nbodX - clog.bcapX, 0);
+	return clog.bodies;
+}
 
 void initialize_eventlog(int ecap, int bcap, int scap)
 {
@@ -127,6 +137,16 @@ ieventstream &ieventstream::operator >>(char *s)
 	return *this;
 }
 
+ieventstream &ieventstream::operator >>(eventlog::event &evt)
+{
+	if(!check_end()) { return *this; }
+	assert(sizeof(eventlog::event) == eventlog::MAX_MSG_LEN);
+	memcpy(&evt, data, sizeof(eventlog::event));
+	at = hdr.len;
+
+	return *this;
+}
+
 // download and clear the contents of GPU log
 void cpueventlog::sync()
 {
@@ -140,8 +160,10 @@ void cpueventlog::sync()
 	// download the data
 	events = hostAlloc(events, ecapX * MAX_MSG_LEN);
 	memcpyToHost(events, glog.events, ecapX * MAX_MSG_LEN);
+	bodies = hostAlloc(bodies, bcapX);
+	memcpyToHost(bodies, glog.bodies, bcapX);
 
-	// reset GPU counters
+	// clear GPU counters
 	counters tmp = *ctr;
 	tmp.reset();
 	memcpyToGPU(glog.ctr, &tmp);
@@ -153,8 +175,10 @@ void cpueventlog::initialize(int ecap_, int bcap_, int scap_)
 	cpueventlog_initialized = true;
 
 	// buffer sizes
-	bcap = scap = 0; ecapX = ecap_;
-	btresh = stresh = 0; etresh = (int)(0.9 * ecapX);
+	bcapX = bcap_;
+	ecapX = ecap_;
+	btresh = (int)(0.9 * bcapX);
+	etresh = (int)(0.9 * ecapX);
 
 	// copy self to GPU version
 	glog = *this;
@@ -168,8 +192,8 @@ void cpueventlog::initialize(int ecap_, int bcap_, int scap_)
 
 	// initialize buffers & eventlog structure
 	glog.events = cuxNew<char>(ecapX * MAX_MSG_LEN);
-	glog.bodies = NULL;
-	glog.systems = NULL;
+	glog.bodies = cuxNew<body>(bcapX);
+	//glog.systems = NULL;
 
 	// upload to const
 	cuxUploadConst("glog", this->glog);
@@ -291,12 +315,50 @@ bool get_as_message(ieventstream &msg, std::string &res)
 	return true;
 }
 
-void dump_gpu_events()
+//
+// Default binary writer
+//
+
+class binary_writer : public writer
+{
+protected:
+	std::auto_ptr<std::ostream> eout_strm, bout_strm;
+	std::auto_ptr<obstream> eout, bout;
+	int ctr;
+
+public:
+	binary_writer(const std::string &cfg);
+	virtual void process(ieventstream &es);
+};
+
+extern "C" writer *create_writer_binary(const std::string &cfg)
+{
+	return new binary_writer(cfg);
+}
+
+binary_writer::binary_writer(const std::string &cfg)
+{
+	ctr = 0;
+
+	std::string event_fn, bodies_fn;
+	std::istringstream ss(cfg);
+	if(!(ss >> event_fn >> bodies_fn))
+		ERROR("Expected 'binary <events_fn> <bodies_fn>' form of configuration for writer.")
+
+	// TODO: check error return codes
+	eout_strm.reset(new std::ofstream(event_fn.c_str()));
+	bout_strm.reset(new std::ofstream(bodies_fn.c_str()));
+	eout.reset(new obstream(*eout_strm));
+	bout.reset(new obstream(*bout_strm));
+}
+
+// store the accumulated events and bodies into a file, while
+// printing out any printf() events to stdout
+BLESS_POD(eventlog::body);
+void binary_writer::process(ieventstream &es)
 {
 	// download and dump the log
-	// NOTE: this should be done less frequently
-	ieventstream es;
-	static int ctr = 0;
+	// write out events
 	while(es.next())
 	{
 		std::string msg;
@@ -306,15 +368,27 @@ void dump_gpu_events()
 		}
 		else
 		{
+			// Write it to file
 			std::cout << "[Event " << es.evtid() << "]\n";
+			eventlog::event evt;
+			es >> evt;
+			*eout << evt;
 		}
 	}
-	if(es.nlost())
+	if(es.nevents_dropped())
 	{
-		std::cout << "==== Ran out of GPU event buffer space. " << es.nlost() << " events lost at this point.\n";
+		std::cerr << "==== Ran out of event GPU output buffer space (" << es.nevents_dropped() << " event records dropped).\n";
 	}
-	else
+
+	// write out bodies
+	int nbod, ndropped;
+	const eventlog::body *bodies = es.get_bodies(nbod, ndropped);
+	for(int bod = 0; bod != nbod; bod++)
 	{
-		std::cout << "====\n";
+		*bout << bodies[bod];
+	}
+	if(ndropped)
+	{
+		std::cerr << "==== Ran out of body GPU output buffer space (" << ndropped << " body records dropped).\n";
 	}
 }

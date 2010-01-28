@@ -84,6 +84,7 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	{
 		m_T = hostAlloc(m_T, nsys);
 		m_Tend = hostAlloc(m_Tend, nsys);
+		m_Toutput = hostAlloc(m_Toutput, 2*nsys);
 		m_xyz = hostAlloc(m_xyz, 3*nsys*nbod);
 		m_vxyz = hostAlloc(m_vxyz, 3*nsys*nbod);
 		m_m = hostAlloc(m_m, nsys*nbod);
@@ -112,6 +113,7 @@ void cpu_ensemble::free()			// Deallocate CPU memory
 //	hostFree(m_nactive); m_nactive = NULL;
 	hostFree(m_T); m_T = NULL;
 	hostFree(m_Tend); m_Tend = NULL;
+	hostFree(m_Toutput); m_Toutput = NULL;
 	hostFree(m_xyz); m_xyz = NULL;
 	hostFree(m_vxyz); m_vxyz = NULL;
 	hostFree(m_m); m_m = NULL;
@@ -126,6 +128,7 @@ void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the 
 	// low-level copy from host to device memory
 	memcpyToHost(m_T, src.m_T, m_nsys);
 	memcpyToHost(m_Tend, src.m_Tend, m_nsys);
+	memcpyToHost(m_Toutput, src.m_Toutput, 2*m_nsys);
 	memcpyToHost(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
 	memcpyToHost(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToHost(m_m, src.m_m, m_nbod*m_nsys);
@@ -173,6 +176,7 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 //		cudaMalloc((void**)&m_nactive, sizeof(*m_nactive));
 		cudaMalloc((void**)&m_T, nsys*sizeof(*m_T));
 		cudaMalloc((void**)&m_Tend, nsys*sizeof(*m_Tend));
+		cudaMalloc((void**)&m_Toutput, 2*nsys*sizeof(*m_Toutput));
 		cudaMalloc((void**)&m_xyz, 3*nsys*nbod*sizeof(*m_xyz));
 		cudaMalloc((void**)&m_vxyz, 3*nsys*nbod*sizeof(*m_vxyz));
 		cudaMalloc((void**)&m_m, nsys*nbod*sizeof(*m_m));
@@ -209,6 +213,7 @@ void gpu_ensemble::free()			// Deallocate CPU memory
 //	cudaFree(m_nactive); m_nactive = NULL;
 	cudaFree(m_T); m_T = NULL;
 	cudaFree(m_Tend); m_Tend = NULL;
+	cudaFree(m_Toutput); m_Toutput = NULL;
 	cudaFree(m_xyz); m_xyz = NULL;
 	cudaFree(m_vxyz); m_vxyz = NULL;
 	cudaFree(m_m); m_m = NULL;
@@ -231,10 +236,11 @@ void debugger_stop()
 void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the GPU
 {
 	reset(src.nsys(), src.nbod(), false);
-	
+
 	// low-level copy from host to device memory
 	memcpyToGPU(m_T, src.m_T, m_nsys);
 	memcpyToGPU(m_Tend, src.m_Tend, m_nsys);
+	memcpyToGPU(m_Toutput, src.m_Toutput, 2*m_nsys);
 	memcpyToGPU(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
 	memcpyToGPU(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
 	memcpyToGPU(m_m, src.m_m, m_nbod*m_nsys);
@@ -353,6 +359,43 @@ integrator *integrator::create(const config &cfg)
 	}
 
 	return integ.release();
+}
+
+//
+// Writer instantiation support
+//
+
+writer *writer::create(const std::string &cfg)
+{
+	std::auto_ptr<writer> w;
+
+	// try loading using a factory function
+	void *me = dlopen(NULL, RTLD_LAZY);
+	if(me == NULL)
+	{
+		ERROR(dlerror());
+	}
+
+	std::string name;
+	std::istringstream ss(cfg);
+	if(!(ss >> name))
+		ERROR("Empty value for 'output' keyword in config file.");
+	std::string factory_name = "create_writer_" + name;
+
+	writerFactory_t factory = (writerFactory_t)dlsym(me, factory_name.c_str());
+	if(factory)
+	{
+		std::string wcfg;
+		getline(ss, wcfg);
+		trim(wcfg);
+		w.reset(factory(wcfg));
+	}
+	else
+	{
+		ERROR("Writer " + name + " unknown (" + dlerror() + ").");
+	}
+
+	return w.release();
 }
 
 //

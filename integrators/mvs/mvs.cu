@@ -87,7 +87,7 @@ __global__ void gpu_mvs_integrator_kernel(double dT, float h)
 	ens.time(sys) = T;
 }
 
-void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT)
+void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT, writer &w)
 {
 #if 1
 	ERROR("MVS integrator has not yet been implemented.");

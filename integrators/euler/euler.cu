@@ -262,10 +262,6 @@ struct stop_on_ejection
 		// called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
 		{
-			if(step == 33 && (sys % 100) == 0)
-			{
-				glog.printf("Ejection detected: sys=%d, step=%d, T=%f.", sys, step, T);
-			}
 			return ts.eject;
 		}
 	};

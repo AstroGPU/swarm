@@ -215,7 +215,7 @@ void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys)
   m_is_old_good = 1;
 };
 
-void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
+void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT, writer &w)
 {
 	// Allocate integration state (if not already there)
 	if(ens.last_integrator() != this) 

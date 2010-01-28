@@ -37,7 +37,7 @@ public:
 	// No support for GPU execution. Note: we could make this function
 	// transparently copy the CPU ensemble to the GPU, and back once
 	// the integration is done
-	virtual void integrate(cpu_ensemble &ens, real_time T);
+	virtual void integrate(cpu_ensemble &ens, real_time T, writer &w);
 
 	// Is it dangerous to provide these as public?
 	// If not, people could use them to interpolate to some specific time

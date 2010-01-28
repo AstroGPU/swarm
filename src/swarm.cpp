@@ -37,12 +37,20 @@ int main()
 	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
 	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
-	// end time of integration
-	double dT;
+	// set up the output writer
+	std::string wcfg = cfg.count("output") ? cfg["output"] : "binary events.bin bodies.bin";
+	std::auto_ptr<writer> w(writer::create(wcfg));
+	std::cerr << "Output: " << wcfg << "\n";
+
+	// set end times of integration, first output time, and snapshot interval
+	double dT, Toutputstep;
 	get_config(dT, cfg, "dT");
+	get_config(Toutputstep, cfg, "output interval");
 	for(int sys = 0; sys != ens.nsys(); sys++)
 	{
 		ens.time_end(sys) = ens.time(sys) + dT;
+		ens.time_output(sys, 0) = ens.time(sys);	// output immediately on start
+		ens.time_output(sys, 1) = Toutputstep;		// output interval
 	}
 
 	// perform the integration
@@ -55,11 +63,11 @@ int main()
 		SWATCH_STOP(swatch_mem);
 
 		SWATCH_START(swatch_temps);
-		integ->integrate(gpu_ens, 0.);				// initialize internal data structures
+		integ->integrate(gpu_ens, 0., *w);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(gpu_ens, dT);				// integrate
+		integ->integrate(gpu_ens, dT, *w);				// integrate
 		SWATCH_STOP(swatch_kernel);
 
 		SWATCH_START(swatch_mem);
@@ -69,11 +77,11 @@ int main()
 	else
 	{
 		SWATCH_START(swatch_temps);
-		integ->integrate(ens, 0.);				// initialize internal data structures
+		integ->integrate(ens, 0., *w);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(ens, dT);				// integrate
+		integ->integrate(ens, dT, *w);				// integrate
 		SWATCH_STOP(swatch_kernel);
 	}
 	SWATCH_STOP(swatch_all);

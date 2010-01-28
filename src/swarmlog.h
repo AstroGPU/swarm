@@ -7,11 +7,15 @@
 
 struct eventlog
 {
-protected:
-	struct evt_hdr
+public:
+	static const int MAX_MSG_LEN = 256;	// maximum message length (in bytes)
+
+	struct ALIGN(4) evt_hdr
 	{
-		int evtid, len;
-		int threadId, nargs;
+		int evtid;	// event ID
+		int len;	// payload length
+		int threadId;	// originator thread
+		int nargs;	// number of sub-packets in the payload
 
 		evt_hdr(int evtid_ = 0, int len_ = 0, int threadId_ = 0, int nargs_ = 0)
 			: evtid(evtid_), len(len_), threadId(threadId_), nargs(nargs_)
@@ -19,22 +23,21 @@ protected:
 	};
 
 public:
+	struct event
+	{
+		evt_hdr hdr;
+		char	data[MAX_MSG_LEN-sizeof(evt_hdr)];
+	};
+
 	struct body // for on-GPU state logging
 	{
+		int		sys, bod;
+		real_time	T;
+		real_mass	m;
 		real_pos	x, y, z;
 		real_vel	vx, vy, vz;
-		real_mass	m;
+		int		user_data;	// e.g.: flags, eventId, etc.
 	};
-
-	struct system
-	{
-		real_time	T, Tend;
-		int		body_begin, body_end;
-		int		flags;
-		int		reason;
-	};
-
-	static const int MAX_MSG_LEN = 256;	// maximum message length (in bytes)
 
 	static const int EVT_EOF	= 0;
 	static const int EVT_PRINTF	= 999999;
@@ -43,15 +46,15 @@ public:
 protected:
 	struct counters
 	{
-		int nbod, nsys, nevtX;	// current buffer position
+		int nbodX, nevtX;	// current buffer position
 		int needflush;		// a kernel will set this flag to request buffer flushing
 
-		__device__ __host__ void reset() { nbod = nsys = nevtX = 0; needflush = 0; }
+		__device__ __host__ void reset() { nbodX = nevtX = 0; needflush = 0; }
 	};
 
 	// buffer capacities
-	int bcap, scap, ecapX;
-	int btresh, stresh, etresh;
+	int bcapX, ecapX;
+	int btresh, etresh;
 
 	// data
 	counters *ctr;
@@ -128,11 +131,11 @@ protected:
 	//
 protected:
 	body *bodies;
-	system *systems;
+	//system *systems;
 
 public:
-	__device__  int log_body(const ensemble &ens, int sys, int bod);
-	__device__ void log_system(const ensemble &ens, int sys, int reason, int body_begin = -1, int body_end = -1);
+	__device__ bool log_system(const ensemble &ens, int sys, double T, int user_data = -1);
+	__device__ bool log_body(const ensemble &ens, int sys, int bod, double T, int user_data = -1);
 };
 
 // event stream
@@ -155,10 +158,13 @@ protected:
 	bool m_eom;		// end-of-message flag
 
 public:
-	int evtid() const { return hdr.evtid; }
-	int threadId() const { return hdr.threadId; }
-	int nargs() const { return hdr.nargs; }
-	int nlost() const { return m_nlost; }
+	int evtid() const { return hdr.evtid; }			// event ID of the current event
+	int threadId() const { return hdr.threadId; }		// originator threadId of the current event
+	int nargs() const { return hdr.nargs; }			// number of data elements in the current event
+
+	int nevents_dropped() const { return m_nlost; }		// number of events that were dropped due to GPU buffer exhaustion
+
+	const eventlog::body* get_bodies(int &nbod, int &ndropped) const;	// get a pointer to recorded bodies
 
 	// advance to next message, returning its event id
 	// if called immediately after construction, it will move to first message
@@ -171,6 +177,7 @@ public:
 	ieventstream &operator >>(raw_msg &v);
 	ieventstream &operator >>(std::string &s);
 	ieventstream &operator >>(char *s);
+	ieventstream &operator >>(eventlog::event &evt);
 	template<typename T> ieventstream &operator >>(T &v)
 	{
 		if(!check_end()) { return *this; }
@@ -192,12 +199,42 @@ public:
 
 void debug_hook();
 void initialize_eventlog(int ecap = 64, int bcap = 1024*1024, int scap = 1024*1024);
-ieventstream get_gpu_events();
-void dump_gpu_events();
 
 #if __CUDACC__
 
 __constant__ eventlog glog;
+
+__device__ bool eventlog::log_body(const ensemble &ens, int sys, int bod, double T, int user_data)
+{
+	int nbod = atomicAdd(&ctr->nbodX, 1);
+	if(nbod >= bcapX) { return false; }
+	if(nbod == btresh) { ctr->needflush = 1; }
+
+	body &b = bodies[nbod];
+	b.sys = sys;
+	b.bod = bod;
+	b.T = T;
+	b.m = ens.mass(sys, bod);
+	b.x = ens.x(sys, bod);
+	b.y = ens.y(sys, bod);
+	b.z = ens.z(sys, bod);
+	b.vx = ens.vx(sys, bod);
+	b.vy = ens.vy(sys, bod);
+	b.vz = ens.vz(sys, bod);
+	b.user_data = user_data;
+
+	return true;
+}
+
+__device__ bool eventlog::log_system(const ensemble &ens, int sys, double T, int user_data)
+{
+	bool succ = true;
+	for(int bod = 0; bod != ens.nbod(); bod++)
+	{
+		succ &= log_body(ens, sys, bod, T);
+	}
+	return succ;
+}
 
 template<typename T>
 __device__ void eventlog::push_data(int &nevt, int mend, const T &data)

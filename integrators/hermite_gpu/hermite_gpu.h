@@ -38,7 +38,7 @@ public:
 	gpu_hermite_integrator(const config &cfg);
 
 public:
-	void integrate(gpu_ensemble &ens, double T);
+	void integrate(gpu_ensemble &ens, double T, writer &w);
 };
 
 #endif

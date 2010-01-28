@@ -78,6 +78,20 @@ struct retval_t
 	int needflush;
 };
 
+__device__ void output_if_needed(ensemble &ens, double T, int sys)
+{
+	// simple output
+//	debug_hook();
+	if(T >= ens.time_output(sys, 0) && sys < 10)
+	{
+		glog.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
+		glog.log_system(ens, sys, T);
+
+		// set next stopping time
+		ens.time_output(sys, 0) += ens.time_output(sys, 1);
+	}
+}
+
 template<typename stopper_t, typename propagator_t>
 __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop)
 {
@@ -96,11 +110,16 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
+		output_if_needed(ens, T, sys);
+
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tend, stop, stop_ts, step);
 
 		step++;
 	}
+
+	output_if_needed(ens, T, sys);
+
 	ens.time(sys) = T;
 }
 
@@ -137,11 +156,11 @@ public:
 	gpu_generic_integrator(const config &cfg);
 
 public:
-	void integrate(gpu_ensemble &ens, double T);
+	void integrate(gpu_ensemble &ens, double T, writer &w);
 };
 
 template<typename stopper_t, typename propagator_t>
-void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT)
+void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT, writer &w)
 {
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)
@@ -175,7 +194,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		// check if we should download and clear the output buffers
 		if(retval.needflush)
 		{
-			dump_gpu_events();
+			ieventstream es;
+			w.process(es);
 		}
 
 		// check if we should compactify or stop
@@ -191,7 +211,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	} while(true);
 
 	// print out remaining events
-	dump_gpu_events();
+	ieventstream es;
+	w.process(es);
 }
 
 template<typename stopper_t, typename propagator_t>
