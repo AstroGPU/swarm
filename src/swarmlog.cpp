@@ -10,25 +10,10 @@ void debug_hook()
 	std::cerr << "";
 }
 
-// CPU end of the event log -- receives the events recorded
-// on the GPU
-struct cpueventlog : public eventlog
-{
-protected:
-	eventlog glog;
+cpu_eventlog clog;
+static bool cpu_eventlog_initialized = 0;
 
-public:
-	void initialize(int ecap = 16*1024, int bcap = 1024*1024, int scap = 1024*1024);
-
-	void sync();
-
-	friend class ieventstream;
-};
-
-static cpueventlog clog;
-static bool cpueventlog_initialized = 0;
-
-const eventlog::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
+const ieventstream::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
 {
 	nbod = std::min(clog.ctr->nbodX, clog.bcapX);
 	ndropped = std::max(clog.ctr->nbodX - clog.bcapX, 0);
@@ -42,7 +27,7 @@ void initialize_eventlog(int ecap, int bcap, int scap)
 
 ieventstream::ieventstream(bool syncNew)
 {
-	assert(cpueventlog_initialized);
+	assert(cpu_eventlog_initialized);
 
 	if(syncNew) { clog.sync(); }
 	init(clog.events, clog.ctr->nevtX, clog.ecapX);
@@ -52,25 +37,25 @@ ieventstream::ieventstream(bool syncNew)
 int ieventstream::next()
 {
 	// already at end?
-	if(atmsg == nmsg) { return eventlog::EVT_EOF; }
+	if(atmsg == nmsg) { return eventlog_base::EVT_EOF; }
 
 	// move and exit if we're at the end
 	atmsg++;
 	if(atmsg != 0)
 	{
-		data += eventlog::MAX_MSG_LEN;
+		data += eventlog_base::MAX_MSG_LEN;
 	}
 
 	// learn the basics about the current message
 	if(atmsg != nmsg)
 	{
-		hdr = *(eventlog::evt_hdr*)(data);
-		at = sizeof(eventlog::evt_hdr);
+		hdr = *(eventlog_base::evt_hdr*)(data);
+		at = sizeof(eventlog_base::evt_hdr);
 		m_eom = false;
 	}
 	else
 	{
-		hdr.evtid = eventlog::EVT_EOF;
+		hdr.evtid = eventlog_base::EVT_EOF;
 	}
 
 	// return current message event ID
@@ -138,22 +123,22 @@ ieventstream &ieventstream::operator >>(char *s)
 	return *this;
 }
 
-ieventstream &ieventstream::operator >>(eventlog::event &evt)
+ieventstream &ieventstream::operator >>(eventlog_base::event &evt)
 {
 	if(!check_end()) { return *this; }
-	assert(sizeof(eventlog::event) == eventlog::MAX_MSG_LEN);
-	memcpy(&evt, data, sizeof(eventlog::event));
+	assert(sizeof(eventlog_base::event) == eventlog_base::MAX_MSG_LEN);
+	memcpy(&evt, data, sizeof(eventlog_base::event));
 	at = hdr.len;
 
 	return *this;
 }
 
 // download and clear the contents of GPU log
-void cpueventlog::sync()
+void cpu_eventlog::sync()
 {
 	// download GPU log data
-	if(!cpueventlog_initialized)
-		ERROR("Programmer error: cpueventlog must be initialized before use. Contact the authors.");
+	if(!cpu_eventlog_initialized)
+		ERROR("Programmer error: cpu_eventlog must be initialized before use. Contact the authors.");
 
 	// download GPU counters
 	memcpyToHost(ctr, glog.ctr);
@@ -170,10 +155,10 @@ void cpueventlog::sync()
 	memcpyToGPU(glog.ctr, &tmp);
 }
 
-void cpueventlog::initialize(int ecap_, int bcap_, int scap_)
+void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 {
-	if(cpueventlog_initialized) { return; }
-	cpueventlog_initialized = true;
+	if(cpu_eventlog_initialized) { return; }
+	cpu_eventlog_initialized = true;
 
 	// buffer sizes
 	bcapX = bcap_;
@@ -186,9 +171,9 @@ void cpueventlog::initialize(int ecap_, int bcap_, int scap_)
 
 	// now update the GPU version with its own pointers
 	// initialize counters/pointers
-	ctr = new eventlog::counters;
+	ctr = new eventlog_base::counters;
 	ctr->reset();
-	glog.ctr = cuxNew<eventlog::counters>(1);
+	glog.ctr = cuxNew<eventlog_base::counters>(1);
 	memcpyToGPU(glog.ctr, ctr);
 
 	// initialize buffers & eventlog structure
@@ -215,20 +200,20 @@ bool get_as_message(ieventstream &msg, std::string &res)
 	// ([hdr][size|...data...][size|...data...])
 
 	int evtid2;
-	if(msg.evtid() == cpueventlog::EVT_MSGLOST  && msg >> evtid2 && evtid2 == cpueventlog::EVT_PRINTF)
+	if(msg.evtid() == cpu_eventlog::EVT_MSGLOST  && msg >> evtid2 && evtid2 == cpu_eventlog::EVT_PRINTF)
 	{
 		msg.next();
 		res = "Message lost (too big).\n";
 		return true;
 	}
-	if(msg.evtid() != cpueventlog::EVT_PRINTF)
+	if(msg.evtid() != cpu_eventlog::EVT_PRINTF)
 	{
 		msg.next();
 		return false;
 	}
 
 	// slurp up the format string
-	char fmtbuf[cpueventlog::MAX_MSG_LEN], *fmt = fmtbuf;
+	char fmtbuf[cpu_eventlog::MAX_MSG_LEN], *fmt = fmtbuf;
 	msg >> fmt;
 
 	// Now run through it, printing everything we can. We must
@@ -355,7 +340,7 @@ binary_writer::binary_writer(const std::string &cfg)
 
 // store the accumulated events and bodies into a file, while
 // printing out any printf() events to stdout
-BLESS_POD(eventlog::body);
+BLESS_POD(eventlog_base::body);
 void binary_writer::process(ieventstream &es)
 {
 	// download and dump the log
@@ -371,7 +356,7 @@ void binary_writer::process(ieventstream &es)
 		{
 			// Write it to file
 			std::cout << "[Event " << es.evtid() << "]\n";
-			eventlog::event evt;
+			eventlog_base::event evt;
 			es >> evt;
 			*eout << evt;
 		}
@@ -383,7 +368,7 @@ void binary_writer::process(ieventstream &es)
 
 	// write out bodies
 	int nbod, ndropped;
-	const eventlog::body *bodies = es.get_bodies(nbod, ndropped);
+	const eventlog_base::body *bodies = es.get_bodies(nbod, ndropped);
 	for(int bod = 0; bod != nbod; bod++)
 	{
 		*bout << bodies[bod];
@@ -392,4 +377,9 @@ void binary_writer::process(ieventstream &es)
 	{
 		std::cerr << "==== Ran out of body GPU output buffer space (" << ndropped << " body records dropped).\n";
 	}
+}
+
+void test()
+{
+	cpu_eventlog elog;
 }
