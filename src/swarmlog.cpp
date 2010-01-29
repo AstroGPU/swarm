@@ -131,17 +131,15 @@ bool cpu_eventlog::need_gpu_flush()
 	eventlog_base::counters gctr;
 	memcpyToHost(&gctr, glog.ctr);
 
-	bool gpuneedflush = gctr.nevtX >= glog.ecapX || gctr.nbodX >= glog.bcapX;
-	bool cpuneedflush = ctr->nevtX >= ecapX || ctr->nbodX >= bcapX;
-//	bool gpuhasdata = gctr.nevtX || gctr.nbodX;
-//	bool cpuhasdata = ctr->nevtX || ctr->nbodX;
-
-	return /*(cpuhasdata && gpuhasdata) ||*/ cpuneedflush || gpuneedflush;
+	return gctr.nevtX >= glog.ecapX || gctr.nbodX >= glog.bcapX;
 }
 
-void cpu_eventlog::flush_if_needed()
+void cpu_eventlog::flush_if_needed(bool cpuonly)
 {
-	if(need_gpu_flush())
+	bool cpuneedflush = ctr->nevtX >= ecapX || ctr->nbodX >= bcapX;
+	bool gpuneedflush = !cpuonly && need_gpu_flush();
+
+	if(cpuneedflush || gpuneedflush)
 	{
 		flush();
 	}

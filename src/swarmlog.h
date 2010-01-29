@@ -38,8 +38,6 @@ public:
 		{ }
 	};
 
-	int needflush() const { return this->ctr->needflush; }
-
 public:
 	struct event
 	{
@@ -60,9 +58,8 @@ public:
 	struct counters
 	{
 		int nbodX, nevtX;	// current buffer positions
-		int needflush;		// a kernel will set this flag to request buffer flushing (currently I'm not using this...)
 
-		__device__ __host__ void reset() { nbodX = nevtX = 0; needflush = 0; }
+		__device__ __host__ void reset() { nbodX = nevtX = 0; }
 	};
 
 	// buffer capacities
@@ -92,17 +89,6 @@ public:
 	__device__ int threadId() { return ::threadId(); }
 	__device__ void prepare() { }
 
-	__device__ void bodies_flush_if_needed(int &nbod)
-	{
-		// request flushing if we're getting close to the end of the buffer
-		if(nbod == this->btresh) { this->ctr->needflush = 1; }
-	}
-	__device__ void events_flush_if_needed(int &nevt)
-	{
-		// request flushing if we're getting close to the end of the buffer
-		if(nevt == this->etresh) { this->ctr->needflush = 1; }
-	}
-
 public:
 	#define __DEVICE__ __device__
 	#include "swarmlog_impl.h"
@@ -121,18 +107,10 @@ struct cpu_eventlog : public eventlog_base
 public:
 	int atomicAdd(int *p, int v) { int tmp = *p; *p += v; return tmp; }
 	int threadId() { return -1; }
-	void prepare() { prepare_for_cpu(); }
-
-	void bodies_flush_if_needed(int &nbod)
+	void prepare()
 	{
-		// request flushing if we're getting close to the end of the buffer
-		if(nbod == this->btresh) { flush(); nbod = 0; }
-	}
-
-	void events_flush_if_needed(int &nevt)
-	{
-		// request flushing if we're getting close to the end of the buffer
-		if(nevt == this->etresh) { flush(); nevt = 0; }
+		prepare_for_cpu();
+		flush_if_needed(true);
 	}
 
 	#define __DEVICE__
@@ -157,7 +135,7 @@ public:
 	void attach_sink(writer *w_) { w = w_; }
 
 	// flush the data to sink if CPU/GPU buffers are close to capacity
-	void flush_if_needed();
+	void flush_if_needed(bool cpuonly = false);
 
 	// flush the data to sink, syncing with GPU if needed
 	void flush();

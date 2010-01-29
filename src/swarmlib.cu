@@ -75,7 +75,6 @@ __constant__ ensemble gpu_integ_ens;
 struct retval_t
 {
 	int nactive;
-	int needflush;
 };
 
 template<typename L>
@@ -139,7 +138,6 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	}
 
 	count_nactive(&retval->nactive, ens);
-	retval->needflush |= glog.needflush();
 }
 
 template<typename stopper_t, typename propagator_t>
@@ -185,10 +183,10 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	// execute the kernel in blocks of steps_per_kernel_run timesteps
 	int nactive0 = -1;
 	int iter = 0;
-	clog.printf("Starting kernel run #%d", iter);
-	clog.printf("Another unnecessary message from the CPU side");
 	do
 	{
+		clog.printf("Starting kernel run #%d", iter);
+		clog.printf("Another unnecessary message from the CPU side");
 		debug_hook();
 		retval_gpu.memset(0);
 		{
@@ -203,10 +201,6 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		if(nactive0 == -1) { nactive0 = retval.nactive; }
 
 		// check if we should download and clear the output buffers
-// 		if(retval.needflush)
-// 		{
-// 			clog.flush();
-// 		}
 		clog.flush_if_needed();
 
 		// check if we should compactify or stop
@@ -220,6 +214,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 			nactive0 = retval.nactive;
 		}
 	} while(true);
+	clog.printf("Exiting integrate");
 
 	clog.flush();
 }
