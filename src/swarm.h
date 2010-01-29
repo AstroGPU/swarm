@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cux/cux.h>
 
 #include "stopwatch.h"
 
@@ -287,13 +288,13 @@ void get_config(T &val, const config &cfg, const std::string &key)
 template<typename T>
 inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
 {
-	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice);
+	cuxErrCheck( cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice) );
 }
 
 template<typename T>
 inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 {
-	cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost);
+	cuxErrCheck( cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost) );
 }
 
 /**

@@ -20,6 +20,31 @@ static const int EVT_PRINTF	= 1000000;	// printf event (mostly good for debuggin
 static const int EVT_MSGLOST	= 1000001;	// marker that a message was dropped due to being too long to fit into MAX_MSG_LEN
 static const int EVT_SNAPSHOT	= 1000002;	// marks a snapshot of a system. see output_if_needed() in swarmlib.cu
 
+extern "C" void debug_hook();
+
+/*
+	Align the pointer to a 4-byte boundary.
+*/
+inline __device__ __host__ void align_to_header(int &at)
+{
+	while (at % 4) at++;
+}
+
+/*
+	The function below serves to align the pointer to either
+	a 4, 8 or 16 byte boundary, depending on whether the structure
+	being written is bigger than 4, 8 or 16 bytes, respectively.
+	This is NECESSARY, as the GPU hardware appears to be incapable
+	of writing to unaligned locations (e.g., an attempt to write
+	a double to a location that is not 8-byte aligned will result
+	in silent overwriting of data before/after the location).
+*/
+inline __device__ __host__ void align_to_payload(int &at, int size)
+{
+	if(size > 4) { while (at % 8) at++; }
+	if(size > 8) { while (at % 16) at++; }
+}
+
 struct eventlog_base
 {
 public:
@@ -133,7 +158,7 @@ public:
 	void initialize(int ecap = 16*1024, int bcap = 1024*1024, int scap = 1024*1024);
 
 	// attach the sink
-	void attach_sink(writer *w_) { w = w_; }
+	void attach_sink(writer *w_);
 
 	// flush the data to sink if CPU/GPU buffers are close to capacity
 	void flush_if_needed(bool cpuonly = false);
@@ -146,8 +171,6 @@ public:
 	~cpu_eventlog();
 };
 extern cpu_eventlog clog;
-
-void debug_hook();
 
 // event stream -- stream-like interface to extract events from cpu_eventlog
 struct ieventstream
@@ -200,9 +223,12 @@ public:
 	{
 		if(!check_end()) { return *this; }
 
+		align_to_header(at);
 		int size = *(int*)(data + at);
 		if(size != sizeof(T)) ERROR("Programmer error: data size != type size. Contact the authors.");
 		at += sizeof(int);
+
+		align_to_payload(at, size);
 		v = *(T*)(data+at);
 		at += sizeof(T);
 		return *this;

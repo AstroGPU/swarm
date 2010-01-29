@@ -65,22 +65,21 @@ public:
 	template<typename T>
 	__DEVICE__ void push_data(int &nevt, int mend, const T &data)
 	{
-		if(sizeof(int)+sizeof(T)+nevt > mend)
-		{
-			// buffer overflow; abort writing.
-			nevt = mend+1;
-			return;
-		}
-	
+		align_to_header(nevt);
+		if(sizeof(int)+nevt > mend) { nevt = mend+1; return; } // buffer overflow; abort writing.
 		*(int*)(this->events + nevt) = sizeof(data); nevt += sizeof(int);
+
+		align_to_payload(nevt, sizeof(T));
+		if(sizeof(T)+nevt > mend) { nevt = mend+1; return; } // buffer overflow; abort writing.
 		*(T*)(this->events + nevt) = data; nevt += sizeof(T);
 	}
-	
+
 	__DEVICE__ void push_data(int &nevt, int mend, const char *c)
 	{
+		align_to_header(nevt);
 		int nevt0 = nevt;
 		nevt += sizeof(int);
-	
+
 		// copy the string, including '\0' to the output
 		do
 		{
@@ -94,11 +93,11 @@ public:
 			this->events[nevt] = *c;
 			nevt++;
 		} while(*(c++) != '\0');
-	
-		// store string length
-		*(int*)(this->events + nevt0) = nevt - nevt0 - sizeof(int);
+
+		// store string length as negative number (signaling it's unaligned)
+		*(int*)(this->events + nevt0) = -(nevt - nevt0 - sizeof(int));
 	}
-	
+
 	__DEVICE__ bool evt_start(int &nevt, int &mend)
 	{
 		this->prepare();

@@ -85,7 +85,7 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 	if(T >= ens.time_output(sys, 0) && sys < 10)
 	{
 		// for debugging
-		log.printf("Stored a snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
+		log.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
 
 		int evtref = glog.log_event(EVT_SNAPSHOT, sys, T);
 		log.log_system(ens, sys, T, evtref);
@@ -129,11 +129,13 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 template<typename stopper_t, typename propagator_t>
 __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop)
 {
-//	glog.printf("This is a test printout.");
-//	glog.printf("And another %d one.", max_steps);
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens;
 	int sys = threadId();
+//	if(sys == 0) glog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
+//	if(sys == 0) glog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
+//	return;
+
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
 	{
 		generic_integrate_system(retval, ens, sys, max_steps, H, stop);
@@ -189,13 +191,11 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	{
 		clog.printf("Starting kernel run #%d", iter);
 		clog.printf("Another unnecessary message from the CPU side");
-		debug_hook();
+//		debug_hook();
 		retval_gpu.memset(0);
-		{
-			//cpu_eventlog::gpulock lock(clog);
-			clog.prepare_for_gpu();
-			gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
-		}
+		clog.prepare_for_gpu();
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
+		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
 
 		retval_t retval;

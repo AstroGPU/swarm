@@ -5,7 +5,7 @@
 #include <sstream>
 #include <memory>
 
-void debug_hook()
+extern "C" void debug_hook()
 {
 	std::cerr << "";
 }
@@ -78,8 +78,11 @@ ieventstream &ieventstream::operator >>(raw_evt &v)
 {
 	if(!check_end()) { return *this; }
 
+	align_to_header(at);
 	v.size = *(int*)(data + at);
 	at += sizeof(int);
+
+	if(v.size > 0) { align_to_payload(at, v.size); } else { v.size *= -1; }
 	v.data = data+at;
 	at += v.size;
 	return *this;
@@ -89,8 +92,12 @@ ieventstream &ieventstream::operator >>(std::string &s)
 {
 	if(!check_end()) { return *this; }
 
+	align_to_header(at);
 	int size = *(int*)(data + at);
+	assert(size < 0);
+	size *= -1;
 	at += sizeof(int);
+
 	s = (data+at);
 	int strlen = s.size();
 	if(strlen != size-1-sizeof(int))
@@ -103,8 +110,12 @@ ieventstream &ieventstream::operator >>(char *s)
 {
 	if(!check_end()) { return *this; }
 
+	align_to_header(at);
 	int size = *(int*)(data + at);
+	assert(size < 0);
+	size *= -1;
 	at += sizeof(int);
+
 	strcpy(s, data+at);
 	int strl = strlen(s);
 	if(strl != size-1)
@@ -158,6 +169,7 @@ void cpu_eventlog::copyFromGPU()
 
 	// download the data
 	events = hostAlloc(events, ecap * MAX_MSG_LEN);
+	memset(events, 0, ecap * MAX_MSG_LEN);
 	memcpyToHost(events, glog.events, ecap * MAX_MSG_LEN);
 	bodies = hostAlloc(bodies, bcap);
 	memcpyToHost(bodies, glog.bodies, bcap);
@@ -197,6 +209,11 @@ void cpu_eventlog::prepare_for_cpu()
 	flush();
 }
 
+void cpu_eventlog::attach_sink(writer *w_)
+{
+	w = w_;
+}
+
 void cpu_eventlog::flush()
 {
 	if(lastongpu)
@@ -208,7 +225,7 @@ void cpu_eventlog::flush()
 		w->process(es);
 		evtref_base += ctr->nevt;
 		bodref_base += ctr->nbod;
-
+			
 		// flush GPU buffers
 		copyFromGPU();
 		ieventstream es2(*this);
@@ -483,9 +500,4 @@ void binary_writer::process(ieventstream &es)
 	{
 		std::cerr << "==== Ran out of body GPU output buffer space (" << ndropped << " body records dropped).\n";
 	}
-}
-
-void test()
-{
-	cpu_eventlog elog;
 }
