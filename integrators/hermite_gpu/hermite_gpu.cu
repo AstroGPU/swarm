@@ -450,10 +450,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	float sVel       [9];
 	float sAcc       [9];
 	float sJerk      [9];
-	float sPosOld    [9];
-	float sVelOld    [9];
-	float sAccOld    [9];
-	float sJerkOld   [9];
+//	float sPosOld    [9];
+//	float sVelOld    [9];
+//	float sAccOld    [9];
+//	float sJerkOld   [9];
 
 	//const float s_mass[]={d_mass[t_start], d_mass[t_start+1],d_mass[t_start+2]};
 	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
@@ -463,7 +463,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	const real dtby6=h/6.;
 	const real dt7by30=h*7./30.;
 	const real dtby7=h*7.;
-	const unsigned int nData=9;
+//	const unsigned int nData=9;
 
 	//load data from global memory
 	mPos[0]=ens.x(sys,0);

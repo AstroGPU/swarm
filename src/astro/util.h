@@ -6,6 +6,7 @@
 #include <astro/constants.h>
 #include <cmath>
 #include <string>
+#include <cstdlib>
 #include <memory.h>
 #include <ctype.h>
 #include <stdio.h>

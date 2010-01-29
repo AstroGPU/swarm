@@ -3,15 +3,19 @@
 
 #include <stdexcept>
 #include <string>
+#include <cstring>
 #include <map>
 #include <cassert>
 #include <cmath>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <cux/cux.h>
 
 #include "stopwatch.h"
 
 class integrator;
+class ieventstream;
+class writer;
 class gpu_ensemble;
 class cpu_ensemble;
 
@@ -46,21 +50,27 @@ public:
 	Note that it has no constructors/destructors/virtuals, to allow its
 	instantiation in __constant__ memory on the GPU.
 */
+typedef double real_time;
+typedef float  real_mass;
+typedef double real_pos;
+typedef double real_vel;
+
 class ensemble
 {
 	public:
-		typedef double real_time;
-		typedef float  real_mass;
-		typedef double real_pos;
-		typedef double real_vel;
+		enum { INACTIVE = 0x01 };
 
 	protected:
 		// number of active (currently integrating) systems, total number of systems
 		// and number of bodies per system
-		int m_nactive, m_nsys, m_nbod;
+		int m_nsys, m_nbod;
 
 		// m_nsys wide array
 		real_time *m_T;
+		real_time *m_Tend;
+
+		// m_nsys*2 wide arrays
+		real_time *m_Toutput;
 
 		// m_nsys*m_nbod*3 wide arrays
 		real_pos  *m_xyz;
@@ -70,9 +80,12 @@ class ensemble
 		real_mass *m_m;
 
 		// m_nsys wide arrays
-		int	*m_active;			// is a given system active
+		int	*m_flags;			// flags about a given system. Bit 0 is the inactivity flag (m_flags & 0x01 ? inactive : acctive). Others can be user-defined.
 		int	*m_systemIndices;		// map from original systemID to sys index in m_* arrays
 		integrator *m_last_integrator;
+
+		// scalars
+//		int	*m_nactive;			// number of active systems, sum of !(m_flags & 0x01). Computed on GPU on exit from kernel.
 
 	public:
 		// DEPRECATED: For Young In's code ONLY!!!
@@ -90,6 +103,8 @@ class ensemble
 	public:
 		// non-const versions
 		__host__ __device__ double&   time(int sys) { return m_T[sys]; }
+		__host__ __device__ double&   time_end(int sys) { return m_Tend[sys]; }
+		__host__ __device__ double&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
 	
 		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -101,9 +116,9 @@ class ensemble
 
 		__host__ __device__ float& mass(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
-		__host__ __device__ int& active(int sys)	{ return m_active[sys]; }
+		__host__ __device__ int& flags(int sys)	{ return m_flags[sys]; }
 
-		__host__ __device__ int& nactive() { return m_nactive; }
+//		__host__ __device__ int& nactive() { return *m_nactive; }
 		__host__ __device__ int& nsys() { return m_nsys; }
 		__host__ __device__ int& nbod() { return m_nbod; }
 
@@ -111,7 +126,9 @@ class ensemble
 
 
 		// const versions
-		__host__ __device__ double  time(int sys) const { return m_T[sys]; }
+		__host__ __device__ double time(int sys) const { return m_T[sys]; }
+		__host__ __device__ double time_end(int sys) const { return m_Tend[sys]; }
+		__host__ __device__ double time_output(int sys, int k) const { return m_Toutput[k*m_nsys + sys]; }
 	
 		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
 		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -123,9 +140,9 @@ class ensemble
 
 		__host__ __device__ float mass(int sys, int bod) const { return m_m[bod*m_nsys + sys]; }
 
-		__host__ __device__ int active(int sys)		const { return m_active[sys]; }
+		__host__ __device__ int flags(int sys)		const { return m_flags[sys]; }
 
-		__host__ __device__ int nactive() const { return m_nactive; }
+//		__host__ __device__ int nactive() const { return *m_nactive; }
 		__host__ __device__ int nsys() const { return m_nsys; }
 		__host__ __device__ int nbod() const { return m_nbod; }
 
@@ -134,6 +151,8 @@ class ensemble
 
 
 		// convenience
+		__host__ __device__ int active(int sys)		const { return m_flags[sys] ^ ~ensemble::INACTIVE; }
+
 		__host__ __device__ void set_body(int sys, int bod,  float m, double x, double y, double z, double vx, double vy, double vz)
 		{
 			int idx = bod*m_nsys + sys;
@@ -226,19 +245,23 @@ class cpu_ensemble : public ensemble
 */
 class gpu_ensemble : public ensemble
 {
+	protected:
+		int *nactive_gpu;	// temp variable for get_nactive()
+
 	public:
 		void reset(int nsys, int nbod, bool reinitIndices = true);	// Allocate GPU memory for nsys systems of nbod planets each
 		void free();							// Deallocate CPU memory
 
 	public:
 		void copy_from(const cpu_ensemble &source);	// Copy the data from the CPU
+		int get_nactive() const;			// Download and return the number of active systems
 
 	public:
 		gpu_ensemble();					// instantiate an empty ensemble
 		gpu_ensemble(int nsys, int nbod);		// instantiate an ensemble with room for nsys systems with nbod each
 		gpu_ensemble(const cpu_ensemble &source);	// instantiate a copy of the source ensemble
 
-		~gpu_ensemble() { free(); }
+		~gpu_ensemble();
 };
 
 typedef std::map<std::string, std::string> config;
@@ -247,6 +270,9 @@ typedef std::map<std::string, std::string> config;
 void load_ensemble(const std::string &name, cpu_ensemble &ens);
 /// Load configuration from file fn
 void load_config(config &cfg, const std::string &fn);
+
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
+#include <sstream>
 
 // get a configuration value for 'key', throwing an error if it doesn't exist
 // NOTE: heavy (unoptimized) function, use sparingly
@@ -257,6 +283,41 @@ void get_config(T &val, const config &cfg, const std::string &key)
 	std::istringstream ss(cfg.at(key));
 	ss >> val;
 }
+#endif
+
+template<typename T>
+inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
+{
+	cuxErrCheck( cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice) );
+}
+
+template<typename T>
+inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
+{
+	cuxErrCheck( cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyDeviceToHost) );
+}
+
+/**
+	\brief Abstract output writer interface
+
+	The method process() is called whenever the GPU output buffers are filled,
+	and should proces/store the accumulated output data and logs (usually by
+	writing them out to a file).
+*/
+class writer
+{
+	public:
+		virtual void process(ieventstream &es) = 0;
+		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
+
+	public:
+		// Integrator factory functions (and supporting typedefs)
+		static writer *create(const std::string &cfg);
+
+	protected:
+		writer() {};		// hide the constructor.and force integrator instantiation with integrator::create
+};
+typedef writer *(*writerFactory_t)(const std::string &cfg);
 
 /**
 	\brief Abstract integrator interface
@@ -296,7 +357,6 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 template<typename T>
 void hostFree(T* var, bool usePinned = true)
 {
-	assert(var!=NULL);
 	if(!usePinned)
 	{
 		::free(var); 
