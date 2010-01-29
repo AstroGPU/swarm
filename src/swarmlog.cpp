@@ -10,34 +10,24 @@ void debug_hook()
 	std::cerr << "";
 }
 
-cpu_eventlog clog;
-static bool cpu_eventlog_initialized = 0;
-
 const ieventstream::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
 {
-	nbod = std::min(clog.ctr->nbodX, clog.bcapX);
-	ndropped = std::max(clog.ctr->nbodX - clog.bcapX, 0);
-	return clog.bodies;
+	nbod = std::min(log.ctr->nbodX, log.bcapX);
+	ndropped = std::max(log.ctr->nbodX - log.bcapX, 0);
+	return log.bodies;
 }
 
-void initialize_eventlog(int ecap, int bcap, int scap)
+ieventstream::ieventstream(cpu_eventlog &log_)
+	: log(log_)
 {
-	clog.initialize(ecap, bcap, scap);
-}
-
-ieventstream::ieventstream(bool syncNew)
-{
-	assert(cpu_eventlog_initialized);
-
-	if(syncNew) { clog.sync(); }
-	init(clog.events, clog.ctr->nevtX, clog.ecapX);
+	init(log.events, log.ctr->nevtX, log.ecapX);
 }
 
 // advance to next message
 int ieventstream::next()
 {
 	// already at end?
-	if(atmsg == nmsg) { return eventlog_base::EVT_EOF; }
+	if(atmsg == nmsg) { return EVT_EOF; }
 
 	// move and exit if we're at the end
 	atmsg++;
@@ -55,7 +45,7 @@ int ieventstream::next()
 	}
 	else
 	{
-		hdr.evtid = eventlog_base::EVT_EOF;
+		hdr.evtid = EVT_EOF;
 	}
 
 	// return current message event ID
@@ -133,11 +123,36 @@ ieventstream &ieventstream::operator >>(eventlog_base::event &evt)
 	return *this;
 }
 
-// download and clear the contents of GPU log
-void cpu_eventlog::sync()
+cpu_eventlog clog;
+
+bool cpu_eventlog::need_gpu_flush()
+{
+	// download GPU counters
+	eventlog_base::counters gctr;
+	memcpyToHost(&gctr, glog.ctr);
+
+	bool gpuneedflush = gctr.nevtX >= glog.ecapX || gctr.nbodX >= glog.bcapX;
+	bool cpuneedflush = ctr->nevtX >= ecapX || ctr->nbodX >= bcapX;
+//	bool gpuhasdata = gctr.nevtX || gctr.nbodX;
+//	bool cpuhasdata = ctr->nevtX || ctr->nbodX;
+
+	return /*(cpuhasdata && gpuhasdata) ||*/ cpuneedflush || gpuneedflush;
+}
+
+void cpu_eventlog::flush_if_needed()
+{
+	if(need_gpu_flush())
+	{
+		flush();
+	}
+}
+
+// download the GPU log data, overwriting the CPU log
+// called _ONLY_ from flush()
+void cpu_eventlog::copyFromGPU()
 {
 	// download GPU log data
-	if(!cpu_eventlog_initialized)
+	if(ctr == NULL)
 		ERROR("Programmer error: cpu_eventlog must be initialized before use. Contact the authors.");
 
 	// download GPU counters
@@ -148,17 +163,94 @@ void cpu_eventlog::sync()
 	memcpyToHost(events, glog.events, ecapX * MAX_MSG_LEN);
 	bodies = hostAlloc(bodies, bcapX);
 	memcpyToHost(bodies, glog.bodies, bcapX);
-
-	// clear GPU counters
-	counters tmp = *ctr;
-	tmp.reset();
-	memcpyToGPU(glog.ctr, &tmp);
 }
 
+void cpu_eventlog::prepare_for_gpu()
+{
+	if(lastongpu) { return; }
+
+	// last write was on the CPU, and may have moved the
+	// refbases. Upload them to the GPU. Because of how
+	// we do things, the GPU buffers should be empty at
+	// this point (it's a bug if they're not)
+
+#if __DEVICE_EMULATION__
+	assert(glog.ctr->nbodX == 0 && glog.ctr->nevtX == 0);
+#endif
+
+	// update the GPU copy with the current ref bases
+	glog.evtref_base = evtref_base + ctr->nevtX;
+	glog.bodref_base = bodref_base + ctr->nbodX;
+	cuxUploadConst("glog", this->glog);
+
+	lastongpu = true;
+}
+
+void cpu_eventlog::prepare_for_cpu()
+{
+	if(!lastongpu) { return; }
+
+	// last write was on the GPU, which moved the ref base.
+	// before that, we may have had writes on the GPU
+	// so now trigger a flush, CPU first, followed by the GPU
+	// After the flush is done, download the GPU refbases
+	// and store it here
+
+	flush();
+}
+
+void cpu_eventlog::flush()
+{
+	if(lastongpu)
+	{
+		// GPU was written-to last
+
+		// flush CPU buffers
+		ieventstream es(*this);
+		w->process(es);
+		evtref_base += ctr->nevtX;
+		bodref_base += ctr->nbodX;
+
+		// flush GPU buffers
+		copyFromGPU();
+		ieventstream es2(*this);
+		w->process(es2);
+	}
+	else
+	{
+		// CPU was written-to last -- by construction
+		// of this class, there's nothing on the GPU side
+
+		// flush CPU buffers
+		ieventstream es(*this);
+		w->process(es);
+	}
+
+	// update ref bases before we clear the counters
+	evtref_base += ctr->nevtX;
+	bodref_base += ctr->nbodX;
+
+	// clear CPU & GPU counters
+	ctr->reset();
+	memcpyToGPU(glog.ctr, ctr);
+
+	// cpu is now the master
+	lastongpu = false;
+}
+
+cpu_eventlog::cpu_eventlog()
+{
+	// set everything to NULL
+	memset(this, 0, sizeof(this));
+}
+
+//
+// Initialize the GPU eventlog buffer, and prepare the CPU
+// eventlog object
+//
 void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 {
-	if(cpu_eventlog_initialized) { return; }
-	cpu_eventlog_initialized = true;
+	if(ctr != NULL) { return; }
 
 	// buffer sizes
 	bcapX = bcap_;
@@ -166,49 +258,57 @@ void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 	btresh = (int)(0.9 * bcapX);
 	etresh = (int)(0.9 * ecapX);
 
-	// copy self to GPU version
-	glog = *this;
-
-	// now update the GPU version with its own pointers
-	// initialize counters/pointers
+	// CPU side
 	ctr = new eventlog_base::counters;
 	ctr->reset();
+	events = hostAlloc(events, ecapX * MAX_MSG_LEN);
+	bodies = hostAlloc(bodies, bcapX);
+
+	// GPU side
+	glog = *this;
 	glog.ctr = cuxNew<eventlog_base::counters>(1);
 	memcpyToGPU(glog.ctr, ctr);
 
-	// initialize buffers & eventlog structure
+	// initialize GPU buffers & eventlog structure
 	glog.events = cuxNew<char>(ecapX * MAX_MSG_LEN);
 	glog.bodies = cuxNew<body>(bcapX);
-	//glog.systems = NULL;
 
 	// upload to const
 	cuxUploadConst("glog", this->glog);
+	lastongpu = true;
 }
 
-
-bool get_as_message(ieventstream &msg, std::string &res);
-
-bool next_message(ieventstream &msg, std::string &res)
+cpu_eventlog::~cpu_eventlog()
 {
-	while(!get_as_message(msg, res) && msg);
-	return msg;
+	// Host
+	hostFree(events);
+	hostFree(bodies);
+	delete ctr;
+	
+	// GPU
+	cudaFree(glog.events);
+	cudaFree(glog.bodies);
+	cudaFree(glog.ctr);
 }
 
-bool get_as_message(ieventstream &msg, std::string &res)
+//
+// gpuPrintf: CPU side
+//
+
+bool get_message(ieventstream &msg, std::string &res)
 {
 	// format of data packets:
 	// ([hdr][size|...data...][size|...data...])
 
 	int evtid2;
-	if(msg.evtid() == cpu_eventlog::EVT_MSGLOST  && msg >> evtid2 && evtid2 == cpu_eventlog::EVT_PRINTF)
+	if(msg.evtid() == EVT_MSGLOST  && msg >> evtid2 && evtid2 == EVT_PRINTF)
 	{
 		msg.next();
 		res = "Message lost (too big).\n";
 		return true;
 	}
-	if(msg.evtid() != cpu_eventlog::EVT_PRINTF)
+	if(msg.evtid() != EVT_PRINTF)
 	{
-		msg.next();
 		return false;
 	}
 
@@ -301,6 +401,12 @@ bool get_as_message(ieventstream &msg, std::string &res)
 	return true;
 }
 
+bool next_message(ieventstream &msg, std::string &res)
+{
+	while(!get_message(msg, res) && msg.next());
+	return msg;
+}
+
 //
 // Default binary writer
 //
@@ -341,6 +447,7 @@ binary_writer::binary_writer(const std::string &cfg)
 // store the accumulated events and bodies into a file, while
 // printing out any printf() events to stdout
 BLESS_POD(eventlog_base::body);
+BLESS_POD(eventlog_base::event);
 void binary_writer::process(ieventstream &es)
 {
 	// download and dump the log
@@ -348,17 +455,18 @@ void binary_writer::process(ieventstream &es)
 	while(es.next())
 	{
 		std::string msg;
-		if(get_as_message(es, msg))
+		if(get_message(es, msg))
 		{
-			std::cout << "[Message (" << ctr++ << ")]: " << msg << "\n";
+			std::cout << "[Event #" << es.evtref() << " from thread " << es.threadId() << "]: " << msg << "\n";
 		}
 		else
 		{
 			// Write it to file
-			std::cout << "[Event " << es.evtid() << "]\n";
 			eventlog_base::event evt;
 			es >> evt;
 			*eout << evt;
+
+			std::cout << "[Event #" << evt.hdr.evtref << " from thread " << evt.hdr.threadId << "] EVT=" << evt.hdr.evtid << ", with " << evt.hdr.nargs << " data elements (" << evt.hdr.len << " bytes for entire event)\n";
 		}
 	}
 	if(es.nevents_dropped())

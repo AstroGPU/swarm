@@ -12,14 +12,15 @@
     <absoluteprojectpath>false</absoluteprojectpath>
     <description/>
     <defaultencoding/>
+    <versioncontrol/>
   </general>
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/gpu_integ/swarm/bin/swarm</mainprogram>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
       <programargs/>
       <globaldebugarguments/>
-      <globalcwd>/home/mjuric/projects/gpu_integ/swarm/run</globalcwd>
+      <globalcwd>/home/mjuric/projects/swarm/run</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
@@ -212,4 +213,11 @@
       <hidenonprojectfiles>false</hidenonprojectfiles>
     </tree>
   </kdevfileview>
+  <kdevdocumentation>
+    <projectdoc>
+      <docsystem/>
+      <docurl/>
+      <usermanualurl/>
+    </projectdoc>
+  </kdevdocumentation>
 </kdevelop>

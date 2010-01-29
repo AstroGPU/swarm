@@ -356,7 +356,6 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 template<typename T>
 void hostFree(T* var, bool usePinned = true)
 {
-	assert(var!=NULL);
 	if(!usePinned)
 	{
 		::free(var); 

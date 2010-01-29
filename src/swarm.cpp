@@ -53,11 +53,13 @@ int main()
 		ens.time_output(sys, 1) = Toutputstep;		// output interval
 	}
 
+	// log initialization
+	clog.initialize();
+	clog.attach_sink(w.get());
+
 	// perform the integration
 	if(ongpu)
 	{
-		initialize_eventlog();
-
 		SWATCH_START(swatch_mem);
 		gpu_ensemble gpu_ens(ens);				// upload to GPU
 		SWATCH_STOP(swatch_mem);
@@ -87,6 +89,7 @@ int main()
 	SWATCH_STOP(swatch_all);
 
 	out << ens;
+	clog.flush();
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;

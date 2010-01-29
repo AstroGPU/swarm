@@ -78,14 +78,18 @@ struct retval_t
 	int needflush;
 };
 
-__device__ void output_if_needed(ensemble &ens, double T, int sys)
+template<typename L>
+__device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
 	// simple output
 //	debug_hook();
 	if(T >= ens.time_output(sys, 0) && sys < 10)
 	{
-		glog.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
-		glog.log_system(ens, sys, T);
+		// for debugging
+		log.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
+
+		int evtref = glog.log_event(EVT_SNAPSHOT, sys, T);
+		log.log_system(ens, sys, T, evtref);
 
 		// set next stopping time
 		ens.time_output(sys, 0) += ens.time_output(sys, 1);
@@ -110,7 +114,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
-		output_if_needed(ens, T, sys);
+		output_if_needed(glog, ens, T, sys);
 
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tend, stop, stop_ts, step);
@@ -118,7 +122,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		step++;
 	}
 
-	output_if_needed(ens, T, sys);
+	output_if_needed(glog, ens, T, sys);
 
 	ens.time(sys) = T;
 }
@@ -181,10 +185,17 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	// execute the kernel in blocks of steps_per_kernel_run timesteps
 	int nactive0 = -1;
 	int iter = 0;
+	clog.printf("Starting kernel run #%d", iter);
+	clog.printf("Another unnecessary message from the CPU side");
 	do
 	{
+		debug_hook();
 		retval_gpu.memset(0);
-		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
+		{
+			//cpu_eventlog::gpulock lock(clog);
+			clog.prepare_for_gpu();
+			gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
+		}
 		iter++;
 
 		retval_t retval;
@@ -192,11 +203,11 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		if(nactive0 == -1) { nactive0 = retval.nactive; }
 
 		// check if we should download and clear the output buffers
-		if(retval.needflush)
-		{
-			ieventstream es;
-			w.process(es);
-		}
+// 		if(retval.needflush)
+// 		{
+// 			clog.flush();
+// 		}
+		clog.flush_if_needed();
 
 		// check if we should compactify or stop
 		if(retval.nactive == 0)
@@ -210,9 +221,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		}
 	} while(true);
 
-	// print out remaining events
-	ieventstream es;
-	w.process(es);
+	clog.flush();
 }
 
 template<typename stopper_t, typename propagator_t>

@@ -232,6 +232,8 @@ struct prop_euler
 	}
 };
 
+const int EVT_EJECTION = 1;
+
 struct stop_on_ejection
 {
 	// GPU state and interface (per-grid)
@@ -257,6 +259,8 @@ struct stop_on_ejection
 			if(r < rmax) { return; }
 			ts.eject = true;
 			//glog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
+			int evtref = glog.log_event(EVT_EJECTION, sys, bod, r, T);
+			glog.log_body(ens, sys, bod, T, evtref);
 		}
 
 		// called after the entire system has completed a single timestep advance.
