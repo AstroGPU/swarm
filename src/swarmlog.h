@@ -57,13 +57,13 @@ public:
 
 	struct counters
 	{
-		int nbodX, nevtX;	// current buffer positions
+		int nbod, nevt;	// current buffer positions
 
-		__device__ __host__ void reset() { nbodX = nevtX = 0; }
+		__device__ __host__ void reset() { nbod = nevt = 0; }
 	};
 
-	// buffer capacities
-	int bcapX, ecapX;
+	// buffer capacities and tresholds to trigger flushing
+	int bcap, ecap;
 	int btresh, etresh;
 
 	// ref bases
@@ -85,8 +85,6 @@ public:
 struct eventlog : public eventlog_base
 {
 public:
-	__device__ int atomicAdd(int *p, int v) { return ::atomicAdd(p, v); }
-	__device__ int threadId() { return ::threadId(); }
 	__device__ void prepare() { }
 
 public:
@@ -104,7 +102,7 @@ __constant__ eventlog glog;
 // on the GPU
 struct cpu_eventlog : public eventlog_base
 {
-public:
+protected:
 	int atomicAdd(int *p, int v) { int tmp = *p; *p += v; return tmp; }
 	int threadId() { return -1; }
 	void prepare()
@@ -113,6 +111,7 @@ public:
 		flush_if_needed(true);
 	}
 
+public:
 	#define __DEVICE__
 	#include "swarmlog_impl.h"
 	#undef __DEVICE__
@@ -124,14 +123,16 @@ protected:
 	bool need_gpu_flush();
 	void copyFromGPU();
 
-	bool ongpu, lastongpu;
+	bool lastongpu;		// was the last buffer write done on GPU (i.e., have you called prepare_for_gpu())
 
-public:
-	void prepare_for_gpu();
 	void prepare_for_cpu();
+public:
+	void prepare_for_gpu();	// prepare for execution on the GPU. MUST call this function before launching a kernel.
 
+	// initialize GPU and CPU buffers (capacities)
 	void initialize(int ecap = 16*1024, int bcap = 1024*1024, int scap = 1024*1024);
 
+	// attach the sink
 	void attach_sink(writer *w_) { w = w_; }
 
 	// flush the data to sink if CPU/GPU buffers are close to capacity
@@ -141,22 +142,6 @@ public:
 	void flush();
 
 public:
-	struct gpulock
-	{
-		cpu_eventlog &log;
-		gpulock(cpu_eventlog &log_)
-			: log(log_)
-		{
-			log.ongpu = true;
-			if(!log.lastongpu) { log.flush(); }
-			log.lastongpu = true;
-		}
-		~gpulock()
-		{
-			log.ongpu = false;
-		}
-	};
-
 	cpu_eventlog();
 	~cpu_eventlog();
 };
@@ -168,10 +153,10 @@ void debug_hook();
 struct ieventstream
 {
 protected:
-	friend bool get_message(ieventstream &msg, std::string &res);
+	friend bool get_message(ieventstream &evt, std::string &res);
 
 protected:
-	struct raw_msg
+	struct raw_evt
 	{
 		int size;
 		const char *data;
@@ -183,8 +168,8 @@ protected:
 
 	evt_hdr hdr;
 	const char *data;
-	int nmsg, m_nlost;
-	int at, atmsg;
+	int nevt, m_ndropped;
+	int at, atevt;
 	bool m_eom;		// end-of-message flag
 
 	cpu_eventlog &log;	// the log to which we're bound
@@ -195,7 +180,7 @@ public:
 	int threadId() const { return hdr.threadId; }		// originator threadId of the current event
 	int nargs() const { return hdr.nargs; }			// number of data elements in the current event
 
-	int nevents_dropped() const { return m_nlost; }		// number of events that were dropped due to GPU buffer exhaustion
+	int nevents_dropped() const { return m_ndropped; }		// number of events that were dropped due to GPU buffer exhaustion
 
 	const body* get_bodies(int &nbod, int &ndropped) const;	// get a pointer to recorded bodies
 
@@ -203,11 +188,11 @@ public:
 	// if called immediately after construction, it will move to first message
 	int next();
 
-	void init(const char *data_, int nmsg_, int ecap_);
+	void init(const char *data_, int nevt_, int ecap_);
 	ieventstream(cpu_eventlog &log);
 
 	bool check_end();
-	ieventstream &operator >>(raw_msg &v);
+	ieventstream &operator >>(raw_evt &v);
 	ieventstream &operator >>(std::string &s);
 	ieventstream &operator >>(char *s);
 	ieventstream &operator >>(event &evt);
@@ -224,7 +209,7 @@ public:
 	}
 
 	operator bool() const { return !eof() && !m_eom; }
-	bool eof() const { return atmsg == nmsg; }
+	bool eof() const { return atevt == nevt; }
 
 	// find and return the next printf message
 	std::string next_message();
