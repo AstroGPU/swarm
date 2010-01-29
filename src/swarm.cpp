@@ -12,8 +12,15 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
-int main()
+int main(int argc, const char **argv)
 {
+	if(argc != 2)
+	{
+		std::cerr << "Usage: " << argv[0] << " <integrator.cfg>\n";
+		return -1;
+	}
+	std::string icfgfn = argv[1];
+
 	// load the ensemble
 	cpu_ensemble ens;
 	load_ensemble("data", ens);
@@ -28,7 +35,7 @@ int main()
 	// set up the integrator
 	SWATCH_START(swatch_all);
 	config cfg;
-	load_config(cfg, "integrator.cfg");
+	load_config(cfg, icfgfn);
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
 	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
 	bool ongpu;

@@ -9,6 +9,7 @@ CXX?=g++
 CCUDAFLAGS?=
 CXXFLAGS?=-g -O0 -I /opt/cuda/include -I ./src
 LDFLAGS?=-L /opt/cuda/lib64
+INTEGRATORCFG?=integrator.cfg
 
 LIBPEYTON=src/astro/BinaryStream.o
 OBJECTS= src/swarmlib.o src/swarmlog.o src/swarm.cu_o src/cux/cux.o $(LIBPEYTON)
@@ -19,7 +20,7 @@ CUDA_DEPS=src/swarmlib.cu src/swarmlog.h
 all: bin/swarm bin/swarmdump
 
 test: all
-	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm && ../bin/swarmdump)
+	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
 
 clean:
 	rm -f $(ALLOBJECTS) *.linkinfo src/*/*.o src/swarm.cu bin/swarmdump bin/swarm integrators/*/*.o
