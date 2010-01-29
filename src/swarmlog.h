@@ -149,7 +149,7 @@ extern cpu_eventlog clog;
 
 void debug_hook();
 
-// event stream -- stream-like interface to extract events from eventlog
+// event stream -- stream-like interface to extract events from cpu_eventlog
 struct ieventstream
 {
 protected:

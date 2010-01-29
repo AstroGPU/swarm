@@ -173,7 +173,7 @@ void cpu_eventlog::prepare_for_gpu()
 	// this point (it's a bug if they're not)
 
 #if __DEVICE_EMULATION__
-	assert(glog.ctr->nbodX == 0 && glog.ctr->nevtX == 0);
+	assert(glog.ctr->nbod == 0 && glog.ctr->nevt == 0);
 #endif
 
 	// update the GPU copy with the current ref bases
