@@ -331,9 +331,9 @@ typedef writer *(*writerFactory_t)(const std::string &cfg);
 class integrator
 {
 	public:
-		virtual void integrate(gpu_ensemble &ens, double T, writer &w)	// for GPU based integrators
+		virtual void integrate(gpu_ensemble &ens, double T)	// for GPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
-		virtual void integrate(cpu_ensemble &ens, double T, writer &w)	// for CPU based integrators
+		virtual void integrate(cpu_ensemble &ens, double T)	// for CPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
 
 		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)

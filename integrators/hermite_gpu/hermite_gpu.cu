@@ -582,7 +582,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	ens.vz(sys,2)=mVel[8];
 }
 
-void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT, writer &w)
+void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
 {
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)

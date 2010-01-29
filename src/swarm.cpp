@@ -65,11 +65,11 @@ int main()
 		SWATCH_STOP(swatch_mem);
 
 		SWATCH_START(swatch_temps);
-		integ->integrate(gpu_ens, 0., *w);				// initialize internal data structures
+		integ->integrate(gpu_ens, 0.);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(gpu_ens, dT, *w);				// integrate
+		integ->integrate(gpu_ens, dT);				// integrate
 		SWATCH_STOP(swatch_kernel);
 
 		SWATCH_START(swatch_mem);
@@ -79,11 +79,11 @@ int main()
 	else
 	{
 		SWATCH_START(swatch_temps);
-		integ->integrate(ens, 0., *w);				// initialize internal data structures
+		integ->integrate(ens, 0.);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(ens, dT, *w);				// integrate
+		integ->integrate(ens, dT);				// integrate
 		SWATCH_STOP(swatch_kernel);
 	}
 	SWATCH_STOP(swatch_all);

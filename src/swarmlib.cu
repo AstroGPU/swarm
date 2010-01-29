@@ -162,11 +162,11 @@ public:
 	gpu_generic_integrator(const config &cfg);
 
 public:
-	void integrate(gpu_ensemble &ens, double T, writer &w);
+	void integrate(gpu_ensemble &ens, double T);
 };
 
 template<typename stopper_t, typename propagator_t>
-void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT, writer &w)
+void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT)
 {
 	// Upload the kernel parameters
 	if(ens.last_integrator() != this)
