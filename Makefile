@@ -36,7 +36,7 @@ include integrators/*/Makefile.mk
 ###
 ### Applications
 ###
-APPS+=swarm
+APPS+=swarm swarm_demo1
 swarm_SOURCES=src/swarm.cpp
 
 APPS+=swarmdump
