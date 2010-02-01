@@ -355,7 +355,7 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 
 // Typesafe de-allocator (convenience)
 template<typename T>
-void hostFree(T* var, bool usePinned = true)
+void hostFree(T* var, bool usePinned = false)
 {
 	if(!usePinned)
 	{
@@ -365,13 +365,13 @@ void hostFree(T* var, bool usePinned = true)
 	{
 		cudaThreadSynchronize();	 // To prevent getting confused over other errors
 		cudaError_t cudaMemStatus = cudaFreeHost(var);
-		if(cudaMemStatus!=cudaSuccess) ERROR("Couldn't free host memory.");
+		if(cudaMemStatus!=cudaSuccess) ERROR(cudaGetErrorString(cudaMemStatus));
 	}
 }
 
 // Typesafe re-allocator (convenience)
 template<typename T>
-T* hostAlloc(T* var, int nelem, bool usePinned = true)
+T* hostAlloc(T* var, int nelem, bool usePinned = false)
 {
 	if(!usePinned)
 	{
@@ -384,7 +384,7 @@ T* hostAlloc(T* var, int nelem, bool usePinned = true)
 		cudaThreadSynchronize();   // To prevent getting confused over other errors
 		if(var!=NULL) hostFree(var);
 		cudaError_t cudaMemStatus = cudaMallocHost((void**)&var,nelem*sizeof(T));
-		if(cudaMemStatus!=cudaSuccess) ERROR("Out of host memory.");
+		if(cudaMemStatus!=cudaSuccess) ERROR(cudaGetErrorString(cudaMemStatus));
 		return var;
 	}
 }

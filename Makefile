@@ -3,13 +3,14 @@
 #
 # Requirements:
 #	- GNU make
-#	- GCC g++
+#	- GNU ld
+#	- GNU GCC g++
 #	- nvcc
 #
 # - sources local definitions from Makefile.user (if exists)
-# - builds src/swarmlib.a from LIBSWARM_SOURCES and LIBSWARM_CUDA
+# - builds bin/swarmlib.so from LIBSWARM_SOURCES and LIBSWARM_CUDA
 # - includes integrators/*/Makefile.mk files for integrator implementations
-# - builds bin/app, where app are read from $(APPS) and built from $(app_SOURCES)
+# - builds bin/app, where apps are read from $(APPS) and built from $(app_SOURCES)
 # - does the automatic dependency tracking for all .cpp and .cu sources
 # - shows simple/pretty output (linux kernel-style), unless VERBOSE=1 is 
 #   defined (e.g., `env VERBOSE=1 make')
@@ -59,8 +60,13 @@ LDFLAGS?=-L /opt/cuda/lib64
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
 
-# Always append this 
+# for libswarm
+LDFLAGS+=-L./bin
 CXXFLAGS+= -I ./src
+CXX+=-fPIC
+
+# Link command just adds the required bits to compiler command
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm 
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects
@@ -69,17 +75,19 @@ LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
 
+BIN=$(shell pwd)/bin
+
 # User-interface beautification (useless but cute ;-))
 # For full output, define VERBOSE=1 in Makefile.user or run
 # make with `env VERBOSE=1 make'
 #
 ifneq ($(VERBOSE),1)
-DEPUI=@ echo "[ DEP  ] $< " &&
-CXXUI=@ echo "[ CXX  ] $< " &&
-NVCCUI=@ echo "[ NVCC ] $< " &&
-LINKUI=@ echo "[ LINK ] $< " &&
-ARUI=@ echo "[ AR   ] $< " &&
-GENUI=@ echo "[ GEN  ] $< " &&
+DEPUI=@ echo "[ DEP  ] $@ " &&
+CXXUI=@ echo "[ CXX  ] $@ " &&
+NVCCUI=@ echo "[ NVCC ] $@ " &&
+LINKUI=@ echo "[ LINK ] $@ " &&
+ARUI=@ echo "[ AR   ] $@ " &&
+GENUI=@ echo "[ GEN  ] $@ " &&
 CLEANUI=@ echo "[ CLEAN ]" &&
 TIDYUI=@ echo "[ TIDY  ]" &&
 endif
@@ -87,16 +95,18 @@ endif
 all: $(APPS)
 
 #
-# rules for libswarm.a
+# rules for libswarm.so
 #
 
-src/swarm.cu: $(LIBSWARM_CUDA)
+src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
 	@ echo "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
 	$(GENUI) ./bin/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
-src/libswarm.a: $(LIBSWARM_OBJECTS) src/swarm.cu_o
-	$(ARUI) ar rcs $@ $(LIBSWARM_OBJECTS)
+src/autogen_dont_edit.o : src/autogen_dont_edit.cu_o
+	$(GENUI) cp -a src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
 
+bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
 
 #
 # Utilities
@@ -106,7 +116,7 @@ test: all
 	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
 
 clean:
-	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) src/swarmlib.a src/swarm.cu
+	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
 
 tidy: clean
 	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/output.bin run/*.bin
@@ -119,6 +129,7 @@ info:
 	@ echo SOURCES=$(SOURCES)
 	@ echo OBJECTS=$(OBJECTS)
 	@ echo APPS=$(APPS)
+	@ echo BIN=$(BIN)
 
 #
 # Build patterns
@@ -128,12 +139,13 @@ info:
 $(APPS): %: bin/%
 
 # Executables
-bin/%: src/libswarm.a src/%.o $($_OBJECTS)
-	$(LINKUI) $(CXX) -rdynamic -o $@ $(LDFLAGS) -lcuda -lcudart $^ src/libswarm.a
+bin/Makefile.d: Makefile
+	$(GENUI) ./bin/generate_app_makefiles.sh $(APPS) > $@
+-include bin/Makefile.d
 
 # CUDA object files
 %.cu_o:%.cu
-	$(CXXUI) $(CCUDA) -c $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@
 
 # C++ object files
 %.o:%.cpp
@@ -161,6 +173,6 @@ bin/%: src/libswarm.a src/%.o $($_OBJECTS)
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),tidy)
 -include $(subst .cpp,.d,$(SOURCES))
--include src/swarm.cu_d
+-include src/autogen_dont_edit.cu_d
 endif
 endif

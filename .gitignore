@@ -8,12 +8,13 @@ integrators/*/*.o
 src/*.o
 run/output.bin
 run/*.bin
+run/observeTimes.dat
 src/astro/*.o
 src/cux/*.o
-src/swarm.cu*
+src/autogen_dont_edit.cu*
 swarm.kdevelop.pcs
 swarm.kdevses
 *~
 src/*~
 *.d
-src/libswarm.a
+bin/libswarm.so
