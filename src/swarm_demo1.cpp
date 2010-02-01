@@ -69,11 +69,10 @@ int main(int argc, const char **argv)
 
 	// Print initial conditions for checking w/ CPU 
 	std::cerr << "Print selected initial conditions for CPU.\n";
-	print_selected_systems_for_demo(ens_check);
-	
+	print_selected_systems_for_demo(ens_check);	
 
 	std::cerr << "Set integration duration for all systems.\n";
-	double dT = 2.*M_PI;
+	double dT = 0.1*2.*M_PI;
 	ens.set_time_end_all(dT);
 
 	// Perform the integration on gpu
@@ -85,7 +84,6 @@ int main(int argc, const char **argv)
 	ens.copy_from(gpu_ens);					
 	std::cerr << "GPU integration complete.\n";
 
-
 	// Perform the integration on the cpu
 	std:: cerr << "Initialize the CPU integrator\n";
 	cfg["integrator"] = "cpu_hermite";
@@ -95,9 +93,9 @@ int main(int argc, const char **argv)
 	std::cerr << "CPU integration complete.\n";
 
 	// Print results
-	std::cerr << "Print selected results from GPU.\n";
+	std::cerr << "Print selected results from GPU's calculation.\n";
 	print_selected_systems_for_demo(ens);
-	std::cerr << "Print selected results from CPU.\n";
+	std::cerr << "Print selected results from CPU's calculation.\n";
 	print_selected_systems_for_demo(ens_check);
 	
 	// both the integrator & the ensembles are automatically deallocated on exit

@@ -24,7 +24,7 @@ int main(int argc, const char **argv)
 	// load the ensemble
 	cpu_ensemble ens;
 	load_ensemble("data", ens);
-	unsigned int nprint = 3; // std::min(2U, ens.nsys());
+	unsigned int nprint = std::min(2, ens.nsys());
 
 	ens_writer out("output.bin");
 	out << ens;

@@ -65,7 +65,7 @@ class ensemble
 	protected:
 		// number of active (currently integrating) systems, total number of systems
 		// and number of bodies per system
-		uint m_nsys, m_nbod;
+		int m_nsys, m_nbod;
 
 		// m_nsys wide array
 		real_time *m_T;
@@ -84,7 +84,7 @@ class ensemble
 
 		// m_nsys wide arrays
 		int	*m_flags;			// flags about a given system. Bit 0 is the inactivity flag (m_flags & 0x01 ? inactive : acctive). Others can be user-defined.
-		uint	*m_systemIndices;		// map from original systemID to sys index in m_* arrays
+		int	*m_systemIndices;		// map from original systemID to sys index in m_* arrays
 		integrator *m_last_integrator;
 
 		// scalars
@@ -121,11 +121,11 @@ class ensemble
 
 		__host__ __device__ int& flags(int sys)	{ return m_flags[sys]; }
 
-//		__host__ __device__ uint& nactive() { return *m_nactive; }
-		__host__ __device__ uint& nsys() { return m_nsys; }
-		__host__ __device__ uint& nbod() { return m_nbod; }
+//		__host__ __device__ int& nactive() { return *m_nactive; }
+		__host__ __device__ int& nsys() { return m_nsys; }
+		__host__ __device__ int& nbod() { return m_nbod; }
 
-		__host__ __device__ uint& index_of_system(int sysId) { return m_systemIndices[sysId]; }
+		__host__ __device__ int& index_of_system(int sysId) { return m_systemIndices[sysId]; }
 		__host__ __device__ uint&   nstep(int sys) { return m_nstep[sys]; }
 
 		// const versions
@@ -145,11 +145,11 @@ class ensemble
 
 		__host__ __device__ int flags(int sys)		const { return m_flags[sys]; }
 
-//		__host__ __device__ uint nactive() const { return *m_nactive; }
-		__host__ __device__ uint nsys() const { return m_nsys; }
-		__host__ __device__ uint nbod() const { return m_nbod; }
+//		__host__ __device__ int nactive() const { return *m_nactive; }
+		__host__ __device__ int nsys() const { return m_nsys; }
+		__host__ __device__ int nbod() const { return m_nbod; }
 
-		__host__ __device__ uint index_of_system(int sysId) const { return m_systemIndices[sysId]; }
+		__host__ __device__ int index_of_system(int sysId) const { return m_systemIndices[sysId]; }
 		__host__ __device__ uint nstep(int sys) const { return m_nstep[sys]; }
 
 
@@ -179,22 +179,22 @@ class ensemble
 		// Should these pay attention to active flag?
 		__host__ __device__ void   set_time_all(const double tend) 
 		{
-		  for(uint sys=0;sys<nsys();++sys)
+		  for(int sys=0;sys<nsys();++sys)
 		    time(sys) = tend;
 		}
 		__host__ __device__ void   set_time_end_all(const double tend) 
 		{
-		  for(uint sys=0;sys<nsys();++sys)
+		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) = tend;
 		}
 		__host__ __device__ void   advance_time_end_all(const double dur) 
 		{
-		  for(uint sys=0;sys<nsys();++sys)
+		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) += dur;
 		}
 		__host__ __device__ void   set_time_output_all(int k, const double tout) 
 		{ 
-		  for(uint sys=0;sys<nsys();++sys)
+		  for(int sys=0;sys<nsys();++sys)
 		    time_output(sys,k) = tout;
 		}
 
