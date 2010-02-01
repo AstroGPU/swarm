@@ -106,6 +106,7 @@ int main(int argc, const char **argv)
 	std::cerr << "GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
 	std::cerr << "Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
 
+	std::cerr << "Final time = (" << ens.time(0) << ", " << ens.time(1) << ",...)\n";
 	// both the integrator & the ensembles are automatically deallocated on exit
 	// so there's nothing special we have to do here.
 	return 0;

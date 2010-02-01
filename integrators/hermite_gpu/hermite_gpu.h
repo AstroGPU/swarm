@@ -3,24 +3,26 @@
 
 #include "swarm.h"
 
-typedef double real;
-typedef real   real_time;
-typedef float   real_mass;
-typedef real   real_pos;
-typedef real   real_vel;
-typedef real   real_acc;
-typedef real   real_jerk;
 
 struct gpu_hermite_integrator_data
 {
-       // Integration state
-       real_pos        *m_xyz_old;
-       real_vel        *m_vxyz_old;
-       real_acc        *m_acc, *m_acc_old;
-       real_jerk       *m_jerk, *m_jerk_old;
+  // Typedef's (not clear if Jianwei is using these throughout
+  typedef double real;
+  typedef real   real_time;
+  typedef float  real_mass;
+  typedef real   real_pos;
+  typedef real   real_vel;
+  typedef real   real_acc;
+  typedef real   real_jerk;
 
-       // Other parameters the integrator will need
-       float h;
+  // Integration state
+  real_pos        *m_xyz_old;
+  real_vel        *m_vxyz_old;
+  real_acc        *m_acc, *m_acc_old;
+  real_jerk       *m_jerk, *m_jerk_old;
+  
+  // Other parameters the integrator will need
+  float h;
 };
 
 

@@ -7,7 +7,12 @@
 // NOTE: Supports 3D grids with 1D blocks of threads
 inline __device__ uint32_t threadId()
 {
+// This will be in inner loops, so may want to optimize
+#if USE_1D_GRID
+	const uint32_t id = blockIdx.x * blockDim.x + threadIdx.x;
+#else
 	const uint32_t id = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
+#endif
 	return id;
 }
 
@@ -105,7 +110,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 	typename propagator_t::thread_state_t    H_ts(H, ens, sys, T, Tend);
 
 	// advance the system until we reach max_steps, Tend, or stop becomes true
-	int step = 0;
+	unsigned int step = 0;
 	while(true)
 	{
 		// stopping conditions
@@ -120,7 +125,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 
 		step++;
 	}
-
+	ens.nstep(sys) += step;
 	output_if_needed(glog, ens, T, sys);
 
 	ens.time(sys) = T;

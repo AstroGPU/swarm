@@ -31,6 +31,7 @@ void set_initial_conditions_for_demo(ensemble& ens)
 
 void print_selected_systems_for_demo(ensemble& ens)
 {
+  std::cout.precision(12);
   unsigned int nprint = 1;
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {

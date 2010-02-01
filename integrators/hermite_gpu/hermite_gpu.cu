@@ -22,11 +22,58 @@ namespace gpu_hermite_aux
 
 //#if PRECISION == 3
 // Double precision
+// Be careful, do we want the lower precission sqrt?
 #define RSQRT(x) rsqrtf(x)
 #define SQRT(x)   sqrtf(x)
-//typedef double real;
+typedef double real;
 //#else
 
+template<unsigned int N, typename destT, typename srcT>
+inline __device__ void copyArray(destT *target, srcT *source)
+{
+	if(N>0)  target[0]=source[0];
+	if(N>1)  target[1]=source[1];
+	if(N>2)  target[2]=source[2];
+	if(N>3)  target[3]=source[3];
+	if(N>4)  target[4]=source[4];
+	if(N>5)  target[5]=source[5];
+	if(N>6)  target[6]=source[6];
+	if(N>7)  target[7]=source[7];
+	if(N>8)  target[8]=source[8];
+	if(N>9)  target[9]=source[9];
+	if(N>10) target[10]=source[10];
+	if(N>11) target[11]=source[11];
+	if(N>12) target[12]=source[12];
+	if(N>13) target[13]=source[13];
+	if(N>14) target[14]=source[14];
+	if(N>15) target[15]=source[15];
+	if(N>16) target[16]=source[16];
+	if(N>17) target[17]=source[17];
+	if(N>18) {
+		 for(int i=18; i<N; i++)
+		    target[i]=source[i];
+		 }
+
+#if 0
+	if(N==9){
+	        target[0]=source[0];		
+		target[1]=source[1];
+		target[2]=source[2];
+		target[3]=source[3];
+		target[4]=source[4];
+		target[5]=source[5];
+		target[6]=source[6];
+		target[7]=source[7];
+		target[8]=source[8];
+	}
+	else {
+		for(int i=0; i<N; i++)
+			target[i]=source[i];
+	}
+#endif
+}
+
+#if 0
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
 {
@@ -46,6 +93,7 @@ inline __device__ void copyArray(destT *target, srcT *source)
 			target[i]=source[i];
 	}
 }
+#endif
 
 template<unsigned int N> 
 inline __device__ void doubleTofloat(float *floatA, real *doubleA)
@@ -671,6 +719,7 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 
 		T += h;
 	}
+	ens.time(sys) = T;
 	ens.x(sys,0)=mPos[0];
 	ens.y(sys,0)=mPos[1];
 	ens.z(sys,0)=mPos[2];
@@ -831,6 +880,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 		T += h;
 	}
+	ens.time(sys) = T;
 	ens.x(sys,0)=mPos[0];
 	ens.y(sys,0)=mPos[1];
 	ens.z(sys,0)=mPos[2];
