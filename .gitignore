@@ -7,6 +7,7 @@ bin/swarmdump
 integrators/*/*.o
 src/*.o
 run/output.bin
+run/*.bin
 src/astro/*.o
 src/cux/*.o
 src/swarm.cu*
@@ -14,3 +15,5 @@ swarm.kdevelop.pcs
 swarm.kdevses
 *~
 src/*~
+*.d
+src/libswarm.a

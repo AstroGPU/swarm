@@ -4,16 +4,11 @@
 # the source directory, not the local one!
 #
 # RULES:
-#    1.) There must be one and only one .cu file.
-#    2.) You must append the name of this file, together with any files it
-#        may depends, to CUDA_DEPS makefile variable.
-#    3.) If defining additional source files, add them to
-#        OBJECTS variable, _with full paths!_. Any dependency rules
-#        they require must also refer to them using full paths.
+#    1.) C++ sources must end in .cpp; CUDA sources must end in .cu
+#    2.) Add C++ sources to LIBSWARM_SOURCES
+#    3.) Add CUDA sources to LIBSWARM_CUDA
+#    4.) Do not add include files (the main makefile will do that)
 #
 
-CUDA_DEPS+=integrators/mvs/mvs.cu integrators/mvs/mvs.h
-
-OBJECTS+=integrators/mvs/mvs.o
-
-integrators/mvs/mvs.o : integrators/mvs/mvs.h
+LIBSWARM_CUDA+=integrators/mvs/mvs.cu
+LIBSWARM_SOURCES+=integrators/mvs/mvs.cpp
