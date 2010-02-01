@@ -154,16 +154,16 @@ void cpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 	reset(src.nsys(), src.nbod(), false);
 
 	// low-level copy from host to separate host memory
-	memcpy(m_T, src.m_T, m_nsys);
-	memcpy(m_Tend, src.m_Tend, m_nsys);
-	memcpy(m_nstep, src.m_nstep, m_nsys);
-	memcpy(m_Toutput, src.m_Toutput, 2*m_nsys);
-	memcpy(m_xyz, src.m_xyz, 3*m_nbod*m_nsys);
-	memcpy(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys);
-	memcpy(m_m, src.m_m, m_nbod*m_nsys);
-	memcpy(m_flags, src.m_flags, m_nsys);
-	memcpy(m_systemIndices, src.m_systemIndices, m_nsys);
-//	memcpy(m_nactive, src.m_nactive, 1);
+	memcpy(m_T, src.m_T, m_nsys*sizeof(*m_T));
+	memcpy(m_Tend, src.m_Tend, m_nsys*sizeof(*m_Tend));
+	memcpy(m_nstep, src.m_nstep, m_nsys*sizeof(*m_nstep));
+	memcpy(m_Toutput, src.m_Toutput, 2*m_nsys*sizeof(*m_Toutput));
+	memcpy(m_xyz, src.m_xyz, 3*m_nbod*m_nsys*sizeof(*m_xyz));
+	memcpy(m_vxyz, src.m_vxyz, 3*m_nbod*m_nsys*sizeof(*m_vxyz));
+	memcpy(m_m, src.m_m, m_nbod*m_nsys*sizeof(*m_m));
+	memcpy(m_flags, src.m_flags, m_nsys*sizeof(*m_flags));
+	memcpy(m_systemIndices, src.m_systemIndices, m_nsys*sizeof(*m_systemIndices));
+//	memcpy(m_nactive, src.m_nactive, 1*sizeof(*m_nactive));
 
 	m_last_integrator = src.m_last_integrator;
 }

@@ -177,7 +177,7 @@ class ensemble
 		// utilities
 
 		// Should these pay attention to active flag?
-		__host__ __device__ void   set_time__all(const double tend) 
+		__host__ __device__ void   set_time_all(const double tend) 
 		{
 		  for(uint sys=0;sys<nsys();++sys)
 		    time(sys) = tend;
@@ -249,6 +249,7 @@ class cpu_ensemble : public ensemble
 
 	public:
 		void copy_from(const gpu_ensemble &source);	// Copy the data from the GPU
+		void copy_from(const cpu_ensemble &source);	// Copy the data from the CPU
 		
 	public:
 		cpu_ensemble();					// instantiate an empty ensemble
@@ -361,7 +362,7 @@ class integrator
 		virtual void integrate(gpu_ensemble &ens, double T)	// for GPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
 		virtual void integrate(cpu_ensemble &ens, double T)	// for CPU based integrators
-			{ ERROR("Execution on GPU not supported by this implementation"); }
+			{ ERROR("Execution on CPU not supported by this implementation"); }
 
 		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 

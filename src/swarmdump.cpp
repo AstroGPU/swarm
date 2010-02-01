@@ -50,7 +50,7 @@ int main()
 
 	ens_reader in("output.bin");
 	in >> ens;
-	unsigned int nprint = std::min(2, ens.nsys());
+	unsigned int nprint = std::min(2U, ens.nsys());
 
 	// Calculate energy at beginning of integration
 	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
