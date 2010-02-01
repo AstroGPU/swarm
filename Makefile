@@ -42,8 +42,14 @@ swarm_SOURCES=src/swarm.cpp
 APPS+=swarmdump
 swarmdump_SOURCES=src/swarmdump.cpp
 
-APPS+=swarm_demo1
-swarm_demo1_SOURCES=src/swarm_demo1.cpp
+APPS+=swarm_demo1c 
+swarm_demo1c_SOURCES=src/swarm_demo1c.cpp 
+
+APPS+=swarm_demo1g 
+swarm_demo1g_SOURCES=src/swarm_demo1g.cpp 
+
+APPS+=swarm_demo1b 
+swarm_demo1b_SOURCES=src/swarm_demo1b.cpp 
 
 ##########################################################
 #

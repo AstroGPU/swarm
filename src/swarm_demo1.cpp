@@ -31,7 +31,8 @@ void set_initial_conditions_for_demo(ensemble& ens)
 
 void print_selected_systems_for_demo(ensemble& ens)
 {
-  std::cout.precision(12);
+  std::streamsize cout_precision_old = std::cout.precision();
+  std::cout.precision(10);
   unsigned int nprint = 1;
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
@@ -41,6 +42,7 @@ void print_selected_systems_for_demo(ensemble& ens)
 	  std::cout << "body= " << bod << ": pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
 	}
     }
+  std::cout.precision(cout_precision_old);
 }
 
 int main(int argc, const char **argv)
@@ -73,7 +75,7 @@ int main(int argc, const char **argv)
 	print_selected_systems_for_demo(ens_check);	
 
 	std::cerr << "Set integration duration for all systems.\n";
-	double dT = 0.1*2.*M_PI;
+	double dT = 1.*2.*M_PI;
 	ens.set_time_end_all(dT);
 
 	// Perform the integration on gpu
