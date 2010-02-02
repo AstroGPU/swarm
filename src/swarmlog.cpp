@@ -256,7 +256,7 @@ void cpu_eventlog::flush()
 cpu_eventlog::cpu_eventlog()
 {
 	// set everything to NULL
-	memset(this, 0, sizeof(this));
+	memset(this, 0, sizeof(*this));
 }
 
 //

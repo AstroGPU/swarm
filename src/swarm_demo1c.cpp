@@ -1,8 +1,11 @@
 #include "swarm.h"
+#include "swarmlog.h"
 #include <iostream>
 
 void set_initial_conditions_for_demo(ensemble& ens);
 void print_selected_systems_for_demo(ensemble& ens);
+
+cpu_eventlog clog;  // Declared soley to prevent segfaults on exit
 
 int main(int argc, const char **argv)
 {
