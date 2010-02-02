@@ -43,13 +43,9 @@ namespace gpu_hermite_aux
 
 }
 
-//#if PRECISION == 3
-// Double precision
 // Be careful, do we want the lower precission sqrt?
 #define RSQRT(x) rsqrtf(x)
 #define SQRT(x)   sqrtf(x)
-//typedef double real;
-//#else
 
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
@@ -187,7 +183,10 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
 {
-	// Check that nbod == 2 or 3
+	// Need to enforce that that nbod == 2 or 3 at compile time
+	if((nBodies<3)||(nBodies>4)) 
+	{ return; }
+
 	real_hi dx[]={0,0,0}; 
 	real_hi dv[]={0,0,0}; 
 	real_hi dx_back[]={0,0,0}; 
@@ -618,8 +617,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 	float sPos       [nData];
 	float sVel       [nData];
-//	float sAcc       [nData];
-//	float sJerk      [nData];
 
 	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
 
@@ -697,7 +694,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	else
 		UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-}	
+	}	
 	else
 	{
 		copyArray<nData>(sPos,mPos);
