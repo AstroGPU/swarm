@@ -177,8 +177,9 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 
 //******************************************************************
 // * UpdateAccJerk function for 2 or 3 Planets 
-// *(real = float for single and mixed)
-// *(real = double for double)
+// *(real_hi = double)
+// *(real_lo = float for single and mixed)
+// *(real_lo = double for double)
 //******************************************************************
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
@@ -419,8 +420,9 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 
 //******************************************************************
 // * UpdateAccJerk function for more than 3 Planets 
-// *(real = float for single and mixed)
-// *(real = double for double)
+// *(real_hi = double)
+// *(real_lo = float for single and mixed)
+// *(real_lo = double for double)
 // ******************************************************************/
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 //template<unsigned int nBodies>
@@ -503,7 +505,7 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 		mJerk[ii] = ji[2];
 	}
 
-#pragma unroll 
+//#pragma unroll 
 	for(unsigned int i=1;i<nBodies;++i)
 	{
 		//float3 xi=mPos[i];
@@ -818,78 +820,19 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 }
 
-void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
-{
-	// Upload the kernel parameters
-	if(ens.last_integrator() != this)
-	{
-		ens.set_last_integrator(this);
-		configure_grid(gridDim, threadsPerBlock, ens.nsys());
 
-		cudaMemcpyToSymbol(gpu_hermite_ens, &ens, sizeof(gpu_hermite_ens));
-		if(dT == 0.) { return; }
-	}
+template<>
+void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_gpu_integrator_body.cu"
 
-	if(ens.nbod()==3) {
-		// execute the kernel
-		switch(prec){
-			// double precision
-			case 1:
-				gpu_hermite_integrator_kernel<1,3><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// signle precision
-			case 2:
-				gpu_hermite_integrator_kernel<2,3><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// mixed precision
-			case 3:
-				gpu_hermite_integrator_kernel<3,3><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-		}
-	}
-	else if(ens.nbod()==4) {
-		// execute the kernel
-		switch(prec){
-			// double precision
-			case 1:
-				gpu_hermite_integrator_kernel<1,4><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// signle precision
-			case 2:
-				gpu_hermite_integrator_kernel<2,4><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// mixed precision
-			case 3:
-				gpu_hermite_integrator_kernel<3,4><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-		}
-	}
-	else if(ens.nbod()==5) {
-		// execute the kernel
-		switch(prec){
-			// double precision
-			case 1:
-				gpu_hermite_integrator_kernel<1,5><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// signle precision
-			case 2:
-				gpu_hermite_integrator_kernel<2,5><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-				// mixed precision
-			case 3:
-				gpu_hermite_integrator_kernel<3,5><<<gridDim, threadsPerBlock>>>(dT, h);
-				break;
-		}
-	}
-	else {
-	// How do we get an error message out of here?
-	ERROR("Invalid number of bodies.");
-	return;
-	}
-	
-	printf("%s\n", cudaGetErrorString(cudaGetLastError()));
+template<>
+void gpu_hermite_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_gpu_integrator_body.cu"
 
-}
+template<>
+void gpu_hermite_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_gpu_integrator_body.cu"
+
 
 } // end namespace hermite_gpu
 } // end namespace swarm

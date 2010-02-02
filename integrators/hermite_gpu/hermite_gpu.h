@@ -6,16 +6,17 @@
 namespace swarm {
 namespace hermite_gpu {
 
+template<typename real_hi, typename real_lo>
 struct gpu_hermite_integrator_data
 {
   // Typedef's (not clear if Jianwei is using these throughout
-  typedef double real;
-  typedef real   real_time;
-  typedef float  real_mass;
-  typedef real   real_pos;
-  typedef real   real_vel;
-  typedef real   real_acc;
-  typedef real   real_jerk;
+  typedef real_hi real;
+  typedef real_hi real_time;
+  typedef float   real_mass;
+  typedef real_hi real_pos;
+  typedef real_hi real_vel;
+  typedef real_lo real_acc;
+  typedef real_lo real_jerk;
 
   // Integration state
   real_pos        *m_xyz_old;
@@ -29,7 +30,8 @@ struct gpu_hermite_integrator_data
 
 
 //class gpu_hermite_integrator : public integrator
-class gpu_hermite_integrator : public integrator, public gpu_hermite_integrator_data
+template< typename real_hi, typename real_lo>
+class gpu_hermite_integrator : public integrator, public gpu_hermite_integrator_data<real_hi,real_lo>
 {
 protected:
 	float h;
@@ -43,7 +45,11 @@ public:
 
 public:
 	void integrate(gpu_ensemble &ens, double T);
+
 };
+
+
+
 
 } // end namespace hermite_gpu
 } // end namespace swarm
