@@ -2,6 +2,7 @@
 #include "hermite_gpu.h"
 
 namespace swarm {
+namespace hermite_gpu {
 
 namespace gpu_hermite_aux
 {
@@ -971,4 +972,6 @@ void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
 
 }
 
+} // end namespace hermite_gpu
 } // end namespace swarm
+

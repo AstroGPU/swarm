@@ -261,8 +261,13 @@ void cpu_eventlog::flush()
 
 cpu_eventlog::cpu_eventlog()
 {
-	// set everything to NULL
+// set everything to NULL
 	memset(this, 0, sizeof(*this));
+std::cerr << "Destructing/Constructing cpu_eventlog\n";
+std::cerr << this << "\n";
+std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
+std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
+std::cerr << "...\n";
 }
 
 //
@@ -302,6 +307,11 @@ void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 
 cpu_eventlog::~cpu_eventlog()
 {
+std::cerr << "Destructing/Constructing cpu_eventlog\n";
+std::cerr << this << "\n";
+std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
+std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
+std::cerr << "...\n";
 	// Host
 	hostFree(events);
 	hostFree(bodies);

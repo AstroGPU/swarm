@@ -4,6 +4,8 @@
 
 namespace swarm {
 
+namespace hermite_gpu {
+
 gpu_hermite_integrator::gpu_hermite_integrator(const config &cfg)
 {
 	if(!cfg.count("h")) ERROR("Integrator gpu_hermite needs a timestep ('h' keyword in the config file).");
@@ -21,4 +23,5 @@ extern "C" integrator *create_gpu_hermite(const config &cfg)
 	return new gpu_hermite_integrator(cfg);
 }
 
+} // end namespace hermite_gpu
 } // end namespace swarm
