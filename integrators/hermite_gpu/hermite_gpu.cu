@@ -21,6 +21,26 @@ namespace gpu_hermite_aux
 		return make_float3(a.x+b.x, a.y+b.y, a.z+b.z);
 	}
 
+	// Specify position/velocity type to be used for various modes
+	template<int pre>
+	struct pos_type {}; 
+	template<>
+	struct pos_type<1> { typedef double type; };
+	template<>
+	struct pos_type<2> { typedef float type; };
+	template<>
+	struct pos_type<3> { typedef double type; };
+
+	// Specify acceleration/jerk type to be used for various modes
+	template<int pre>
+	struct acc_type {}; 
+	template<>
+	struct acc_type<1> { typedef double type; };
+	template<>
+	struct acc_type<2> { typedef float type; };
+	template<>
+	struct acc_type<3> { typedef float type; };
+
 }
 
 //#if PRECISION == 3
@@ -56,47 +76,8 @@ inline __device__ void copyArray(destT *target, srcT *source)
 		 for(int i=18; i<N; i++)
 		    target[i]=source[i];
 		 }
-
-#if 0
-	if(N==9){
-	        target[0]=source[0];		
-		target[1]=source[1];
-		target[2]=source[2];
-		target[3]=source[3];
-		target[4]=source[4];
-		target[5]=source[5];
-		target[6]=source[6];
-		target[7]=source[7];
-		target[8]=source[8];
-	}
-	else {
-		for(int i=0; i<N; i++)
-			target[i]=source[i];
-	}
-#endif
 }
 
-#if 0
-template<unsigned int N, typename destT, typename srcT>
-inline __device__ void copyArray(destT *target, srcT *source)
-{
-	if(N==9){
-		target[0]=source[0];
-		target[1]=source[1];
-		target[2]=source[2];
-		target[3]=source[3];
-		target[4]=source[4];
-		target[5]=source[5];
-		target[6]=source[6];
-		target[7]=source[7];
-		target[8]=source[8];
-	}
-	else {
-		for(int i=0; i<N; i++)
-			target[i]=source[i];
-	}
-}
-#endif
 
 template<unsigned int N> 
 inline __device__ void doubleTofloat(float *floatA, real *doubleA)
@@ -110,9 +91,8 @@ inline __device__ void floatTodouble(double *doubleA, float *floatA)
 	copyArray<N,real,float>(doubleA,floatA);
 }
 
-//inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h, int numArray)
-template<unsigned int N>
-inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h)
+template<unsigned int N, typename real_hi, typename real_lo>
+inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, const real_lo dtby2, const real_lo dtby3, real_hi h)
 {
 	if(N>0)	mPos[0] += h* (mVel[0]+ dtby2*(mAcc[0]+dtby3*mJerk[0]));
 	if(N>1)	mPos[1] += h* (mVel[1]+ dtby2*(mAcc[1]+dtby3*mJerk[1]));
@@ -157,43 +137,12 @@ inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, 
 			mVel[i] += h* (mAcc[i]+ dtby2*mJerk[i]);
 			}
 		}
-#if 0
-	if(numArray==9){
-		mPos[0] += h* (mVel[0]+ dtby2*(mAcc[0]+dtby3*mJerk[0]));
-		mPos[1] += h* (mVel[1]+ dtby2*(mAcc[1]+dtby3*mJerk[1]));
-		mPos[2] += h* (mVel[2]+ dtby2*(mAcc[2]+dtby3*mJerk[2]));
-		mPos[3] += h* (mVel[3]+ dtby2*(mAcc[3]+dtby3*mJerk[3]));
-		mPos[4] += h* (mVel[4]+ dtby2*(mAcc[4]+dtby3*mJerk[4]));
-		mPos[5] += h* (mVel[5]+ dtby2*(mAcc[5]+dtby3*mJerk[5]));
-		mPos[6] += h* (mVel[6]+ dtby2*(mAcc[6]+dtby3*mJerk[6]));
-		mPos[7] += h* (mVel[7]+ dtby2*(mAcc[7]+dtby3*mJerk[7]));
-		mPos[8] += h* (mVel[8]+ dtby2*(mAcc[8]+dtby3*mJerk[8]));
-		mVel[0] += h* (mAcc[0]+ dtby2*mJerk[0]);
-		mVel[1] += h* (mAcc[1]+ dtby2*mJerk[1]);
-		mVel[2] += h* (mAcc[2]+ dtby2*mJerk[2]);
-		mVel[3] += h* (mAcc[3]+ dtby2*mJerk[3]);
-		mVel[4] += h* (mAcc[4]+ dtby2*mJerk[4]);
-		mVel[5] += h* (mAcc[5]+ dtby2*mJerk[5]);
-		mVel[6] += h* (mAcc[6]+ dtby2*mJerk[6]);
-		mVel[7] += h* (mAcc[7]+ dtby2*mJerk[7]);
-		mVel[8] += h* (mAcc[8]+ dtby2*mJerk[8]);
-	}
-	else {
-		for(int i=0; i<numArray; i++) {
-			mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
-			mVel[i] += h* (mAcc[i]+ dtby2*mJerk[i]);
-		}
-	}
-#endif
 }
 
-/* inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk, 
-		real *mPosOld, real *mVelOld, real *mAccOld, real *mJerkOld, 
-		const real dtby2, const real dtby6, const real dtby7, const real dt7by30, int numArray)*/
-template<unsigned int N>
-inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk, 
-		real *mPosOld, real *mVelOld, real *mAccOld, real *mJerkOld, 
-		const real dtby2, const real dtby6, const real dtby7, const real dt7by30)
+template<unsigned int N, typename real_hi, typename real_lo>
+inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, 
+		real_hi *mPosOld, real_hi *mVelOld, real_lo *mAccOld, real_lo *mJerkOld, 
+		const real_lo dtby2, const real_lo dtby6, const real_lo dtby7, const real_lo dt7by30)
 {
 	if(N>0)	mVel[0] = mVelOld[0] + dtby2*((mAccOld[0]+mAcc[0]) + dtby6*  (mJerkOld[0]-mJerk[0]));
 	if(N>1)	mVel[1] = mVelOld[1] + dtby2*((mAccOld[1]+mAcc[1]) + dtby6*  (mJerkOld[1]-mJerk[1]));
@@ -240,65 +189,35 @@ inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk,
 	    }
 
 
-
-#if 0
-	if(numArray==9){
-		mVel[0] = mVelOld[0] + dtby2*((mAccOld[0]+mAcc[0]) + dtby6*  (mJerkOld[0]-mJerk[0]));
-		mVel[1] = mVelOld[1] + dtby2*((mAccOld[1]+mAcc[1]) + dtby6*  (mJerkOld[1]-mJerk[1]));
-		mVel[2] = mVelOld[2] + dtby2*((mAccOld[2]+mAcc[2]) + dtby6*  (mJerkOld[2]-mJerk[2]));
-		mVel[3] = mVelOld[3] + dtby2*((mAccOld[3]+mAcc[3]) + dtby6*  (mJerkOld[3]-mJerk[3]));
-		mVel[4] = mVelOld[4] + dtby2*((mAccOld[4]+mAcc[4]) + dtby6*  (mJerkOld[4]-mJerk[4]));
-		mVel[5] = mVelOld[5] + dtby2*((mAccOld[5]+mAcc[5]) + dtby6*  (mJerkOld[5]-mJerk[5]));
-		mVel[6] = mVelOld[6] + dtby2*((mAccOld[6]+mAcc[6]) + dtby6*  (mJerkOld[6]-mJerk[6]));
-		mVel[7] = mVelOld[7] + dtby2*((mAccOld[7]+mAcc[7]) + dtby6*  (mJerkOld[7]-mJerk[7]));
-		mVel[8] = mVelOld[8] + dtby2*((mAccOld[8]+mAcc[8]) + dtby6*  (mJerkOld[8]-mJerk[8]));
-		mPos[0] = mPosOld[0] + dtby2*((mVelOld[0]+mVel[0]) + dt7by30*((mAccOld[0]- mAcc[0]) + dtby7*(mJerkOld[0]+mJerk[0])));
-		mPos[1] = mPosOld[1] + dtby2*((mVelOld[1]+mVel[1]) + dt7by30*((mAccOld[1]- mAcc[1]) + dtby7*(mJerkOld[1]+mJerk[1])));
-		mPos[2] = mPosOld[2] + dtby2*((mVelOld[2]+mVel[2]) + dt7by30*((mAccOld[2]- mAcc[2]) + dtby7*(mJerkOld[2]+mJerk[2])));
-		mPos[3] = mPosOld[3] + dtby2*((mVelOld[3]+mVel[3]) + dt7by30*((mAccOld[3]- mAcc[3]) + dtby7*(mJerkOld[3]+mJerk[3])));
-		mPos[4] = mPosOld[4] + dtby2*((mVelOld[4]+mVel[4]) + dt7by30*((mAccOld[4]- mAcc[4]) + dtby7*(mJerkOld[4]+mJerk[4])));
-		mPos[5] = mPosOld[5] + dtby2*((mVelOld[5]+mVel[5]) + dt7by30*((mAccOld[5]- mAcc[5]) + dtby7*(mJerkOld[5]+mJerk[5])));
-		mPos[6] = mPosOld[6] + dtby2*((mVelOld[6]+mVel[6]) + dt7by30*((mAccOld[6]- mAcc[6]) + dtby7*(mJerkOld[6]+mJerk[6])));
-		mPos[7] = mPosOld[7] + dtby2*((mVelOld[7]+mVel[7]) + dt7by30*((mAccOld[7]- mAcc[7]) + dtby7*(mJerkOld[7]+mJerk[7])));
-		mPos[8] = mPosOld[8] + dtby2*((mVelOld[8]+mVel[8]) + dt7by30*((mAccOld[8]- mAcc[8]) + dtby7*(mJerkOld[8]+mJerk[8])));
-	}
-	else {
-		for(int i=0; i<numArray; i++) {
-			mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
-			mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
-		}
-	}
-#endif
-
 }
 //******************************************************************
 // * UpdateAccJerk function for 2 or 3 Planets 
 // *(real = float for single and mixed)
 // *(real = double for double)
 //******************************************************************
-template<class acc_real>
-__device__  void UpdateAccJerk(acc_real * mPos, acc_real * mVel, acc_real* mAcc, acc_real* mJerk, int nBodies,const float * d_mass) 
+template<typename real_hi, typename real_lo>
+__device__  void UpdateAccJerk(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, int nBodies,const float * d_mass) 
 {
-	acc_real dx[]={0,0,0}; 
-	acc_real dv[]={0,0,0}; 
-	acc_real dx_back[]={0,0,0}; 
-	acc_real dv_back[]={0,0,0}; 
+	real_hi dx[]={0,0,0}; 
+	real_hi dv[]={0,0,0}; 
+	real_hi dx_back[]={0,0,0}; 
+	real_hi dv_back[]={0,0,0}; 
 
-	acc_real r2=0;
-	acc_real rv=0;
-	acc_real rinv=0;
-	acc_real rinv3=0;
+	real_hi r2=0;
+	real_hi rv=0;
+	real_hi rinv=0;
+	real_hi rinv3=0;
 
-	acc_real ai0[]={0,0,0};
-	acc_real ai1[]={0,0,0};
-	acc_real ai2[]={0,0,0};
-	acc_real ji0[]={0,0,0};
-	acc_real ji1[]={0,0,0};
-	acc_real ji2[]={0,0,0};
+	real_lo ai0[]={0,0,0};
+	real_lo ai1[]={0,0,0};
+	real_lo ai2[]={0,0,0};
+	real_lo ji0[]={0,0,0};
+	real_lo ji1[]={0,0,0};
+	real_lo ji2[]={0,0,0};
 
 	//if(nBodies ==4) {
-	acc_real ai3[]={0,0,0};
-	acc_real ji3[]={0,0,0};
+	real_lo ai3[]={0,0,0};
+	real_lo ji3[]={0,0,0};
 	//}
 
 	//! planet1 and planet2
@@ -752,8 +671,10 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 		UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 4, &s_mass[0]);
 	else
 	{
-		doubleTofloat<nData>(sPos, mPos);
-		doubleTofloat<nData>(sVel, mVel);
+		copyArray<nData,float,double>(sPos,mPos);
+		copyArray<nData,float,double>(sVel,mVel);
+//		doubleTofloat<nData>(sPos, mPos);
+//		doubleTofloat<nData>(sVel, mVel);
 		UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 4, &s_mass[0]);
 		floatTodouble<nData>(mAcc,sAcc);
 		floatTodouble<nData>(mJerk,sJerk);
@@ -786,8 +707,10 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 4, &s_mass[0]);
 		else
 		{
-			doubleTofloat<nData>(sPos, mPos);
-			doubleTofloat<nData>(sVel, mVel);
+		copyArray<nData,float,double>(sPos,mPos);
+		copyArray<nData,float,double>(sVel,mVel);
+//			doubleTofloat<nData>(sPos, mPos);
+//			doubleTofloat<nData>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 4, &s_mass[0]);
 			floatTodouble<nData>(mAcc,sAcc);
 			floatTodouble<nData>(mJerk,sJerk);
@@ -806,8 +729,10 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 4, &s_mass[0]);
 		else
 		{
-			doubleTofloat<nData>(sPos, mPos);
-			doubleTofloat<nData>(sVel, mVel);
+		copyArray<nData,float,double>(sPos,mPos);
+		copyArray<nData,float,double>(sVel,mVel);
+//			doubleTofloat<nData>(sPos, mPos);
+//			doubleTofloat<nData>(sVel, mVel);
 			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 4, &s_mass[0]);
 			floatTodouble<nData>(mAcc,sAcc);
 			floatTodouble<nData>(mJerk,sJerk);
@@ -863,29 +788,30 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 	//const unsigned int current_id = sys; 
 
-	real mPos       [9];
-	real mVel       [9];
-	real mAcc       [9];
-	real mJerk      [9];
-	real mPosOld    [9];
-	real mVelOld    [9];
-	real mAccOld    [9];
-	real mJerkOld   [9];
+	const unsigned int nData=9;
+	typename pos_type<pre>::type mPos       [9];
+	typename pos_type<pre>::type mVel       [9];
+	typename acc_type<pre>::type mAcc       [9];
+	typename acc_type<pre>::type mJerk      [9];
+	typename pos_type<pre>::type mPosOld    [9];
+	typename pos_type<pre>::type mVelOld    [9];
+	typename acc_type<pre>::type mAccOld    [9];
+	typename acc_type<pre>::type mJerkOld   [9];
 
 	float sPos       [9];
 	float sVel       [9];
 	float sAcc       [9];
 	float sJerk      [9];
 
-	//const float s_mass[]={d_mass[t_start], d_mass[t_start+1],d_mass[t_start+2]};
 	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
 
-	const real dtby2=h/2.;
-	const real dtby3=h/3.;
-	const real dtby6=h/6.;
-	const real dt7by30=h*7./30.;
-	const real dtby7=h*7.;
-	const unsigned int nData=9;
+	const typename acc_type<pre>::type dtby2=h/2.;
+	const typename acc_type<pre>::type dtby3=h/3.;
+	const typename acc_type<pre>::type dtby6=h/6.;
+	const typename acc_type<pre>::type dt7by30=h*7./30.;
+	const typename acc_type<pre>::type dtby7=h*7.;
+	const typename pos_type<pre>::type hh=h;
+
 
 	//load data from global memory
 	mPos[0]=ens.x(sys,0);
@@ -908,78 +834,47 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[7]=ens.vy(sys,2);
 	mVel[8]=ens.vz(sys,2);
 
-	//UpdateAccJerk_General(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 	if(pre==1)
-		UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
+		UpdateAccJerk(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 	else
 	{
-		doubleTofloat<nData>(sPos, mPos);
-		doubleTofloat<nData>(sVel, mVel);
-		UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-		floatTodouble<nData>(mAcc,sAcc);
-		floatTodouble<nData>(mJerk,sJerk);
+		copyArray<nData>(sPos,mPos);
+		copyArray<nData>(sVel,mVel);
+		UpdateAccJerk(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 	}
 
 	while(T<Tend)
 	{
-		////Evolve(DeltaT);
-		//CopyToOld();
 
 		copyArray<nData>(mPosOld,mPos);
 		copyArray<nData>(mVelOld,mVel);
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
-		//for(unsigned int i=0; i<nData; ++i) {
-		//	mPosOld[i]=mPos[i];
-		//	mVelOld[i]=mVel[i];
-		//	mAccOld[i]=mAcc[i];
-		//	mJerkOld[i]=mJerk[i];
-		//}
 
-		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h);
-		//for(unsigned int i=0; i<nData; ++i) {
-		//	mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
-		//	mVel[i] += h* ( mAcc[i]+ dtby2*mJerk[i]);
-		//}
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
 
-		//UpdateAccJerk_General(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		if(pre==1)
-			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
+			UpdateAccJerk(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat<nData>(sPos, mPos);
-			doubleTofloat<nData>(sVel, mVel);
-			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble<nData>(mAcc,sAcc);
-			floatTodouble<nData>(mJerk,sJerk);
+		copyArray<nData>(sPos,mPos);
+		copyArray<nData>(sVel,mVel);
+			UpdateAccJerk(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		}
 
-		//Correct(dt);
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		
-		//for(unsigned int i=0; i<nData; ++i) {
-		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
-		//	mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
-		//}
 
-		//UpdateAccJerk_General(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		if(pre==1)
-			UpdateAccJerk<double>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
+			UpdateAccJerk(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		else
 		{
-			doubleTofloat<nData>(sPos, mPos);
-			doubleTofloat<nData>(sVel, mVel);
-			UpdateAccJerk<float>(&sPos[0], &sVel[0], &sAcc[0], &sJerk[0], 3, &s_mass[0]);
-			floatTodouble<nData>(mAcc,sAcc);
-			floatTodouble<nData>(mJerk,sJerk);
+		copyArray<nData>(sPos,mPos);
+		copyArray<nData>(sVel,mVel);
+			UpdateAccJerk(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
 		}
 
-		//Correct(dt);
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
-		//for(unsigned int i=0; i<nData; ++i) {
-		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
-		//	mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
-		//}
 
 		T += h;
 	}
