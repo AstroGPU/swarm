@@ -141,10 +141,6 @@ ieventstream &ieventstream::operator >>(eventlog_base::event &evt)
 	return *this;
 }
  
-} // namespace swarm 
-extern swarm::cpu_eventlog clog;
-
-namespace swarm {
 bool cpu_eventlog::need_gpu_flush()
 {
 	// download GPU counters
@@ -515,3 +511,5 @@ void binary_writer::process(ieventstream &es)
 
 
 } // end namespace swarm
+
+extern swarm::cpu_eventlog clog;

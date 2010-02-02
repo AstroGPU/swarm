@@ -173,10 +173,8 @@ public:
 	cpu_eventlog();
 	~cpu_eventlog();
 };
-} // namespace clog
-extern swarm::cpu_eventlog clog;
 
-namespace swarm {
+
 // event stream -- stream-like interface to extract events from cpu_eventlog
 struct ieventstream
 {
@@ -248,6 +246,7 @@ public:
 
 } // end namespace swarm
 
+extern swarm::cpu_eventlog clog;
 #if __CUDACC__
 __constant__ swarm::eventlog glog;
 #endif

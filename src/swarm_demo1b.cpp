@@ -5,6 +5,7 @@
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
 void print_selected_systems_for_demo(swarm::ensemble& ens);
 
+// Appears that this is no longer needed now that moved things to namespace swarm.  Fluke?
 //swarm::cpu_eventlog clog;  // Declared soley to prevent segfaults on exit
 
 int main(int argc, const char **argv)
