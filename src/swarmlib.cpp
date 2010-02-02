@@ -13,11 +13,15 @@
 // Utilities
 //
 
+// Appears unused
 void die(const std::string &msg)
 {
 	std::cerr << msg << "\n";
 	abort();
 }
+
+
+namespace swarm {
 
 void trim(std::string& str)
 {
@@ -562,3 +566,5 @@ ens_reader &ens_reader::operator >>(cpu_ensemble &ens)
 
 	return *this;
 }
+
+} // end namespace swarm

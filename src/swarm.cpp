@@ -12,8 +12,11 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
+swarm::cpu_eventlog clog; 
+
 int main(int argc, const char **argv)
 {
+  using namespace swarm;
 	if(argc != 2)
 	{
 		std::cerr << "Usage: " << argv[0] << " <integrator.cfg>\n";

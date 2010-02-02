@@ -2,13 +2,14 @@
 #include "swarmlog.h"
 #include <iostream>
 
-void set_initial_conditions_for_demo(ensemble& ens);
-void print_selected_systems_for_demo(ensemble& ens);
+void set_initial_conditions_for_demo(swarm::ensemble& ens);
+void print_selected_systems_for_demo(swarm::ensemble& ens);
 
-cpu_eventlog clog;  // Declared soley to prevent segfaults on exit
+// swarm::cpu_eventlog clog;  // Declared soley to prevent segfaults on exit
 
 int main(int argc, const char **argv)
 {
+  using namespace swarm;
 	std::cerr << "Set integrator parameters\n";
 	config cfg;
 	cfg["integrator"] = "cpu_hermite"; // integrator name
@@ -32,7 +33,7 @@ int main(int argc, const char **argv)
 	double dT = 1.*2.*M_PI;
 	ens.set_time_end_all(dT);
 
-	std::cerr << "Integrate ensemble on GPU.\n";
+	std::cerr << "Integrate ensemble on CPU.\n";
 	integ->integrate(ens, dT);				
 	std::cerr << "Integration complete.\n";
 
@@ -46,8 +47,9 @@ int main(int argc, const char **argv)
 
 
 
-void set_initial_conditions_for_demo(ensemble& ens) 
+void set_initial_conditions_for_demo(swarm::ensemble& ens) 
 {
+  using namespace swarm;
   std::cerr << "Set initial time for all systems.\n";
   ens.set_time_all(0.);	
 
@@ -74,8 +76,9 @@ void set_initial_conditions_for_demo(ensemble& ens)
     }
 }
 
-void print_selected_systems_for_demo(ensemble& ens)
+void print_selected_systems_for_demo(swarm::ensemble& ens)
 {
+  using namespace swarm;
   std::streamsize cout_precision_old = std::cout.precision();
   std::cout.precision(10);
   unsigned int nprint = 1;

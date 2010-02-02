@@ -4,6 +4,7 @@
 #include "swarm.h"
 #include <valarray>
 
+namespace swarm {
 
 class cpu_hermite_integrator : public integrator
 {
@@ -110,4 +111,5 @@ protected:
 	double jz_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 };
 
+} // end namespace swarm
 #endif

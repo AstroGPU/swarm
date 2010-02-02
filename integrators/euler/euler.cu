@@ -156,6 +156,8 @@
 
 */
 
+namespace swarm {
+
 
 struct prop_euler
 {
@@ -295,3 +297,5 @@ extern "C" integrator *create_gpu_euler(const config &cfg)
 {
 	return new gpu_generic_integrator<stop_on_ejection, prop_euler>(cfg);
 }
+
+} // end namespace swarm

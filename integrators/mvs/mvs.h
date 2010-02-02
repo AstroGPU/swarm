@@ -3,6 +3,8 @@
 
 #include "swarm.h"
 
+namespace swarm {
+
 class gpu_mvs_integrator : public integrator
 {
 protected:
@@ -17,5 +19,7 @@ public:
 public:
 	void integrate(gpu_ensemble &ens, double T, writer &w);
 };
+
+} // end namespace swarm
 
 #endif

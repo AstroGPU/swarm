@@ -13,6 +13,8 @@
 */
 
 
+namespace swarm {
+
 // System-defined event IDs. The user must ensure there's no collision between their event IDs and these.
 static const int EVT_EOF	= 0;
 
@@ -73,6 +75,7 @@ public:
 	struct body // for on-GPU state logging
 	{
 		int		sys, bod;
+	  // should time go here or in evt_hdr?
 		real_time	T;
 		real_mass	m;
 		real_pos	x, y, z;
@@ -120,7 +123,7 @@ public:
 	friend struct cpueventlog;
 	friend struct ieventstream;
 };
-__constant__ eventlog glog;
+//__constant__ eventlog glog;
 #endif
 
 // CPU end of the event log -- receives the events recorded
@@ -170,8 +173,10 @@ public:
 	cpu_eventlog();
 	~cpu_eventlog();
 };
-extern cpu_eventlog clog;
+} // namespace clog
+extern swarm::cpu_eventlog clog;
 
+namespace swarm {
 // event stream -- stream-like interface to extract events from cpu_eventlog
 struct ieventstream
 {
@@ -240,5 +245,11 @@ public:
 	// find and return the next printf message
 	std::string next_message();
 };
+
+} // end namespace swarm
+
+#if __CUDACC__
+__constant__ swarm::eventlog glog;
+#endif
 
 #endif

@@ -158,7 +158,7 @@ namespace io {
 	// Use this to tell stream that your user defined type
 	// may be treated as a plain-old-datatype
 	#define BLESS_POD(T) \
-		namespace boost { \
+	        namespace boost {	    \
 			template <> \
 				class is_pod<T> : public true_type \
 					{}; \

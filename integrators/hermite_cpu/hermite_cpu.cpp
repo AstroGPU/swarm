@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 
+namespace swarm {
 // We don't need to use this for CPU integrators
 // ensemble cpu_hermite_ens;
 
@@ -238,3 +239,5 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	    }
 	} // end loop over systems
 }
+
+} // end namespace swarm

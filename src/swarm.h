@@ -13,6 +13,18 @@
 
 #include "stopwatch.h"
 
+#ifdef THROW_IS_ABORT
+	#include <cassert>
+	#include <cstring>
+        #include <cstdio>
+#endif
+
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
+#include <sstream>
+#endif
+
+namespace swarm {
+
 class integrator;
 class ieventstream;
 class writer;
@@ -35,9 +47,6 @@ public:
 #ifndef THROW_IS_ABORT
 	#define ERROR(msg) throw swarm_error(msg);
 #else
-	#include <cassert>
-	#include <cstring>
-        #include <cstdio>
 	#define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
 #endif
 
@@ -300,7 +309,6 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens);
 void load_config(config &cfg, const std::string &fn);
 
 #ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
-#include <sstream>
 
 // get a configuration value for 'key', throwing an error if it doesn't exist
 // NOTE: heavy (unoptimized) function, use sparingly
@@ -417,6 +425,8 @@ T* hostAlloc(T* var, int nelem, bool usePinned = false)
 	}
 }
 
+} // end namespace swarm
+
 //
 // Utilities
 //
@@ -430,7 +440,9 @@ void trim(std::string& str);
 #ifndef __CUDACC__
 
 	#include <valarray>
+namespace swarm {
 	void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E);
+} // end namespace swarm
 
 #endif
 

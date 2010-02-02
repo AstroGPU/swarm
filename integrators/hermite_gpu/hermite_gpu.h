@@ -3,6 +3,7 @@
 
 #include "swarm.h"
 
+namespace swarm {
 
 struct gpu_hermite_integrator_data
 {
@@ -42,5 +43,7 @@ public:
 public:
 	void integrate(gpu_ensemble &ens, double T);
 };
+
+} // end namespace swarm
 
 #endif

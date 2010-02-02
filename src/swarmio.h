@@ -16,6 +16,8 @@ std::string str(const T& var)
 	return ss.str();
 }
 
+namespace swarm {
+
 //
 // I/O and snapshotting support
 //
@@ -42,5 +44,7 @@ public:
 	ens_reader &operator >>(cpu_ensemble &ens);
 	operator bool() const { return bin; }
 };
+
+} // end namespace swarm
 
 #endif

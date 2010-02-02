@@ -1,6 +1,8 @@
+#include <cassert>
 #include "swarm.h"
 #include "hermite_gpu.h"
-#include <cassert>
+
+namespace swarm {
 
 gpu_hermite_integrator::gpu_hermite_integrator(const config &cfg)
 {
@@ -18,3 +20,5 @@ extern "C" integrator *create_gpu_hermite(const config &cfg)
 {
 	return new gpu_hermite_integrator(cfg);
 }
+
+} // end namespace swarm
