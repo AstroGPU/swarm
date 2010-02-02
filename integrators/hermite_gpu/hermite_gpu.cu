@@ -110,8 +110,54 @@ inline __device__ void floatTodouble(double *doubleA, float *floatA)
 	copyArray<N,real,float>(doubleA,floatA);
 }
 
-inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h, int numArray)
+//inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h, int numArray)
+template<unsigned int N>
+inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, const real dtby2, const real dtby3, double h)
 {
+	if(N>0)	mPos[0] += h* (mVel[0]+ dtby2*(mAcc[0]+dtby3*mJerk[0]));
+	if(N>1)	mPos[1] += h* (mVel[1]+ dtby2*(mAcc[1]+dtby3*mJerk[1]));
+	if(N>2)	mPos[2] += h* (mVel[2]+ dtby2*(mAcc[2]+dtby3*mJerk[2]));
+	if(N>3)	mPos[3] += h* (mVel[3]+ dtby2*(mAcc[3]+dtby3*mJerk[3]));
+	if(N>4)	mPos[4] += h* (mVel[4]+ dtby2*(mAcc[4]+dtby3*mJerk[4]));
+	if(N>5)	mPos[5] += h* (mVel[5]+ dtby2*(mAcc[5]+dtby3*mJerk[5]));
+	if(N>6)	mPos[6] += h* (mVel[6]+ dtby2*(mAcc[6]+dtby3*mJerk[6]));
+	if(N>7)	mPos[7] += h* (mVel[7]+ dtby2*(mAcc[7]+dtby3*mJerk[7]));
+	if(N>8)	mPos[8] += h* (mVel[8]+ dtby2*(mAcc[8]+dtby3*mJerk[8]));
+	if(N>9)	mPos[9] += h* (mVel[9]+ dtby2*(mAcc[9]+dtby3*mJerk[9]));
+	if(N>10) mPos[10] += h* (mVel[10]+ dtby2*(mAcc[10]+dtby3*mJerk[10]));
+	if(N>11) mPos[11] += h* (mVel[11]+ dtby2*(mAcc[11]+dtby3*mJerk[11]));
+	if(N>12) mPos[12] += h* (mVel[12]+ dtby2*(mAcc[12]+dtby3*mJerk[12]));
+	if(N>13) mPos[13] += h* (mVel[13]+ dtby2*(mAcc[13]+dtby3*mJerk[13]));
+	if(N>14) mPos[14] += h* (mVel[14]+ dtby2*(mAcc[14]+dtby3*mJerk[14]));
+	if(N>15) mPos[15] += h* (mVel[15]+ dtby2*(mAcc[15]+dtby3*mJerk[15]));
+	if(N>16) mPos[16] += h* (mVel[16]+ dtby2*(mAcc[16]+dtby3*mJerk[16]));
+	if(N>17) mPos[17] += h* (mVel[17]+ dtby2*(mAcc[17]+dtby3*mJerk[17]));
+	if(N>0)	mVel[0] += h* (mAcc[0]+ dtby2*mJerk[0]);
+	if(N>1)	mVel[1] += h* (mAcc[1]+ dtby2*mJerk[1]);
+	if(N>2)	mVel[2] += h* (mAcc[2]+ dtby2*mJerk[2]);
+	if(N>3)	mVel[3] += h* (mAcc[3]+ dtby2*mJerk[3]);
+	if(N>4)	mVel[4] += h* (mAcc[4]+ dtby2*mJerk[4]);
+	if(N>5)	mVel[5] += h* (mAcc[5]+ dtby2*mJerk[5]);
+	if(N>6)	mVel[6] += h* (mAcc[6]+ dtby2*mJerk[6]);
+	if(N>7)	mVel[7] += h* (mAcc[7]+ dtby2*mJerk[7]);
+	if(N>8)	mVel[8] += h* (mAcc[8]+ dtby2*mJerk[8]);
+	if(N>9)	mVel[9] += h* (mAcc[9]+ dtby2*mJerk[9]);
+	if(N>10) mVel[10] += h* (mAcc[10]+ dtby2*mJerk[10]);
+	if(N>11) mVel[11] += h* (mAcc[11]+ dtby2*mJerk[11]);
+	if(N>12) mVel[12] += h* (mAcc[12]+ dtby2*mJerk[12]);
+	if(N>13) mVel[13] += h* (mAcc[13]+ dtby2*mJerk[13]);
+	if(N>14) mVel[14] += h* (mAcc[14]+ dtby2*mJerk[14]);
+	if(N>15) mVel[15] += h* (mAcc[15]+ dtby2*mJerk[15]);
+	if(N>16) mVel[16] += h* (mAcc[16]+ dtby2*mJerk[16]);
+	if(N>17) mVel[17] += h* (mAcc[17]+ dtby2*mJerk[17]);
+	if(N>18)
+		{	
+		for(int i=18; i<N; i++) {
+			mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
+			mVel[i] += h* (mAcc[i]+ dtby2*mJerk[i]);
+			}
+		}
+#if 0
 	if(numArray==9){
 		mPos[0] += h* (mVel[0]+ dtby2*(mAcc[0]+dtby3*mJerk[0]));
 		mPos[1] += h* (mVel[1]+ dtby2*(mAcc[1]+dtby3*mJerk[1]));
@@ -138,12 +184,64 @@ inline __device__ void predict(real *mPos, real *mVel, real *mAcc, real *mJerk, 
 			mVel[i] += h* (mAcc[i]+ dtby2*mJerk[i]);
 		}
 	}
+#endif
 }
 
+/* inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk, 
+		real *mPosOld, real *mVelOld, real *mAccOld, real *mJerkOld, 
+		const real dtby2, const real dtby6, const real dtby7, const real dt7by30, int numArray)*/
+template<unsigned int N>
 inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk, 
 		real *mPosOld, real *mVelOld, real *mAccOld, real *mJerkOld, 
-		const real dtby2, const real dtby6, const real dtby7, const real dt7by30, int numArray)
+		const real dtby2, const real dtby6, const real dtby7, const real dt7by30)
 {
+	if(N>0)	mVel[0] = mVelOld[0] + dtby2*((mAccOld[0]+mAcc[0]) + dtby6*  (mJerkOld[0]-mJerk[0]));
+	if(N>1)	mVel[1] = mVelOld[1] + dtby2*((mAccOld[1]+mAcc[1]) + dtby6*  (mJerkOld[1]-mJerk[1]));
+	if(N>2)	mVel[2] = mVelOld[2] + dtby2*((mAccOld[2]+mAcc[2]) + dtby6*  (mJerkOld[2]-mJerk[2]));
+	if(N>3)	mVel[3] = mVelOld[3] + dtby2*((mAccOld[3]+mAcc[3]) + dtby6*  (mJerkOld[3]-mJerk[3]));
+	if(N>4)	mVel[4] = mVelOld[4] + dtby2*((mAccOld[4]+mAcc[4]) + dtby6*  (mJerkOld[4]-mJerk[4]));
+	if(N>5)	mVel[5] = mVelOld[5] + dtby2*((mAccOld[5]+mAcc[5]) + dtby6*  (mJerkOld[5]-mJerk[5]));
+	if(N>6)	mVel[6] = mVelOld[6] + dtby2*((mAccOld[6]+mAcc[6]) + dtby6*  (mJerkOld[6]-mJerk[6]));
+	if(N>7)	mVel[7] = mVelOld[7] + dtby2*((mAccOld[7]+mAcc[7]) + dtby6*  (mJerkOld[7]-mJerk[7]));
+	if(N>8)	mVel[8] = mVelOld[8] + dtby2*((mAccOld[8]+mAcc[8]) + dtby6*  (mJerkOld[8]-mJerk[8]));
+	if(N>9)	mVel[9] = mVelOld[9] + dtby2*((mAccOld[9]+mAcc[9]) + dtby6*  (mJerkOld[9]-mJerk[9]));
+	if(N>10)	mVel[10] = mVelOld[10] + dtby2*((mAccOld[10]+mAcc[10]) + dtby6*  (mJerkOld[10]-mJerk[10]));
+	if(N>11)	mVel[11] = mVelOld[11] + dtby2*((mAccOld[11]+mAcc[11]) + dtby6*  (mJerkOld[11]-mJerk[11]));
+	if(N>12)	mVel[12] = mVelOld[12] + dtby2*((mAccOld[12]+mAcc[12]) + dtby6*  (mJerkOld[12]-mJerk[12]));
+	if(N>13)	mVel[13] = mVelOld[13] + dtby2*((mAccOld[13]+mAcc[13]) + dtby6*  (mJerkOld[13]-mJerk[13]));
+	if(N>14)	mVel[14] = mVelOld[14] + dtby2*((mAccOld[14]+mAcc[14]) + dtby6*  (mJerkOld[14]-mJerk[14]));
+	if(N>15)	mVel[15] = mVelOld[15] + dtby2*((mAccOld[15]+mAcc[15]) + dtby6*  (mJerkOld[15]-mJerk[15]));
+	if(N>16)	mVel[16] = mVelOld[16] + dtby2*((mAccOld[16]+mAcc[16]) + dtby6*  (mJerkOld[16]-mJerk[16]));
+	if(N>17)	mVel[17] = mVelOld[17] + dtby2*((mAccOld[17]+mAcc[17]) + dtby6*  (mJerkOld[17]-mJerk[17]));
+	if(N>0)	mPos[0] = mPosOld[0] + dtby2*((mVelOld[0]+mVel[0]) + dt7by30*((mAccOld[0]- mAcc[0]) + dtby7*(mJerkOld[0]+mJerk[0])));
+	if(N>1)	mPos[1] = mPosOld[1] + dtby2*((mVelOld[1]+mVel[1]) + dt7by30*((mAccOld[1]- mAcc[1]) + dtby7*(mJerkOld[1]+mJerk[1])));
+	if(N>2)	mPos[2] = mPosOld[2] + dtby2*((mVelOld[2]+mVel[2]) + dt7by30*((mAccOld[2]- mAcc[2]) + dtby7*(mJerkOld[2]+mJerk[2])));
+	if(N>3)	mPos[3] = mPosOld[3] + dtby2*((mVelOld[3]+mVel[3]) + dt7by30*((mAccOld[3]- mAcc[3]) + dtby7*(mJerkOld[3]+mJerk[3])));
+	if(N>4)	mPos[4] = mPosOld[4] + dtby2*((mVelOld[4]+mVel[4]) + dt7by30*((mAccOld[4]- mAcc[4]) + dtby7*(mJerkOld[4]+mJerk[4])));
+	if(N>5)	mPos[5] = mPosOld[5] + dtby2*((mVelOld[5]+mVel[5]) + dt7by30*((mAccOld[5]- mAcc[5]) + dtby7*(mJerkOld[5]+mJerk[5])));
+	if(N>6)	mPos[6] = mPosOld[6] + dtby2*((mVelOld[6]+mVel[6]) + dt7by30*((mAccOld[6]- mAcc[6]) + dtby7*(mJerkOld[6]+mJerk[6])));
+	if(N>7)	mPos[7] = mPosOld[7] + dtby2*((mVelOld[7]+mVel[7]) + dt7by30*((mAccOld[7]- mAcc[7]) + dtby7*(mJerkOld[7]+mJerk[7])));
+	if(N>8)	mPos[8] = mPosOld[8] + dtby2*((mVelOld[8]+mVel[8]) + dt7by30*((mAccOld[8]- mAcc[8]) + dtby7*(mJerkOld[8]+mJerk[8])));
+	if(N>9)	mPos[9] = mPosOld[9] + dtby2*((mVelOld[9]+mVel[9]) + dt7by30*((mAccOld[9]- mAcc[9]) + dtby7*(mJerkOld[9]+mJerk[9])));
+	if(N>10)	mPos[10] = mPosOld[10] + dtby2*((mVelOld[10]+mVel[10]) + dt7by30*((mAccOld[10]- mAcc[10]) + dtby7*(mJerkOld[10]+mJerk[10])));
+	if(N>11)	mPos[11] = mPosOld[11] + dtby2*((mVelOld[11]+mVel[11]) + dt7by30*((mAccOld[11]- mAcc[11]) + dtby7*(mJerkOld[11]+mJerk[11])));
+	if(N>12)	mPos[12] = mPosOld[12] + dtby2*((mVelOld[12]+mVel[12]) + dt7by30*((mAccOld[12]- mAcc[12]) + dtby7*(mJerkOld[12]+mJerk[12])));
+	if(N>13)	mPos[13] = mPosOld[13] + dtby2*((mVelOld[13]+mVel[13]) + dt7by30*((mAccOld[13]- mAcc[13]) + dtby7*(mJerkOld[13]+mJerk[13])));
+	if(N>14)	mPos[14] = mPosOld[14] + dtby2*((mVelOld[14]+mVel[14]) + dt7by30*((mAccOld[14]- mAcc[14]) + dtby7*(mJerkOld[14]+mJerk[14])));
+	if(N>15)	mPos[15] = mPosOld[15] + dtby2*((mVelOld[15]+mVel[15]) + dt7by30*((mAccOld[15]- mAcc[15]) + dtby7*(mJerkOld[15]+mJerk[15])));
+	if(N>16)	mPos[16] = mPosOld[16] + dtby2*((mVelOld[16]+mVel[16]) + dt7by30*((mAccOld[16]- mAcc[16]) + dtby7*(mJerkOld[16]+mJerk[16])));
+	if(N>17)	mPos[17] = mPosOld[17] + dtby2*((mVelOld[17]+mVel[17]) + dt7by30*((mAccOld[17]- mAcc[17]) + dtby7*(mJerkOld[17]+mJerk[17])));
+	if(N>18)
+	    {
+		for(int i=18; i<N; i++) {
+			mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
+			mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
+		}	
+	    }
+
+
+
+#if 0
 	if(numArray==9){
 		mVel[0] = mVelOld[0] + dtby2*((mAccOld[0]+mAcc[0]) + dtby6*  (mJerkOld[0]-mJerk[0]));
 		mVel[1] = mVelOld[1] + dtby2*((mAccOld[1]+mAcc[1]) + dtby6*  (mJerkOld[1]-mJerk[1]));
@@ -170,6 +268,8 @@ inline __device__ void correct(real *mPos, real *mVel, real *mAcc, real *mJerk,
 			mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
 		}
 	}
+#endif
+
 }
 //******************************************************************
 // * UpdateAccJerk function for 2 or 3 Planets 
@@ -675,7 +775,7 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 		//	mJerkOld[i]=mJerk[i];
 		//}
 
-		predict(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h, nData);
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
 		//	mVel[i] += h* ( mAcc[i]+ dtby2*mJerk[i]);
@@ -694,7 +794,7 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
+		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
@@ -714,7 +814,7 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
+		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
 		//	mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
@@ -836,7 +936,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		//	mJerkOld[i]=mJerk[i];
 		//}
 
-		predict(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h, nData);
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, h);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mPos[i] += h* (mVel[i]+ dtby2*(mAcc[i]+dtby3*mJerk[i]));
 		//	mVel[i] += h* ( mAcc[i]+ dtby2*mJerk[i]);
@@ -855,7 +955,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
+		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
@@ -875,7 +975,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		}
 
 		//Correct(dt);
-		correct(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30, nData);
+		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		//for(unsigned int i=0; i<nData; ++i) {
 		//	mVel[i] = mVelOld[i] + dtby2*((mAccOld[i]+ mAcc[i]) + dtby6*  (mJerkOld[i]-mJerk[i]));
 		//	mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
