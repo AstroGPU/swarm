@@ -774,7 +774,7 @@ __global__ void gpu_hermite_integrator_kernel4(double dT, double h)
 	ens.vy(sys,3)=mVel[10];
 	ens.vz(sys,3)=mVel[11];
 }
-template<int pre>
+template<unsigned int pre, unsigned int nbod>
 __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 {
 	using namespace gpu_hermite_aux;
@@ -786,22 +786,21 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	double    T = ens.time(sys);
 	double Tend = T + dT;
 
-	//const unsigned int current_id = sys; 
 
-	const unsigned int nData=9;
-	typename pos_type<pre>::type mPos       [9];
-	typename pos_type<pre>::type mVel       [9];
-	typename acc_type<pre>::type mAcc       [9];
-	typename acc_type<pre>::type mJerk      [9];
-	typename pos_type<pre>::type mPosOld    [9];
-	typename pos_type<pre>::type mVelOld    [9];
-	typename acc_type<pre>::type mAccOld    [9];
-	typename acc_type<pre>::type mJerkOld   [9];
+	const unsigned int nData=3*nbod;
+	typename pos_type<pre>::type mPos       [nData];
+	typename pos_type<pre>::type mVel       [nData];
+	typename acc_type<pre>::type mAcc       [nData];
+	typename acc_type<pre>::type mJerk      [nData];
+	typename pos_type<pre>::type mPosOld    [nData];
+	typename pos_type<pre>::type mVelOld    [nData];
+	typename acc_type<pre>::type mAccOld    [nData];
+	typename acc_type<pre>::type mJerkOld   [nData];
 
-	float sPos       [9];
-	float sVel       [9];
-	float sAcc       [9];
-	float sJerk      [9];
+	float sPos       [nData];
+	float sVel       [nData];
+//	float sAcc       [nData];
+//	float sJerk      [nData];
 
 	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
 
@@ -814,25 +813,64 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 
 	//load data from global memory
+	if(nbod>0)
+	{
 	mPos[0]=ens.x(sys,0);
 	mPos[1]=ens.y(sys,0);
 	mPos[2]=ens.z(sys,0);
-	mPos[3]=ens.x(sys,1);
-	mPos[4]=ens.y(sys,1);
-	mPos[5]=ens.z(sys,1);
-	mPos[6]=ens.x(sys,2);
-	mPos[7]=ens.y(sys,2);
-	mPos[8]=ens.z(sys,2);
-
 	mVel[0]=ens.vx(sys,0);
 	mVel[1]=ens.vy(sys,0);
 	mVel[2]=ens.vz(sys,0);
+	}
+	if(nbod>1)
+	{
+	mPos[3]=ens.x(sys,1);
+	mPos[4]=ens.y(sys,1);
+	mPos[5]=ens.z(sys,1);
 	mVel[3]=ens.vx(sys,1);
 	mVel[4]=ens.vy(sys,1);
 	mVel[5]=ens.vz(sys,1);
+	}
+	if(nbod>2)
+	{
+	mPos[6]=ens.x(sys,2);
+	mPos[7]=ens.y(sys,2);
+	mPos[8]=ens.z(sys,2);
 	mVel[6]=ens.vx(sys,2);
 	mVel[7]=ens.vy(sys,2);
 	mVel[8]=ens.vz(sys,2);
+	}
+	if(nbod>3)
+	{
+	mPos[9]=ens.x(sys,3);
+	mPos[10]=ens.y(sys,3);
+	mPos[11]=ens.z(sys,3);
+	mVel[9]=ens.vx(sys,3);
+	mVel[10]=ens.vy(sys,3);
+	mVel[11]=ens.vz(sys,3);
+	}
+	if(nbod>4)
+	{
+	mPos[12]=ens.x(sys,4);
+	mPos[13]=ens.y(sys,4);
+	mPos[14]=ens.z(sys,4);
+	mVel[12]=ens.vx(sys,4);
+	mVel[13]=ens.vy(sys,4);
+	mVel[14]=ens.vz(sys,4);
+	}
+	if(nbod>5)
+	{
+	unsigned int idx = 15;
+	for(unsigned int plid=5;plid<nbod;++plid)
+		{	
+		mPos[idx]=ens.x(sys,plid);
+		mVel[idx]=ens.vx(sys,plid); ++idx;
+		mPos[idx]=ens.y(sys,plid);
+		mVel[idx]=ens.vy(sys,plid); ++idx;
+		mPos[idx]=ens.z(sys,plid);
+		mVel[idx]=ens.vz(sys,plid); ++idx;
+		}
+	}
 
 	if(pre==1)
 		UpdateAccJerk(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], 3, &s_mass[0]);
@@ -879,25 +917,65 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		T += h;
 	}
 	ens.time(sys) = T;
+	if(nbod>0)
+	{
 	ens.x(sys,0)=mPos[0];
 	ens.y(sys,0)=mPos[1];
 	ens.z(sys,0)=mPos[2];
-	ens.x(sys,1)=mPos[3];
-	ens.y(sys,1)=mPos[4];
-	ens.z(sys,1)=mPos[5];
-	ens.x(sys,2)=mPos[6];
-	ens.y(sys,2)=mPos[7];
-	ens.z(sys,2)=mPos[8];
-
 	ens.vx(sys,0)=mVel[0];
 	ens.vy(sys,0)=mVel[1];
 	ens.vz(sys,0)=mVel[2];
+	}
+	if(nbod>1)
+	{
+	ens.x(sys,1)=mPos[3];
+	ens.y(sys,1)=mPos[4];
+	ens.z(sys,1)=mPos[5];
 	ens.vx(sys,1)=mVel[3];
 	ens.vy(sys,1)=mVel[4];
 	ens.vz(sys,1)=mVel[5];
+	}
+	if(nbod>2)
+	{
+	ens.x(sys,2)=mPos[6];
+	ens.y(sys,2)=mPos[7];
+	ens.z(sys,2)=mPos[8];
 	ens.vx(sys,2)=mVel[6];
 	ens.vy(sys,2)=mVel[7];
 	ens.vz(sys,2)=mVel[8];
+	}
+	if(nbod>3)
+	{
+	ens.x(sys,3)=mPos[9];
+	ens.y(sys,3)=mPos[10];
+	ens.z(sys,3)=mPos[11];
+	ens.vx(sys,3)=mVel[9];
+	ens.vy(sys,3)=mVel[10];
+	ens.vz(sys,3)=mVel[11];
+	}
+	if(nbod>4)
+	{
+	ens.x(sys,4)=mPos[12];
+	ens.y(sys,4)=mPos[13];
+	ens.z(sys,4)=mPos[14];
+	ens.vx(sys,4)=mVel[12];
+	ens.vy(sys,4)=mVel[13];
+	ens.vz(sys,4)=mVel[14];
+	}
+	if(nbod>5)
+	{
+	unsigned int idx = 15;
+	for(unsigned int plid=5;plid<nbod;++plid)
+		{	
+		mPos[idx]=ens.x(sys,plid);
+		mVel[idx]=ens.vx(sys,plid); ++idx;
+		mPos[idx]=ens.y(sys,plid);
+		mVel[idx]=ens.vy(sys,plid); ++idx;
+		mPos[idx]=ens.z(sys,plid);
+		mVel[idx]=ens.vz(sys,plid); ++idx;
+		}
+	}
+
 }
 
 void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
@@ -917,15 +995,15 @@ void gpu_hermite_integrator::integrate(gpu_ensemble &ens, double dT)
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,3><<<gridDim, threadsPerBlock>>>(dT, h);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,3><<<gridDim, threadsPerBlock>>>(dT, h);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,3><<<gridDim, threadsPerBlock>>>(dT, h);
 				break;
 		}
 	}
