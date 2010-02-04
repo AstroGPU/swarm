@@ -757,6 +757,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 
 		T += h;
+		ens.nstep(sys)++;
 	}
 	ens.time(sys) = T;
 	if(nbod>0)

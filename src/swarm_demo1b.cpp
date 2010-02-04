@@ -110,7 +110,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
   unsigned int nprint = 1;
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
-      std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << "\n";
+      std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << " nsteps= " << ens.nstep(systemid) << "\n";
       for(unsigned int bod=0;bod<ens.nbod();++bod)
 	{
 	  std::cout << "body= " << bod << ": pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";

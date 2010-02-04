@@ -23,7 +23,7 @@ struct gpu_hermite_integrator_data
   real_vel        *m_vxyz_old;
   real_acc        *m_acc, *m_acc_old;
   real_jerk       *m_jerk, *m_jerk_old;
-  
+
   // Other parameters the integrator will need
   float h;
 };
@@ -47,8 +47,6 @@ public:
 	void integrate(gpu_ensemble &ens, double T);
 
 };
-
-
 
 
 } // end namespace hermite_gpu

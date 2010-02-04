@@ -236,6 +236,7 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	    {
 	      Evolve ( ens,sys );
 	      ens.time( sys ) += h;
+	      ens.nstep(sys)++;
 	    }
 	} // end loop over systems
 }

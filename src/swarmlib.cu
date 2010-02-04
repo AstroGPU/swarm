@@ -261,6 +261,7 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 	typedef ThreeVector<real> V3;
 
 	// Calculate acceleration and jerk for the system, storing the outputs into arrays aa, jj
+	//  Is the ordering of dimensions what we want?
 	//
 	// NOTE: The second loop goes from (nbod..0], which is the optimal choice
 	//       from numerical precision standpoint if bod=0 is the most massive
