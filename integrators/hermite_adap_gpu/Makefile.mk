@@ -12,8 +12,5 @@
 #        they require must also refer to them using full paths.
 #
 
-CUDA_DEPS+=integrators/hermite_adap_gpu/hermite_adap_gpu.cu integrators/hermite_adap_gpu/hermite_adap_gpu.h
-
-OBJECTS+=integrators/hermite_adap_gpu/hermite_adap_gpu.o
-
-integrators/hermite_gpu/hermite_gpu.o : integrators/hermite_adap_gpu/hermite_adap_gpu.h
+LIBSWARM_CUDA+=integrators/hermite_adap_gpu/hermite_adap_gpu.cu
+LIBSWARM_SOURCES+=integrators/hermite_adap_gpu/hermite_adap_gpu.cpp
