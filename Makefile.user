@@ -1,0 +1,3 @@
+CCUDAFLAGS=#-deviceemu
+NBODIES=4
+INTEGRATORCFG=integrator-acboley.cfg
