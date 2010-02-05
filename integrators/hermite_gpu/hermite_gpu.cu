@@ -620,7 +620,8 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	float sPos       [nData];
 	float sVel       [nData];
 
-	const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2)};
+	float s_mass[nbod];
+	//const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2), ens.mass(sys,3)};
 
 	const typename acc_type<pre>::type dtby2=h/2.;
 	const typename acc_type<pre>::type dtby3=h/3.;
@@ -639,6 +640,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[0]=ens.vx(sys,0);
 	mVel[1]=ens.vy(sys,0);
 	mVel[2]=ens.vz(sys,0);
+	s_mass[0]=ens.mass(sys, 0);
 	}
 	if(nbod>1)
 	{
@@ -648,6 +650,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[3]=ens.vx(sys,1);
 	mVel[4]=ens.vy(sys,1);
 	mVel[5]=ens.vz(sys,1);
+	s_mass[1]=ens.mass(sys, 1);
 	}
 	if(nbod>2)
 	{
@@ -657,6 +660,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[6]=ens.vx(sys,2);
 	mVel[7]=ens.vy(sys,2);
 	mVel[8]=ens.vz(sys,2);
+	s_mass[2]=ens.mass(sys, 2);
 	}
 	if(nbod>3)
 	{
@@ -666,6 +670,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[9]=ens.vx(sys,3);
 	mVel[10]=ens.vy(sys,3);
 	mVel[11]=ens.vz(sys,3);
+	s_mass[3]=ens.mass(sys, 3);
 	}
 	if(nbod>4)
 	{
@@ -675,6 +680,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	mVel[12]=ens.vx(sys,4);
 	mVel[13]=ens.vy(sys,4);
 	mVel[14]=ens.vz(sys,4);
+	s_mass[4]=ens.mass(sys, 4);
 	}
 	if(nbod>5)
 	{
@@ -687,24 +693,25 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		mVel[idx]=ens.vy(sys,plid); ++idx;
 		mPos[idx]=ens.z(sys,plid);
 		mVel[idx]=ens.vz(sys,plid); ++idx;
+		s_mass[plid]=ens.mass(sys, plid);
 		}
 	}
 
 	if(pre==1)
 	{
-	if(nbod<4)
-		UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	else
-		UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
 	else
 	{
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
-	if(nbod<4)
-		UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	else
-		UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}
 
 	while(T<Tend)
@@ -719,7 +726,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 		if(pre==1)
 		{
-		if(nbod<4)
+		if(nbod<5)
 			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		else
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
@@ -728,7 +735,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		{
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
-		if(nbod<4)
+		if(nbod<5)
 			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		else
 			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
@@ -739,7 +746,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 		if(pre==1)
 		{
-		if(nbod<4)
+		if(nbod<5)
 			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		else	
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
@@ -748,7 +755,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		{
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
-		if(nbod<4)
+		if(nbod<5)
 			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		else
 			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
