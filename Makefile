@@ -102,8 +102,8 @@ src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
 	@ echo "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
 	$(GENUI) ./bin/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
-src/autogen_dont_edit.o : src/autogen_dont_edit.cu_o
-	$(GENUI) cp -a src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
+src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o
+	$(GENUI) cp src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
 
 bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
@@ -167,8 +167,15 @@ bin/Makefile.d: Makefile
 %.d: %.cpp
 	$(DEPUI) $(CXX) -M -MT "$@ $(subst .cpp,.o,$<)" $(CXXFLAGS) $< > $@
 
+# The 1st sed adds cu_d file as a target to be remade if any of the deps change
+# The 2nd sed is a workaround for nvcc 2.3 (or gcc?) bug where the file directory is listed as a dependency
+# The 3rd sed fixes a problem where multiple slashes (i.e. //) may be present in the target, because $(dir $<) leaves the trailing slash, and nvcc -odir expects there to be none
 %.cu_d: %.cu
-	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< | sed 's,$$*.cu_o,& $@,g' > $@
+	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< \
+		| sed 's,\($$*\)\.o[ :]*,\1.cu_o $@ : ,g' \
+		| sed 's,.*/ \\,    \\,g' \
+		| sed 's,//,/,g' \
+		 > $@
 
 
 # Include all auto-generated dependencies, unless we're clean-ing or tidy-ing
