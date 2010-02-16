@@ -168,7 +168,7 @@ bin/Makefile.d: Makefile
 	$(DEPUI) $(CXX) -M -MT "$@ $(subst .cpp,.o,$<)" $(CXXFLAGS) $< > $@
 
 %.cu_d: %.cu
-	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< | sed 's,$$*.o,& $@,g' > $@
+	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< | sed 's,$$*.cu_o,& $@,g' > $@
 
 
 # Include all auto-generated dependencies, unless we're clean-ing or tidy-ing
