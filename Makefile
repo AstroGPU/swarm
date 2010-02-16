@@ -112,8 +112,11 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 # Utilities
 #
 
-test: all
-	(cd run && (test -f data.0 || ../bin/easyGen.py) && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
+test-dataset:
+	(cd run && (test -f data.0 || ../bin/easyGen.py))
+
+test: all test-dataset
+	(cd run && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
 
 clean:
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
