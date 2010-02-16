@@ -258,9 +258,9 @@ struct stop_on_ejection
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
 			ts.eject = true;
-			//glog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
-			int evtref = glog.log_event(EVT_EJECTION, sys, bod, r, T);
-			glog.log_body(ens, sys, bod, T, evtref);
+			//dlog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
+			int evtref = dlog.log_event(EVT_EJECTION, sys, bod, r, T);
+			dlog.log_body(ens, sys, bod, T, evtref);
 		}
 
 		// called after the entire system has completed a single timestep advance.

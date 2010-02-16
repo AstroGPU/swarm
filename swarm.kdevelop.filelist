@@ -38,6 +38,7 @@ src/cux/cuda_rng.h
 src/cux/cux.cpp
 src/cux/cux.h
 src/cux/cux_lowlevel.h
+src/eventstream.h
 src/stopwatch.h
 src/swarm.cpp
 src/swarm.h

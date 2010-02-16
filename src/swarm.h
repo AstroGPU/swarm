@@ -14,8 +14,9 @@
 #include "stopwatch.h"
 
 class integrator;
-class ieventstream;
+class event;
 class writer;
+class output_buffers;
 class gpu_ensemble;
 class cpu_ensemble;
 
@@ -307,7 +308,7 @@ inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 class writer
 {
 	public:
-		virtual void process(ieventstream &es) = 0;
+		virtual void process(const output_buffers &ob) = 0;
 		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 
 	public:

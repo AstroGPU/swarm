@@ -87,7 +87,7 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 		// for debugging
 		log.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
 
-		int evtref = glog.log_event(EVT_SNAPSHOT, sys, T);
+		int evtref = dlog.log_event(EVT_SNAPSHOT, sys, T);
 		log.log_system(ens, sys, T, evtref);
 
 		// set next stopping time
@@ -113,7 +113,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
-		output_if_needed(glog, ens, T, sys);
+		output_if_needed(dlog, ens, T, sys);
 
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tend, stop, stop_ts, step);
@@ -121,7 +121,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		step++;
 	}
 
-	output_if_needed(glog, ens, T, sys);
+	output_if_needed(dlog, ens, T, sys);
 
 	ens.time(sys) = T;
 }
@@ -132,8 +132,8 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens;
 	int sys = threadId();
-//	if(sys == 0) glog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
-//	if(sys == 0) glog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
+//	if(sys == 0) dlog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
+//	if(sys == 0) dlog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
 //	return;
 
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
@@ -189,11 +189,11 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	int iter = 0;
 	do
 	{
-		clog.printf("Starting kernel run #%d", iter);
-		clog.printf("Another unnecessary message from the CPU side");
+		hlog.printf("Starting kernel run #%d", iter);
+		hlog.printf("Another unnecessary message from the CPU side");
 //		debug_hook();
 		retval_gpu.memset(0);
-		clog.prepare_for_gpu();
+		hlog.prepare_for_gpu();
 		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
 		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
@@ -203,7 +203,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		if(nactive0 == -1) { nactive0 = retval.nactive; }
 
 		// check if we should download and clear the output buffers
-		clog.flush_if_needed();
+		hlog.flush_if_needed();
 
 		// check if we should compactify or stop
 		if(retval.nactive == 0)
@@ -216,9 +216,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 			nactive0 = retval.nactive;
 		}
 	} while(true);
-	clog.printf("Exiting integrate");
+	hlog.printf("Exiting integrate");
 
-	clog.flush();
+	hlog.flush();
 }
 
 template<typename stopper_t, typename propagator_t>
