@@ -23,9 +23,10 @@ static const int EVT_SNAPSHOT	= 1000002;	// marks a snapshot of a system. see ou
 extern "C" void debug_hook();
 
 /*
-	Align the pointer to a 4-byte boundary.
+	Align the pointer to a 4-byte boundary, preparing it to store
+	the size of next data subpacket.
 */
-inline __device__ __host__ void align_to_header(int &at)
+inline __device__ __host__ void align_for_header(int &at)
 {
 	while (at % 4) at++;
 }
@@ -39,7 +40,7 @@ inline __device__ __host__ void align_to_header(int &at)
 	a double to a location that is not 8-byte aligned will result
 	in silent overwriting of data before/after the location).
 */
-inline __device__ __host__ void align_to_payload(int &at, int size)
+inline __device__ __host__ void align_for_payload(int &at, int size)
 {
 	if(size > 4) { while (at % 8) at++; }
 	if(size > 8) { while (at % 16) at++; }
@@ -50,7 +51,7 @@ inline __device__ __host__ void align_to_payload(int &at, int size)
 struct event // TODO: Rename it event_packet
 {
 public:
-	struct ALIGN(4) header
+	struct ALIGN(16) header
 	{
 		int evtid;	// event ID
 		int evtref;	// unique event number
@@ -80,7 +81,9 @@ protected:
 	friend class eventlog;
 };
 
-// extracting data from an event packet
+//
+// event data unserializer
+//
 struct ievent
 {
 public:
@@ -108,12 +111,12 @@ public:
 	{
 		if(!test_end()) { return *this; }
 
-		align_to_header(at);
+		align_for_header(at);
 		int size = *(int*)(evt->data + at);
 		if(size != sizeof(T)) ERROR("Programmer error: data size != type size. Contact the authors.");
 		at += sizeof(int);
 
-		align_to_payload(at, size);
+		align_for_payload(at, size);
 		v = *(T*)(evt->data + at);
 		at += sizeof(T);
 		return *this;
@@ -128,7 +131,9 @@ public:
 class device_eventlog;
 class host_eventlog;
 
-// storing data into an event packet
+//
+// event data serializer
+//
 struct oevent
 {
 protected:
@@ -152,11 +157,11 @@ public:
 	template<typename T>
 	__device__ __host__ oevent &operator<<(const T &data)
 	{
-		align_to_header(offs);
+		align_for_header(offs);
 		if(sizeof(int)+offs > event::PAYLOAD_SIZE) { offs = -1; return *this; } // buffer overflow; abort writing.
 		*(int*)(evt->data + offs) = sizeof(data); offs += sizeof(int);
 
-		align_to_payload(offs, sizeof(T));
+		align_for_payload(offs, sizeof(T));
 		if(sizeof(T)+offs > event::PAYLOAD_SIZE) { offs = -1; return *this; } // buffer overflow; abort writing.
 		*(T*)(evt->data + offs) = data; offs += sizeof(T);
 
@@ -165,7 +170,7 @@ public:
 
 	__device__ __host__ oevent &operator<<(const char *c)
 	{
-		align_to_header(offs);
+		align_for_header(offs);
 		int offs0 = offs;
 		offs += sizeof(int);
 
@@ -202,6 +207,7 @@ struct body
 	int		user_data;	// e.g.: flags, eventId, etc.
 };
 
+// argument-passing struct for writer::process()
 struct output_buffers
 {
 	const event *events;
@@ -211,6 +217,11 @@ struct output_buffers
 	int nbod, nbod_dropped;
 };
 
+//
+// eventlog - Base class for event log objects. DO NOT USE this object directly;
+// use instead the derived host_/device_eventlog classes, and hlog/dlog static
+// objects.
+//
 struct eventlog
 {
 protected:
@@ -312,20 +323,9 @@ __constant__ device_eventlog dlog;
 struct host_eventlog : public eventlog
 {
 protected:
-	event *alloc_event(int evtid)
-	{
-		int idx = ctr->nevt++;
-		return prepare_event(idx, evtid, -1);
-	}
 	friend class oevent;
-
-	int log_body(const ensemble &ens, int sys, int bod, double T, int user_data = -1)
-	{
-		prepare_for_cpu();
-		flush_if_needed(true);
-		int nbod = ctr->nbod++;
-		return store_body(nbod, ens, sys, bod, T, user_data);
-	}
+	event *alloc_event(int evtid);
+	int log_body(const ensemble &ens, int sys, int bod, double T, int user_data = -1);
 
 public:
 	#define __DEVICE__
@@ -381,7 +381,5 @@ inline __host__ oevent::oevent(host_eventlog &dest, int evtid)
 	evt = dest.alloc_event(evtid);
 	offs = 0;
 }
-
-#include "eventstream.h"
 
 #endif

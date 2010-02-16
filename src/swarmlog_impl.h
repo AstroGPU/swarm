@@ -87,18 +87,18 @@ public:
 	template<typename T>
 	__DEVICE__ void push_data(int &offs, int endoffs, const T &data)
 	{
-		align_to_header(offs);
+		align_for_header(offs);
 		if(sizeof(int)+offs > endoffs) { offs = endoffs+1; return; } // buffer overflow; abort writing.
 		*(int*)(this->events.raw + offs) = sizeof(data); offs += sizeof(int);
 
-		align_to_payload(offs, sizeof(T));
+		align_for_payload(offs, sizeof(T));
 		if(sizeof(T)+offs > endoffs) { offs = endoffs+1; return; } // buffer overflow; abort writing.
 		*(T*)(this->events.raw + offs) = data; offs += sizeof(T);
 	}
 
 	__DEVICE__ void push_data(int &offs, int endoffs, const char *c)
 	{
-		align_to_header(offs);
+		align_for_header(offs);
 		int offs0 = offs;
 		offs += sizeof(int);
 

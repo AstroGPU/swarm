@@ -29,11 +29,11 @@ ievent &ievent::operator >>(opaque_data &v)
 {
 	if(!test_end()) { return *this; }
 
-	align_to_header(at);
+	align_for_header(at);
 	v.size = *(int*)(evt->data + at);
 	at += sizeof(int);
 
-	if(v.size > 0) { align_to_payload(at, v.size); } else { v.size *= -1; }
+	if(v.size > 0) { align_for_payload(at, v.size); } else { v.size *= -1; }
 	v.data = evt->data+at;
 	at += v.size;
 	return *this;
@@ -43,7 +43,7 @@ ievent &ievent::operator >>(std::string &s)
 {
 	if(!test_end()) { return *this; }
 
-	align_to_header(at);
+	align_for_header(at);
 	int size = *(int*)(evt->data + at);
 	assert(size < 0);
 	size *= -1;
@@ -61,7 +61,7 @@ ievent &ievent::operator >>(char *s)
 {
 	if(!test_end()) { return *this; }
 
-	align_to_header(at);
+	align_for_header(at);
 	int size = *(int*)(evt->data + at);
 	assert(size < 0);
 	size *= -1;
@@ -83,6 +83,21 @@ ievent &ievent::operator >>(event &evt)
 	at = evt.hdr.len;
 
 	return *this;
+}
+
+event *host_eventlog::alloc_event(int evtid)
+{
+	prepare_for_cpu();
+	int idx = ctr->nevt++;
+	return prepare_event(idx, evtid, -1);
+}
+
+int host_eventlog::log_body(const ensemble &ens, int sys, int bod, double T, int user_data)
+{
+	prepare_for_cpu();
+	flush_if_needed(true);
+	int nbod = ctr->nbod++;
+	return store_body(nbod, ens, sys, bod, T, user_data);
 }
 
 # if 0
@@ -177,7 +192,7 @@ void host_eventlog::copyFromGPU()
 
 	// download the data
 	events.evt = hostAlloc(events.evt, ecap);
-	memset(events.evt, 0, ecap * sizeof(event));
+	memset(events.evt, 0, ecap * sizeof(event)); // debugging!
 	memcpyToHost(events.evt, dlog.events.evt, ecap);
 	bodies = hostAlloc(bodies, bcap);
 	memcpyToHost(bodies, dlog.bodies, bcap);
@@ -339,6 +354,7 @@ bool ievent::isprintf() const
 	{
 		return false;
 	}
+	return true;
 }
 
 std::string ievent::printf() const
