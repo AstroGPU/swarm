@@ -14,7 +14,8 @@
 
 int main(int argc, const char **argv)
 {
-  using namespace swarm;
+	using namespace swarm;
+
 	if(argc != 2)
 	{
 		std::cerr << "Usage: " << argv[0] << " <integrator.cfg>\n";

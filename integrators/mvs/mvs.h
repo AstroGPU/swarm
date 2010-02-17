@@ -17,7 +17,7 @@ public:
 	gpu_mvs_integrator(const config &cfg);
 
 public:
-	void integrate(gpu_ensemble &ens, double T, writer &w);
+	void integrate(gpu_ensemble &ens, double T);
 };
 
 } // end namespace swarm

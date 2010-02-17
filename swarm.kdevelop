@@ -18,8 +18,8 @@
     <run>
       <directoryradio>executable</directoryradio>
       <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
-      <programargs>integrator.cfg</programargs>
-      <globaldebugarguments>integrator.cfg</globaldebugarguments>
+      <programargs>integrator-mjuric.cfg</programargs>
+      <globaldebugarguments>integrator-mjuric.cfg</globaldebugarguments>
       <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
@@ -210,7 +210,7 @@
     </groups>
     <tree>
       <hidepatterns>*.o,*.lo,CVS</hidepatterns>
-      <hidenonprojectfiles>true</hidenonprojectfiles>
+      <hidenonprojectfiles>false</hidenonprojectfiles>
     </tree>
   </kdevfileview>
   <kdevdocumentation>

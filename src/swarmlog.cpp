@@ -234,12 +234,13 @@ swarm::host_eventlog::host_eventlog()
 {
 	// set everything to NULL
 	memset(this, 0, sizeof(*this));
-
+#if 0
 	std::cerr << "Constructing cpu_eventlog\n";
 	std::cerr << this << "\n";
 	std::cerr << (void*)events.evt << " " << bodies << " " << ctr << "\n";
 	std::cerr << (void*)dlog.events.evt << " " << dlog.bodies << " " << dlog.ctr << "\n";
 	std::cerr << "...\n";
+#endif
 }
 
 //
@@ -278,12 +279,13 @@ void swarm::host_eventlog::initialize(int ecap_, int bcap_, int scap_)
 
 swarm::host_eventlog::~host_eventlog()
 {
+#if 0
 	std::cerr << "Destructing cpu_eventlog\n";
 	std::cerr << this << "\n";
 	std::cerr << (void*)events.evt << " " << bodies << " " << ctr << "\n";
 	std::cerr << (void*)dlog.events.evt << " " << dlog.bodies << " " << dlog.ctr << "\n";
 	std::cerr << "...\n";
-
+#endif
 	// Host
 	hostFree(events.evt);
 	hostFree(bodies);
