@@ -1,6 +1,7 @@
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>
+#include <memory>
 
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
 void print_selected_systems_for_demo(swarm::ensemble& ens);

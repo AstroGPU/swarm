@@ -1,3 +1,46 @@
+#if 1
+	// NOTE: We could rewrite this to be MUCH, MUCH simpler if we could use
+	//       variadic templates from C++0x
+	//
+		__DEVICE__ int log_event(int evtid)
+		{ return (oevent(*this, evtid)).evtref(); }
+
+	template<typename T1>
+		__DEVICE__ int log_event(int evtid, const T1 &v1)
+		{ return (oevent(*this, evtid) << v1).evtref(); }
+
+	template<typename T1, typename T2>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2)
+		{ return (oevent(*this, evtid) << v1 << v2).evtref(); }
+
+	template<typename T1, typename T2, typename T3>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3).evtref(); }
+
+	template<typename T1, typename T2, typename T3, typename T4>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4).evtref(); }
+
+	template<typename T1, typename T2, typename T3, typename T4, typename T5>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4 << v5).evtref(); }
+
+	template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4 << v5 << v6).evtref(); }
+
+	template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4 << v5 << v6 << v7).evtref(); }
+	
+	template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4 << v5 << v6 << v7 << v8).evtref(); }
+	
+	template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+		__DEVICE__ int log_event(int evtid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
+		{ return (oevent(*this, evtid) << v1 << v2 << v3 << v4 << v5 << v6 << v7 << v8 << v9).evtref(); }
+	
 	//
 	// Printf-like facility
 	//
@@ -30,30 +73,9 @@
 	template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
 		__DEVICE__ int printf(const char *fmt, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
 		{ return log_event(EVT_PRINTF, fmt, v1, v2, v3, v4, v5, v6, v7, v8, v9); }
+#endif
 
-public:
-	__DEVICE__ int log_body(const ensemble &ens, int sys, int bod, double T, int user_data = -1)
-	{
-		this->prepare();
-		int nbod = atomicAdd(&this->ctr->nbod, 1);
-		if(nbod >= this->bcap) { return nbod + this->bodref_base; }
-	
-		body &b = this->bodies[nbod];
-		b.sys = sys;
-		b.bod = bod;
-		b.T = T;
-		b.m = ens.mass(sys, bod);
-		b.x = ens.x(sys, bod);
-		b.y = ens.y(sys, bod);
-		b.z = ens.z(sys, bod);
-		b.vx = ens.vx(sys, bod);
-		b.vy = ens.vy(sys, bod);
-		b.vz = ens.vz(sys, bod);
-		b.user_data = user_data;
-	
-		return this->bodref_base + nbod;
-	}
-	
+public:	
 	__DEVICE__ void log_system(const ensemble &ens, int sys, double T, int user_data = -1)
 	{
 		for(int bod = 0; bod != ens.nbod(); bod++)
@@ -61,92 +83,92 @@ public:
 			log_body(ens, sys, bod, T, user_data);
 		}
 	}
-	
+#if 0
 	template<typename T>
-	__DEVICE__ void push_data(int &nevt, int mend, const T &data)
+	__DEVICE__ void push_data(int &offs, int endoffs, const T &data)
 	{
-		align_to_header(nevt);
-		if(sizeof(int)+nevt > mend) { nevt = mend+1; return; } // buffer overflow; abort writing.
-		*(int*)(this->events + nevt) = sizeof(data); nevt += sizeof(int);
+		align_for_header(offs);
+		if(sizeof(int)+offs > endoffs) { offs = endoffs+1; return; } // buffer overflow; abort writing.
+		*(int*)(this->events.raw + offs) = sizeof(data); offs += sizeof(int);
 
-		align_to_payload(nevt, sizeof(T));
-		if(sizeof(T)+nevt > mend) { nevt = mend+1; return; } // buffer overflow; abort writing.
-		*(T*)(this->events + nevt) = data; nevt += sizeof(T);
+		align_for_payload(offs, sizeof(T));
+		if(sizeof(T)+offs > endoffs) { offs = endoffs+1; return; } // buffer overflow; abort writing.
+		*(T*)(this->events.raw + offs) = data; offs += sizeof(T);
 	}
 
-	__DEVICE__ void push_data(int &nevt, int mend, const char *c)
+	__DEVICE__ void push_data(int &offs, int endoffs, const char *c)
 	{
-		align_to_header(nevt);
-		int nevt0 = nevt;
-		nevt += sizeof(int);
+		align_for_header(offs);
+		int offs0 = offs;
+		offs += sizeof(int);
 
 		// copy the string, including '\0' to the output
 		do
 		{
-			if(nevt >= mend)
+			if(offs >= endoffs)
 			{
 				// buffer overflow; abort writing, signal overflow.
-				nevt = mend+1;
+				offs = endoffs+1;
 				return;
 			};
 	
-			this->events[nevt] = *c;
-			nevt++;
+			this->events.raw[offs] = *c;
+			offs++;
 		} while(*(c++) != '\0');
 
 		// store string length as negative number (signaling it's unaligned)
-		*(int*)(this->events + nevt0) = -(nevt - nevt0 - sizeof(int));
+		*(int*)(this->events.raw + offs0) = -(offs - offs0 - sizeof(int));
 	}
 
-	__DEVICE__ bool evt_start(int &nevt, int &mend)
+	__DEVICE__ bool evt_start(int &offs, int &endoffs)
 	{
 		this->prepare();
-		nevt = atomicAdd(&this->ctr->nevt, 1);
-		if(nevt >= this->ecap) { return false; }
-	
-		nevt *= eventlog_base::MAX_MSG_LEN;		// convert nevt to byte offset
-		mend  = nevt + eventlog_base::MAX_MSG_LEN;
+		offs = atomicAdd(&this->ctr->nevt, 1);
+		if(offs >= this->ecap) { return false; }
+
+		offs *= event::SIZEOF;		// convert offs to byte offset
+		endoffs  = offs + event::SIZEOF;
 	
 		// leave room for evt_hdr, which will be written
 		// by evt_end
-		nevt += sizeof(eventlog_base::evt_hdr);
+		offs += sizeof(event::header);
 	
 		return true;
 	}
 	
-	__DEVICE__ int evt_end(int &nevt, int &mend, int nargs, int evtid)
+	__DEVICE__ int evt_end(int &offs, int &endoffs, int nargs, int evtid)
 	{
-		if(nevt > mend)
+		if(offs > endoffs)
 		{
 			// rewind and store which message was lost
-			nevt = mend - eventlog_base::MAX_MSG_LEN + sizeof(eventlog_base::evt_hdr);
-			push_data(nevt, mend, evtid);
+			offs = endoffs - event::SIZEOF + sizeof(event::header);
+			push_data(offs, endoffs, evtid);
 			evtid = EVT_MSGLOST;
 		}
 
 		// store the event header
 		int evtref = this->evtref_base;
-		evtref += nevt / eventlog_base::MAX_MSG_LEN;
-		eventlog_base::evt_hdr hdr(evtid, evtref, nevt-(mend-eventlog_base::MAX_MSG_LEN), threadId(), nargs);
-		nevt = mend - eventlog_base::MAX_MSG_LEN;
-		*(eventlog_base::evt_hdr*)(this->events + nevt) = hdr;
+		evtref += offs / event::SIZEOF;
+		event::header hdr(evtid, evtref, offs-(endoffs-event::SIZEOF), threadId(), nargs);
+		offs = endoffs - event::SIZEOF;
+// 		*(event::header*)(this->events.raw + offs) = hdr;
 
 		return evtref;
 	}
 	
 	#define MSG_START(evtid, nargs) \
-		int mend, nevt; \
-		if(!evt_start(nevt, mend)) { return nevt; }
+		int offs, endoffs; \
+		if(!evt_start(offs, endoffs)) { return offs; }
 	
 	#define MSG_END(evtid, nargs) \
-		return evt_end(nevt, mend, nargs, evtid)
+		return evt_end(offs, endoffs, nargs, evtid)
 	
 	template<typename T1>
 		__DEVICE__ int log_event(int evtId, const T1 &v1)
 	{
 		MSG_START(evtId, 1);
 	
-		push_data(nevt, mend, v1);
+		push_data(offs, endoffs, v1);
 	
 		MSG_END(evtId, 1);
 	}
@@ -157,8 +179,8 @@ public:
 	{
 		MSG_START(evtId, 2);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
 	
 		MSG_END(evtId, 2);
 	}
@@ -167,9 +189,9 @@ public:
 	{
 		MSG_START(evtId, 3);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
 	
 		MSG_END(evtId, 3);
 	}
@@ -178,10 +200,10 @@ public:
 	{
 		MSG_START(evtId, 4);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
 	
 		MSG_END(evtId, 4);
 	}
@@ -190,11 +212,11 @@ public:
 	{
 		MSG_START(evtId, 5);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
-		push_data(nevt, mend, v5);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
+		push_data(offs, endoffs, v5);
 	
 		MSG_END(evtId, 5);
 	}
@@ -203,12 +225,12 @@ public:
 	{
 		MSG_START(evtId, 6);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
-		push_data(nevt, mend, v5);
-		push_data(nevt, mend, v6);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
+		push_data(offs, endoffs, v5);
+		push_data(offs, endoffs, v6);
 	
 		MSG_END(evtId, 6);
 	}
@@ -217,13 +239,13 @@ public:
 	{
 		MSG_START(evtId, 7);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
-		push_data(nevt, mend, v5);
-		push_data(nevt, mend, v6);
-		push_data(nevt, mend, v7);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
+		push_data(offs, endoffs, v5);
+		push_data(offs, endoffs, v6);
+		push_data(offs, endoffs, v7);
 	
 		MSG_END(evtId, 7);
 	}
@@ -232,14 +254,14 @@ public:
 	{
 		MSG_START(evtId, 8);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
-		push_data(nevt, mend, v5);
-		push_data(nevt, mend, v6);
-		push_data(nevt, mend, v7);
-		push_data(nevt, mend, v8);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
+		push_data(offs, endoffs, v5);
+		push_data(offs, endoffs, v6);
+		push_data(offs, endoffs, v7);
+		push_data(offs, endoffs, v8);
 	
 		MSG_END(evtId, 8);
 	}
@@ -248,15 +270,16 @@ public:
 	{
 		MSG_START(evtId, 9);
 	
-		push_data(nevt, mend, v1);
-		push_data(nevt, mend, v2);
-		push_data(nevt, mend, v3);
-		push_data(nevt, mend, v4);
-		push_data(nevt, mend, v5);
-		push_data(nevt, mend, v6);
-		push_data(nevt, mend, v7);
-		push_data(nevt, mend, v8);
-		push_data(nevt, mend, v9);
+		push_data(offs, endoffs, v1);
+		push_data(offs, endoffs, v2);
+		push_data(offs, endoffs, v3);
+		push_data(offs, endoffs, v4);
+		push_data(offs, endoffs, v5);
+		push_data(offs, endoffs, v6);
+		push_data(offs, endoffs, v7);
+		push_data(offs, endoffs, v8);
+		push_data(offs, endoffs, v9);
 	
 		MSG_END(evtId, 9);
 	}
+#endif

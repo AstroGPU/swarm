@@ -12,8 +12,6 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
-swarm::cpu_eventlog clog; 
-
 int main(int argc, const char **argv)
 {
   using namespace swarm;
@@ -64,8 +62,8 @@ int main(int argc, const char **argv)
 	}
 
 	// log initialization
-	clog.initialize();
-	clog.attach_sink(w.get());
+	hlog.initialize();
+	hlog.attach_sink(w.get());
 
 	// perform the integration
 	if(ongpu)
@@ -99,7 +97,7 @@ int main(int argc, const char **argv)
 	SWATCH_STOP(swatch_all);
 
 	out << ens;
-	clog.flush();
+	hlog.flush();
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;

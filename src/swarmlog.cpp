@@ -5,107 +5,53 @@
 #include <sstream>
 #include <memory>
 
-// Is this used?
 extern "C" void debug_hook()
 {
+	// a hook into which to place a breakpoint when the debugger
+	// won't stop in nvcc-compiled code.
 	std::cerr << "";
 }
 
-
-BLESS_POD(swarm::eventlog_base::body);
-BLESS_POD(swarm::eventlog_base::event);
-
-namespace swarm {
-
-const ieventstream::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
+struct swarm::ievent::opaque_data
 {
-	nbod = std::min(log.ctr->nbod, log.bcap);
-	ndropped = std::max(log.ctr->nbod - log.bcap, 0);
-	return log.bodies;
-}
+	int size;
+	const char *data;
+};
 
-ieventstream::ieventstream(cpu_eventlog &log_)
-	: log(log_)
+
+// Test if we hit the end of message, and set at = -1 if we did. at = -1
+// signals an EOF condition (operator bool() will return false).
+bool swarm::ievent::test_end()
 {
-	init(log.events, log.ctr->nevt, log.ecap);
-}
-
-// advance to next message
-int ieventstream::next()
-{
-	// already at end?
-	if(atevt == nevt) { return EVT_EOF; }
-
-	// move and exit if we're at the end
-	atevt++;
-	if(atevt != 0)
-	{
-		data += eventlog_base::MAX_MSG_LEN;
-	}
-
-	// learn the basics about the current message
-	if(atevt != nevt)
-	{
-		hdr = *(eventlog_base::evt_hdr*)(data);
-		at = sizeof(eventlog_base::evt_hdr);
-		m_eom = false;
-	}
-	else
-	{
-		hdr.evtid = EVT_EOF;
-	}
-
-	// return current message event ID
-	return evtid();
-}
-
-void ieventstream::init(const char *data_, int nevt_, int ecap_)
-{
-	data = data_;
-	nevt = std::min(nevt_, ecap_);
-	m_ndropped = std::max(nevt_ - ecap_, 0);
-
-	// position us _ahead_ of the first message
-	// (expecting a call to next() will move us to first message)
-	atevt = -1;
-	m_eom = true;
-}
-
-bool ieventstream::check_end()
-{
-	if(atevt == -1) // first call, auto-advance
-	{
-		next();
-	}
-	if(hdr.len == at) { m_eom = true; }
+	if(evt->hdr.len == at) { at = -1; }
 	return *this;
 }
 
-ieventstream &ieventstream::operator >>(raw_evt &v)
+swarm::ievent &swarm::ievent::operator >>(opaque_data &v)
 {
-	if(!check_end()) { return *this; }
+	if(!test_end()) { return *this; }
 
-	align_to_header(at);
-	v.size = *(int*)(data + at);
+	align_for_header(at);
+	v.size = *(int*)(evt->data + at);
 	at += sizeof(int);
 
-	if(v.size > 0) { align_to_payload(at, v.size); } else { v.size *= -1; }
-	v.data = data+at;
+	if(v.size > 0) { align_for_payload(at, v.size); } else { v.size *= -1; }
+	v.data = evt->data+at;
 	at += v.size;
 	return *this;
 }
 
-ieventstream &ieventstream::operator >>(std::string &s)
+swarm::ievent &swarm::ievent::operator >>(std::string &s)
 {
-	if(!check_end()) { return *this; }
+	if(!test_end()) { return *this; }
 
-	align_to_header(at);
-	int size = *(int*)(data + at);
+	align_for_header(at);
+	int size = *(int*)(evt->data + at);
 	assert(size < 0);
 	size *= -1;
 	at += sizeof(int);
 
-	s = (data+at);
+	s = (evt->data+at);
 	int strlen = s.size();
 	if(strlen != size-1-sizeof(int))
 		ERROR("Programmer error: data size != string size. Contact the authors.");
@@ -113,17 +59,17 @@ ieventstream &ieventstream::operator >>(std::string &s)
 	return *this;
 }
 
-ieventstream &ieventstream::operator >>(char *s)
+swarm::ievent &swarm::ievent::operator >>(char *s)
 {
-	if(!check_end()) { return *this; }
+	if(!test_end()) { return *this; }
 
-	align_to_header(at);
-	int size = *(int*)(data + at);
+	align_for_header(at);
+	int size = *(int*)(evt->data + at);
 	assert(size < 0);
 	size *= -1;
 	at += sizeof(int);
 
-	strcpy(s, data+at);
+	strcpy(s, evt->data+at);
 	int strl = strlen(s);
 	if(strl != size-1)
 		ERROR("Programmer error: data size != string size. Contact the authors.");
@@ -131,26 +77,44 @@ ieventstream &ieventstream::operator >>(char *s)
 	return *this;
 }
 
-ieventstream &ieventstream::operator >>(eventlog_base::event &evt)
+swarm::ievent &swarm::ievent::operator >>(event &evt)
 {
-	if(!check_end()) { return *this; }
-	assert(sizeof(eventlog_base::event) == eventlog_base::MAX_MSG_LEN);
-	memcpy(&evt, data, sizeof(eventlog_base::event));
-	at = hdr.len;
+	if(!test_end()) { return *this; }
+	assert(sizeof(event) == event::SIZEOF);
+	memcpy(&evt, this->evt->data, sizeof(event));
+	at = evt.hdr.len;
 
 	return *this;
 }
- 
-bool cpu_eventlog::need_gpu_flush()
-{
-	// download GPU counters
-	eventlog_base::counters gctr;
-	memcpyToHost(&gctr, glog.ctr);
 
-	return gctr.nevt >= glog.ecap || gctr.nbod >= glog.bcap;
+swarm::event *swarm::host_eventlog::alloc_event(int evtid)
+{
+	prepare_for_cpu();
+	int idx = ctr->nevt++;
+	return prepare_event(idx, evtid, -1);
 }
 
-void cpu_eventlog::flush_if_needed(bool cpuonly)
+int swarm::host_eventlog::log_body(const ensemble &ens, int sys, int bod, double T, int user_data)
+{
+	prepare_for_cpu();
+	flush_if_needed(true);
+	int nbod = ctr->nbod++;
+	return store_body(nbod, ens, sys, bod, T, user_data);
+}
+
+// global host (CPU) eventlog object
+swarm::host_eventlog swarm::hlog;
+
+bool swarm::host_eventlog::need_gpu_flush()
+{
+	// download GPU counters
+	eventlog::counters gctr;
+	memcpyToHost(&gctr, dlog.ctr);
+
+	return gctr.nevt >= dlog.ecap || gctr.nbod >= dlog.bcap;
+}
+
+void swarm::host_eventlog::flush_if_needed(bool cpuonly)
 {
 	bool cpuneedflush = ctr->nevt >= ecap || ctr->nbod >= bcap;
 	bool gpuneedflush = !cpuonly && need_gpu_flush();
@@ -163,24 +127,24 @@ void cpu_eventlog::flush_if_needed(bool cpuonly)
 
 // download the GPU log data, overwriting the CPU log
 // called _ONLY_ from flush()
-void cpu_eventlog::copyFromGPU()
+void swarm::host_eventlog::copyFromGPU()
 {
 	// download GPU log data
 	if(ctr == NULL)
-		ERROR("Programmer error: cpu_eventlog must be initialized before use. Contact the authors.");
+		ERROR("Programmer error: swarm::host_eventlog must be initialized before use. Contact the authors.");
 
 	// download GPU counters
-	memcpyToHost(ctr, glog.ctr);
+	memcpyToHost(ctr, dlog.ctr);
 
 	// download the data
-	events = hostAlloc(events, ecap * MAX_MSG_LEN);
-	memset(events, 0, ecap * MAX_MSG_LEN);
-	memcpyToHost(events, glog.events, ecap * MAX_MSG_LEN);
+	events.evt = hostAlloc(events.evt, ecap);
+	memset(events.evt, 0, ecap * sizeof(event)); // debugging!
+	memcpyToHost(events.evt, dlog.events.evt, ecap);
 	bodies = hostAlloc(bodies, bcap);
-	memcpyToHost(bodies, glog.bodies, bcap);
+	memcpyToHost(bodies, dlog.bodies, bcap);
 }
 
-void cpu_eventlog::prepare_for_gpu()
+void swarm::host_eventlog::prepare_for_gpu()
 {
 	if(lastongpu) { return; }
 
@@ -190,19 +154,18 @@ void cpu_eventlog::prepare_for_gpu()
 	// this point (it's a bug if they're not)
 
 #if __DEVICE_EMULATION__
-	assert(glog.ctr->nbod == 0 && glog.ctr->nevt == 0);
+	assert(dlog.ctr->nbod == 0 && dlog.ctr->nevt == 0);
 #endif
 
 	// update the GPU copy with the current ref bases
-	glog.evtref_base = evtref_base + ctr->nevt;
-	glog.bodref_base = bodref_base + ctr->nbod;
-	cuxUploadConst("glog", this->glog);
-	//	cuxUploadConst("swarm::glog", this->glog);
+	dlog.evtref_base = evtref_base + ctr->nevt;
+	dlog.bodref_base = bodref_base + ctr->nbod;
+	cuxUploadConst("dlog", this->dlog);
 
 	lastongpu = true;
 }
 
-void cpu_eventlog::prepare_for_cpu()
+void swarm::host_eventlog::prepare_for_cpu()
 {
 	if(!lastongpu) { return; }
 
@@ -215,66 +178,75 @@ void cpu_eventlog::prepare_for_cpu()
 	flush();
 }
 
-void cpu_eventlog::attach_sink(writer *w_)
+void swarm::host_eventlog::attach_sink(writer *w_)
 {
 	w = w_;
 }
 
-void cpu_eventlog::flush()
+// aux. function to construct the argument-passing structure for writer::process()
+void swarm::host_eventlog::flush_to_writer()
+{
+	assert(w);
+
+	output_buffers ob;
+
+	ob.events = events.evt;
+	ob.nevt = std::min(ctr->nevt, ecap);
+	ob.nevt_dropped = std::max(ctr->nevt - ecap, 0);
+
+	ob.bodies = bodies;
+	ob.nbod = std::min(ctr->nbod, bcap);
+	ob.nbod_dropped = std::max(ctr->nbod - bcap, 0);
+
+	w->process(ob);
+
+	evtref_base += ctr->nevt;
+	bodref_base += ctr->nbod;
+	ctr->reset();
+}
+
+void swarm::host_eventlog::flush()
 {
 	if(lastongpu)
 	{
-		// GPU was written-to last
-
 		// flush CPU buffers
-	        ieventstream es(*this);
-		w->process(es);
-		evtref_base += ctr->nevt;
-		bodref_base += ctr->nbod;
-			
-		// flush GPU buffers
+		flush_to_writer();
+
+		// download GPU buffers
 		copyFromGPU();
-		ieventstream es2(*this);
-		w->process(es2);
 	}
 	else
 	{
 		// CPU was written-to last -- by construction
 		// of this class, there's nothing on the GPU side
-
-		// flush CPU buffers
-		ieventstream es(*this);
-		w->process(es);
 	}
 
-	// update ref bases before we clear the counters
-	evtref_base += ctr->nevt;
-	bodref_base += ctr->nbod;
+	flush_to_writer();
 
-	// clear CPU & GPU counters
-	ctr->reset();
-	memcpyToGPU(glog.ctr, ctr);
+	// clear GPU counters
+	memcpyToGPU(dlog.ctr, ctr);
 
 	// cpu is now the master
 	lastongpu = false;
 }
 
-cpu_eventlog::cpu_eventlog()
+swarm::host_eventlog::host_eventlog()
 {
-// set everything to NULL
+	// set everything to NULL
 	memset(this, 0, sizeof(*this));
-std::cerr << "Destructing/Constructing cpu_eventlog\n";
-std::cerr << this << "\n";
-std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
-std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
-std::cerr << "...\n";
+
+	std::cerr << "Constructing cpu_eventlog\n";
+	std::cerr << this << "\n";
+	std::cerr << (void*)events.evt << " " << bodies << " " << ctr << "\n";
+	std::cerr << (void*)dlog.events.evt << " " << dlog.bodies << " " << dlog.ctr << "\n";
+	std::cerr << "...\n";
 }
 
 //
 // Initialize the GPU eventlog buffer, and prepare the CPU
 // eventlog object
 //
-void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
+void swarm::host_eventlog::initialize(int ecap_, int bcap_, int scap_)
 {
 	if(ctr != NULL) { return; }
 
@@ -285,42 +257,42 @@ void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 	etresh = (int)(0.9 * ecap);
 
 	// CPU side
-	ctr = new eventlog_base::counters;
+	ctr = new eventlog::counters;
 	ctr->reset();
-	events = hostAlloc(events, ecap * MAX_MSG_LEN);
+	events.evt = hostAlloc(events.evt, ecap);
 	bodies = hostAlloc(bodies, bcap);
 
 	// GPU side
-	glog = *this;
-	glog.ctr = cuxNew<eventlog_base::counters>(1);
-	memcpyToGPU(glog.ctr, ctr);
+	dlog = *this;
+	dlog.ctr = cuxNew<eventlog::counters>(1);
+	memcpyToGPU(dlog.ctr, ctr);
 
 	// initialize GPU buffers & eventlog structure
-	glog.events = cuxNew<char>(ecap * MAX_MSG_LEN);
-	glog.bodies = cuxNew<body>(bcap);
+	dlog.events.evt = cuxNew<event>(ecap);
+	dlog.bodies = cuxNew<body>(bcap);
 
 	// upload to const
-		cuxUploadConst("glog", this->glog);
-	//	cuxUploadConst("swarm::glog", this->glog);
+	cuxUploadConst("dlog", this->dlog);
 	lastongpu = true;
 }
 
-cpu_eventlog::~cpu_eventlog()
+swarm::host_eventlog::~host_eventlog()
 {
-std::cerr << "Destructing/Constructing cpu_eventlog\n";
-std::cerr << this << "\n";
-std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
-std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
-std::cerr << "...\n";
+	std::cerr << "Destructing cpu_eventlog\n";
+	std::cerr << this << "\n";
+	std::cerr << (void*)events.evt << " " << bodies << " " << ctr << "\n";
+	std::cerr << (void*)dlog.events.evt << " " << dlog.bodies << " " << dlog.ctr << "\n";
+	std::cerr << "...\n";
+
 	// Host
-	hostFree(events);
+	hostFree(events.evt);
 	hostFree(bodies);
 	delete ctr;
 	
 	// GPU
-	cudaFree(glog.events);
-	cudaFree(glog.bodies);
-	cudaFree(glog.ctr);
+	cudaFree(dlog.events.evt);
+	cudaFree(dlog.bodies);
+	cudaFree(dlog.ctr);
 }
 
 
@@ -328,25 +300,42 @@ std::cerr << "...\n";
 // gpuPrintf: CPU side
 //
 
-bool get_message(ieventstream &evt, std::string &res)
+bool swarm::ievent::isprintf() const
 {
-	// format of data packets:
-	// ([hdr][size|...data...][size|...data...])
-
+	// TODO: WTF?! This shouldn't even compile (it's declared as a const
+	// function, and calls the >> extractor ?!?!?!??!?!?!?!)
 	int evtid2;
-	if(evt.evtid() == EVT_MSGLOST  && evt >> evtid2 && evtid2 == EVT_PRINTF)
+	if(evtid() == EVT_MSGLOST  && *this >> evtid2 && evtid2 == EVT_PRINTF)
 	{
-		evt.next();
-		res = "Message lost (too big).\n";
 		return true;
 	}
-	if(evt.evtid() != EVT_PRINTF)
+	if(evtid() != EVT_PRINTF)
 	{
 		return false;
 	}
+	return true;
+}
+
+std::string swarm::ievent::printf() const
+{
+	// format of data packets:
+	// ([hdr][size|...data...][size|...data...])
+	std::string res;
+
+	ievent evt(*this->evt);
+
+	int evtid2;
+	if(evtid() == EVT_MSGLOST  && evt >> evtid2 && evtid2 == EVT_PRINTF)
+	{
+		return "Message lost (too big).\n";
+	}
+	if(evtid() != EVT_PRINTF)
+	{
+		return "";
+	}
 
 	// slurp up the format string
-	char fmtbuf[cpu_eventlog::MAX_MSG_LEN], *fmt = fmtbuf;
+	char fmtbuf[event::SIZEOF], *fmt = fmtbuf;
 	evt >> fmt;
 
 	// Now run through it, printing everything we can. We must
@@ -371,7 +360,7 @@ bool get_message(ieventstream &evt, std::string &res)
 			break;
 		}
 
-		ieventstream::raw_evt m;
+		swarm::ievent::opaque_data m;
 		evt >> m;
 
 		char specifier = *p++;
@@ -430,22 +419,23 @@ bool get_message(ieventstream &evt, std::string &res)
 
 	// Print out the last of the string
 	out << fmt;
-	res = out.str();
-	return true;
+	return out.str();
 }
 
+#if 0
 bool next_message(ieventstream &evt, std::string &res)
 {
 	while(!get_message(evt, res) && evt.next());
 	return evt;
 }
 
+#endif
 
 //
 // Default binary writer
 //
 
-class binary_writer : public writer
+class binary_writer : public swarm::writer
 {
 protected:
 	std::auto_ptr<std::ostream> eout_strm, bout_strm;
@@ -454,10 +444,10 @@ protected:
 
 public:
 	binary_writer(const std::string &cfg);
-	virtual void process(ieventstream &es);
+	virtual void process(const swarm::output_buffers &ob);
 };
 
-extern "C" writer *create_writer_binary(const std::string &cfg)
+extern "C" swarm::writer *create_writer_binary(const std::string &cfg)
 {
 	return new binary_writer(cfg);
 }
@@ -480,46 +470,46 @@ binary_writer::binary_writer(const std::string &cfg)
 
 // store the accumulated events and bodies into a file, while
 // printing out any printf() events to stdout
-void binary_writer::process(ieventstream &es)
+BLESS_POD(swarm::body);
+BLESS_POD(swarm::event);
+
+void binary_writer::process(const swarm::output_buffers &ob)
 {
+	using namespace swarm;
+
 	// download and dump the log
 	// write out events
-	while(es.next())
+	std::string msg;
+	for(int i = 0; i != ob.nevt; i++)
 	{
-		std::string evt;
-		if(get_message(es, evt))
+		ievent es(ob.events[i]);
+		if(es.isprintf())
 		{
-			std::cout << "[Event #" << es.evtref() << " from thread " << es.threadId() << "]: " << evt << "\n";
+			std::string msg = es.printf();
+			std::cout << "[Event #" << es.evtref() << " from thread " << es.threadId() << "]: " << msg << "\n";
 		}
 		else
 		{
 			// Write it to file
-			eventlog_base::event evt;
-			es >> evt;
+			const event &evt = ob.events[i];
 			*eout << evt;
 
-			std::cout << "[Event #" << evt.hdr.evtref << " from thread " << evt.hdr.threadId << "] EVT=" << evt.hdr.evtid << ", with " << evt.hdr.nargs << " data elements (" << evt.hdr.len << " bytes for entire event)\n";
+			std::cout << "[Event #" << evt.evtref() << " from thread " << evt.threadId() << "] EVT=" << evt.evtid() << ", " << evt.len() << " bytes long data payload.\n";
 		}
 	}
-	if(es.nevents_dropped())
+	if(ob.nevt_dropped)
 	{
-		std::cerr << "==== Ran out of event GPU output buffer space (" << es.nevents_dropped() << " event records dropped).\n";
+		std::cerr << "==== Ran out of event GPU output buffer space (" << ob.nevt_dropped << " event records dropped).\n";
 	}
 
 	// write out bodies
-	int nbod, ndropped;
-	const eventlog_base::body *bodies = es.get_bodies(nbod, ndropped);
-	for(int bod = 0; bod != nbod; bod++)
+	for(int bod = 0; bod != ob.nbod; bod++)
 	{
-		*bout << bodies[bod];
+		*bout << ob.bodies[bod];
 	}
-	if(ndropped)
+	if(ob.nbod_dropped)
 	{
-		std::cerr << "==== Ran out of body GPU output buffer space (" << ndropped << " body records dropped).\n";
+		std::cerr << "==== Ran out of body GPU output buffer space (" << ob.nbod_dropped << " body records dropped).\n";
 	}
 }
 
-
-} // end namespace swarm
-
-extern swarm::cpu_eventlog clog;
