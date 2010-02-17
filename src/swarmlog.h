@@ -143,9 +143,9 @@ protected:
 	event *evt;		// output event packet
 
 public:
-	int evtid() const { return evt->hdr.evtid; }		// event ID of the current event
-	int evtref() const { return evt->hdr.evtref; }		// unique reference to this event
-	int threadId() const { return evt->hdr.threadId; }	// originator threadId of the current event
+	__device__ __host__ int evtid() const { return evt->hdr.evtid; }		// event ID of the current event
+	__device__ __host__ int evtref() const { return evt->hdr.evtref; }		// unique reference to this event
+	__device__ __host__ int threadId() const { return evt->hdr.threadId; }	// originator threadId of the current event
 
 #ifdef __CUDACC__
 	__device__ oevent(device_eventlog &dest, int evtid);
