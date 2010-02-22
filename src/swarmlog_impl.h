@@ -80,7 +80,6 @@ public:
 	{
 		// write out event header
 		int snapid = log_event(EVT_SNAPSHOT_MARKER);
-		debug_hook();
 
 		int bod_begin, bod_last;
 		for(int bod = 0; bod != ens.nbod(); bod++)
