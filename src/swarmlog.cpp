@@ -496,7 +496,7 @@ void binary_writer::process(const swarm::output_buffers &ob)
 			const event &evt = ob.events[i];
 			*eout << evt;
 
-			std::cout << "[Event #" << evt.evtref() << " from thread " << evt.threadId() << "] EVT=" << evt.evtid() << ", " << evt.len() << " bytes long data payload.\n";
+			//std::cout << "[Event #" << evt.evtref() << " from thread " << evt.threadId() << "] EVT=" << evt.evtid() << ", " << evt.len() << " bytes long data payload.\n";
 		}
 	}
 	if(ob.nevt_dropped)
@@ -507,7 +507,8 @@ void binary_writer::process(const swarm::output_buffers &ob)
 	// write out bodies
 	for(int bod = 0; bod != ob.nbod; bod++)
 	{
-		*bout << ob.bodies[bod];
+		const body &b = ob.bodies[bod];
+		*bout << b;
 	}
 	if(ob.nbod_dropped)
 	{

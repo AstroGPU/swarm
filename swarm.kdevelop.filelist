@@ -28,9 +28,11 @@ src
 src/ThreeVector.hpp
 src/astro
 src/astro/BinaryStream.cpp
+src/astro/MemoryMap.cpp
 src/astro/binarystream.h
 src/astro/constants.h
 src/astro/macros.h
+src/astro/memorymap.h
 src/astro/types.h
 src/astro/util.h
 src/cux

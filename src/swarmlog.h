@@ -18,9 +18,10 @@ namespace swarm {
 // System-defined event IDs. The user must ensure there's no collision between their event IDs and these.
 static const int EVT_EOF	= 0;
 
-static const int EVT_PRINTF	= 1000000;	// printf event (mostly good for debugging)
-static const int EVT_MSGLOST	= 1000001;	// marker that a message was dropped due to being too long to fit into MAX_MSG_LEN
-static const int EVT_SNAPSHOT	= 1000002;	// marks a snapshot of a system. see output_if_needed() in swarmlib.cu
+static const int EVT_PRINTF		= 1000000;	// printf event (mostly good for debugging)
+static const int EVT_MSGLOST		= 1000001;	// marker that a message was dropped due to being too long to fit into MAX_MSG_LEN
+static const int EVT_SNAPSHOT		= 1000002;	// marks a snapshot of a system. see output_if_needed() in swarmlib.cu
+static const int EVT_SNAPSHOT_MARKER	= 1000003;	// a dummy event used to generate a unique snapshot ID. Should be ignored by readers.
 
 extern "C" void debug_hook();
 
@@ -199,14 +200,20 @@ public:
 
 
 // for on-GPU state logging of bodies
-struct body
+// NOTE: I've written out the datatypes _explicitly_, because
+// of alignment requirements that have to be hand-tuned between
+// the device and host code. Yes, this _is_ unfortunate.
+struct ALIGN(8) body
 {
+	// NOTE: put all doubles first, to avoid interstitial padding
+	double	T;
+	double	x, y, z;
+	double	vx, vy, vz;
+
+	float	m;
+
 	int		sys, bod;
-	real_time	T;
-	real_mass	m;
-	real_pos	x, y, z;
-	real_vel	vx, vy, vz;
-	int		user_data;	// e.g.: flags, eventId, etc.
+	int		evtref, user_data;	// e.g.: flags, eventId, whatever...
 };
 
 // argument-passing struct for writer::process()
@@ -244,7 +251,7 @@ protected:
 		return evt;
 	}
 
-	__device__ __host__ int store_body(int nbod, const ensemble &ens, int sys, int bod, double T, int user_data = -1)
+	__device__ __host__ int store_body(int nbod, const ensemble &ens, int sys, int bod, double T, int evtref, int user_data = -1)
 	{
 		if(nbod >= bcap) { return -1; }
 	
@@ -259,6 +266,7 @@ protected:
 		b.vx = ens.vx(sys, bod);
 		b.vy = ens.vy(sys, bod);
 		b.vz = ens.vz(sys, bod);
+		b.evtref = evtref;
 		b.user_data = user_data;
 	
 		return bodref_base + nbod;

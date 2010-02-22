@@ -123,14 +123,10 @@ template<typename L>
 __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
 	// simple output
-//	debug_hook();
 	if(T >= ens.time_output(sys, 0) && sys < 10)
 	{
-		// for debugging
-		log.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
-
-		int evtref = dlog.log_event(EVT_SNAPSHOT, sys, T);
-		log.log_system(ens, sys, T, evtref);
+		// store the snapshot
+		log.log_system(ens, sys, T);
 
 		// set next stopping time
 		ens.time_output(sys, 0) += ens.time_output(sys, 1);
@@ -201,9 +197,6 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens[gpu_ensemble_id];
 	int sys = threadId();
-//	if(sys == 0) dlog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
-//	if(sys == 0) dlog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
-//	return;
 
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
 	{
@@ -273,9 +266,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	int iter = 0;
 	do
 	{
-		hlog.printf("Starting kernel run #%d", iter);
-		hlog.printf("Another unnecessary message from the CPU side");
-//		debug_hook();
+//		hlog.printf("Starting kernel run #%d", iter);
+//		hlog.printf("Another unnecessary message from the CPU side");
+
 		retval_gpu.memset(0);
 		hlog.prepare_for_gpu();
 		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id);

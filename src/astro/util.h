@@ -94,6 +94,6 @@ namespace Util = util; // backwards compatibility hack
 
 }
 
-#define __peyton_util peyton::util
+using namespace peyton::util;
 
 #endif
