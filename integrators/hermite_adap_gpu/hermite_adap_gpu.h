@@ -6,7 +6,7 @@
 #define LARGE_NUMBER 1e16
 #define SMALL_NUMBER 1e-16
 #define STEP_FACTOR 0.01
-#define NBODIES 4
+#define NBODIES 3
 
 typedef double real;
 typedef real   real_time;

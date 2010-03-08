@@ -12,5 +12,5 @@
 #        they require must also refer to them using full paths.
 #
 
-LIBSWARM_CUDA+=integrators/hermite_adap_gpu/hermite_adap_gpu.cu
+LIBSWARM_CUDA+=integrators/hermite_adap_gpu/hermite_adap_gpu.cu 
 LIBSWARM_SOURCES+=integrators/hermite_adap_gpu/hermite_adap_gpu.cpp

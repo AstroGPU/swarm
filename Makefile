@@ -25,7 +25,7 @@
 ###
 ### libswarm library
 ###
-LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/swarmlib.cpp src/swarmlog.cpp src/cux/cux.cpp src/scatter/peaShooter.cpp
+LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/swarmlib.cpp src/swarmlog.cpp src/cux/cux.cpp
 LIBSWARM_CUDA=src/swarmlib.cu
 
 ####

@@ -33,7 +33,7 @@ double calc_system_energy(const cpu_ensemble &ens, const int sys)
 	{
 	  float m1; double x1[3], v1[3];
 	  ens.get_body(sys, bod1, m1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2]);
-	  E += 0.5*m1*(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
+	  E += 0.5*m1*(v1[0]*v1[0]+v1[1]*v1[1]+v1[3]*v1[3]);
 	  
 	  for(int bod2 = 0; bod2 < bod1; bod2++)
 	    {
@@ -168,42 +168,64 @@ int main()
 	   ens.copy_from(gpu_ens);
 	*/
 
+        //open and clear files
+        for (unsigned int i=0;i<nSystems;++i)
+         {
+          ofstream thisFile;
+          stringstream buff;
+
+          buff.str("");
+          buff<<OUTPUT_DIRECTORY<<"/systemInfo."<<setfill('0')<<setw(4)<<i;
+          thisFile.open(buff.str().c_str(),ios::trunc);
+          assert(thisFile.good());
+          thisFile.close();
+         }
+
+
         //
         //ACB
         //Now integrate, but stop at each observation time to check progress and log data.
         //
 
         gpu_ensemble gpu_ens(ens);				// upload to GPU
-        stringstream logData[nSystems];
         unsigned int observation=0;
         real startTime=ObsTimes[observation];
-        while(observation<nObs)
+        while(observation++<nObs-1)
          {
-           real dT=ObsTimes[++observation]-startTime;
-           cout<<" Working on observation and dt"<<observation<<' '<<dT<<"\n";
+           real dT=ObsTimes[observation]-startTime;
+           cout<<" Working on observation and dt "<<observation<<" of "<<nObs-1<<' ' <<dT<<"\n";
            integ->integrate(gpu_ens, dT);				// integrate
            cudaThreadSynchronize();
            ens.copy_from(gpu_ens);					// download to host
-           cudaThreadSynchronize(); 
+           //cudaThreadSynchronize(); 
            startTime=ObsTimes[observation];
 
 	// store output
-
            for (unsigned int i=0;i<nSystems;++i) 
             {
-             logData[i]<<scientific<<setprecision(9)<<ens.time(i)<<' ';
-             double Enew = calc_system_energy(ens,i);
-             //logTheseData(ens, const int sys, string &log);
-             for(int bod = 0; bod != ens.nbod(); bod++)
+              ofstream thisFile;
+              stringstream buff;
+  
+              buff.str("");
+              buff<<OUTPUT_DIRECTORY<<"/systemInfo."<<setfill('0')<<setw(4)<<i;
+              thisFile.open(buff.str().c_str(),ios::app);
+              assert(thisFile.good());
+              thisFile<<scientific<<setprecision(9)<<ens.time(i)<<' ';
+              double Enew = calc_system_energy(ens,i);
+              //logTheseData(ens, const int sys, string &log);
+              for(int bod = 0; bod != ens.nbod(); bod++)
               {
                 float m; double x[3], v[3];
                 ens.get_body(i, bod, m, x[0], x[1], x[2], v[0], v[1], v[2]);
-                logData[i]<<scientific<<setprecision(9)<<m<<' '<<x[0]<<' '<<x[1]<<' '<<x[2]<<' '<<v[0]<<' '<<v[1]<<' '<<v[2]<<' ';
+                thisFile<<scientific<<setprecision(9)<<m<<' '<<x[0]<<' '<<x[1]<<' '<<x[2]<<' '<<v[0]<<' '<<v[1]<<' '<<v[2]<<' ';
 
               }
-              logData[i]<<Enew<<"\n";
+              thisFile<<Enew<<"\n";
+              thisFile.close();
 
             }
+ 
+
           } // end while loop
 
 ////////////////////////////////////////////////////////////////////////

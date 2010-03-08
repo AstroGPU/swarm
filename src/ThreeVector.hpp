@@ -64,8 +64,6 @@ class ThreeVector
     { ThreeVectorT Diff;  Diff.mX=-mX;  Diff.mY=-mY;  Diff.mZ=-mZ;  return Diff; };
   __device__ __host__ bool operator==(const ThreeVector &X) const
   { if((X()==X.X())&&(Y()==X.Y())&&(Z()==X.Z())) return true;  else return false; };
-  __device__ __host__ bool Approx(const ThreeVectorT &X) const
-    { if(!approx(mX,X.mX)||!approx(mY,X.mY)||!approx(mZ,X.mZ)) return 0; else return 1; };
 
   //  Next two lines don't work with cygwin g++ for some reason
   //  friend ThreeVectorT operator*<>(const FloatT &X, const ThreeVectorT &Y);
@@ -73,7 +71,6 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateZ(const FloatT s, const FloatT c) throw() 
     {
-      assert(approx(c*c+s*s,1.,1.e-6));
       ThreeVectorT C(*this);
       X() = + C.X()*c - C.Y()*s;
       Y() = + C.X()*s + C.Y()*c;
@@ -82,7 +79,6 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateX(const FloatT s, const FloatT c)  throw() 
     {
-      assert(approx(c*c+s*s,1.,1.e-6));
       ThreeVectorT C(*this);
       Y() = + C.Y()*c - C.Z()*s;
       Z() = + C.Y()*s + C.Z()*c;
@@ -91,7 +87,6 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateY(const FloatT s, const FloatT c) throw() 
     {
-      assert(approx(c*c+s*s,1.,1.e-6));
       ThreeVectorT C(*this);
       Z() = + C.Z()*c - C.X()*s;
       X() = + C.Z()*s + C.X()*c;
