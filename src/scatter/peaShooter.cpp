@@ -33,7 +33,7 @@ double calc_system_energy(const cpu_ensemble &ens, const int sys)
 	{
 	  float m1; double x1[3], v1[3];
 	  ens.get_body(sys, bod1, m1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2]);
-	  E += 0.5*m1*(v1[0]*v1[0]+v1[1]*v1[1]+v1[3]*v1[3]);
+	  E += 0.5*m1*(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
 	  
 	  for(int bod2 = 0; bod2 < bod1; bod2++)
 	    {
