@@ -7,6 +7,8 @@
 #include <map>
 #include <cassert>
 #include <cmath>
+#include <vector>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cux/cux.h>
@@ -166,7 +168,10 @@ class ensemble
 
 
 		// convenience
-		__host__ __device__ int active(int sys)		const { return m_flags[sys] ^ ~ensemble::INACTIVE; }
+		__host__ __device__ int is_active(int sys)		const { return !(m_flags[sys] & ensemble::INACTIVE); }
+		__host__ __device__ int is_inactive(int sys)		const { return m_flags[sys] & ensemble::INACTIVE; }
+		__host__ __device__ void set_active(int sys)	{ m_flags[sys] = m_flags[sys] & ~ensemble::INACTIVE; }
+		__host__ __device__ void set_inactive(int sys)	{ m_flags[sys] = m_flags[sys] |  ensemble::INACTIVE; }
 
 		__host__ __device__ void set_body(int sys, int bod,  float m, real_pos x, real_pos y, real_pos z, real_vel vx, real_vel vy, real_vel vz)
 		{
@@ -300,6 +305,24 @@ class cpu_ensemble : public ensemble
 
 		~cpu_ensemble() { free(); }
 
+		void set_active(const std::vector<int>& keep_flag)
+		{
+		  for(int sysid=0;sysid<nsys();++sysid)
+		    if(keep_flag[sysid]) ensemble::set_active(sysid);
+		};
+
+		void set_inactive(const std::vector<int>& halt_flag)
+		{
+		  for(int sysid=0;sysid<nsys();++sysid)
+		    if(halt_flag[sysid]) ensemble::set_inactive(sysid);
+		};
+
+		void set_active(const int sys) { ensemble::set_active(sys); }
+		void set_inactive(const int sys) { ensemble::set_inactive(sys); }
+
+		int pack();
+		void replace_inactive_from(cpu_ensemble &src, const int offset);
+
 	private:
 		cpu_ensemble &operator=(const cpu_ensemble&);	// disallow copying
 };
@@ -332,7 +355,7 @@ class gpu_ensemble : public ensemble
 
 		~gpu_ensemble();
 
-		__device__ void set_time_end_all(const real_time tend);
+		void set_time_end_all(const real_time tend);
 		__device__ void set_time_end_all_kernel(const real_time tend);
 };
 

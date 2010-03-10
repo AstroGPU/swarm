@@ -626,7 +626,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	typename acc_type<pre>::type dtby3=hh/3.;
 	typename acc_type<pre>::type dtby6=hh/6.;
 	typename acc_type<pre>::type dt7by30=hh*7./30.;
-	typename acc_type<pre>::type dtby7=hh*7.;
+	typename acc_type<pre>::type dtby7=hh/7.;
 
 	//load data from global memory
 	if(nbod>0)
@@ -740,7 +740,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			dtby3=hh/3.;
 			dtby6=hh/6.;
 			dt7by30=hh*7./30.;
-			dtby7=hh*7.;
+			dtby7=hh/7.;
 		  }
 		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
 

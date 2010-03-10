@@ -228,7 +228,7 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{
-	  if(!ens.active(sys)) continue;
+	  if(ens.is_inactive(sys)) continue;
 	  real_time Tend = ens.time( sys ) + dT;
 	  UpdateAccJerk ( ens,sys );
 	  // propagate the system until we match or exceed Tend

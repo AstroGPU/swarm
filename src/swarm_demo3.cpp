@@ -478,6 +478,59 @@ public:
 };
 
 
+void calc_semimajor_axes(const swarm::ensemble& ens, std::vector<std::vector<double> >& semimajor_axes)
+{
+  for(unsigned int systemid = 0; systemid< ens.nsys(); ++systemid)
+    {
+      //      std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << "\n";
+      double mass_enclosed = 0.;
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  double mass = ens.mass(systemid,bod);
+	  mass_enclosed += mass;
+
+	  if(bod<=0) continue;
+	  //	  std::cout << "body= " << bod << ": ";
+	  //	  std::cout << "pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
+	  
+	  double bx, by, bz, bvx, bvy, bvz;
+	  ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	  double x = ens.x(systemid,bod)-bx;
+	  double y = ens.y(systemid,bod)-by;
+	  double z = ens.z(systemid,bod)-bz;
+	  double vx = ens.vx(systemid,bod)-bvx;
+	  double vy = ens.vy(systemid,bod)-bvy;
+	  double vz = ens.vz(systemid,bod)-bvz;
+	  
+	  double a, e, i, O, w, M;
+	  calc_keplerian_for_cartesian(a,e,i,O,w,M, x,y,z,vx,vy,vz, mass_enclosed);
+	  O *= 180/M_PI;
+	  w *= 180/M_PI;
+	  M *= 180/M_PI;
+	  semimajor_axes[systemid][bod] = a;
+	  //	  std::cout << " a= " << a << " e= " << e << " i= " << i << " O= " << O << " w= " << w << " M= " << M << "\n";
+	}
+    }
+}
+
+std::vector<int> choose_systems_to_halt(const swarm::ensemble& ens, const std::vector<std::vector<double> >& a_init)
+{
+  std::vector<std::vector<double> > a_final(ens.nsys(),std::vector<double>(ens.nbod()-1));
+  calc_semimajor_axes(ens,a_final);
+  std::vector<int> halt(ens.nsys(),0);
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      int bad = 0;
+      for(int plid=0;plid<ens.nbod();++plid)
+	{
+	  if(fabs(a_final[sysid][plid]-a_init[sysid][plid])>0.5*a_init[sysid][plid])
+	    ++bad;
+	}
+      if(bad!=0) halt[sysid] = 1;
+    }
+  return halt;
+}
+
 int main(int argc, const char **argv)
 {
   using namespace swarm;
@@ -528,6 +581,9 @@ int main(int argc, const char **argv)
 	std::vector<double> energy_init(nsystems), energy_final(nsystems);
 	ens.calc_total_energy(&energy_init[0]);
 
+	std::vector<std::vector<double> > a_init(ens.nsys(),std::vector<double>(ens.nbod()-1));
+	calc_semimajor_axes(ens,a_init);
+
 	//	std::vector<std::vector<double> > StarVz(Obs.numobs(),std::vector<double>(nsystems));
 	std::vector<std::vector<double> > StarVz(nsystems,std::vector<double>(Obs.numobs()));
 	for(int sysid=0;sysid<nsystems;++sysid)
@@ -570,7 +626,6 @@ int main(int argc, const char **argv)
 	  }
 	
 
-
 	// Now do stability test
 	int num_integrations = 1;
 	for(int intid=0;intid<num_integrations;++intid)
@@ -581,6 +636,14 @@ int main(int argc, const char **argv)
 	    integ_gpu->integrate(gpu_ens, dT);				
 	    ens.copy_from(gpu_ens);					
 	    print_selected_systems_for_demo(ens);
+
+	    std::vector<int> halt_flag = choose_systems_to_halt(ens,a_init);
+	    ens.set_inactive(halt_flag);
+	    int nactive = ens.pack();
+	    if(nactive*0.5<ens.nsys())
+	      {
+		
+	      }
 	  }
 
 
