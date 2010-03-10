@@ -6,7 +6,9 @@
 
 #include<gsl/gsl_multifit.h>
 
-
+const double DaysInYear = 365.2425;
+const double TimeUnitToMetersPerSec = 29785.9163;
+const double MetersPerSecToAuPerYear = 1./4740.57581;
 
 double DrawUniform01() 
 { return static_cast<double>(rand())/static_cast<double>(RAND_MAX); }
@@ -138,10 +140,16 @@ void calc_cartesian_for_ellipse(double& x,double& y, double & z, double &vx, dou
   vz = d1[2]*vfac1+d2[2]*vfac2;
 }
 
-void set_initial_conditions_for_demo(swarm::ensemble& ens, const swarm::config& cfg) 
+void set_initial_conditions_for_demo(swarm::ensemble& ens, const swarm::config& cfg, const double t_first_obs) 
 {
 
   bool use_jacobi = cfg.count("use_jacobi") ? atoi(cfg.at("use_jacobi").c_str()) : 0;
+
+  std::cerr << "Set initial time for all systems = ";
+  double time_init = cfg.count("time_init") ? atof(cfg.at("time_init").c_str()) : t_first_obs;
+  std::cerr << time_init << ".\n";
+  time_init *= 2.*M_PI/DaysInYear;
+  ens.set_time_all(time_init);	
 
   for(unsigned int sys=0;sys<ens.nsys();++sys)
     {
@@ -151,21 +159,34 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens, const swarm::config& 
       ens.set_body(sys, 0, mass_star, x, y, z, vx, vy, vz);
 
       double mass_enclosed = mass_star;
-      // add near-Jupiter-mass planets on nearly circular orbits
       for(unsigned int bod=1;bod<ens.nbod();++bod)
 	{
-	  float mass_planet = DrawValue(cfg,"mass",bod,0.,mass_star);
-	  mass_enclosed += mass_planet;
 
-	  double a = DrawValue(cfg,"a",bod,0.001,10000.);
+	  double P = DrawValue(cfg,"P",bod,0.1,100000.);
+	  double K = DrawValue(cfg,"K",bod,0.1,10000.);
 	  double e = DrawValue(cfg,"ecc",bod,0.,1.);
 	  double i = DrawValue(cfg,"inc",bod,-180.,180.);
+	  i *= M_PI/180.;	  
+          P /= DaysInYear;
+          K *= MetersPerSecToAuPerYear;
+	  double sini = sin(i);
+          double mu = 0., a;
+          for(unsigned int aa=0;aa<6;++aa)
+            {
+              a = pow((mass_enclosed+mu*mass_star)*P*P, 1.0/3.0);
+              mu = K*P*sqrt(1.-e*e)/(2.*M_PI*a*sini);
+            }
+	  double mass_planet = mass_star*mu;
+	  //	  float mass_planet = DrawValue(cfg,"mass",bod,0.,mass_star);
+	  mass_enclosed += mass_planet;
+
+
 	  double O = DrawValue(cfg,"node",bod,-720.,720.);
 	  double w = DrawValue(cfg,"omega",bod,-720.,720.);
 	  double M = DrawValue(cfg,"meananom",bod,-720.,720.);
 	  //	  std::cout << "# Drawing sys= " << sys << " bod= " << bod << ' ' << mass_planet << "  " << a << ' ' << e << ' ' << i << ' ' << O << ' ' << w << ' ' << M << '\n';
 
-	  i *= M_PI/180.;
+
 	  O *= M_PI/180.;
 	  w *= M_PI/180.;
 	  M *= M_PI/180.;
@@ -297,7 +318,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 {
   std::streamsize cout_precision_old = std::cout.precision();
   std::cout.precision(10);
-  unsigned int nprint = std::min(10,ens.nsys());
+  unsigned int nprint = std::max(10,ens.nsys());
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
       std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << "\n";
@@ -477,6 +498,55 @@ public:
 
 };
 
+std::vector<double> CalcChiSq(swarm::cpu_ensemble& ens, swarm::gpu_ensemble& gpu_ens, std::auto_ptr<swarm::integrator> integ_gpu, const ObservationListClass& Obs)
+{
+  std::cerr << "Upload data to GPU.\n";
+  gpu_ens.copy_from(ens);
+
+  CalcChiSqForBestConstantsClass fit(Obs.numobs(),Obs.numobsids());
+  fit.set_predictors(Obs.mObsId);
+  fit.set_sigma(Obs.mErr);
+  //	std::vector<std::vector<double> > StarVz(Obs.numobs(),std::vector<double>(nsystems));
+  std::vector<std::vector<double> > StarVz(ens.nsys(),std::vector<double>(Obs.numobs()));
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    StarVz[sysid][0] = ens.vz(sysid,0);
+  
+  for(int obsid=1;obsid<Obs.numobs();++obsid)
+    {
+#if 0   // How should we deal with stop criteria here?
+      std::cerr << "Set stop time for all systems.\n";
+      double time_stop = Obs.time(obsid)*2.*M_PI/DaysInYear;
+      ens.set_time_end_all(time_stop);
+#endif
+      
+      double dT = (Obs.time(obsid)-Obs.time(obsid-1))*2.*M_PI/DaysInYear;
+      
+      // Perform the integration on gpu
+      std::cerr << "Integrate ensemble on GPU.\n";
+      integ_gpu->integrate(gpu_ens, dT);				
+      std::cerr << "Download data to host.\n";
+      ens.copy_from(gpu_ens);					
+      std::cerr << "GPU integration complete.\n";
+      // Save data for calculating chi^2
+      for(int sysid=0;sysid<ens.nsys();++sysid)
+	StarVz[sysid][obsid] = ens.vz(sysid,0);
+    }
+  
+  // Check Energy conservation
+  //  ens.calc_total_energy(&energy_final[0]);
+  
+  std::vector<double> ChiSq(ens.nsys());
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      fit.set_data(Obs.mRv,StarVz[sysid]);
+      ChiSq[sysid] = fit();
+      //      double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+      std::cout << sysid << ": " << ChiSq[sysid] << "\n"; // " dE/E= " << deltaE << "\n";
+    }
+  
+  return ChiSq;
+}
+
 
 void calc_semimajor_axes(const swarm::ensemble& ens, std::vector<std::vector<double> >& semimajor_axes)
 {
@@ -534,7 +604,7 @@ std::vector<int> choose_systems_to_halt(const swarm::ensemble& ens, const std::v
 int main(int argc, const char **argv)
 {
   using namespace swarm;
-  const double DaysInYear = 365.2425;
+
   if(argc != 2)
     {
       std::cerr << "Usage: " << argv[0] << " <integrator.cfg>\n";
@@ -557,106 +627,56 @@ int main(int argc, const char **argv)
   unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
   unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
   cpu_ensemble ens(nsystems, nbodyspersystem);
-
-	CalcChiSqForBestConstantsClass fit(Obs.numobs(),Obs.numobsids());
-	fit.set_predictors(Obs.mObsId);
-	fit.set_sigma(Obs.mErr);
+  gpu_ensemble gpu_ens(nsystems, nbodyspersystem);
 
 	std:: cerr << "Initialize the GPU integrator\n";
 	std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
 
 	std::cerr << "Set initial conditions on CPU.\n";
-	set_initial_conditions_for_demo(ens,cfg);
-
-	std::cerr << "Set initial time for all systems = ";
-	double time_init = cfg.count("time_init") ? atof(cfg.at("time_init").c_str()) : Obs.time(0);
-	std::cerr << time_init << ".\n";
-	time_init *= 2.*M_PI/DaysInYear;
-	ens.set_time_all(time_init);	
+	set_initial_conditions_for_demo(ens,cfg,Obs.time(0));
 
 	// Print initial conditions on CPU for use w/ GPU
-	std::cerr << "Print selected initial conditions for upload to GPU.\n";
-	print_selected_systems_for_demo(ens);
+	//	std::cerr << "Print selected initial conditions for upload to GPU.\n";
+	//	print_selected_systems_for_demo(ens);
 	
 	std::vector<double> energy_init(nsystems), energy_final(nsystems);
 	ens.calc_total_energy(&energy_init[0]);
 
 	std::vector<std::vector<double> > a_init(ens.nsys(),std::vector<double>(ens.nbod()-1));
 	calc_semimajor_axes(ens,a_init);
-
-	//	std::vector<std::vector<double> > StarVz(Obs.numobs(),std::vector<double>(nsystems));
-	std::vector<std::vector<double> > StarVz(nsystems,std::vector<double>(Obs.numobs()));
-	for(int sysid=0;sysid<nsystems;++sysid)
-	  StarVz[sysid][0] = ens.vz(sysid,0);
-
-	std::cerr << "Upload data to GPU.\n";
-	gpu_ensemble gpu_ens(ens);
-
-	for(int obsid=1;obsid<Obs.numobs();++obsid)
-	  {
-#if 0   // How should we deal with stop criteria here?
-	    std::cerr << "Set stop time for all systems.\n";
-	    double time_stop = Obs.time(obsid)*2.*M_PI/DaysInYear;
-	    ens.set_time_end_all(time_stop);
-#endif
-
-	    double dT = (Obs.time(obsid)-Obs.time(obsid-1))*2.*M_PI/DaysInYear;
-
-	    // Perform the integration on gpu
-	    std::cerr << "Integrate ensemble on GPU.\n";
-	    integ_gpu->integrate(gpu_ens, dT);				
-	    std::cerr << "Download data to host.\n";
-	    ens.copy_from(gpu_ens);					
-	    std::cerr << "GPU integration complete.\n";
-	    // Save data for calculating chi^2
-	    for(int sysid=0;sysid<nsystems;++sysid)
-	      StarVz[sysid][obsid] = ens.vz(sysid,0);
-	  }
-
-	// Check Energy conservation
-	ens.calc_total_energy(&energy_final[0]);
-
-	std::vector<double> ChiSq(nsystems);
-	for(int sysid=0;sysid<nsystems;++sysid)
-	  {
-	    fit.set_data(Obs.mRv,StarVz[sysid]);
-	    ChiSq[sysid] = fit();
-	    double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
-	    std::cout << sysid << ": " << ChiSq[sysid] << " dE/E= " << deltaE << "\n";
-	  }
-	
+	std::vector<double> ChiSq(ens.nsys()); //= CalcChiSq(ens,gpu_ens,integ_gpu,Obs);
+  gpu_ens.copy_from(ens);
 
 	// Now do stability test
-	int num_integrations = 1;
+	int num_integrations = 3;
 	for(int intid=0;intid<num_integrations;++intid)
 	  {
-	    double time_stop = 100.*2.*M_PI*pow(2,intid);
+	    double time_stop = 100.*2.*M_PI*pow(2,intid); // +Obs.time(0)/DaysInYear;
 	    double dT = time_stop-ens.time(0);
 	    std::cerr << "Integrate ensemble on GPU from t= " << ens.time(0) << " to " << time_stop << ".\n";
 	    integ_gpu->integrate(gpu_ens, dT);				
+	    std::cerr << "Download data from GPU\n";
 	    ens.copy_from(gpu_ens);					
+	    std::cerr << "Print selected systems\n";
 	    print_selected_systems_for_demo(ens);
-
+	    std::cerr << "Choose Systems to halt\n";
 	    std::vector<int> halt_flag = choose_systems_to_halt(ens,a_init);
+	    std::cerr << "Set Inactive Flag\n";
 	    ens.set_inactive(halt_flag);
+	    std::cerr << "Pack CPU ensemble\n";
 	    int nactive = ens.pack();
-	    if(nactive*0.5<ens.nsys())
-	      {
-		
-	      }
 	  }
 
 
 	// Check Energy conservation
-	//	ens.calc_total_energy(&energy_final[0]);
+	ens.calc_total_energy(&energy_final[0]);
 	double max_deltaE = 0;
 	for(int sysid=0;sysid<ens.nsys();++sysid)
 	  {
-	    double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+	    double deltaE = (energy_final[ens.index_of_system(sysid)]-energy_init[sysid])/energy_init[sysid];
 	    if(fabs(deltaE)>max_deltaE)
 	      { max_deltaE = fabs(deltaE); }
-	    if(fabs(deltaE)>0.0001)
-	      std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
+	    std::cout << sysid << ": " << ChiSq[ens.index_of_system(sysid)] << " dE/E= " << deltaE << "\n";
 	  }
 	std::cerr << "# Max dE/E= " << max_deltaE << "\n";
 
