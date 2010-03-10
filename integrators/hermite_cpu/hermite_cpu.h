@@ -18,7 +18,7 @@ public:
 	typedef real   real_jerk;
 
 protected:
-	real_time h;
+	real_time m_h;
 
 	// Integration state
 	std::valarray<real_pos>		m_xyz_old;
@@ -42,20 +42,20 @@ public:
 
 	// Is it dangerous to provide these as public?
 	// If not, people could use them to interpolate to some specific time
-	void set_timestep(const real_time hnew) { h = hnew; };
+	void set_timestep(const real_time hnew) { m_h = hnew; };
 
 	int is_old_good() const { return m_is_old_good; };
 	
 protected:
-	void predict(cpu_ensemble &ens, const unsigned int sys);
-	void Correct(cpu_ensemble &ens, const unsigned int sys);
-	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys);
+	void predict(cpu_ensemble &ens, const unsigned int sys, const double h);
+	void Correct(cpu_ensemble &ens, const unsigned int sys, const double h);
+	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, const double h);
 
 	void UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys);
 	
-	void Evolve(cpu_ensemble &ens, const unsigned int sys);
-	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys);
-	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys);
+	void Evolve(cpu_ensemble &ens, const unsigned int sys, const double h);
+	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys, const double h);
+	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, const double h);
  
 	void CopyToOld(cpu_ensemble &ens, const unsigned int sys);
 

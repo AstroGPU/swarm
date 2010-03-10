@@ -19,7 +19,7 @@ cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) :
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
 	if(!cfg.count("h")) ERROR("Integrator cpu_hermite needs a timestep ('h' keyword in the config file).");
-	h = atof(cfg.at("h").c_str());
+	m_h = atof(cfg.at("h").c_str());
 }
 
 void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
@@ -36,7 +36,7 @@ void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 }
 
 // Actual calculations
-void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys, const double h)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
@@ -69,7 +69,7 @@ void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys
     }
 };
 
-void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, const double h)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
@@ -95,9 +95,9 @@ void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned 
 
 
 // Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
-void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys, const double h)
 {
-  CorrectAlpha7by6(ens,sys);
+  CorrectAlpha7by6(ens,sys, h);
 }
 
 void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys)
@@ -198,21 +198,21 @@ void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int
 }
 
 
-void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, const double h)
 {
   CopyToOld(ens,sys);
-  predict(ens,sys);
+  predict(ens,sys,h);
   UpdateAccJerk(ens,sys);
-  Correct(ens,sys);
+  Correct(ens,sys,h);
   UpdateAccJerk(ens,sys); 
-  Correct(ens,sys);
+  Correct(ens,sys,h);
 };
 
   
 // See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
-void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys, const double h)
 {
-  EvolvePEC2(ens,sys);
+  EvolvePEC2(ens,sys,h);
   m_is_old_good = 1;
 };
 
@@ -234,7 +234,8 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	  // propagate the system until we match or exceed Tend
 	  while ( ens.time( sys ) < Tend )
 	    {
-	      Evolve ( ens,sys );
+	      double h = std::min(m_h,Tend-ens.time(sys));
+	      Evolve ( ens,sys,h );
 	      ens.time( sys ) += h;
 	      ens.nstep(sys)++;
 	    }

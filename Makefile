@@ -51,6 +51,12 @@ swarm_demo1g_SOURCES=src/swarm_demo1g.cpp
 APPS+=swarm_demo1b 
 swarm_demo1b_SOURCES=src/swarm_demo1b.cpp 
 
+APPS+=swarm_demo2 
+swarm_demo2_SOURCES=src/swarm_demo2.cpp 
+
+APPS+=swarm_demo3
+swarm_demo3_SOURCES=src/swarm_demo3.cpp 
+
 ##########################################################
 #
 #  You shouldn't need to touch anything below this point
@@ -65,7 +71,7 @@ CXX?=g++
 CCUDAFLAGS?=
 DEVEMU?=
 CXXFLAGS?=-g -O0 -I /opt/cuda/include -I ./src
-LDFLAGS?=-L /opt/cuda/lib64
+LDFLAGS?=-L /opt/cuda/lib64  -L /usr/lib64
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
 
@@ -75,7 +81,7 @@ CXXFLAGS+= -I ./src
 CXX+=-fPIC
 
 # Link command just adds the required bits to compiler command
-LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm 
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects

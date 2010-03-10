@@ -187,24 +187,53 @@ class ensemble
 		}
 
 		// utilities
+                __host__ __device__ void get_barycenter(const int sys, real_pos& x, real_pos& y, real_pos& z, real_vel& vx, real_vel& vy, real_vel& vz, const int max_body_id) const 
+                {
+		  
+                  x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;
+                  double mass_sum = 0.;
+                  for(int bod=0;bod<=max_body_id;++bod)
+                    {
+                      double m = mass(sys,bod);
+                      x  += m* this->x(sys,bod);
+                      y  += m* this->y(sys,bod);
+                      z  += m* this->z(sys,bod);
+                      vx += m* this->vx(sys,bod);
+                      vy += m* this->vy(sys,bod);
+                      vz += m* this->vz(sys,bod);
+                      mass_sum += m;
+                    }
+                  x  /= mass_sum;
+                  y  /= mass_sum;
+                  z  /= mass_sum;
+                  vx /= mass_sum;
+                  vy /= mass_sum;
+                  vz /= mass_sum;
+                };
+
+                __host__ __device__ void get_barycenter(const int sys, real_pos& x, real_pos& y, real_pos& z, real_vel& vx, real_vel& vy, real_vel& vz) const 
+		{
+		  get_barycenter(sys, x, y, z, vx, vy, vz, nbod()-1);
+		}
 
 		// Should these pay attention to active flag?
-		__host__ __device__ void   set_time_all(const real_time tend) 
+		__host__ void   set_time_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time(sys) = tend;
 		}
-		__host__ __device__ void   set_time_end_all(const real_time tend) 
+
+		__host__ void   set_time_end_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) = tend;
 		}
-		__host__ __device__ void   advance_time_end_all(const real_time dur) 
+		__host__ void   advance_time_end_all(const real_time dur) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) += dur;
 		}
-		__host__ __device__ void   set_time_output_all(int k, const real_time tout) 
+		__host__ void   set_time_output_all(int k, const real_time tout) 
 		{ 
 		  for(int sys=0;sys<nsys();++sys)
 		    time_output(sys,k) = tout;
@@ -231,7 +260,7 @@ class ensemble
 			return E;
 		}
 
-		__host__ __device__ void calc_total_energy(double *E) const
+		__host__ void calc_total_energy(double *E) const
 		{
 			for (int sys = 0; sys != nsys(); sys++)
 			{
@@ -302,6 +331,9 @@ class gpu_ensemble : public ensemble
 		gpu_ensemble(const cpu_ensemble &source);	// instantiate a copy of the source ensemble
 
 		~gpu_ensemble();
+
+		__device__ void set_time_end_all(const real_time tend);
+		__device__ void set_time_end_all_kernel(const real_time tend);
 };
 
 typedef std::map<std::string, std::string> config;
