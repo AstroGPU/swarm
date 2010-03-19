@@ -44,8 +44,8 @@ namespace gpu_hermite_aux
 }
 
 // Be careful, do we want the lower precission sqrt?
-#define RSQRT(x) rsqrtf(x)
-#define SQRT(x)   sqrtf(x)
+#define RSQRT(x) rsqrt(x)
+#define SQRT(x)   sqrt(x)
 
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
@@ -627,7 +627,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	const typename acc_type<pre>::type dtby3=h/3.;
 	const typename acc_type<pre>::type dtby6=h/6.;
 	const typename acc_type<pre>::type dt7by30=h*7./30.;
-	const typename acc_type<pre>::type dtby7=h*7.;
+	const typename acc_type<pre>::type dtby7=h/7.;
 	const typename pos_type<pre>::type hh=h;
 
 
