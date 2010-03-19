@@ -85,10 +85,8 @@ real_time cpu_verlet_integrator::CalcTimeScaleFactor(cpu_ensemble &ens, const un
 			msum += ens.mass(sys,j);
 		        ThreeVector<real_time> dist = xi - ThreeVector<real_time>( ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));
 			real_time distmagsq = dist.MagnitudeSquared();
-			//real_time distmagcube = distmagsq*sqrt(distmagsq);
 			real_time rinv = 1./sqrt(distmagsq);
 			rinv *=msum;
-			//InvPSqEff += msum/distmagcube;
 			InvPSqEff += rinv/distmagsq;
 		}
 	}
@@ -103,12 +101,10 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForDrift(cp
 	
 	for(unsigned int i=0;i<ens.nbod();++i)
 	{
-		//vi[i]=ThreeVector<real_time>(ens.vx(sys,i), ens.vy(sys.i), ens.vz(sys.i));
 		vi[i].X()=ens.vx(sys,i);
 		vi[i].Y()=ens.vy(sys,i);
 		vi[i].Z()=ens.vz(sys,i);
 	}
-	//return ThreeVector<real_time> vi(ens.vx(sys,i),ens.vy(sys,i),ens.vz(sys,i));
 	return vi;
 };
 
@@ -130,8 +126,6 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForKick(cpu
 			acc[j].X() += ens.mass(sys,i)*dist.X()/distmagcube;
 			acc[j].Y() += ens.mass(sys,i)*dist.Y()/distmagcube;
 			acc[j].Z() += ens.mass(sys,i)*dist.Z()/distmagcube;
-			//acc[i] -= ens.mass(sys,j)*dist/distmagcube;
-			//acc[j] += ens.mass(sys.i)*dist/distmagcube;
 		}
 	}
 	// Add in star-planet accel last to reduce roundoff error
@@ -149,8 +143,6 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForKick(cpu
 			acc[j].X() += ens.mass(sys,i)*dist.X()/distmagcube;
 			acc[j].Y() += ens.mass(sys,i)*dist.Y()/distmagcube;
 			acc[j].Z() += ens.mass(sys,i)*dist.Z()/distmagcube;
-			//acc[i] -= ens.mass(sys,j)*dist/distmagcube;
-			//acc[j] += ens.mass(sys.i)*dist/distmagcube;
 		}
 	}
 	return acc;
