@@ -44,8 +44,8 @@ namespace gpu_hermite_aux
 }
 
 // Be careful, do we want the lower precission sqrt?
-#define RSQRT(x) rsqrtf(x)
-#define SQRT(x)   sqrtf(x)
+#define RSQRT(x) rsqrt(x)
+#define SQRT(x)   sqrt(x)
 
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
@@ -621,12 +621,12 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	float s_mass[nbod];
 	//const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2), ens.mass(sys,3)};
 
+	typename acc_type<pre>::type dtby2=h/2.;
+	typename acc_type<pre>::type dtby3=h/3.;
+	typename acc_type<pre>::type dtby6=h/6.;
+	typename acc_type<pre>::type dt7by30=h*7./30.;
+	typename acc_type<pre>::type dtby7=h/7.;
 	typename pos_type<pre>::type hh=h;
-	typename acc_type<pre>::type dtby2=hh/2.;
-	typename acc_type<pre>::type dtby3=hh/3.;
-	typename acc_type<pre>::type dtby6=hh/6.;
-	typename acc_type<pre>::type dt7by30=hh*7./30.;
-	typename acc_type<pre>::type dtby7=hh/7.;
 
 	//load data from global memory
 	if(nbod>0)
