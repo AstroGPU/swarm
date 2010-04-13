@@ -617,19 +617,16 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	typename acc_type<pre>::type mAccOld    [nData];
 	typename acc_type<pre>::type mJerkOld   [nData];
 
-	float sPos       [nData];
-	float sVel       [nData];
 
 	float s_mass[nbod];
 	//const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2), ens.mass(sys,3)};
 
-	const typename acc_type<pre>::type dtby2=h/2.;
-	const typename acc_type<pre>::type dtby3=h/3.;
-	const typename acc_type<pre>::type dtby6=h/6.;
-	const typename acc_type<pre>::type dt7by30=h*7./30.;
-	const typename acc_type<pre>::type dtby7=h/7.;
-	const typename pos_type<pre>::type hh=h;
-
+	typename acc_type<pre>::type dtby2=h/2.;
+	typename acc_type<pre>::type dtby3=h/3.;
+	typename acc_type<pre>::type dtby6=h/6.;
+	typename acc_type<pre>::type dt7by30=h*7./30.;
+	typename acc_type<pre>::type dtby7=h/7.;
+	typename pos_type<pre>::type hh=h;
 
 	//load data from global memory
 	if(nbod>0)
@@ -704,8 +701,22 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		else
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
+	else if(pre==2)
+	{
+// If not using shared memory as cache, no need bother	
+//		float sPos       [nData];
+//		float sVel       [nData];
+//		copyArray<nData>(sPos,mPos);
+//		copyArray<nData>(sVel,mVel);
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+	}
 	else
 	{
+		float sPos       [nData];
+		float sVel       [nData];
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
 		if(nbod<5)
@@ -722,6 +733,15 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
+	        if(T+h>Tend)
+	          {	
+			hh=Tend-T;
+			dtby2=hh/2.;
+			dtby3=hh/3.;
+			dtby6=hh/6.;
+			dt7by30=hh*7./30.;
+			dtby7=hh/7.;
+		  }
 		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
 
 		if(pre==1)
@@ -731,8 +751,22 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		else
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
+		else if(pre==2)
+		{
+// If not using shared memory as cahce, don't bother
+//		float sPos       [nData];
+//		float sVel       [nData];
+//		copyArray<nData>(sPos,mPos);
+//		copyArray<nData>(sVel,mVel);
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		}
 		else
 		{
+		float sPos       [nData];
+		float sVel       [nData];
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
 		if(nbod<5)
@@ -750,9 +784,23 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		else	
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		} 
+		else if(pre==2)
+		{
+// If not using shared memory as cahce, don't bother
+//		float sPos       [nData];
+//		float sVel       [nData];
+//		copyArray<nData>(sPos,mPos);
+//		copyArray<nData>(sVel,mVel);
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
 		else
 		{
+		float sPos       [nData];
+		float sVel       [nData];
 		copyArray<nData>(sPos,mPos);
 		copyArray<nData>(sVel,mVel);
 		if(nbod<5)
@@ -763,7 +811,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 
-		T += h;
+		T += hh;
 		ens.nstep(sys)++;
 	}
 	ens.time(sys) = T;
