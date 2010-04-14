@@ -47,15 +47,15 @@ public:
 	int is_old_good() const { return m_is_old_good; };
 	
 protected:
-	void predict(cpu_ensemble &ens, const unsigned int sys);
-	void Correct(cpu_ensemble &ens, const unsigned int sys);
-	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys);
+	void predict(cpu_ensemble &ens, const unsigned int sys, real_time hh);
+	void Correct(cpu_ensemble &ens, const unsigned int sys, real_time hh);
+	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, real_time hh);
 
 	void UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys);
 	
-	void Evolve(cpu_ensemble &ens, const unsigned int sys);
-	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys);
-	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys);
+	void Evolve(cpu_ensemble &ens, const unsigned int sys, real_time hh);
+	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys, real_time hh);
+	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, real_time hh);
  
 	void CopyToOld(cpu_ensemble &ens, const unsigned int sys);
 

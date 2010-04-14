@@ -36,17 +36,17 @@ void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 }
 
 // Actual calculations
-void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
-      const real_time hby2 = h/2., hby3 = h/3.;
-      ens.x(sys,i)  += h*(ens.vx(sys,i)+hby2*(ax(sys,i)+hby3*jx(sys,i)));
-      ens.y(sys,i)  += h*(ens.vy(sys,i)+hby2*(ay(sys,i)+hby3*jy(sys,i)));
-      ens.z(sys,i)  += h*(ens.vz(sys,i)+hby2*(az(sys,i)+hby3*jz(sys,i)));
-      ens.vx(sys,i) += h*(ax(sys,i)+hby2*jx(sys,i));
-      ens.vy(sys,i) += h*(ay(sys,i)+hby2*jy(sys,i));
-      ens.vz(sys,i) += h*(az(sys,i)+hby2*jz(sys,i));
+      const real_time hby2 = hh/2., hby3 = hh/3.;
+      ens.x(sys,i)  += hh*(ens.vx(sys,i)+hby2*(ax(sys,i)+hby3*jx(sys,i)));
+      ens.y(sys,i)  += hh*(ens.vy(sys,i)+hby2*(ay(sys,i)+hby3*jy(sys,i)));
+      ens.z(sys,i)  += hh*(ens.vz(sys,i)+hby2*(az(sys,i)+hby3*jz(sys,i)));
+      ens.vx(sys,i) += hh*(ax(sys,i)+hby2*jx(sys,i));
+      ens.vy(sys,i) += hh*(ay(sys,i)+hby2*jy(sys,i));
+      ens.vz(sys,i) += hh*(az(sys,i)+hby2*jz(sys,i));
     }
 };
 
@@ -69,12 +69,12 @@ void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys
     }
 };
 
-void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
     {
-      const real_time hby2 = h/2., hby6 = h/6.;
-      const real_time h7by30 = h*7./30, hby7 = h/7.;
+      const real_time hby2 = hh/2., hby6 = hh/6.;
+      const real_time h7by30 = hh*7./30, hby7 = hh/7.;
       ens.vx(sys,i) = vx_old(sys,i) + hby2*((ax_old(sys,i)+ax(sys,i)
 					 + hby6*(jx_old(sys,i)-jx(sys,i))));
       ens.vy(sys,i) = vy_old(sys,i) + hby2*((ay_old(sys,i)+ay(sys,i)
@@ -95,9 +95,9 @@ void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned 
 
 
 // Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
-void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
-  CorrectAlpha7by6(ens,sys);
+  CorrectAlpha7by6(ens,sys, hh);
 }
 
 void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys)
@@ -198,21 +198,21 @@ void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int
 }
 
 
-void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   CopyToOld(ens,sys);
-  predict(ens,sys);
+  predict(ens,sys, hh);
   UpdateAccJerk(ens,sys);
-  Correct(ens,sys);
+  Correct(ens,sys, hh);
   UpdateAccJerk(ens,sys); 
-  Correct(ens,sys);
+  Correct(ens,sys, hh);
 };
 
   
 // See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
-void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys)
+void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
-  EvolvePEC2(ens,sys);
+  EvolvePEC2(ens,sys, hh);
   m_is_old_good = 1;
 };
 
@@ -228,14 +228,16 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{
+          real_time hh=h;		
 	  if(!ens.active(sys)) continue;
 	  real_time Tend = ens.time( sys ) + dT;
 	  UpdateAccJerk ( ens,sys );
 	  // propagate the system until we match or exceed Tend
 	  while ( ens.time( sys ) < Tend )
 	    {
-	      Evolve ( ens,sys );
-	      ens.time( sys ) += h;
+	      if( ens.time( sys )+h>Tend) hh=Tend-ens.time(sys);
+	      Evolve ( ens,sys, hh );
+	      ens.time( sys ) += hh;
 	      ens.nstep(sys)++;
 	    }
 	} // end loop over systems
