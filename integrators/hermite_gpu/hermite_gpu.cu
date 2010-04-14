@@ -832,14 +832,32 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 }
 
 
+/**
+ * host function to invoke a kernel (double precision) 
+ *
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
+/**
+ * host function to invoke a kernel (mixed precision) 
+ *
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
+/**
+ * host function to invoke a kernel (single precision) 
+ *
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
