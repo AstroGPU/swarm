@@ -14,7 +14,11 @@ extern "C" integrator *create_cpu_hermite(const config &cfg)
 	return new cpu_hermite_integrator(cfg);
 }
 
-// Constructor
+/**
+ * Constructor for hermite cpu integrator
+ *
+ * @param[in] cfg configuration file needs a timestep.
+ */
 cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
@@ -22,6 +26,11 @@ cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) :
 	h = atof(cfg.at("h").c_str());
 }
 
+/**
+ * function to (re)allocate the integration state
+ * 
+ * @param[in] ens cpu_ensemble
+ */
 void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 {
 	// allocate memory where we'll keep the integration state
@@ -35,7 +44,13 @@ void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 	m_is_old_good = 0;
 }
 
-// Actual calculations
+/**
+ * Predicts velocity and position (Actual calculations)
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] hh time step
+ */
 void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
@@ -50,6 +65,12 @@ void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys, 
     }
 };
 
+/**
+ * Makes a copy for old data 
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ */
 void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
@@ -69,6 +90,13 @@ void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys
     }
 };
 
+/**
+ * Actual computation for correction 
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] hh time step
+ */
 void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
@@ -93,13 +121,24 @@ void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned 
     }
 };
 
-
-// Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
+/**
+ * Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] hh time step
+ */
 void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   CorrectAlpha7by6(ens,sys, hh);
 }
 
+/**
+ * Updates acceleration and jerk 
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ */
 void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys)
 {
   // Use's double precission
@@ -198,6 +237,13 @@ void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int
 }
 
 
+/**
+ * Actual evolve function
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] hh time step
+ */
 void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   CopyToOld(ens,sys);
@@ -209,13 +255,25 @@ void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sy
 };
 
   
-// See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
+/**
+ * See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] hh time step
+ */
 void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys, real_time hh)
 {
   EvolvePEC2(ens,sys, hh);
   m_is_old_good = 1;
 };
 
+/**
+ * integrate function 
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] dT destination time 
+ */
 void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 {
 	// Allocate integration state (if not already there)
@@ -235,6 +293,7 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	  // propagate the system until we match or exceed Tend
 	  while ( ens.time( sys ) < Tend )
 	    {
+	      // adjust time step to ends at exact destination time
 	      if( ens.time( sys )+h>Tend) hh=Tend-ens.time(sys);
 	      Evolve ( ens,sys, hh );
 	      ens.time( sys ) += hh;

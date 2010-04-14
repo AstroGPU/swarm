@@ -6,6 +6,9 @@
 
 namespace swarm {
 
+/**
+ * cpu_hermite_integrator class
+ */
 class cpu_hermite_integrator : public integrator
 {
 public:
@@ -28,16 +31,28 @@ protected:
 	int				m_nsys, m_nbod;
 	int                             m_is_old_good;
 
-	// function to (re)allocate the integration state
+	/**
+  	 * function to (re)allocate the integration state
+	 * 
+	 * @param[in] ens cpu_ensemble
+ 	 */
 	void alloc_state(cpu_ensemble &ens);
 
 public:
+	/**
+	 * Constructor for hermite cpu integrator
+	 *
+	 * @param[in] cfg configuration file needs a timestep.
+	 */
 	cpu_hermite_integrator(const config &cfg);
 
 public:
-	// No support for GPU execution. Note: we could make this function
-	// transparently copy the CPU ensemble to the GPU, and back once
-	// the integration is done
+	/**
+	 * integrate function 
+	 *
+	 * @param[in,out] ens cpu_ensemble 
+	 * @param[in] dT destination time 
+	 */
 	virtual void integrate(cpu_ensemble &ens, real_time T);
 
 	// Is it dangerous to provide these as public?
