@@ -10,7 +10,6 @@ namespace gpu_hermite_aux
 	// Wrap all aux. functions in a separate namespace, to avoid
 	// collisions with equally named functions from other integrators.
 	//
-
 	__device__ float3 operator*(const float3 &a, const float &b)
 	{
 		return make_float3(a.x*b, a.y*b, a.z*b);
@@ -47,6 +46,15 @@ namespace gpu_hermite_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
+/**
+ * Copies array from a source to a target
+ *
+ * @tparam N number of elements to copy    
+ * @tparam destT destination type
+ * @tparam srcT source type
+ * @param[out] target the target array to copy to     
+ * @param[in] source the source array to copy from    
+ */
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
 {
@@ -74,7 +82,21 @@ inline __device__ void copyArray(destT *target, srcT *source)
 		 }
 }
 
-
+/**
+ * Predicts velocity and position
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam N 3*(number of bodies per system )    
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[out] mPos position (x,y,z) for each body     
+ * @param[in,out] mVel velocity (x,y,z) for each body      
+ * @param[in] mAcc acceleration (x,y,z) for each body     
+ * @param[in] mJerk jerk (x,y,z) for each body      
+ * @param[in] dtby2 h/2. const
+ * @param[in] dtby3 h/3. const
+ * @param[in] h time step
+ */
 template<unsigned int N, typename real_hi, typename real_lo>
 inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, const real_lo dtby2, const real_lo dtby3, real_hi h)
 {
@@ -123,6 +145,26 @@ inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 		}
 }
 
+/**
+ * Corrects velocity and position
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam N 3*(number of bodies per system )    
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[out] mPos position (x,y,z) for each body     
+ * @param[in,out] mVel velocity (x,y,z) for each body      
+ * @param[in] mAcc acceleration (x,y,z) for each body     
+ * @param[in] mJerk jerk (x,y,z) for each body      
+ * @param[in] mPosOld old position (x,y,z) for each body     
+ * @param[in] mVelOld old velocity (x,y,z) for each body      
+ * @param[in] mAccOld old acceleration (x,y,z) for each body     
+ * @param[in] mJerkOld old jerk (x,y,z) for each body      
+ * @param[in] dtby2 h/2. const
+ * @param[in] dtby6 h/6. const
+ * @param[in] dt7by30 h*7./30. const
+ * @param[in] dtby7 h/7. const
+ */
 template<unsigned int N, typename real_hi, typename real_lo>
 inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, 
 		real_hi *mPosOld, real_hi *mVelOld, real_lo *mAccOld, real_lo *mJerkOld, 
@@ -171,22 +213,20 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 			mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
 		}	
 	    }
-
-
 }
 
 /**
  * Updates acceleration and jerk for 2 or 3 planets (optimized). 
  * For mixed precision, acceleration and jerk are saved in single precision.
- * (real_hi = double)
- * (real_lo = float for single and mixed)
- * (real_lo = double for double)
  *
- * @param mPos position (x,y,z) for each body     
- * @param mVel velocity (x,y,z) for each body      
- * @param mAcc acceleration (x,y,z) for each body     
- * @param mJerk jerk (x,y,z) for each body      
- * @param d_mass mass in constant float for each body
+ * @tparam nBodies number of bodies per system
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[in] mPos position (x,y,z) for each body     
+ * @param[in] mVel velocity (x,y,z) for each body      
+ * @param[out] mAcc acceleration (x,y,z) for each body     
+ * @param[out] mJerk jerk (x,y,z) for each body      
+ * @param[in] d_mass mass in constant float for each body
  */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
@@ -424,15 +464,15 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 /**
  * Updates acceleration and jerk for more than 3 planets. 
  * For mixed precision, acceleration and jerk are saved in single precision.
- * (real_hi = double)
- * (real_lo = float for single and mixed)
- * (real_lo = double for double)
  *
- * @param mPos position (x,y,z) for each body     
- * @param mVel velocity (x,y,z) for each body      
- * @param mAcc acceleration (x,y,z) for each body     
- * @param mJerk jerk (x,y,z) for each body      
- * @param d_mass mass in constant float for each body
+ * @tparam nBodies number of bodies per system
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[in] mPos position (x,y,z) for each body     
+ * @param[in] mVel velocity (x,y,z) for each body      
+ * @param[out] mAcc acceleration (x,y,z) for each body     
+ * @param[out] mJerk jerk (x,y,z) for each body      
+ * @param[in] d_mass mass in constant float for each body
  */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
@@ -529,6 +569,14 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 
 __constant__ ensemble gpu_hermite_ens;
 
+/**
+ * Hermite integrator kernel function
+ *
+ * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
+ * @tparam nbod number of bodies per system 
+ * @param dT destination time     
+ * @param h time step       
+ */
 template<unsigned int pre, unsigned int nbod>
 __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 {
@@ -540,7 +588,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 	double    T = ens.time(sys);
 	double Tend = T + dT;
-
 
 	const unsigned int nData=3*nbod;
 	typename pos_type<pre>::type mPos       [nData];
@@ -565,12 +612,15 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	//load data from global memory
 	if(nbod>0)
 	{
+	//load position 
 	mPos[0]=ens.x(sys,0);
 	mPos[1]=ens.y(sys,0);
 	mPos[2]=ens.z(sys,0);
+	//load velocity 
 	mVel[0]=ens.vx(sys,0);
 	mVel[1]=ens.vy(sys,0);
 	mVel[2]=ens.vz(sys,0);
+	//load mass 
 	s_mass[0]=ens.mass(sys, 0);
 	}
 	if(nbod>1)
@@ -628,26 +678,8 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		}
 	}
 
-	if(pre==1)
-	{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	}	
-	else if(pre==2)
-	{
-// If not using shared memory as cache, no need bother	
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	}
-	else
+	//mixed precision
+	if(pre==3)
 	{
 		float sPos       [nData];
 		float sVel       [nData];
@@ -658,6 +690,14 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		else
 			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}
+	//double or single precision
+	else
+	{
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+	}	
 
 	while(T<Tend)
 	{
@@ -678,69 +718,48 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		  }
 		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
 
-		if(pre==1)
+		//mixed precision
+		if(pre==3)
 		{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			float sPos       [nData];
+			float sVel       [nData];
+			copyArray<nData>(sPos,mPos);
+			copyArray<nData>(sVel,mVel);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
-		else if(pre==2)
-		{
-// If not using shared memory as cahce, don't bother
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		}
+		//double or single precision
 		else
 		{
-		float sPos       [nData];
-		float sVel       [nData];
-		copyArray<nData>(sPos,mPos);
-		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		
-
-		if(pre==1)
+		//mixed precision
+		if(pre==3)
 		{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else	
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		} 
-		else if(pre==2)
-		{
-// If not using shared memory as cahce, don't bother
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			float sPos       [nData];
+			float sVel       [nData];
+			copyArray<nData>(sPos,mPos);
+			copyArray<nData>(sVel,mVel);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
+		//double or single precision
 		else
 		{
-		float sPos       [nData];
-		float sVel       [nData];
-		copyArray<nData>(sPos,mPos);
-		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
@@ -748,7 +767,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		T += hh;
 		ens.nstep(sys)++;
 	}
+	//update system time
 	ens.time(sys) = T;
+
+	//save data to global memory
 	if(nbod>0)
 	{
 	ens.x(sys,0)=mPos[0];
@@ -807,7 +829,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		mVel[idx]=ens.vz(sys,plid); ++idx;
 		}
 	}
-
 }
 
 
