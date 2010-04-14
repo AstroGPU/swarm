@@ -24,7 +24,8 @@ struct gpu_hermite_adap_integrator_data
        real_jerk       *m_jerk, *m_jerk_old;
 
        // Other parameters the integrator will need
-       // For the adaptive time step, h is now the minimum
+       // h is the minimum time step allowed
+       // stepfac is the fraction of the implicit step you wish to take, e.g., dt = acc.mag/jerk.mag * stepfac + h
        float h, stepfac;
 };
 
