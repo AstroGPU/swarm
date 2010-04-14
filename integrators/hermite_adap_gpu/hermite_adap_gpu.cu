@@ -3,8 +3,8 @@
 
 //#if PRECISION == 3
 // Double precision
-#define RSQRT(x) rsqrtf(x)
-#define SQRT(x)   sqrtf(x)
+#define RSQRT(x) rsqrt(x)
+#define SQRT(x)   sqrt(x)
 //typedef double real;
 //#else
 
@@ -27,15 +27,15 @@ namespace gpu_hermite_adap_aux
 	}
 
 
-inline __device__ real getAdaptiveTimeStep(real *mAcc, real *mJerk, unsigned int nBodies, real h) 
+inline __device__ real getAdaptiveTimeStep(real *mAcc, real *mJerk, unsigned int nBodies, real h, real stepfac) 
  {
          real dt=LARGE_NUMBER;
          real magAcc, magJerk;
          for(unsigned int i=0;i<nBodies;++i) 
           {
-                   magAcc =sqrt(pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
-                   magJerk=sqrt(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) ;
-                   dt=min(dt,magAcc/(magJerk+magAcc*SMALL_NUMBER)*STEP_FACTOR+h);
+                   magAcc =SQRT(pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
+                   magJerk=SQRT(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) ;
+                   dt=min(dt,magAcc/(magJerk+magAcc*SMALL_NUMBER)*stepfac+h);
           }
          return dt;
  }
@@ -547,7 +547,7 @@ __device__  void UpdateAccJerk_General(acc_real * mPos, acc_real * mVel, acc_rea
 __constant__ ensemble gpu_hermite_adap_ens;
 
 template<int pre>
-__global__ void gpu_hermite_adap_integrator_kernel(double dT, double h)
+__global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double stepfac)
 {
 	using namespace gpu_hermite_adap_aux;
 
@@ -661,14 +661,14 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h)
 	{
 		////Evolve(DeltaT);
 		//CopyToOld();
-                dt=getAdaptiveTimeStep(&mAcc[0], &mJerk[0], NBODIES, h);
+                dt=getAdaptiveTimeStep(&mAcc[0], &mJerk[0], NBODIES, h, stepfac);
                 if(dt+T>Tend)dt=Tend-T;
          
          	real dtby2=dt/2.;
 	        real dtby3=dt/3.;
 	        real dtby6=dt/6.;
 	        real dt7by30=dt*7./30.;
-	        real dtby7=dt*7.;
+	        real dtby7=dt/7.;
 
 		copyArray<nData>(mPosOld,mPos);
 		copyArray<nData>(mVelOld,mVel);
@@ -800,15 +800,15 @@ void gpu_hermite_adap_integrator::integrate(gpu_ensemble &ens, double dT)
 	switch(prec){
 		// double precision
 		case 1:
-			gpu_hermite_adap_integrator_kernel<1><<<gridDim, threadsPerBlock>>>(dT, h);
+			gpu_hermite_adap_integrator_kernel<1><<<gridDim, threadsPerBlock>>>(dT, h, stepfac);
 			break;
 		// signle precision
 		case 2:
-			gpu_hermite_adap_integrator_kernel<2><<<gridDim, threadsPerBlock>>>(dT, h);
+			gpu_hermite_adap_integrator_kernel<2><<<gridDim, threadsPerBlock>>>(dT, h, stepfac);
 			break;
 		// mixed precision
 		case 3:
-			gpu_hermite_adap_integrator_kernel<3><<<gridDim, threadsPerBlock>>>(dT, h);
+			gpu_hermite_adap_integrator_kernel<3><<<gridDim, threadsPerBlock>>>(dT, h, stepfac);
 			break;
 	}
 	printf("%s\n", cudaGetErrorString(cudaGetLastError()));

@@ -2,11 +2,10 @@
 #define integ_hermite_adap_h__
 
 #include "swarm.h"
+#include "user.h"
 
 #define LARGE_NUMBER 1e16
 #define SMALL_NUMBER 1e-16
-#define STEP_FACTOR 0.01
-#define NBODIES 3
 
 typedef double real;
 typedef real   real_time;
@@ -26,7 +25,7 @@ struct gpu_hermite_adap_integrator_data
 
        // Other parameters the integrator will need
        // For the adaptive time step, h is now the minimum
-       float h;
+       float h, stepfac;
 };
 
 
