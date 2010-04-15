@@ -8,12 +8,13 @@ namespace swarm {
 
 namespace hermite_gpu {
 
-/**
- * Constructor for hermite gpu integrator
+/*!
+ * \brief Constructor for hermite gpu integrator
  *
+ * Timestep, precision, and blocksize are set from configuration class.
  * @tparam real_hi double
  * @tparam real_lo float for single and mixed, double for double
- * @param[in] cfg configuration file needs a timestep, precision, and block size.
+ * @param[in] cfg configuration class, read in from a file, needs a timestep, precision, and block size.
  */
 template<typename real_hi, typename real_lo>
 gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cfg)
@@ -27,10 +28,10 @@ gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cf
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }
 
-/**
- * Create double/single/mixed hermite gpu integrator based on precision
+/*!
+ * \brief Create double/single/mixed hermite gpu integrator based on precision
  *
- * @param[in] cfg configuration file needs precision for hermite integrator    
+ * @param[in] cfg configuration class, read in from a file, needs precision for hermite integrator    
  */
 extern "C" integrator *create_gpu_hermite(const config &cfg)
 {

@@ -46,8 +46,8 @@ namespace gpu_hermite_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-/**
- * Copies array from a source to a target
+/*!
+ * \brief Copies array from a source to a target.
  *
  * @tparam N number of elements to copy    
  * @tparam destT destination type
@@ -82,8 +82,9 @@ inline __device__ void copyArray(destT *target, srcT *source)
 		 }
 }
 
-/**
- * Predicts velocity and position
+/*!
+ * \brief Predicts velocity and position
+ *
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam N 3*(number of bodies per system )    
@@ -145,8 +146,9 @@ inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 		}
 }
 
-/**
- * Corrects velocity and position
+/*!
+ * \brief Corrects velocity and position
+ *
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam N 3*(number of bodies per system )    
@@ -215,8 +217,9 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 	    }
 }
 
-/**
- * Updates acceleration and jerk for 2 or 3 planets (optimized). 
+/*!
+ * \brief Updates acceleration and jerk for 2 or 3 planets (optimized). 
+ *
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam nBodies number of bodies per system
@@ -461,8 +464,9 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	mJerk[6] = ji2[0]; mJerk[7] = ji2[1]; mJerk[8] = ji2[2];
 }
 
-/**
- * Updates acceleration and jerk for more than 3 planets. 
+/*!
+ * \brief Updates acceleration and jerk for more than 3 planets. 
+ *
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam nBodies number of bodies per system
@@ -569,8 +573,23 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 
 __constant__ ensemble gpu_hermite_ens;
 
-/**
- * Hermite integrator kernel function
+/*!
+ * \brief Hermite GPU integrator kernel function
+ *
+ * This kernel will do the followings, 
+ *  1. Data load: position, velocity, and mass from global memory. 
+ *  2. UpdateAccJerk(ens,sys);
+ *  3. While (ens.time( sys ) < Tend )
+ *      CopyToOld(ens,sys);
+ *      predict(ens,sys, hh);
+ *      UpdateAccJerk(ens,sys);
+ *      Correct(ens,sys, hh);
+ *      UpdateAccJerk(ens,sys); 
+ *      Correct(ens,sys, hh);
+ * Implementation is based on Hermite CPU integrator
+ * @see swarm::cpu_hermite_integrator
+ * UpdateAccJerk function is optimized for 2 or 3 plantes. 
+ * According to precision, all data type will be set as double or float
  *
  * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
  * @tparam nbod number of bodies per system 
@@ -832,9 +851,11 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 }
 
 
-/**
- * host function to invoke a kernel (double precision) 
+/*!
+ * \brief host function to invoke a kernel (double precision) 
  *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
@@ -842,9 +863,11 @@ template<>
 void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
-/**
- * host function to invoke a kernel (mixed precision) 
+/*!
+ * \brief host function to invoke a kernel (mixed precision) 
  *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
@@ -852,9 +875,11 @@ template<>
 void gpu_hermite_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
-/**
- * host function to invoke a kernel (single precision) 
+/*!
+ * \brief host function to invoke a kernel (single precision) 
  *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
