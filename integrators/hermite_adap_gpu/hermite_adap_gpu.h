@@ -3,6 +3,13 @@
 
 #include "swarm.h"
 
+#ifndef LARGE_NUMBER
+#define LARGE_NUMBER 1e32
+#endif
+#ifndef SMALL_NUMBER
+#define SMALL_NUMBER 1e-32
+#endif
+
 namespace swarm {
 namespace hermite_adap_gpu {
 
