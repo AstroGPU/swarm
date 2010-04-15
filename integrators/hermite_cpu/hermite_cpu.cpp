@@ -14,8 +14,8 @@ extern "C" integrator *create_cpu_hermite(const config &cfg)
 	return new cpu_hermite_integrator(cfg);
 }
 
-/**
- * Constructor for hermite cpu integrator
+/*!
+ * \brief Constructor for hermite cpu integrator
  *
  * @param[in] cfg configuration file needs a timestep.
  */
@@ -26,8 +26,8 @@ cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) :
 	h = atof(cfg.at("h").c_str());
 }
 
-/**
- * function to (re)allocate the integration state
+/*!
+ * \brief function to (re)allocate the integration state
  * 
  * @param[in] ens cpu_ensemble
  */
@@ -44,8 +44,8 @@ void cpu_hermite_integrator::alloc_state(cpu_ensemble &ens)
 	m_is_old_good = 0;
 }
 
-/**
- * Predicts velocity and position (Actual calculations)
+/*!
+ * \brief Predicts velocity and position (Actual calculations)
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -65,8 +65,8 @@ void cpu_hermite_integrator::predict(cpu_ensemble &ens, const unsigned int sys, 
     }
 };
 
-/**
- * Makes a copy for old data 
+/*!
+ * \brief Makes a copy for old data 
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -90,9 +90,10 @@ void cpu_hermite_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys
     }
 };
 
-/**
- * Actual computation for correction 
+/*!
+ * \brief Actual computation for correction 
  *
+ * Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
  * @param[in] hh time step
@@ -121,8 +122,8 @@ void cpu_hermite_integrator::CorrectAlpha7by6(cpu_ensemble &ens, const unsigned 
     }
 };
 
-/**
- * Kokubo & Makino PASJ 56, 861 explain choice of alpha = 7/6
+/*!
+ * \brief correct funtion 
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -133,8 +134,8 @@ void cpu_hermite_integrator::Correct(cpu_ensemble &ens, const unsigned int sys, 
   CorrectAlpha7by6(ens,sys, hh);
 }
 
-/**
- * Updates acceleration and jerk 
+/*!
+ * \brief Updates acceleration and jerk 
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -237,8 +238,8 @@ void cpu_hermite_integrator::UpdateAccJerk(cpu_ensemble &ens, const unsigned int
 }
 
 
-/**
- * Actual evolve function
+/*!
+ * \brief Actual evolve function
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -255,9 +256,10 @@ void cpu_hermite_integrator::EvolvePEC2(cpu_ensemble &ens, const unsigned int sy
 };
 
   
-/**
- * See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
+/*!
+ * \brief evolve function 
  *
+ * See Kokubo, Yoshinaga & Makino MNRAS 297, 1067 for details of choice
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
  * @param[in] hh time step
@@ -268,9 +270,11 @@ void cpu_hermite_integrator::Evolve(cpu_ensemble &ens, const unsigned int sys, r
   m_is_old_good = 1;
 };
 
-/**
- * integrate function 
+/*!
+ * \brief Hermite CPU integrate function 
  *
+ * Hermite GPU integrator is implemented based on this
+ * @see swarm::hermite_gpu
  * @param[in,out] ens cpu_ensemble 
  * @param[in] dT destination time 
  */

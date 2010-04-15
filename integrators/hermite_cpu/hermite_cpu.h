@@ -6,8 +6,8 @@
 
 namespace swarm {
 
-/**
- * cpu_hermite_integrator class
+/*!
+ * \brief cpu_hermite_integrator class
  */
 class cpu_hermite_integrator : public integrator
 {
@@ -31,24 +31,21 @@ protected:
 	int				m_nsys, m_nbod;
 	int                             m_is_old_good;
 
-	/**
-  	 * function to (re)allocate the integration state
+	/*!
+  	 * \brief  function to (re)allocate the integration state
 	 * 
 	 * @param[in] ens cpu_ensemble
  	 */
 	void alloc_state(cpu_ensemble &ens);
 
 public:
-	/**
-	 * Constructor for hermite cpu integrator
-	 *
-	 * @param[in] cfg configuration file needs a timestep.
-	 */
 	cpu_hermite_integrator(const config &cfg);
 
 public:
 	virtual void integrate(cpu_ensemble &ens, real_time T);
 
+	// Is it dangerous to provide these as public?
+	// If not, people could use them to interpolate to some specific time
 	void set_timestep(const real_time hnew) { h = hnew; };
 
 	int is_old_good() const { return m_is_old_good; };
