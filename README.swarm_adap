@@ -1,11 +1,13 @@
 README FILE FOR SWARM_ADAP
+==========================
 
-INSTALL:
+INSTALL
+-------
 
-o Place the tar in Swarm-NG's home directory, for example,
+* Place the tar in Swarm-NG's home directory, for example,
 /home/username/swarm-ng/
 
-o untar scatter-ng.tar.  This will unpack the following files.  All directories
+* untar scatter-ng.tar.  This will unpack the following files.  All directories
 are from the Swarm-NG's home directory.
 
 	./ic/swarm_adap.py
@@ -14,27 +16,24 @@ are from the Swarm-NG's home directory.
 	./src/swarm_adap/swarm_adap.h
 	./src/swarm_adap/swarm_adap.cpp
 
-o Add the following lines to Makefile.user
+* Add the following lines to Makefile.user
 
 	APPS+=swarm_adap
 	swarm_adap_SOURCES=src/swarm_adap/swarm_adap.cpp
 
-o Type make in Swarm-NG's home directory.  You may wish to make a symbolic link between swarm_adap, which will
+* Type make in Swarm-NG's home directory.  You may wish to make a symbolic link between swarm_adap, which will
 be placed in the bin directory, and run, where program execution is expected
 to take place.
 
-ICS and PROGRAM EXECUTION:
+ICS and PROGRAM EXECUTION
+-------------------------
 
-o Generate ICs. Execute swarm_adap.py in the ic directory. Feel free to modify
+* Generate ICs. Execute swarm_adap.py in the ic directory. Feel free to modify
 the generator.  Its default is to generate 2048 4-planet systems plus one
 perturbering body.  The pertuber is given a Maxwellian speed distribution.
 
-o cfg file.  Make sure that integrator-adap.cfg is in the run directory and that
+* cfg file.  Make sure that integrator-adap.cfg is in the run directory and that
 it has pre, h, and stepfac defined.  pre is the precision, h is the minimum 
 time step, and stepfac is the fraction of accerlation/jerk you wish to take. 
 Values between 0.03 and 0.01 offer a compromise between speed and accuracy.
-
-o Type make.  You may wish to make a symbolic link between swarm_adap, which will
-be placed in the bin directory, and run, where program execution is expected
-to take place.
 
