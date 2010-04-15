@@ -169,7 +169,7 @@
 	}
 	else {
 		// How do we get an error message out of here?
-		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+		ERROR("Invalid number of bodies using definition N_BODY. Ensemble should equal N_BODY");
 		return;
 	}
 #endif
