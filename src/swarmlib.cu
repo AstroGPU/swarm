@@ -21,9 +21,14 @@ inline __device__ uint32_t threadId()
 
 namespace swarm {
 
-// compute and store the number of systems that remain active
-// NOTE: assumes 64 threads per block
-// NOTE: assumes *nactive = 0 on input
+/*!
+  \brief compute and store the number of systems that remain active
+
+  NOTE: assumes 64 threads per block
+  NOTE: assumes *nactive = 0 on input
+ @param[out] nactive number of active systems 
+ @param[in] ens ensemble
+*/
 __device__ void count_nactive(int *nactive, ensemble &ens)
 {
 	__shared__ int active[64];
@@ -45,8 +50,12 @@ __device__ void count_nactive(int *nactive, ensemble &ens)
 	}
 }
 
-// Standalone kernel for counting the number of active ensembles
-// in a GPU ensemble
+/*!
+  \brief Standalone kernel for counting the number of active ensembles in a GPU ensemble
+
+ @param[out] nactive number of active systems 
+ @param[in] ens ensemble
+*/
 __global__ void get_nactive_kernel(int *nactive, ensemble ens)
 {
 	count_nactive(nactive, ens);
@@ -80,12 +89,21 @@ int gpu_ensemble::get_nactive() const
 #define MAX_GPU_ENSEMBLES 4
 __constant__ ensemble gpu_integ_ens[MAX_GPU_ENSEMBLES];
 
-// generic GPU integrator return value
+/// generic GPU integrator return value
 struct retval_t
 {
 	int nactive;
 };
 
+/*!
+ \brief output if needed
+ 
+ ...
+ @param[out] log
+ @param[in] ens
+ @param[in] T
+ @param[in] sys
+*/
 template<typename L>
 __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
@@ -104,6 +122,18 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 	}
 }
 
+/*!
+ \brief generic integrate system  
+ 
+ ...
+ ...
+ @param[out] retval
+ @param[in,out] ens
+ @param[in] sys
+ @param[in] max_steps
+ @param[in,out] H
+ @param[in,out] stop
+*/
 template<typename stopper_t, typename propagator_t>
 __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop)
 {
@@ -135,6 +165,16 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 	ens.time(sys) = T;
 }
 
+/*!
+ \brief gpu integrate driver 
+ 
+ ...
+ @param[out] retval
+ @param[in] max_steps
+ @param[in] H
+ @param[in] stop
+ @param[in] gpu_ensemble_id
+*/
 template<typename stopper_t, typename propagator_t>
 __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id)
 {
@@ -158,6 +198,12 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	count_nactive(&retval->nactive, ens);
 }
 
+
+/*!
+ \brief gpu generic integrate class
+ 
+ ...
+*/
 template<typename stopper_t, typename propagator_t>
 class gpu_generic_integrator : public integrator
 {
@@ -180,6 +226,13 @@ public:
 	void integrate(gpu_ensemble &ens, double T);
 };
 
+/*!
+ \brief gpu integrate 
+ 
+ ...
+ @param[out] ens
+ @param[in] dT
+*/
 template<typename stopper_t, typename propagator_t>
 void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT)
 {
@@ -237,6 +290,12 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	clog.flush();
 }
 
+/*!
+ \brief gpu generic integrator 
+ 
+ ...
+ @param[in] cfg 
+*/
 template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
@@ -254,18 +313,24 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 #include "ThreeVector.hpp"
 
 namespace swarm {
+/*!
+  Calculate acceleration and jerk for the system, storing the outputs into arrays aa, jj
+  Is the ordering of dimensions what we want?
 
+	NOTE: The second loop goes from (nbod..0], which is the optimal choice
+	from numerical precision standpoint if bod=0 is the most massive
+	in the system.
+
+  @param[in] ens
+  @param[in] sys
+  @param[out] aa
+  @param[out] jj
+*/
 template<typename real>
 __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePtr<real, 3> &aa, const cuxDevicePtr<real, 3> &jj)
 {
 	typedef ThreeVector<real> V3;
 
-	// Calculate acceleration and jerk for the system, storing the outputs into arrays aa, jj
-	//  Is the ordering of dimensions what we want?
-	//
-	// NOTE: The second loop goes from (nbod..0], which is the optimal choice
-	//       from numerical precision standpoint if bod=0 is the most massive
-	//       in the system.
 	for ( unsigned int i=0;i<ens.nbod();++i )
 	{
 		V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
@@ -300,16 +365,22 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 	} // end loop over bodies
 }
 
+/*!
+  Calculate accelerations for the system, storing the output into array aa
+
+   NOTE: The second loop goes from (nbod..0], which is the optimal choice
+   from numerical precision standpoint if bod=0 is the most massive
+   in the system.
+
+  @param[in] ens
+  @param[in] sys
+  @param[out] aa
+*/
 template<typename real>
 __device__ void compute_acc(ensemble &ens, const int sys, const cuxDevicePtr<real, 3> &aa)
 {
 	typedef ThreeVector<real> V3;
 
-	// Calculate accelerations for the system, storing the output into array aa
-	//
-	// NOTE: The second loop goes from (nbod..0], which is the optimal choice
-	//       from numerical precision standpoint if bod=0 is the most massive
-	//       in the system.
 	for ( unsigned int i=0;i<ens.nbod();++i )
 	{
 		V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
