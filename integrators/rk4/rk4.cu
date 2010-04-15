@@ -2,7 +2,7 @@
 #include "rk4.h"
 #include "swarmlog.h"
 
-/*
+/*!
 
 	\brief gpu_generic_integrator - Versatile GPU integrator template
 
@@ -159,26 +159,48 @@
 namespace swarm {
 
 
+/*!  
+ *  \brief propagator class for RK4 integrator on GPU: Advance the system by one time step.
+ *
+ *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
+ *  Keep any data that needs to reside on the CPU here.
+ */
 struct prop_rk4
 {
-	// GPU state and interface (per-grid)
+	/*! 
+	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
+         *
+	 * Any per-block read-only variables should be members of this structure.
+         */
 	struct gpu_t
 	{
-		// any per-block variables
+		//! per-block variables, time step
 		double h;
+		//! per-block variables, acceleration0
 		cuxDevicePtr<double, 3> aa0;
+		//! per-block variables, acceleration1
 		cuxDevicePtr<double, 3> aa1;
+		//! per-block variables, acceleration2
 		cuxDevicePtr<double, 3> aa2;
 
-		// GPU per-thread state and interface
+		/*!
+		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
+                 *
+		 * Any per-thread variables should be members of this structure.
+		 */
 		struct thread_state_t
 		{
 			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
 			{ }
 		};
 
-		/*
-		 * advance the system
+		/*!
+                 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
+		 *
+		 * This function MUST return the new time of the system.
+		 * This function MUST also call stop.test_body() for every body
+		 * in the system, after that body has been advanced by a timestep.
+                 *
   		 * see RK4 implementation by http://www.artcompsci.org/kali/vol/shared_timesteps/.nbody_sh1.rb.html
 		 * def rk4
                  * old_pos = pos
@@ -190,7 +212,17 @@ struct prop_rk4
                  * pos = old_pos + vel*dt + (a0+a1*2)*(1/6.)*dt*dt
                  * vel += (a0_a1*4+a2)*(1/6.)*dt
 		 * end 
-		 *
+                 *
+		 * @tparam stop_t ...
+		 * @param[in,out] ens ensemble
+		 * @param[in,out] pt ...
+		 * @param[in] sys system ID
+		 * @param[in] T start time
+		 * @param[in] Tend destination time
+		 * @param[in] stop ...
+		 * @param[in] stop_ts ...
+		 * @param[in] step  ...
+		 * @return new time of the system
 		 */
 		template<typename stop_t>
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
@@ -245,12 +277,19 @@ struct prop_rk4
 
 	};
 
-	// CPU state and interface
+	//! CPU state and interface
 	cuxDeviceAutoPtr<double, 3> aa0;
 	cuxDeviceAutoPtr<double, 3> aa1;
 	cuxDeviceAutoPtr<double, 3> aa2;
 	gpu_t gpu_obj;
 
+	/*!
+         * \brief initialize temporary variables for ensemble ens. 
+         *
+         * This function should initialize any temporary state that is needed for integration of ens. 
+	 * It will be called from gpu_generic_integrator, but only if ens.last_integrator() != this. 
+         * If any temporary state exists from previous invocation of this function, it should be deallocated and the new state (re)allocated.
+	 */
 	void initialize(ensemble &ens)
 	{
 		// Here you'd initialize the object to be passed to the kernel, or
@@ -263,12 +302,26 @@ struct prop_rk4
 		gpu_obj.aa2= aa2;
 	}
 
+	/*!
+	 * \brief constructor 
+         * 
+         * Constructor will be passed the cfg object with the contents of integrator configuration file. 
+         * It will be called during construction of gpu_generic_integrator. 
+         * It should load any values necessary for initialization.
+	 */
 	prop_rk4(const config &cfg)
 	{
 		if(!cfg.count("h")) ERROR("Integrator gpu_rk4 needs a timestep ('h' keyword in the config file).");
 		gpu_obj.h = atof(cfg.at("h").c_str());
 	}
 
+	/*!
+         * \brief Cast operator for gpu_t.
+         *
+         * This operator must return the gpu_t object to be passed to integration kernel. 
+         * It is called once per kernel invocation.
+	 * @return gpu_t object to be passed to integration kernel.
+	 */
 	operator gpu_t()
 	{
 		return gpu_obj;
