@@ -2,6 +2,7 @@
 #include "mvs.h"
 #include <cassert>
 
+namespace swarm {
 gpu_mvs_integrator::gpu_mvs_integrator(const config &cfg)
 {
 	if(!cfg.count("h")) ERROR("Integrator gpu_mvs needs a timestep ('h' keyword in the config file).");
@@ -15,3 +16,5 @@ extern "C" integrator *create_gpu_mvs(const config &cfg)
 {
 	return new gpu_mvs_integrator(cfg);
 }
+ 
+} // end namespace swarm

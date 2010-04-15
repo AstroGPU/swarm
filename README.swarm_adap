@@ -1,0 +1,21 @@
+README FILE FOR SWARM_ADAP
+
+INSTALL:
+
+o Place the tar in Swarm-NG's home directory, for example,
+/home/username/swarm-ng/
+
+o untar scatter-ng.tar.  This will unpack the following files.  All directories
+are from the Swarm-NG's home directory.
+
+	./ic/swarm_adap.py
+	./run/adap_output/
+	./src/user.h
+	./src/swarm_adap/swarm_adap.h
+	./src/swarm_adap/swarm_adap.cpp
+
+o add the following lines to Makefile.user
+
+	APPS+=swarm_adap
+	swarm_adap_SOURCES=src/swarm_adap/swarm_adap.cpp
+

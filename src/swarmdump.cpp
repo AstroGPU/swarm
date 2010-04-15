@@ -16,8 +16,10 @@ struct energy_sorter
 };
 
 // aux class to sort indices by time (smallest first)
+namespace swarm {
 struct time_sorter
 {
+
 	ensemble &ens;
 
 	time_sorter(ensemble &ens_) : ens(ens_) {};
@@ -26,9 +28,10 @@ struct time_sorter
 		return ens.time(a) < ens.time(b);
 	}
 };
+}
 
 // just a simple dump to stdout of one system
-void write_output(const cpu_ensemble &ens, const int sys, std::valarray<double>  &Eold, std::valarray<double> &Enew)
+void write_output(const swarm::cpu_ensemble &ens, const int sys, std::valarray<double>  &Eold, std::valarray<double> &Enew)
 {
 	for (int bod = 0; bod != ens.nbod(); bod++)
 	{
@@ -45,6 +48,7 @@ void write_output(const cpu_ensemble &ens, const int sys, std::valarray<double> 
 //
 int main()
 {
+  using namespace swarm;
 	// load the ensemble
 	cpu_ensemble ens;
 

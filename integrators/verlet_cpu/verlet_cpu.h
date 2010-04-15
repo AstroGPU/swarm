@@ -1,15 +1,17 @@
-#ifndef integ_hermite_cpu_h__
-#define integ_hermite_cpu_h__
+#ifndef integ_verlet_cpu_h__
+#define integ_verlet_cpu_h__
 
 #include "swarm.h"
+#include "ThreeVector.hpp"
 #include <valarray>
+#include <vector>
 
 namespace swarm {
 
 /**
- * cpu_hermite_integrator class
+ * cpu_verlet_integrator class
  */
-class cpu_hermite_integrator : public integrator
+class cpu_verlet_integrator : public integrator
 {
 public:
 	typedef double real;
@@ -18,7 +20,6 @@ public:
 	typedef real   real_pos;
 	typedef real   real_vel;
 	typedef real   real_acc;
-	typedef real   real_jerk;
 
 protected:
 	real_time h;
@@ -27,24 +28,23 @@ protected:
 	std::valarray<real_pos>		m_xyz_old;
 	std::valarray<real_vel>		m_vxyz_old;
 	std::valarray<real_acc>		m_acc, m_acc_old;
-	std::valarray<real_jerk>	m_jerk, m_jerk_old;
 	int				m_nsys, m_nbod;
 	int                             m_is_old_good;
 
 	/**
-  	 * function to (re)allocate the integration state
+	 * function to (re)allocate the integration state
 	 * 
 	 * @param[in] ens cpu_ensemble
- 	 */
+	 */
 	void alloc_state(cpu_ensemble &ens);
 
 public:
 	/**
-	 * Constructor for hermite cpu integrator
+	 * Constructor for verlet cpu integrator
 	 *
 	 * @param[in] cfg configuration file needs a timestep.
 	 */
-	cpu_hermite_integrator(const config &cfg);
+	cpu_verlet_integrator(const config &cfg);
 
 public:
 	virtual void integrate(cpu_ensemble &ens, real_time T);
@@ -54,15 +54,7 @@ public:
 	int is_old_good() const { return m_is_old_good; };
 	
 protected:
-	void predict(cpu_ensemble &ens, const unsigned int sys, real_time hh);
-	void Correct(cpu_ensemble &ens, const unsigned int sys, real_time hh);
-	void CorrectAlpha7by6(cpu_ensemble &ens, const unsigned int sys, real_time hh);
-
-	void UpdateAccJerk(cpu_ensemble &ens, const unsigned int sys);
-	
-	void Evolve(cpu_ensemble &ens, const unsigned int sys, real_time hh);
-	void EvolvePEC1(cpu_ensemble &ens, const unsigned int sys, real_time hh);
-	void EvolvePEC2(cpu_ensemble &ens, const unsigned int sys, real_time hh);
+	void predict(cpu_ensemble &ens, const unsigned int sys);
  
 	void CopyToOld(cpu_ensemble &ens, const unsigned int sys);
 
@@ -72,9 +64,6 @@ protected:
 	double&  ay(int sys, int bod) { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double&  az(int sys, int bod) { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	double& jx(int sys, int bod) { return m_jerk[bod*m_nsys + sys]; }
-	double& jy(int sys, int bod) { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	double& jz(int sys, int bod) { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 	double&  x_old(int sys, int bod) { return m_xyz_old[bod*m_nsys + sys]; }
 	double&  y_old(int sys, int bod) { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -88,18 +77,12 @@ protected:
 	double&  ay_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double&  az_old(int sys, int bod) { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	double& jx_old(int sys, int bod) { return m_jerk_old[bod*m_nsys + sys]; }
-	double& jy_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	double& jz_old(int sys, int bod) { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 	// const versions
 	double  ax(int sys, int bod) const { return m_acc[bod*m_nsys + sys]; }
 	double  ay(int sys, int bod) const { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double  az(int sys, int bod) const { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	double jx(int sys, int bod) const { return m_jerk[bod*m_nsys + sys]; }
-	double jy(int sys, int bod) const { return m_jerk[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	double jz(int sys, int bod) const { return m_jerk[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 	double  x_old(int sys, int bod) const { return m_xyz_old[bod*m_nsys + sys]; }
 	double  y_old(int sys, int bod) const { return m_xyz_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
@@ -113,9 +96,13 @@ protected:
 	double  ay_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double  az_old(int sys, int bod) const { return m_acc_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-	double jx_old(int sys, int bod) const { return m_jerk_old[bod*m_nsys + sys]; }
-	double jy_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys + bod*m_nsys + sys]; }
-	double jz_old(int sys, int bod) const { return m_jerk_old[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+	void Step_Pos(cpu_ensemble &ens, const unsigned int sys, const std::vector<ThreeVector<real> >& dxdt, const real dt);
+	void Step_Vel(cpu_ensemble &ens, const unsigned int sys, const std::vector<ThreeVector<real> >& dxdt, const real dt);
+	real CalcTimeScaleFactor(cpu_ensemble &ens, const unsigned int sys) const;
+	std::vector<ThreeVector<real> > CalcDerivForDrift(cpu_ensemble &ens, const unsigned int sys) const;
+	std::vector<ThreeVector<real> > CalcDerivForKick(cpu_ensemble &ens, const unsigned int sys) const;
+
+
 };
 
 } // end namespace swarm

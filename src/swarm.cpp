@@ -12,8 +12,11 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
+swarm::cpu_eventlog clog; 
+
 int main(int argc, const char **argv)
 {
+  using namespace swarm;
 	if(argc != 2)
 	{
 		std::cerr << "Usage: " << argv[0] << " <integrator.cfg>\n";
@@ -106,6 +109,7 @@ int main(int argc, const char **argv)
 	std::cerr << "GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
 	std::cerr << "Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
 
+	std::cerr << "Final time = (" << ens.time(0) << ", " << ens.time(1) << ",...)\n";
 	// both the integrator & the ensembles are automatically deallocated on exit
 	// so there's nothing special we have to do here.
 	return 0;

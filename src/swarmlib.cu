@@ -1,5 +1,6 @@
 #include "swarm.h"
 #include <cux/cux.h>
+#include <cassert>
 
 ////////// Utilities
 
@@ -7,11 +8,18 @@
 // NOTE: Supports 3D grids with 1D blocks of threads
 inline __device__ uint32_t threadId()
 {
+// This will be in inner loops, so may want to optimize
+#if USE_1D_GRID
+	const uint32_t id = blockIdx.x * blockDim.x + threadIdx.x;
+#else
 	const uint32_t id = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
+#endif
 	return id;
 }
 
 #include "swarmlog.h"
+
+namespace swarm {
 
 // compute and store the number of systems that remain active
 // NOTE: assumes 64 threads per block
@@ -69,7 +77,8 @@ int gpu_ensemble::get_nactive() const
 //// Generic versatile integrator template framework
 ///////////////////
 
-__constant__ ensemble gpu_integ_ens;
+#define MAX_GPU_ENSEMBLES 4
+__constant__ ensemble gpu_integ_ens[MAX_GPU_ENSEMBLES];
 
 // generic GPU integrator return value
 struct retval_t
@@ -105,7 +114,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 	typename propagator_t::thread_state_t    H_ts(H, ens, sys, T, Tend);
 
 	// advance the system until we reach max_steps, Tend, or stop becomes true
-	int step = 0;
+	unsigned int step = 0;
 	while(true)
 	{
 		// stopping conditions
@@ -120,17 +129,22 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 
 		step++;
 	}
-
+	ens.nstep(sys) += step;
 	output_if_needed(glog, ens, T, sys);
 
 	ens.time(sys) = T;
 }
 
 template<typename stopper_t, typename propagator_t>
-__global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop)
+__global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id)
 {
+	// Need to test that don't get bogus gpu_ensemble_id
+ 	if((gpu_ensemble_id<0)||(gpu_ensemble_id>=MAX_GPU_ENSEMBLES))
+		// Is this proper way to bail from GPU?
+ 		{ retval->nactive = -1; return; }	
+
 	// find the system we're to work on
-	ensemble &ens = gpu_integ_ens;
+	ensemble &ens = gpu_integ_ens[gpu_ensemble_id];
 	int sys = threadId();
 //	if(sys == 0) glog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
 //	if(sys == 0) glog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
@@ -151,6 +165,7 @@ protected:
 	stopper_t	stop;
 	propagator_t	H;
 
+	int gpu_ensemble_id;
 	int steps_per_kernel_run;
 
 	dim3 gridDim;
@@ -175,7 +190,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		configure_grid(gridDim, threadsPerBlock, ens.nsys());
 
 		// upload ensemble
-		cudaMemcpyToSymbol(gpu_integ_ens, &ens, sizeof(gpu_integ_ens));
+		assert((gpu_ensemble_id>=0)&&(gpu_ensemble_id<MAX_GPU_ENSEMBLES));
+		cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id]));
 
 		// initialize propagator, stopping condition
 		H.initialize(ens);
@@ -194,7 +210,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 //		debug_hook();
 		retval_gpu.memset(0);
 		clog.prepare_for_gpu();
-		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop);
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop,gpu_ensemble_id);
 		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
 
@@ -225,14 +241,19 @@ template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
 {
-	steps_per_kernel_run = cfg.count("steps per kernel run") ? atof(cfg.at("steps per kernel run").c_str()) : 100;
+	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 100;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
+	gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
 }
+
+} // end namespace swarm
 
 ///////////////
 //// Some generically useful force/jerk computation functions
 ///////////////
 #include "ThreeVector.hpp"
+
+namespace swarm {
 
 template<typename real>
 __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePtr<real, 3> &aa, const cuxDevicePtr<real, 3> &jj)
@@ -240,6 +261,7 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 	typedef ThreeVector<real> V3;
 
 	// Calculate acceleration and jerk for the system, storing the outputs into arrays aa, jj
+	//  Is the ordering of dimensions what we want?
 	//
 	// NOTE: The second loop goes from (nbod..0], which is the optimal choice
 	//       from numerical precision standpoint if bod=0 is the most massive
@@ -310,3 +332,5 @@ __device__ void compute_acc(ensemble &ens, const int sys, const cuxDevicePtr<rea
 		aa ( sys, i, 2 ) = ai.Z();
 	} // end loop over bodies
 }
+
+} // end namespace swarm

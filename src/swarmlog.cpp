@@ -5,10 +5,17 @@
 #include <sstream>
 #include <memory>
 
+// Is this used?
 extern "C" void debug_hook()
 {
 	std::cerr << "";
 }
+
+
+BLESS_POD(swarm::eventlog_base::body);
+BLESS_POD(swarm::eventlog_base::event);
+
+namespace swarm {
 
 const ieventstream::body* ieventstream::get_bodies(int &nbod, int &ndropped) const
 {
@@ -133,9 +140,7 @@ ieventstream &ieventstream::operator >>(eventlog_base::event &evt)
 
 	return *this;
 }
-
-cpu_eventlog clog;
-
+ 
 bool cpu_eventlog::need_gpu_flush()
 {
 	// download GPU counters
@@ -192,6 +197,7 @@ void cpu_eventlog::prepare_for_gpu()
 	glog.evtref_base = evtref_base + ctr->nevt;
 	glog.bodref_base = bodref_base + ctr->nbod;
 	cuxUploadConst("glog", this->glog);
+	//	cuxUploadConst("swarm::glog", this->glog);
 
 	lastongpu = true;
 }
@@ -221,7 +227,7 @@ void cpu_eventlog::flush()
 		// GPU was written-to last
 
 		// flush CPU buffers
-		ieventstream es(*this);
+	        ieventstream es(*this);
 		w->process(es);
 		evtref_base += ctr->nevt;
 		bodref_base += ctr->nbod;
@@ -255,8 +261,13 @@ void cpu_eventlog::flush()
 
 cpu_eventlog::cpu_eventlog()
 {
-	// set everything to NULL
-	memset(this, 0, sizeof(this));
+// set everything to NULL
+	memset(this, 0, sizeof(*this));
+std::cerr << "Destructing/Constructing cpu_eventlog\n";
+std::cerr << this << "\n";
+std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
+std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
+std::cerr << "...\n";
 }
 
 //
@@ -289,12 +300,18 @@ void cpu_eventlog::initialize(int ecap_, int bcap_, int scap_)
 	glog.bodies = cuxNew<body>(bcap);
 
 	// upload to const
-	cuxUploadConst("glog", this->glog);
+		cuxUploadConst("glog", this->glog);
+	//	cuxUploadConst("swarm::glog", this->glog);
 	lastongpu = true;
 }
 
 cpu_eventlog::~cpu_eventlog()
 {
+std::cerr << "Destructing/Constructing cpu_eventlog\n";
+std::cerr << this << "\n";
+std::cerr << (void*)events << " " << bodies << " " << ctr << "\n";
+std::cerr << (void*)glog.events << " " << glog.bodies << " " << glog.ctr << "\n";
+std::cerr << "...\n";
 	// Host
 	hostFree(events);
 	hostFree(bodies);
@@ -305,6 +322,7 @@ cpu_eventlog::~cpu_eventlog()
 	cudaFree(glog.bodies);
 	cudaFree(glog.ctr);
 }
+
 
 //
 // gpuPrintf: CPU side
@@ -422,6 +440,7 @@ bool next_message(ieventstream &evt, std::string &res)
 	return evt;
 }
 
+
 //
 // Default binary writer
 //
@@ -461,8 +480,6 @@ binary_writer::binary_writer(const std::string &cfg)
 
 // store the accumulated events and bodies into a file, while
 // printing out any printf() events to stdout
-BLESS_POD(eventlog_base::body);
-BLESS_POD(eventlog_base::event);
 void binary_writer::process(ieventstream &es)
 {
 	// download and dump the log
@@ -501,3 +518,8 @@ void binary_writer::process(ieventstream &es)
 		std::cerr << "==== Ran out of body GPU output buffer space (" << ndropped << " body records dropped).\n";
 	}
 }
+
+
+} // end namespace swarm
+
+extern swarm::cpu_eventlog clog;

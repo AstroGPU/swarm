@@ -1,5 +1,5 @@
 #include "swarm.h"
-#include "euler.h"
+#include "rk4.h"
 #include "swarmlog.h"
 
 /*
@@ -159,14 +159,16 @@
 namespace swarm {
 
 
-struct prop_euler
+struct prop_rk4
 {
 	// GPU state and interface (per-grid)
 	struct gpu_t
 	{
 		// any per-block variables
 		double h;
-		cuxDevicePtr<double, 3> aa;
+		cuxDevicePtr<double, 3> aa0;
+		cuxDevicePtr<double, 3> aa1;
+		cuxDevicePtr<double, 3> aa2;
 
 		// GPU per-thread state and interface
 		struct thread_state_t
@@ -175,56 +177,95 @@ struct prop_euler
 			{ }
 		};
 
-		// advance the system
+		/*
+		 * advance the system
+  		 * see RK4 implementation by http://www.artcompsci.org/kali/vol/shared_timesteps/.nbody_sh1.rb.html
+		 * def rk4
+                 * old_pos = pos
+                 * a0 = acc(ba)
+                 * pos = old_pos + vel*0.5*dt + a0*0.125*dt*dt
+                 * a1 = acc(ba)
+                 * pos = old_pos + vel*dt + a1*0.5*dt*dt
+                 * a2 = acc(ba)
+                 * pos = old_pos + vel*dt + (a0+a1*2)*(1/6.)*dt*dt
+                 * vel += (a0_a1*4+a2)*(1/6.)*dt
+		 * end 
+		 *
+		 */
 		template<typename stop_t>
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			double h = T + this->h <= Tend ? this->h : Tend - T;
+			//double h = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= h*0.5;
+
+			double  x_old[3] = {ens.x(sys, 0), ens.x(sys, 1), ens.x(sys, 2)};
+			double  y_old[3] = {ens.y(sys, 0), ens.y(sys, 1), ens.y(sys, 2)};
+			double  z_old[3] = {ens.z(sys, 0), ens.z(sys, 1), ens.z(sys, 2)};
+			double  vx_old[3] = {ens.vx(sys, 0), ens.vx(sys, 1), ens.vx(sys, 2)};
+			double  vy_old[3] = {ens.vy(sys, 0), ens.vy(sys, 1), ens.vy(sys, 2)};
+			double  vz_old[3] = {ens.vz(sys, 0), ens.vz(sys, 1), ens.vz(sys, 2)};
 
 			// compute accelerations
-			compute_acc(ens, sys, aa);
+			compute_acc(ens, sys, aa0);
 
-			for(int bod = 1; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				// load
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-
-				// advance
-				x += vx * h;
-				y += vy * h;
-				z += vz * h;
-				vx += aa(sys, bod, 0) * h;
-				vy += aa(sys, bod, 1) * h;
-				vz += aa(sys, bod, 2) * h;
-
-				stop.test_body(stop_ts, ens, sys, bod, T+h, x, y, z, vx, vy, vz);
-
-				// store
-				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h_half + aa0(sys, bod, 0) * h_half * h_half * 0.5;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h_half + aa0(sys, bod, 1) * h_half * h_half * 0.5;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h_half + aa0(sys, bod, 2) * h_half * h_half * 0.5;
 			}
+
+			// compute accelerations
+			compute_acc(ens, sys, aa1);
+
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			{
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + aa1(sys, bod, 0) * h_half * h;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + aa1(sys, bod, 1) * h_half * h;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + aa1(sys, bod, 2) * h_half * h;
+			}
+
+			// compute accelerations
+			compute_acc(ens, sys, aa2);
+
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			{
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * h * h / 6.0;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * h * h / 6.0;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * h * h / 6.0;
+				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* h/6.0;
+				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* h/6.0;
+				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* h/6.0;
+			}
+		        
 
 			return T + h;
 		}
+
 	};
 
 	// CPU state and interface
-	cuxDeviceAutoPtr<double, 3> aa;
+	cuxDeviceAutoPtr<double, 3> aa0;
+	cuxDeviceAutoPtr<double, 3> aa1;
+	cuxDeviceAutoPtr<double, 3> aa2;
 	gpu_t gpu_obj;
 
 	void initialize(ensemble &ens)
 	{
 		// Here you'd initialize the object to be passed to the kernel, or
 		// upload any temporary data you need to constant/texture/global memory
-		aa.realloc(ens.nsys(), ens.nbod(), 3);
-		gpu_obj.aa = aa;
+		aa0.realloc(ens.nsys(), ens.nbod(), 3);
+		aa1.realloc(ens.nsys(), ens.nbod(), 3);
+		aa2.realloc(ens.nsys(), ens.nbod(), 3);
+		gpu_obj.aa0= aa0;
+		gpu_obj.aa1= aa1;
+		gpu_obj.aa2= aa2;
 	}
 
-	prop_euler(const config &cfg)
+	prop_rk4(const config &cfg)
 	{
-		if(!cfg.count("h")) ERROR("Integrator gpu_euler needs a timestep ('h' keyword in the config file).");
+		if(!cfg.count("h")) ERROR("Integrator gpu_rk4 needs a timestep ('h' keyword in the config file).");
 		gpu_obj.h = atof(cfg.at("h").c_str());
 	}
 
@@ -234,68 +275,11 @@ struct prop_euler
 	}
 };
 
-const int EVT_EJECTION = 1;
-
-struct stop_on_ejection
-{
-	// GPU state and interface (per-grid)
-	struct gpu_t
-	{
-		float rmax;
-
-		// GPU per-thread state and interface
-		struct thread_state_t
-		{
-			bool eject;
-
-			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend)
-			{
-				eject = false;
-			}
-		};
-
-		// called _after_ the body 'bod' has advanced a timestep.
-		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
-		{
-			float r = sqrtf(x*x + y*y + z*z);
-			if(r < rmax) { return; }
-			ts.eject = true;
-			//glog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
-			int evtref = glog.log_event(EVT_EJECTION, sys, bod, r, T);
-			glog.log_body(ens, sys, bod, T, evtref);
-		}
-
-		// called after the entire system has completed a single timestep advance.
-		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
-		{
-			return ts.eject;
-		}
-	};
-
-	// CPU state and interface
-	gpu_t gpu_obj;
-
-	stop_on_ejection(const config &cfg)
-	{
-		if(!cfg.count("rmax")) ERROR("Stopping condition 'stop_on_ejection' requires 'rmax' parameter.");
-		gpu_obj.rmax = atof(cfg.at("rmax").c_str());
-	}
-
-	void initialize(ensemble &ens)
-	{
-		// Here you'd upload any temporary data you need to constant/texture/global memory
-	}
-
-	operator gpu_t()
-	{
-		return gpu_obj;
-	}
-};
 
 // factory
-extern "C" integrator *create_gpu_euler(const config &cfg)
+extern "C" integrator *create_gpu_rk4(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_euler>(cfg);
+	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
 }
 
 } // end namespace swarm

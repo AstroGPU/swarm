@@ -1,9 +1,8 @@
 #include "swarm.h"
-#include "user.h"
-#include "hermite_adap_gpu.h"
+#include "hermite_gpu.h"
 
 namespace swarm {
-namespace hermite_adap_gpu {
+namespace hermite_gpu {
 
 namespace gpu_hermite_adap_aux
 {
@@ -49,12 +48,10 @@ namespace gpu_hermite_adap_aux
 
 // Adaptive time step algorithm.  It only considers the accelerations and jerks for now, so be careful
 // with your choice of stepfac.
-
-template<unsigned int nBodies, typename real_hi, typename real_lo>
-inline __device__ real_hi getAdaptiveTimeStep(real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
+inline __device__ real getAdaptiveTimeStep(real *mAcc, real *mJerk, unsigned int nBodies, real h, real stepfac) 
  {
-         real_hi dt=LARGE_NUMBER;
-         real_hi magAcc, magJerk;
+         real dt=LARGE_NUMBER;
+         real magAcc, magJerk;
          for(unsigned int i=0;i<nBodies;++i) 
           {
                    magAcc =SQRT(pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
@@ -598,7 +595,7 @@ __constant__ ensemble gpu_hermite_adap_ens;
  * @param h time step       
  */
 template<unsigned int pre, unsigned int nbod>
-__global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double stepfac)
+__global__ void gpu_hermite_adap_integrator_kernel(double dT, double h)
 {
 	using namespace gpu_hermite_adap_aux;
 
@@ -713,6 +710,16 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
 
+        dt=getAdaptiveTimeStep(&mAcc[0], &mJerk[0], nbod, h, stepfac);
+        if(dt+T>Tend)dt=Tend-T;
+
+	typename acc_type<pre>::type dtby2=dt/2.;
+	typename acc_type<pre>::type dtby3=dt/3.;
+	typename acc_type<pre>::type dtby6=dt/6.;
+	typename acc_type<pre>::type dt7by30=dt*7./30.;
+	typename acc_type<pre>::type dtby7=dt/7.;
+
+
 	while(T<Tend)
 	{
 
@@ -721,17 +728,17 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
-                dt=getAdaptiveTimeStep<nbod>(&mAcc[0], &mJerk[0],  h, stepfac);
+                dt=getAdaptiveTimeStep(&mAcc[0], &mJerk[0], nbod, h, stepfac);
                 if(dt+T>Tend)dt=Tend-T;
- 
-        	typename acc_type<pre>::type dtby2=dt/2.;
-	        typename acc_type<pre>::type dtby3=dt/3.;
-        	typename acc_type<pre>::type dtby6=dt/6.;
- 	        typename acc_type<pre>::type dt7by30=dt*7./30.;
-	        typename acc_type<pre>::type dtby7=dt/7.;
-                typename pos_type<pre>::type dtdt=dt;
+      
+	        dtby2=dt/2.;
+	        dtby3=dt/3.;
+	        dtby6=dt/6.;
+	        dt7by30=dt*7./30.;
+	        dtby7=dt/7.;
 
-		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, dtdt);
+
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, dt);
 
 		//mixed precision
 		if(pre==3)
@@ -855,7 +862,7 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
  */
 template<>
 void gpu_hermite_adap_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_adap_gpu_integrator_body.cu"
+#include"hermite_gpu_integrator_body.cu"
 
 /**
  * host function to invoke a kernel (mixed precision) 
@@ -865,7 +872,7 @@ void gpu_hermite_adap_integrator<double,double>::integrate(gpu_ensemble &ens, do
  */
 template<>
 void gpu_hermite_adap_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_adap_gpu_integrator_body.cu"
+#include"hermite_gpu_integrator_body.cu"
 
 /**
  * host function to invoke a kernel (single precision) 
@@ -875,9 +882,9 @@ void gpu_hermite_adap_integrator<double,float>::integrate(gpu_ensemble &ens, dou
  */
 template<>
 void gpu_hermite_adap_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_adap_gpu_integrator_body.cu"
+#include"hermite_gpu_integrator_body.cu"
 
 
-} // end namespace hermite_adap_gpu
+} // end namespace hermite_gpu
 } // end namespace swarm
 

@@ -1,5 +1,5 @@
 #include "swarm.h"
-#include "euler.h"
+#include "verlet.h"
 #include "swarmlog.h"
 
 /*
@@ -159,7 +159,7 @@
 namespace swarm {
 
 
-struct prop_euler
+struct prop_verlet
 {
 	// GPU state and interface (per-grid)
 	struct gpu_t
@@ -180,33 +180,100 @@ struct prop_euler
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			double h = T + this->h <= Tend ? this->h : Tend - T;
+			//double h = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= h*0.5;
 
+			//Step(pos);
+			//CalcDerivForDrift(); -> returns velocity
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			{
+				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
+				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
+				x += vx * h_half;
+				y += vy * h_half;
+				z += vz * h_half;
+				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
+			}
+
+			//CalcDerivForKick();
 			// compute accelerations
 			compute_acc(ens, sys, aa);
 
-			for(int bod = 1; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			//Step(vel)
+			for(int bod = 0; bod != ens.nbod(); bod++) 
 			{
 				// load
 				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
 				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-
 				// advance
-				x += vx * h;
-				y += vy * h;
-				z += vz * h;
-				vx += aa(sys, bod, 0) * h;
-				vy += aa(sys, bod, 1) * h;
-				vz += aa(sys, bod, 2) * h;
+				//x += vx * h_half;
+				//y += vy * h_half;
+				//z += vz * h_half;
+				vx += aa(sys, bod, 0) * h_half;
+				vy += aa(sys, bod, 1) * h_half;
+				vz += aa(sys, bod, 2) * h_half;
 
-				stop.test_body(stop_ts, ens, sys, bod, T+h, x, y, z, vx, vy, vz);
+				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
+
+				// store
+				//ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
+				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
+			}
+		        
+			T = T + h_half;
+			//Calculate New HalfDeltaT; HalfDeltaT =1./(2./(CalcTimeScaleFactor(mass, pos, nBodies)*DeltaTau)-1./HalfDeltaTLast);
+			//CalcTimeScaleFactor(mass, pos, nBodies)
+			double rinv3 = 0.;
+			for ( unsigned int i=0;i<ens.nbod();++i )
+			{
+				//V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
+				double xi0= ens.x ( sys,i );
+				double xi1= ens.y ( sys,i );
+				double xi2= ens.z ( sys,i );
+				
+				double mass_sum = ens.mass(sys,i);
+				for (int j=i+1; j < ens.nbod(); ++j) {
+					//double msum = g_mass[i]+g_mass[j];
+					mass_sum += ens.mass(sys,j); 
+					//V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
+					//double r2 = dx.MagnitudeSquared();
+					double dx0=ens.x(sys,j) - xi0;
+					double dx1=ens.y(sys,j) - xi1;
+					double dx2=ens.z(sys,j) - xi2;
+					double r2 = dx0*dx0 + dx1*dx1 + dx2*dx2;
+					double rinv = 1./sqrt ( r2 );
+					rinv *= mass_sum;
+					rinv3 += rinv/r2;
+				}
+			}
+
+			double h_new= 1./(1.+sqrt(rinv3)); 
+			// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
+			h_new = 1./(2./(h_new*h)-1./h_half);
+			h_half = h_new;
+
+			//Step(vel)
+			for(int bod = 0; bod != ens.nbod(); bod++) 
+			{
+				// load
+				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
+				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
+				vx += aa(sys, bod, 0) * h_half;
+				vy += aa(sys, bod, 1) * h_half;
+				vz += aa(sys, bod, 2) * h_half;
+				x += vx * h_half;
+				y += vy * h_half;
+				z += vz * h_half;
+
+				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
 
 				// store
 				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
 				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
 			}
 
-			return T + h;
+
+			return T + h_half;
 		}
 	};
 
@@ -222,9 +289,9 @@ struct prop_euler
 		gpu_obj.aa = aa;
 	}
 
-	prop_euler(const config &cfg)
+	prop_verlet(const config &cfg)
 	{
-		if(!cfg.count("h")) ERROR("Integrator gpu_euler needs a timestep ('h' keyword in the config file).");
+		if(!cfg.count("h")) ERROR("Integrator gpu_verlet needs a timestep ('h' keyword in the config file).");
 		gpu_obj.h = atof(cfg.at("h").c_str());
 	}
 
@@ -234,68 +301,11 @@ struct prop_euler
 	}
 };
 
-const int EVT_EJECTION = 1;
-
-struct stop_on_ejection
-{
-	// GPU state and interface (per-grid)
-	struct gpu_t
-	{
-		float rmax;
-
-		// GPU per-thread state and interface
-		struct thread_state_t
-		{
-			bool eject;
-
-			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend)
-			{
-				eject = false;
-			}
-		};
-
-		// called _after_ the body 'bod' has advanced a timestep.
-		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
-		{
-			float r = sqrtf(x*x + y*y + z*z);
-			if(r < rmax) { return; }
-			ts.eject = true;
-			//glog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
-			int evtref = glog.log_event(EVT_EJECTION, sys, bod, r, T);
-			glog.log_body(ens, sys, bod, T, evtref);
-		}
-
-		// called after the entire system has completed a single timestep advance.
-		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
-		{
-			return ts.eject;
-		}
-	};
-
-	// CPU state and interface
-	gpu_t gpu_obj;
-
-	stop_on_ejection(const config &cfg)
-	{
-		if(!cfg.count("rmax")) ERROR("Stopping condition 'stop_on_ejection' requires 'rmax' parameter.");
-		gpu_obj.rmax = atof(cfg.at("rmax").c_str());
-	}
-
-	void initialize(ensemble &ens)
-	{
-		// Here you'd upload any temporary data you need to constant/texture/global memory
-	}
-
-	operator gpu_t()
-	{
-		return gpu_obj;
-	}
-};
 
 // factory
-extern "C" integrator *create_gpu_euler(const config &cfg)
+extern "C" integrator *create_gpu_verlet(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_euler>(cfg);
+	return new gpu_generic_integrator<stop_on_ejection, prop_verlet>(cfg);
 }
 
 } // end namespace swarm

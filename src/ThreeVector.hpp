@@ -64,6 +64,8 @@ class ThreeVector
     { ThreeVectorT Diff;  Diff.mX=-mX;  Diff.mY=-mY;  Diff.mZ=-mZ;  return Diff; };
   __device__ __host__ bool operator==(const ThreeVector &X) const
   { if((X()==X.X())&&(Y()==X.Y())&&(Z()==X.Z())) return true;  else return false; };
+  __device__ __host__ bool Approx(const ThreeVectorT &X) const
+    { if(!approx(mX,X.mX)||!approx(mY,X.mY)||!approx(mZ,X.mZ)) return 0; else return 1; };
 
   //  Next two lines don't work with cygwin g++ for some reason
   //  friend ThreeVectorT operator*<>(const FloatT &X, const ThreeVectorT &Y);

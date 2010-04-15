@@ -13,11 +13,29 @@
 
 #include "stopwatch.h"
 
+#ifdef THROW_IS_ABORT
+	#include <cassert>
+	#include <cstring>
+        #include <cstdio>
+#endif
+
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
+#include <sstream>
+#endif
+
+namespace swarm {
+
 class integrator;
 class ieventstream;
 class writer;
 class gpu_ensemble;
 class cpu_ensemble;
+
+typedef double real_time;
+typedef float  real_mass;
+typedef double real_pos;
+typedef double real_vel;
+typedef unsigned int uint;
 
 /**
 	\brief Unrecoverable error exception.
@@ -35,8 +53,6 @@ public:
 #ifndef THROW_IS_ABORT
 	#define ERROR(msg) throw swarm_error(msg);
 #else
-	#include <cassert>
-	#include <cstring>
 	#define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
 #endif
 
@@ -50,10 +66,7 @@ public:
 	Note that it has no constructors/destructors/virtuals, to allow its
 	instantiation in __constant__ memory on the GPU.
 */
-typedef double real_time;
-typedef float  real_mass;
-typedef double real_pos;
-typedef double real_vel;
+
 
 class ensemble
 {
@@ -68,6 +81,7 @@ class ensemble
 		// m_nsys wide array
 		real_time *m_T;
 		real_time *m_Tend;
+		uint *m_nstep;
 
 		// m_nsys*2 wide arrays
 		real_time *m_Toutput;
@@ -89,10 +103,10 @@ class ensemble
 
 	public:
 		// DEPRECATED: For Young In's code ONLY!!!
-		double *xyz()  { return m_xyz; }
-		double *vxyz() { return m_vxyz; }
-		const double *xyz()  const { return m_xyz; }
-		const double *vxyz() const { return m_vxyz; }
+		real_pos *xyz()  { return m_xyz; }
+		real_vel *vxyz() { return m_vxyz; }
+		const real_pos *xyz()  const { return m_xyz; }
+		const real_vel *vxyz() const { return m_vxyz; }
 
 	protected:
 		void construct_base()
@@ -102,17 +116,17 @@ class ensemble
 
 	public:
 		// non-const versions
-		__host__ __device__ double&   time(int sys) { return m_T[sys]; }
-		__host__ __device__ double&   time_end(int sys) { return m_Tend[sys]; }
-		__host__ __device__ double&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
+		__host__ __device__ real_time&   time(int sys) { return m_T[sys]; }
+		__host__ __device__ real_time&   time_end(int sys) { return m_Tend[sys]; }
+		__host__ __device__ real_time&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
 	
-		__host__ __device__ double&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
-		__host__ __device__ double&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
-		__host__ __device__ double&  z(int sys, int bod) { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+		__host__ __device__ real_pos&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
+		__host__ __device__ real_pos&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ real_pos&  z(int sys, int bod) { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ double& vx(int sys, int bod) { return m_vxyz[bod*m_nsys + sys]; }
-		__host__ __device__ double& vy(int sys, int bod) { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
-		__host__ __device__ double& vz(int sys, int bod) { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+		__host__ __device__ real_vel& vx(int sys, int bod) { return m_vxyz[bod*m_nsys + sys]; }
+		__host__ __device__ real_vel& vy(int sys, int bod) { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ real_vel& vz(int sys, int bod) { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 		__host__ __device__ float& mass(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
@@ -123,20 +137,20 @@ class ensemble
 		__host__ __device__ int& nbod() { return m_nbod; }
 
 		__host__ __device__ int& index_of_system(int sysId) { return m_systemIndices[sysId]; }
-
+		__host__ __device__ uint&   nstep(int sys) { return m_nstep[sys]; }
 
 		// const versions
-		__host__ __device__ double time(int sys) const { return m_T[sys]; }
-		__host__ __device__ double time_end(int sys) const { return m_Tend[sys]; }
-		__host__ __device__ double time_output(int sys, int k) const { return m_Toutput[k*m_nsys + sys]; }
+		__host__ __device__ real_time time(int sys) const { return m_T[sys]; }
+		__host__ __device__ real_time time_end(int sys) const { return m_Tend[sys]; }
+		__host__ __device__ real_time time_output(int sys, int k) const { return m_Toutput[k*m_nsys + sys]; }
 	
-		__host__ __device__ double  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
-		__host__ __device__ double  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
-		__host__ __device__ double  z(int sys, int bod) const { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+		__host__ __device__ real_pos  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
+		__host__ __device__ real_pos  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ real_pos  z(int sys, int bod) const { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
-		__host__ __device__ double vx(int sys, int bod) const { return m_vxyz[bod*m_nsys + sys]; }
-		__host__ __device__ double vy(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
-		__host__ __device__ double vz(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
+		__host__ __device__ real_vel vx(int sys, int bod) const { return m_vxyz[bod*m_nsys + sys]; }
+		__host__ __device__ real_vel vy(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		__host__ __device__ real_vel vz(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
 		__host__ __device__ float mass(int sys, int bod) const { return m_m[bod*m_nsys + sys]; }
 
@@ -147,13 +161,13 @@ class ensemble
 		__host__ __device__ int nbod() const { return m_nbod; }
 
 		__host__ __device__ int index_of_system(int sysId) const { return m_systemIndices[sysId]; }
-
+		__host__ __device__ uint nstep(int sys) const { return m_nstep[sys]; }
 
 
 		// convenience
 		__host__ __device__ int active(int sys)		const { return m_flags[sys] ^ ~ensemble::INACTIVE; }
 
-		__host__ __device__ void set_body(int sys, int bod,  float m, double x, double y, double z, double vx, double vy, double vz)
+		__host__ __device__ void set_body(int sys, int bod,  float m, real_pos x, real_pos y, real_pos z, real_vel vx, real_vel vy, real_vel vz)
 		{
 			int idx = bod*m_nsys + sys;
 
@@ -162,7 +176,7 @@ class ensemble
 			m_vxyz[idx]  = vx;  m_vxyz[m_nbod*m_nsys + idx] = vy;   m_vxyz[m_nbod*m_nsys*2 + idx] = vz;
 		}
 
-		__host__ __device__ void get_body(int sys, int bod, float &m, double &x, double &y, double &z, double &vx, double &vy, double &vz) const
+		__host__ __device__ void get_body(int sys, int bod, float &m, real_pos &x, real_pos &y, real_pos &z, real_vel &vx, real_vel &vy, real_vel &vz) const
 		{
 			int idx = bod*m_nsys + sys;
 			
@@ -172,20 +186,43 @@ class ensemble
 		}
 
 		// utilities
+
+		// Should these pay attention to active flag?
+		__host__ __device__ void   set_time_all(const real_time tend) 
+		{
+		  for(int sys=0;sys<nsys();++sys)
+		    time(sys) = tend;
+		}
+		__host__ __device__ void   set_time_end_all(const real_time tend) 
+		{
+		  for(int sys=0;sys<nsys();++sys)
+		    time_end(sys) = tend;
+		}
+		__host__ __device__ void   advance_time_end_all(const real_time dur) 
+		{
+		  for(int sys=0;sys<nsys();++sys)
+		    time_end(sys) += dur;
+		}
+		__host__ __device__ void   set_time_output_all(int k, const real_time tout) 
+		{ 
+		  for(int sys=0;sys<nsys();++sys)
+		    time_output(sys,k) = tout;
+		}
+
 		__host__ __device__ double calc_total_energy(int sys) const
 		{
 			double E = 0.;
 			for (int bod1 = 0; bod1 != nbod(); bod1++)
 			{
-				float m1; double x1[3], v1[3];
+				float m1; real_pos x1[3], v1[3];
 				get_body(sys, bod1, m1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2]);
 				E += 0.5 * m1 * (v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
 
 				for (int bod2 = 0; bod2 < bod1; bod2++)
 				{
-					float m2; double x2[3], v2[3];
+					float m2; real_pos x2[3], v2[3];
 					get_body(sys, bod2, m2, x2[0], x2[1], x2[2], v2[0], v2[1], v2[2]);
-					double dist = sqrt((x2[0] - x1[0]) * (x2[0] - x1[0]) + (x2[1] - x1[1]) * (x2[1] - x1[1]) + (x2[2] - x1[2]) * (x2[2] - x1[2]));
+					real_pos dist = sqrt((x2[0] - x1[0]) * (x2[0] - x1[0]) + (x2[1] - x1[1]) * (x2[1] - x1[1]) + (x2[2] - x1[2]) * (x2[2] - x1[2]));
 
 					E -= m1 * m2 / dist;
 				}
@@ -223,11 +260,13 @@ class cpu_ensemble : public ensemble
 
 	public:
 		void copy_from(const gpu_ensemble &source);	// Copy the data from the GPU
+		void copy_from(const cpu_ensemble &source);	// Copy the data from the CPU
 		
 	public:
 		cpu_ensemble();					// instantiate an empty ensemble
 		cpu_ensemble(int nsys, int nbod);		// instantiate an ensemble with room for nsys systems with nbod each
 		cpu_ensemble(const gpu_ensemble &source);	// instantiate a copy of source ensemble
+		cpu_ensemble(const cpu_ensemble &source);	// instantiate a copy of source ensemble
 
 		~cpu_ensemble() { free(); }
 
@@ -272,7 +311,6 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens);
 void load_config(config &cfg, const std::string &fn);
 
 #ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
-#include <sstream>
 
 // get a configuration value for 'key', throwing an error if it doesn't exist
 // NOTE: heavy (unoptimized) function, use sparingly
@@ -334,7 +372,7 @@ class integrator
 		virtual void integrate(gpu_ensemble &ens, double T)	// for GPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
 		virtual void integrate(cpu_ensemble &ens, double T)	// for CPU based integrators
-			{ ERROR("Execution on GPU not supported by this implementation"); }
+			{ ERROR("Execution on CPU not supported by this implementation"); }
 
 		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 
@@ -389,6 +427,8 @@ T* hostAlloc(T* var, int nelem, bool usePinned = false)
 	}
 }
 
+} // end namespace swarm
+
 //
 // Utilities
 //
@@ -402,7 +442,9 @@ void trim(std::string& str);
 #ifndef __CUDACC__
 
 	#include <valarray>
+namespace swarm {
 	void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E);
+} // end namespace swarm
 
 #endif
 

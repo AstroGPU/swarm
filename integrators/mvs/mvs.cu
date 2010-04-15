@@ -5,6 +5,8 @@
 // FIXME: This is just a dummy placeholder (a copy of euler.cu).
 //
 
+namespace swarm {
+
 namespace gpu_mvs_aux
 {
 	//
@@ -107,3 +109,4 @@ void gpu_mvs_integrator::integrate(gpu_ensemble &ens, double dT, writer &w)
 #endif
 }
 
+} // end namespace swarm

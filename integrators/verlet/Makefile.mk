@@ -10,5 +10,5 @@
 #    4.) Do not add include files (the main makefile will do that)
 #
 
-LIBSWARM_CUDA+=integrators/hermite_adap_gpu/hermite_adap_gpu.cu
-LIBSWARM_SOURCES+=integrators/hermite_adap_gpu/hermite_adap_gpu.cpp
+LIBSWARM_CUDA+=integrators/verlet/verlet.cu
+LIBSWARM_SOURCES+=integrators/verlet/verlet.cpp
