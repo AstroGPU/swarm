@@ -8,8 +8,8 @@
 
 namespace swarm {
 
-/**
- * cpu_verlet_integrator class
+/*!
+ * \brief cpu_verlet_integrator class
  */
 class cpu_verlet_integrator : public integrator
 {
@@ -31,18 +31,18 @@ protected:
 	int				m_nsys, m_nbod;
 	int                             m_is_old_good;
 
-	/**
-	 * function to (re)allocate the integration state
+	/*!
+	 * \brief function to (re)allocate the integration state
 	 * 
 	 * @param[in] ens cpu_ensemble
 	 */
 	void alloc_state(cpu_ensemble &ens);
 
 public:
-	/**
-	 * Constructor for verlet cpu integrator
+	/*!
+	 * \brief Constructor for verlet cpu integrator
 	 *
-	 * @param[in] cfg configuration file needs a timestep.
+	 * @param[in] cfg configuration class needs a timestep.
 	 */
 	cpu_verlet_integrator(const config &cfg);
 

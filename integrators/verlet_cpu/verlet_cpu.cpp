@@ -11,10 +11,10 @@ extern "C" integrator *create_cpu_verlet(const config &cfg)
 	return new cpu_verlet_integrator(cfg);
 }
 
-/**
- * Constructor for verlet cpu integrator
+/*!
+ * \brief Constructor for verlet cpu integrator
  *
- * @param[in] cfg configuration file needs a timestep.
+ * @param[in] cfg configuration class needs a timestep.
  */
 cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
@@ -23,8 +23,8 @@ cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) :
 	h = atof(cfg.at("h").c_str());
 }
 
-/**
- * function to (re)allocate the integration state
+/*!
+ * \brief function to (re)allocate the integration state
  * 
  * @param[in] ens cpu_ensemble
  */
@@ -41,8 +41,8 @@ void cpu_verlet_integrator::alloc_state(cpu_ensemble &ens)
 }
 
 
-/**
- * Makes a copy for old data 
+/*!
+ * \brief Makes a copy for old data 
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -64,8 +64,8 @@ void cpu_verlet_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
 };
 
 
-/**
- * Drift step  
+/*!
+ * \brief Drift step  
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -82,8 +82,8 @@ void cpu_verlet_integrator::Step_Pos(cpu_ensemble &ens, const unsigned int sys, 
 	}
 };
 
-/**
- * Kick step  
+/*!
+ * \brief Kick step  
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -100,8 +100,8 @@ void cpu_verlet_integrator::Step_Vel(cpu_ensemble &ens, const unsigned int sys, 
 	}
 };
 
-/**
- * Updating the time step  
+/*!
+ * \brief Updating the time step  
  *
  * @param[in,out] ens cpu_ensemble 
  * @param[in] sys system 
@@ -129,8 +129,8 @@ real_time cpu_verlet_integrator::CalcTimeScaleFactor(cpu_ensemble &ens, const un
 	// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
 };
 
-/**
- * Calculation for the drift  
+/*!
+ * \brief Calculation for the drift  
  *
  * @param[in] ens cpu_ensemble 
  * @param[in] sys system 
@@ -150,8 +150,8 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForDrift(cp
 	return vi;
 };
 
-/**
- * Calculation for the kick  
+/*!
+ * \brief Calculation for the kick  
  *
  * @param[in] ens cpu_ensemble 
  * @param[in] sys system 
@@ -197,9 +197,11 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForKick(cpu
 	return acc;
 };
 
-/**
- * integrate function 
+/*!
+ * \brief Verlet CPU integrate function 
  *
+ * Verlet GPU implementation is based on this
+ * @see swarm::prop_verlet 
  * @param[in,out] ens cpu_ensemble 
  * @param[in] dT destination time 
  */
