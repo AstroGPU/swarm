@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <memory>
 
 double DrawUniform01() 
 { return static_cast<double>(rand())/static_cast<double>(RAND_MAX); }

@@ -10,7 +10,6 @@ namespace gpu_hermite_aux
 	// Wrap all aux. functions in a separate namespace, to avoid
 	// collisions with equally named functions from other integrators.
 	//
-
 	__device__ float3 operator*(const float3 &a, const float &b)
 	{
 		return make_float3(a.x*b, a.y*b, a.z*b);
@@ -47,6 +46,15 @@ namespace gpu_hermite_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
+/*!
+ * \brief Copies array from a source to a target.
+ *
+ * @tparam N number of elements to copy    
+ * @tparam destT destination type
+ * @tparam srcT source type
+ * @param[out] target the target array to copy to     
+ * @param[in] source the source array to copy from    
+ */
 template<unsigned int N, typename destT, typename srcT>
 inline __device__ void copyArray(destT *target, srcT *source)
 {
@@ -74,7 +82,22 @@ inline __device__ void copyArray(destT *target, srcT *source)
 		 }
 }
 
-
+/*!
+ * \brief Predicts velocity and position
+ *
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam N 3*(number of bodies per system )    
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[out] mPos position (x,y,z) for each body     
+ * @param[in,out] mVel velocity (x,y,z) for each body      
+ * @param[in] mAcc acceleration (x,y,z) for each body     
+ * @param[in] mJerk jerk (x,y,z) for each body      
+ * @param[in] dtby2 h/2. const
+ * @param[in] dtby3 h/3. const
+ * @param[in] h time step
+ */
 template<unsigned int N, typename real_hi, typename real_lo>
 inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, const real_lo dtby2, const real_lo dtby3, real_hi h)
 {
@@ -123,6 +146,27 @@ inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 		}
 }
 
+/*!
+ * \brief Corrects velocity and position
+ *
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam N 3*(number of bodies per system )    
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[out] mPos position (x,y,z) for each body     
+ * @param[in,out] mVel velocity (x,y,z) for each body      
+ * @param[in] mAcc acceleration (x,y,z) for each body     
+ * @param[in] mJerk jerk (x,y,z) for each body      
+ * @param[in] mPosOld old position (x,y,z) for each body     
+ * @param[in] mVelOld old velocity (x,y,z) for each body      
+ * @param[in] mAccOld old acceleration (x,y,z) for each body     
+ * @param[in] mJerkOld old jerk (x,y,z) for each body      
+ * @param[in] dtby2 h/2. const
+ * @param[in] dtby6 h/6. const
+ * @param[in] dt7by30 h*7./30. const
+ * @param[in] dtby7 h/7. const
+ */
 template<unsigned int N, typename real_hi, typename real_lo>
 inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, 
 		real_hi *mPosOld, real_hi *mVelOld, real_lo *mAccOld, real_lo *mJerkOld, 
@@ -171,16 +215,22 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 			mPos[i] = mPosOld[i] + dtby2*((mVelOld[i]+mVel[i]) + dt7by30*((mAccOld[i]- mAcc[i]) + dtby7*(mJerkOld[i]+mJerk[i])));
 		}	
 	    }
-
-
 }
 
-//******************************************************************
-// * UpdateAccJerk function for 2 or 3 Planets 
-// *(real_hi = double)
-// *(real_lo = float for single and mixed)
-// *(real_lo = double for double)
-//******************************************************************
+/*!
+ * \brief Updates acceleration and jerk for 2 or 3 planets (optimized). 
+ *
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam nBodies number of bodies per system
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[in] mPos position (x,y,z) for each body     
+ * @param[in] mVel velocity (x,y,z) for each body      
+ * @param[out] mAcc acceleration (x,y,z) for each body     
+ * @param[out] mJerk jerk (x,y,z) for each body      
+ * @param[in] d_mass mass in constant float for each body
+ */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
 {
@@ -201,16 +251,13 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	real_lo ai0[]={0,0,0};
 	real_lo ai1[]={0,0,0};
 	real_lo ai2[]={0,0,0};
+	real_lo ai3[]={0,0,0};
 	real_lo ji0[]={0,0,0};
 	real_lo ji1[]={0,0,0};
 	real_lo ji2[]={0,0,0};
-
-	//if(nBodies ==4) {
-	real_lo ai3[]={0,0,0};
 	real_lo ji3[]={0,0,0};
-	//}
 
-	//! planet1 and planet2
+	// planet1 and planet2
 	dx[0] = mPos[6] - mPos[3]; dx_back[0] = -dx[0];
 	dx[1] = mPos[7] - mPos[4]; dx_back[1] = -dx[1];
 	dx[2] = mPos[8] - mPos[5]; dx_back[2] = -dx[2];
@@ -232,7 +279,6 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	dx[0] *= rv; dx[1] *= rv; dx[2] *= rv;
 	ji1[0] -= dx[0]; ji1[1] -= dx[1]; ji1[2] -= dx[2];
 
-
 	rinv3 = rinv3/d_mass[2] * d_mass[1];
 
 	dx_back[0] *= rinv3; dx_back[1] *= rinv3; dx_back[2] *= rinv3;
@@ -240,10 +286,10 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	dv_back[0] *= rinv3; dv_back[1] *= rinv3; dv_back[2] *= rinv3;
 	ji2[0] += dv_back[0]; ji2[1] += dv_back[1]; ji2[2] += dv_back[2];
 	ji2[0] -= dx_back[0]*rv; ji2[1] -= dx_back[1]*rv; ji2[2] -= dx_back[2]*rv;
-
+	// end of planet1 and planet2
 
 	if(nBodies==4) {
-		//! planet1 and planet 3
+		// planet1 and planet 3
 		dx[0] = mPos[9] - mPos[3]; dx_back[0] = -dx[0];
 		dx[1] = mPos[10] - mPos[4]; dx_back[1] = -dx[1];
 		dx[2] = mPos[11] - mPos[5]; dx_back[2] = -dx[2];
@@ -265,7 +311,6 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 		dx[0] *= rv; dx[1] *= rv; dx[2] *= rv;
 		ji1[0] -= dx[0]; ji1[1] -= dx[1]; ji1[2] -= dx[2];
 
-
 		rinv3 = rinv3/d_mass[3] * d_mass[1];
 
 		dx_back[0] *= rinv3; dx_back[1] *= rinv3; dx_back[2] *= rinv3;
@@ -274,15 +319,15 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 		ji3[0] += dv_back[0]; ji3[1] += dv_back[1]; ji3[2] += dv_back[2];
 		dx_back[0] *= rv; dx_back[1] *= rv; dx_back[2] *= rv;
 		ji3[0] -= dx_back[0]; ji3[1] -= dx_back[1]; ji3[2] -= dx_back[2];
+		// end of planet1 and planet 3
 
-		//! planet2 and planet 3
+		// planet2 and planet 3
 		dx[0] = mPos[9] - mPos[6]; dx_back[0] = -dx[0];
 		dx[1] = mPos[10] - mPos[7]; dx_back[1] = -dx[1];
 		dx[2] = mPos[11] - mPos[8]; dx_back[2] = -dx[2];
 		dv[0] = mVel[9] - mVel[6]; dv_back[0] = -dv[0];
 		dv[1] = mVel[10] - mVel[7]; dv_back[1] = -dv[1];
 		dv[2] = mVel[11] - mVel[8]; dv_back[2] = -dv[2];
-
 
 		r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
 		rv = dx[0]*dv[0] + dx[1]*dv[1] + dx[2]*dv[2];
@@ -306,17 +351,16 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 		ji3[0] += dv_back[0]; ji3[1] += dv_back[1]; ji3[2] += dv_back[2];
 		dx_back[0] *= rv; dx_back[1] *= rv; dx_back[2] *= rv;
 		ji3[0] -= dx_back[0]; ji3[1] -= dx_back[1]; ji3[2] -= dx_back[2];
+		// end of  planet2 and planet 3
 	}
 
-
-	//! Star and planet 1
+	// star and planet1
 	dx[0] = mPos[0] - mPos[3]; dx_back[0] = -dx[0];
 	dx[1] = mPos[1] - mPos[4]; dx_back[1] = -dx[1];
 	dx[2] = mPos[2] - mPos[5]; dx_back[2] = -dx[2];
 	dv[0] = mVel[0] - mVel[3]; dv_back[0] = -dv[0];
 	dv[1] = mVel[1] - mVel[4]; dv_back[1] = -dv[1];
 	dv[2] = mVel[2] - mVel[5]; dv_back[2] = -dv[2];
-
 
 	r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
 	rv = dx[0]*dv[0] + dx[1]*dv[1] + dx[2]*dv[2];
@@ -332,7 +376,6 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	dx[0] *= rv; dx[1] *= rv; dx[2] *= rv;
 	ji1[0] -= dx[0]; ji1[1] -= dx[1]; ji1[2] -= dx[2];
 
-
 	rinv3=rinv3/d_mass[0]*d_mass[1];
 
 	dx_back[0] *= rinv3; dx_back[1] *= rinv3; dx_back[2] *= rinv3;
@@ -341,9 +384,9 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	ji0[0] += dv_back[0]; ji0[1] += dv_back[1]; ji0[2] += dv_back[2];
 	dx_back[0] *= rv; dx_back[1] *= rv; dx_back[2] *= rv;
 	ji0[0] -= dx_back[0]; ji0[1] -= dx_back[1]; ji0[2] -= dx_back[2];
+	// end of star and planet1
 
-
-	//! Star and planet 2
+	// star and planet2
 	dx[0] = mPos[6] - mPos[0]; dx_back[0] = -dx[0];
 	dx[1] = mPos[7] - mPos[1]; dx_back[1] = -dx[1];
 	dx[2] = mPos[8] - mPos[2]; dx_back[2] = -dx[2];
@@ -373,10 +416,10 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	ji2[0] += dv_back[0]; ji2[1] += dv_back[1]; ji2[2] += dv_back[2];
 	dx_back[0] *= rv; dx_back[1] *= rv; dx_back[2] *= rv;
 	ji2[0] -= dx_back[0]; ji2[1] -= dx_back[1]; ji2[2] -= dx_back[2];
-
+	// end of star and planet2
 	
 	if(nBodies==4){
-		//! Star and planet 3
+		// star and planet 3
 		dx[0] = mPos[9] - mPos[0]; dx_back[0] = -dx[0];
 		dx[1] = mPos[10] - mPos[1]; dx_back[1] = -dx[1];
 		dx[2] = mPos[11] - mPos[2]; dx_back[2] = -dx[2];
@@ -406,10 +449,13 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 		ji3[0] += dv_back[0]; ji3[1] += dv_back[1]; ji3[2] += dv_back[2];
 		dx_back[0] *= rv; dx_back[1] *= rv; dx_back[2] *= rv;
 		ji3[0] -= dx_back[0]; ji3[1] -= dx_back[1]; ji3[2] -= dx_back[2];
+		// end of star and planet 3
 
+	        // save planet3 acceleration and jerk into local memory 
 		mAcc[9] = ai3[0]; mAcc[10] = ai3[1]; mAcc[11] = ai3[2]; 
 		mJerk[9] = ji3[0]; mJerk[10] = ji3[1]; mJerk[11] = ji3[2];
 	}
+	// save star, planet1, and planet2 acceleration and jerk into local memory 
 	mAcc[0] = ai0[0]; mAcc[1] = ai0[1]; mAcc[2] = ai0[2]; 
 	mJerk[0] = ji0[0]; mJerk[1] = ji0[1]; mJerk[2] = ji0[2];
 	mAcc[3] = ai1[0]; mAcc[4] = ai1[1]; mAcc[5] = ai1[2]; 
@@ -418,17 +464,23 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	mJerk[6] = ji2[0]; mJerk[7] = ji2[1]; mJerk[8] = ji2[2];
 }
 
-//******************************************************************
-// * UpdateAccJerk function for more than 3 Planets 
-// *(real_hi = double)
-// *(real_lo = float for single and mixed)
-// *(real_lo = double for double)
-// ******************************************************************/
+/*!
+ * \brief Updates acceleration and jerk for more than 3 planets. 
+ *
+ * For mixed precision, acceleration and jerk are saved in single precision.
+ *
+ * @tparam nBodies number of bodies per system
+ * @tparam real_hi double
+ * @tparam real_lo float for single and mixed, double for double
+ * @param[in] mPos position (x,y,z) for each body     
+ * @param[in] mVel velocity (x,y,z) for each body      
+ * @param[out] mAcc acceleration (x,y,z) for each body     
+ * @param[out] mJerk jerk (x,y,z) for each body      
+ * @param[in] d_mass mass in constant float for each body
+ */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
-//template<unsigned int nBodies>
 __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* mAcc, real_lo* mJerk, const float * d_mass) 
 {
-
 	real_hi dx[]={0,0,0}; 
 	real_hi dv[]={0,0,0}; 
 
@@ -443,14 +495,9 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 		for(unsigned int j=1;j<nBodies;++j)
 		{
 			unsigned int jj= 3*j;
-			dx[0] = mPos[jj] - xi[0];
-			dv[0] = mVel[jj] - vi[0];
-			++jj;
-			dx[1] = mPos[jj] - xi[1];
-			dv[1] = mVel[jj] - vi[1];
-			++jj;
-			dx[2] = mPos[jj] - xi[2];
-			dv[2] = mVel[jj] - vi[2];
+			dx[0] = mPos[jj] - xi[0]; dv[0] = mVel[jj] - vi[0]; ++jj;
+			dx[1] = mPos[jj] - xi[1]; dv[1] = mVel[jj] - vi[1]; ++jj;
+			dx[2] = mPos[jj] - xi[2]; dv[2] = mVel[jj] - vi[2];
 			real_hi r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
 			real_hi rv = dx[0]*dv[0] + dx[1]*dv[1] + dx[2]*dv[2];
 			real_hi rinv = RSQRT(r2);
@@ -458,57 +505,21 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 			rinv *= d_mass[j];
 			real_hi rinv3 = rinv/r2;
 
-			//dx *= rinv3;
-			//dx = rinv3*dx;
-			dx[0] *= rinv3;
-			dx[1] *= rinv3;
-			dx[2] *= rinv3;
-			//ai += dx;
-			ai[0] += dx[0];
-			ai[1] += dx[1];
-			ai[2] += dx[2];
-			//dv *= rinv3;
-			//dv = rinv3*dv;
-			dv[0] *= rinv3;
-			dv[1] *= rinv3;
-			dv[2] *= rinv3;
-			//ji += dv;
-			ji[0] += dv[0];
-			ji[1] += dv[1];
-			ji[2] += dv[2];
-			//dx *= rv;
-			//dx = rv*dx;
-			dx[0] *= rv;
-			dx[1] *= rv;
-			dx[2] *= rv;
-			//ji -= dx;
-			ji[0] -= dx[0];
-			ji[1] -= dx[1];
-			ji[2] -= dx[2];
+			dx[0] *= rinv3; dx[1] *= rinv3; dx[2] *= rinv3;
+			ai[0] += dx[0]; ai[1] += dx[1]; ai[2] += dx[2];
+			dv[0] *= rinv3; dv[1] *= rinv3; dv[2] *= rinv3;
+			ji[0] += dv[0]; ji[1] += dv[1]; ji[2] += dv[2];
+			dx[0] *= rv; dx[1] *= rv; dx[2] *= rv;
+			ji[0] -= dx[0]; ji[1] -= dx[1]; ji[2] -= dx[2];
 		}
-		//mAcc[i] = ai;
-		mAcc[i*3  ] = ai[0];
-		mAcc[i*3+1] = ai[1];
-		mAcc[i*3+2] = ai[2];
-		//mJerk[i] = ji;
-		mJerk[i*3  ] = ji[0];
-		mJerk[i*3+1] = ji[1];
-		mJerk[i*3+2] = ji[2];
 		unsigned int ii = i*3;
-		mAcc[ii  ] = ai[0];
-		mJerk[ii ] = ji[0];
-		++ii;
-		mAcc[ii ] = ai[1];
-		mJerk[ii] = ji[1];
-		++ii;
-		mAcc[ii ] = ai[2];
-		mJerk[ii] = ji[2];
+		mAcc[ii ] = ai[0]; mJerk[ii] = ji[0]; ++ii;
+		mAcc[ii ] = ai[1]; mJerk[ii] = ji[1]; ++ii;
+		mAcc[ii ] = ai[2]; mJerk[ii] = ji[2];
 	}
 
-//#pragma unroll 
 	for(unsigned int i=1;i<nBodies;++i)
 	{
-		//float3 xi=mPos[i];
 		real_hi xi[]={mPos[i*3], mPos[i*3+1], mPos[i*3+2]};
 		real_hi vi[]={mVel[i*3], mVel[i*3+1], mVel[i*3+2]};
 		real_lo ai[]={0,0,0};
@@ -522,66 +533,35 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 			dx[0] = mPos[jj] - xi[0]; dv[0] = mVel[jj] - vi[0]; ++jj;
 			dx[1] = mPos[jj] - xi[1]; dv[1] = mVel[jj] - vi[1]; ++jj;
 			dx[2] = mPos[jj] - xi[2]; dv[2] = mVel[jj] - vi[2];
-			//	    dx = mPos[j] - mPos[i];
-			//dx = mPos[j] - xi;
-			//	    dv = mVel[j] - mVel[i];
-			//dv = mVel[j] - vi;
-			//float r2 = dx.MagnitudeSquared();
 			real_hi r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
-			//float r2 = dot(dx,dx);
 			real_hi rv = dx[0]*dv[0] + dx[1]*dv[1] + dx[2]*dv[2];
-			//float rv = dot(dx,dv);
 			real_hi rinv = RSQRT(r2);
 			rv *= 3./r2;
 			rinv *= d_mass[j];
 			real_hi rinv3 = rinv/r2;
 
-			//dx *= rinv3;
-			//dx = rinv3*dx;
 			dx[0] = rinv3*dx[0]; dx[1] = rinv3*dx[1]; dx[2] = rinv3*dx[2];
-			//ai += dx;
 			ai[0] = ai[0] +dx[0]; ai[1] = ai[1] +dx[1]; ai[2] = ai[2] +dx[2];
-			//dv *= rinv3;
-			//dv = rinv3*dv;
 			dv[0] = rinv3*dv[0]; dv[1] = rinv3*dv[1]; dv[2] = rinv3*dv[2];
-			//ji += dv;
 			ji[0] =ji[0] + dv[0]; ji[1] =ji[1] + dv[1]; ji[2] =ji[2] + dv[2];
-			//dx *= rv;
-			//dx = rv*dx;
 			dx[0] = rv*dx[0]; dx[1] = rv*dx[1]; dx[2] = rv*dx[2];
-			//ji -= dx;
 			ji[0] = ji[0] - dx[0]; ji[1] = ji[1] - dx[1]; ji[2] = ji[2] - dx[2];
 		}
 		{  // But add sun's contribution last to minimize round-off error
-			//	    dx = mPos[j] - mPos[i];
 			dx[0] = mPos[0] - xi[0]; dx[1] = mPos[1] - xi[1]; dx[2] = mPos[2] - xi[2];
-			//	    dv = mVel[j] - mVel[i];
-			//dv = mVel[j] - vi;
 			dv[0] = mVel[0] - vi[0]; dv[1] = mVel[1] - vi[1]; dv[2] = mVel[2] - vi[2];
-			//float r2 = dx.MagnitudeSquared();
 			real_hi r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2];
-			//float r2 = dot(dx,dx);
 			real_hi rv = dx[0]*dv[0] + dx[1]*dv[1] + dx[2]*dv[2];
-			//float rv = dot(dx,dv);
 			real_hi rinv = RSQRT(r2);
 			rv *= 3./r2;
 			rinv *= d_mass[0];
 			real_hi rinv3 = rinv/r2;
 
-			//dx *= rinv3;
-			//dx = rinv3*dx;
 			dx[0] = rinv3*dx[0]; dx[1] = rinv3*dx[1]; dx[2] = rinv3*dx[2];
-			//ai += dx;
 			ai[0] = ai[0] +dx[0]; ai[1] = ai[1] +dx[1]; ai[2] = ai[2] +dx[2];
-			//dv *= rinv3;
-			//dv = rinv3*dv;
 			dv[0] = rinv3*dv[0]; dv[1] = rinv3*dv[1]; dv[2] = rinv3*dv[2];
-			//ji += dv;
 			ji[0] =ji[0] + dv[0]; ji[1] =ji[1] + dv[1]; ji[2] =ji[2] + dv[2];
-			//dx *= rv;
-			//dx = rv*dx;
 			dx[0] = rv*dx[0]; dx[1] = rv*dx[1]; dx[2] = rv*dx[2];
-			//ji -= dx;
 			ji[0] = ji[0] - dx[0]; ji[1] = ji[1] - dx[1]; ji[2] = ji[2] - dx[2];
 		}
 		unsigned int ii = i*3;
@@ -591,9 +571,31 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 	}
 }
 
-//__constant__ gpu_hermite_integrator_data pars;
 __constant__ ensemble gpu_hermite_ens;
 
+/*!
+ * \brief Hermite GPU integrator kernel function
+ *
+ * This kernel will do the followings, 
+ *  1. Data load: position, velocity, and mass from global memory. 
+ *  2. UpdateAccJerk(ens,sys);
+ *  3. While (ens.time( sys ) < Tend )
+ *      CopyToOld(ens,sys);
+ *      predict(ens,sys, hh);
+ *      UpdateAccJerk(ens,sys);
+ *      Correct(ens,sys, hh);
+ *      UpdateAccJerk(ens,sys); 
+ *      Correct(ens,sys, hh);
+ * Implementation is based on Hermite CPU integrator
+ * @see swarm::cpu_hermite_integrator
+ * UpdateAccJerk function is optimized for 2 or 3 plantes. 
+ * According to precision, all data type will be set as double or float
+ *
+ * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
+ * @tparam nbod number of bodies per system 
+ * @param dT destination time     
+ * @param h time step       
+ */
 template<unsigned int pre, unsigned int nbod>
 __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 {
@@ -605,7 +607,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 	double    T = ens.time(sys);
 	double Tend = T + dT;
-
 
 	const unsigned int nData=3*nbod;
 	typename pos_type<pre>::type mPos       [nData];
@@ -619,7 +620,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 
 	float s_mass[nbod];
-	//const float s_mass[]={ens.mass(sys, 0), ens.mass(sys,1), ens.mass(sys,2), ens.mass(sys,3)};
 
 	typename acc_type<pre>::type dtby2=h/2.;
 	typename acc_type<pre>::type dtby3=h/3.;
@@ -631,12 +631,15 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	//load data from global memory
 	if(nbod>0)
 	{
+	//load position 
 	mPos[0]=ens.x(sys,0);
 	mPos[1]=ens.y(sys,0);
 	mPos[2]=ens.z(sys,0);
+	//load velocity 
 	mVel[0]=ens.vx(sys,0);
 	mVel[1]=ens.vy(sys,0);
 	mVel[2]=ens.vz(sys,0);
+	//load mass 
 	s_mass[0]=ens.mass(sys, 0);
 	}
 	if(nbod>1)
@@ -694,26 +697,8 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		}
 	}
 
-	if(pre==1)
-	{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	}	
-	else if(pre==2)
-	{
-// If not using shared memory as cache, no need bother	
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-	}
-	else
+	//mixed precision
+	if(pre==3)
 	{
 		float sPos       [nData];
 		float sVel       [nData];
@@ -724,6 +709,14 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		else
 			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}
+	//double or single precision
+	else
+	{
+		if(nbod<5)
+			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+		else
+			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+	}	
 
 	while(T<Tend)
 	{
@@ -744,69 +737,48 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		  }
 		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
 
-		if(pre==1)
+		//mixed precision
+		if(pre==3)
 		{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			float sPos       [nData];
+			float sVel       [nData];
+			copyArray<nData>(sPos,mPos);
+			copyArray<nData>(sVel,mVel);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
-		else if(pre==2)
-		{
-// If not using shared memory as cahce, don't bother
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		}
+		//double or single precision
 		else
 		{
-		float sPos       [nData];
-		float sVel       [nData];
-		copyArray<nData>(sPos,mPos);
-		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 		
-
-		if(pre==1)
+		//mixed precision
+		if(pre==3)
 		{
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else	
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		} 
-		else if(pre==2)
-		{
-// If not using shared memory as cahce, don't bother
-//		float sPos       [nData];
-//		float sVel       [nData];
-//		copyArray<nData>(sPos,mPos);
-//		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			float sPos       [nData];
+			float sVel       [nData];
+			copyArray<nData>(sPos,mPos);
+			copyArray<nData>(sVel,mVel);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
+		//double or single precision
 		else
 		{
-		float sPos       [nData];
-		float sVel       [nData];
-		copyArray<nData>(sPos,mPos);
-		copyArray<nData>(sVel,mVel);
-		if(nbod<5)
-			UpdateAccJerk23<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
-		else
-			UpdateAccJerkGeneral<nbod>(&sPos[0], &sVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			if(nbod<5)
+				UpdateAccJerk23<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
+			else
+				UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 		}
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
@@ -814,7 +786,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		T += hh;
 		ens.nstep(sys)++;
 	}
+	//update system time
 	ens.time(sys) = T;
+
+	//save data to global memory
 	if(nbod>0)
 	{
 	ens.x(sys,0)=mPos[0];
@@ -873,18 +848,41 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		mVel[idx]=ens.vz(sys,plid); ++idx;
 		}
 	}
-
 }
 
 
+/*!
+ * \brief host function to invoke a kernel (double precision) 
+ *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
+/*!
+ * \brief host function to invoke a kernel (mixed precision) 
+ *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"
 
+/*!
+ * \brief host function to invoke a kernel (single precision) 
+ *
+ * Currently maximum number of bodies is set to 10.
+ * In order to change, add if statement. 
+ * @param[in,out] ens gpu_ensemble for data communication
+ * @param[in] dT destination time 
+ */
 template<>
 void gpu_hermite_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
 #include"hermite_gpu_integrator_body.cu"

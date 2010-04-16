@@ -4,8 +4,6 @@
 #include <cmath>
 
 namespace swarm {
-// We don't need to use this for CPU integrators
-// ensemble cpu_verlet_ens;
 
 // factory
 extern "C" integrator *create_cpu_verlet(const config &cfg)
@@ -13,7 +11,11 @@ extern "C" integrator *create_cpu_verlet(const config &cfg)
 	return new cpu_verlet_integrator(cfg);
 }
 
-// Constructor
+/*!
+ * \brief Constructor for verlet cpu integrator
+ *
+ * @param[in] cfg configuration class needs a timestep.
+ */
 cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
@@ -21,6 +23,11 @@ cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) :
 	h = atof(cfg.at("h").c_str());
 }
 
+/*!
+ * \brief function to (re)allocate the integration state
+ * 
+ * @param[in] ens cpu_ensemble
+ */
 void cpu_verlet_integrator::alloc_state(cpu_ensemble &ens)
 {
 	// allocate memory where we'll keep the integration state
@@ -34,6 +41,12 @@ void cpu_verlet_integrator::alloc_state(cpu_ensemble &ens)
 }
 
 
+/*!
+ * \brief Makes a copy for old data 
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ */
 void cpu_verlet_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
 {
   for(unsigned int i=0;i<ens.nbod();++i)
@@ -51,6 +64,14 @@ void cpu_verlet_integrator::CopyToOld(cpu_ensemble &ens, const unsigned int sys)
 };
 
 
+/*!
+ * \brief Drift step  
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] dxdt drift (velocity)  
+ * @param[in] dt time step  
+ */
 void cpu_verlet_integrator::Step_Pos(cpu_ensemble &ens, const unsigned int sys, const std::vector<ThreeVector<real_time> >& dxdt, const real_time dt)
 {
 	for(unsigned int i=0;i<ens.nbod();++i)
@@ -61,6 +82,14 @@ void cpu_verlet_integrator::Step_Pos(cpu_ensemble &ens, const unsigned int sys, 
 	}
 };
 
+/*!
+ * \brief Kick step  
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @param[in] dxdt kick  (acceleration)
+ * @param[in] dt time step  
+ */
 void cpu_verlet_integrator::Step_Vel(cpu_ensemble &ens, const unsigned int sys, const std::vector<ThreeVector<real_time> >& dxdt, const real_time dt)
 {
 	for(unsigned int i=0;i<ens.nbod();++i)
@@ -71,7 +100,13 @@ void cpu_verlet_integrator::Step_Vel(cpu_ensemble &ens, const unsigned int sys, 
 	}
 };
 
-
+/*!
+ * \brief Updating the time step  
+ *
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @return new time step   
+ */
 real_time cpu_verlet_integrator::CalcTimeScaleFactor(cpu_ensemble &ens, const unsigned int sys) const
 {
 	real_time InvPSqEff = 0.;
@@ -94,6 +129,13 @@ real_time cpu_verlet_integrator::CalcTimeScaleFactor(cpu_ensemble &ens, const un
 	// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
 };
 
+/*!
+ * \brief Calculation for the drift  
+ *
+ * @param[in] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @return drift (velocity)  
+ */
 std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForDrift(cpu_ensemble &ens, const unsigned int sys) const
 {
 	
@@ -108,6 +150,13 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForDrift(cp
 	return vi;
 };
 
+/*!
+ * \brief Calculation for the kick  
+ *
+ * @param[in] ens cpu_ensemble 
+ * @param[in] sys system 
+ * @return kick (acceleration) 
+ */
 std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForKick(cpu_ensemble &ens, const unsigned int sys) const
 {
 	std::vector<ThreeVector<real_time> > acc(ens.nbod(),ThreeVector<real_time>(0.,0.,0.));
@@ -148,6 +197,14 @@ std::vector<ThreeVector<real_time> > cpu_verlet_integrator::CalcDerivForKick(cpu
 	return acc;
 };
 
+/*!
+ * \brief Verlet CPU integrate function 
+ *
+ * Verlet GPU implementation is based on this
+ * @see swarm::prop_verlet 
+ * @param[in,out] ens cpu_ensemble 
+ * @param[in] dT destination time 
+ */
 void cpu_verlet_integrator::integrate(cpu_ensemble &ens, real_time dT)
 {
 	// Allocate integration state (if not already there)
@@ -158,7 +215,6 @@ void cpu_verlet_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	    if(dT == 0.) { return; }
 	  }
 
-	
 
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{

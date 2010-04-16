@@ -77,9 +77,7 @@ class ensemble
 		enum { INACTIVE = 0x01 };
 
 	protected:
-		// number of active (currently integrating) systems, total number of systems
-		// and number of bodies per system
-		int m_nsys, m_nbod;
+		int m_nsys, m_nbod; //!< number of active (currently integrating) systems, total number of systems and number of bodies per system
 
 		// m_nsys wide array
 		real_time *m_T;
@@ -97,12 +95,12 @@ class ensemble
 		real_mass *m_m;
 
 		// m_nsys wide arrays
-		int	*m_flags;			// flags about a given system. Bit 0 is the inactivity flag (m_flags & 0x01 ? inactive : acctive). Others can be user-defined.
-		int	*m_systemIndices;		// map from original systemID to sys index in m_* arrays
+		int	*m_flags;			//!< flags about a given system. Bit 0 is the inactivity flag (m_flags & 0x01 ? inactive : acctive). Others can be user-defined.
+		int	*m_systemIndices;		//!< map from original systemID to sys index in m_* arrays
 		integrator *m_last_integrator;
 
 		// scalars
-//		int	*m_nactive;			// number of active systems, sum of !(m_flags & 0x01). Computed on GPU on exit from kernel.
+//		int	*m_nactive;			//!< number of active systems, sum of !(m_flags & 0x01). Computed on GPU on exit from kernel.
 
 	public:
 		// DEPRECATED: For Young In's code ONLY!!!
@@ -290,18 +288,18 @@ class ensemble
 class cpu_ensemble : public ensemble
 {
 	public:
-		void reset(int nsys, int nbod, bool reinitIndices = true);	// Allocate CPU memory for nsys systems of nbod planets each
-		void free();						// Deallocate CPU memory
+		void reset(int nsys, int nbod, bool reinitIndices = true);	//!< Allocate CPU memory for nsys systems of nbod planets each
+		void free();						//!< Deallocate CPU memory
 
 	public:
-		void copy_from(const gpu_ensemble &source);	// Copy the data from the GPU
-		void copy_from(const cpu_ensemble &source);	// Copy the data from the CPU
+		void copy_from(const gpu_ensemble &source);	//!< Copy the data from the GPU
+		void copy_from(const cpu_ensemble &source);	//!< Copy the data from the CPU
 		
 	public:
-		cpu_ensemble();					// instantiate an empty ensemble
-		cpu_ensemble(int nsys, int nbod);		// instantiate an ensemble with room for nsys systems with nbod each
-		cpu_ensemble(const gpu_ensemble &source);	// instantiate a copy of source ensemble
-		cpu_ensemble(const cpu_ensemble &source);	// instantiate a copy of source ensemble
+		cpu_ensemble();					//!< instantiate an empty ensemble
+		cpu_ensemble(int nsys, int nbod);		//!< instantiate an ensemble with room for nsys systems with nbod each
+		cpu_ensemble(const gpu_ensemble &source);	//!< instantiate a copy of source ensemble
+		cpu_ensemble(const cpu_ensemble &source);	//!< instantiate a copy of source ensemble
 
 		~cpu_ensemble() { free(); }
 
@@ -324,7 +322,7 @@ class cpu_ensemble : public ensemble
 		void replace_inactive_from(cpu_ensemble &src, const int offset);
 
 	private:
-		cpu_ensemble &operator=(const cpu_ensemble&);	// disallow copying
+		cpu_ensemble &operator=(const cpu_ensemble&);	//!< disallow copying
 };
 
 /**
@@ -338,20 +336,20 @@ class cpu_ensemble : public ensemble
 class gpu_ensemble : public ensemble
 {
 	protected:
-		int *nactive_gpu;	// temp variable for get_nactive()
+		int *nactive_gpu;	//!< temp variable for get_nactive()
 
 	public:
-		void reset(int nsys, int nbod, bool reinitIndices = true);	// Allocate GPU memory for nsys systems of nbod planets each
-		void free();							// Deallocate CPU memory
+		void reset(int nsys, int nbod, bool reinitIndices = true);	//!< Allocate GPU memory for nsys systems of nbod planets each
+		void free();							//!< Deallocate CPU memory
 
 	public:
-		void copy_from(const cpu_ensemble &source);	// Copy the data from the CPU
-		int get_nactive() const;			// Download and return the number of active systems
+		void copy_from(const cpu_ensemble &source);	//!< Copy the data from the CPU
+		int get_nactive() const;			//!< Download and return the number of active systems
 
 	public:
-		gpu_ensemble();					// instantiate an empty ensemble
-		gpu_ensemble(int nsys, int nbod);		// instantiate an ensemble with room for nsys systems with nbod each
-		gpu_ensemble(const cpu_ensemble &source);	// instantiate a copy of the source ensemble
+		gpu_ensemble();					//!< instantiate an empty ensemble
+		gpu_ensemble(int nsys, int nbod);		//!< instantiate an ensemble with room for nsys systems with nbod each
+		gpu_ensemble(const cpu_ensemble &source);	//!< instantiate a copy of the source ensemble
 
 		~gpu_ensemble();
 
@@ -402,14 +400,14 @@ class writer
 {
 	public:
 		virtual void process(const output_buffers &ob) = 0;
-		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
+		virtual ~writer() {};	//!< has to be here to ensure the derived class' destructor is called (if it exists)
 
 	public:
-		// Integrator factory functions (and supporting typedefs)
+		/// Integrator factory functions (and supporting typedefs)
 		static writer *create(const std::string &cfg);
 
 	protected:
-		writer() {};		// hide the constructor.and force integrator instantiation with integrator::create
+		writer() {};		//!< hide the constructor.and force integrator instantiation with integrator::create
 };
 typedef writer *(*writerFactory_t)(const std::string &cfg);
 
@@ -425,29 +423,41 @@ typedef writer *(*writerFactory_t)(const std::string &cfg);
 class integrator
 {
 	public:
-		virtual void integrate(gpu_ensemble &ens, double T)	// for GPU based integrators
+		virtual void integrate(gpu_ensemble &ens, double T)	//!< for GPU based integrators
 			{ ERROR("Execution on GPU not supported by this implementation"); }
-		virtual void integrate(cpu_ensemble &ens, double T)	// for CPU based integrators
+		virtual void integrate(cpu_ensemble &ens, double T)	//!< for CPU based integrators
 			{ ERROR("Execution on CPU not supported by this implementation"); }
 
-		virtual ~integrator() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
+		virtual ~integrator() {};	//!< has to be here to ensure the derived class' destructor is called (if it exists)
 
 	public:
-		// Integrator factory functions (and supporting typedefs)
+		/// Integrator factory functions (and supporting typedefs)
 		static integrator *create(const config &cfg);
 
 	protected:
-		integrator() {};		// hide the constructor.and force integrator instantiation with integrator::create
+		integrator() {};		/// hide the constructor.and force integrator instantiation with integrator::create
 };
 
 typedef integrator *(*integratorFactory_t)(const config &cfg);
 
-// configure grid for nthreads intependent threads, each requiring dynShmemPerThread of shared memory, and
-// with each block needing staticShmemPerBlock of shared memory (usually to pass kernel invocation args.)
-// The default for staticShmemPerBlock is reasonable (for small kernels), but not necessarily optimal.
+/** 
+  \brief Configur grid for nthreads independent threads
+
+   configure grid for nthreads independent threads, each requiring dynShmemPerThread of shared memory, and
+   with each block needing staticShmemPerBlock of shared memory (usually to pass kernel invocation args.)
+   The default for staticShmemPerBlock is reasonable (for small kernels), but not necessarily optimal.
+
+   @param[out] gridDim
+   @param[in] threadsPerBlock
+   @param[in] nthreads
+   @param[in] synShmemPerThread
+   @param[in] staticShmemPerBlock
+*/
 bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread = 0, int staticShmemPerBlock = 128);
 
-// Typesafe de-allocator (convenience)
+/** 
+  \brief Typesafe de-allocator (convenience)
+*/
 template<typename T>
 void hostFree(T* var, bool usePinned = false)
 {
@@ -463,7 +473,9 @@ void hostFree(T* var, bool usePinned = false)
 	}
 }
 
-// Typesafe re-allocator (convenience)
+/** 
+  \brief Typesafe re-allocator (convenience)
+*/
 template<typename T>
 T* hostAlloc(T* var, int nelem, bool usePinned = false)
 {
@@ -489,7 +501,9 @@ T* hostAlloc(T* var, int nelem, bool usePinned = false)
 // Utilities
 //
 
-/// trim whitespaces from the beginning and the end of a string
+/** 
+  \brief trim whitespaces from the beginning and the end of a string
+*/
 void trim(std::string& str);
 
 // NOTE: The ifdef here is a workaround for CUDA 2.2 device emulation mode bug, where C++
