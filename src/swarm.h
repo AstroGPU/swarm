@@ -30,7 +30,6 @@ namespace swarm {
 class integrator;
 class event;
 class writer;
-class output_buffers;
 class gpu_ensemble;
 class cpu_ensemble;
 
@@ -398,8 +397,8 @@ inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 class writer
 {
 	public:
-		virtual void process(const output_buffers &ob) = 0;
-		virtual ~writer() {};	//!< has to be here to ensure the derived class' destructor is called (if it exists)
+		virtual void process(const char *log_data, size_t length) = 0;
+		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 
 	public:
 		/// Integrator factory functions (and supporting typedefs)

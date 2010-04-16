@@ -156,6 +156,8 @@
 
 */
 
+extern "C" void debug_hook();
+
 namespace swarm {
 
 
@@ -259,10 +261,10 @@ struct stop_on_ejection
 		{
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
+			::debug_hook();
 			ts.eject = true;
-			//dlog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
-			int evtref = dlog.log_event(EVT_EJECTION, sys, bod, r, T);
-			dlog.log_body(ens, sys, bod, T, evtref);
+			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
+			log_event(dlog, EVT_EJECTION, T, sys, r, body_set(ens, sys, bod));
 		}
 
 		// called after the entire system has completed a single timestep advance.

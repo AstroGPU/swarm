@@ -28,6 +28,9 @@ int main(int argc, const char **argv)
 	load_ensemble("data", ens);
 	unsigned int nprint = std::min(2, ens.nsys());
 
+//	gpulog::internal::dump_ttraits(body_set(ens, 1, 1, 3));
+//	return -1;
+
 	ens_writer out("output.bin");
 	out << ens;
 
@@ -46,10 +49,10 @@ int main(int argc, const char **argv)
 	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
 	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
-	// set up the output writer
-	std::string wcfg = cfg.count("output") ? cfg["output"] : "binary events.bin bodies.bin";
-	std::auto_ptr<writer> w(writer::create(wcfg));
+	// initialize output log
+	std::string wcfg = cfg.count("output") ? cfg["output"] : "binary log.bin";
 	std::cerr << "Output: " << wcfg << "\n";
+	init_logs(wcfg);
 
 	// set end times of integration, first output time, and snapshot interval
 	double dT, Toutputstep;
@@ -63,8 +66,9 @@ int main(int argc, const char **argv)
 	}
 
 	// log initialization
-	hlog.initialize();
-	hlog.attach_sink(w.get());
+	hlog.alloc(1000000);
+	gpulog::alloc_device_log("dlog", hlog.capacity());
+//	hlog.attach_sink(w.get());
 
 	// perform the integration
 	if(ongpu)
@@ -98,7 +102,8 @@ int main(int argc, const char **argv)
 	SWATCH_STOP(swatch_all);
 
 	out << ens;
-	hlog.flush();
+	flush_logs();
+	sort_binary_log_file("log.bin", "log.raw");
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;

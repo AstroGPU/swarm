@@ -22,7 +22,7 @@ protected:
 	std::string filename;
 	int fd;
 
-	int length;
+	size_t length;
 	void *map;
 
 	bool closefd;
@@ -44,18 +44,20 @@ public:
 	static void pagesizealign(std::ostream &out);
 	static void pagesizealign(std::istream &in);
 public:
-	void open(int fd, int length_, int offset, int mode, int mapstyle, bool closefd = false);
+	void open(int fd, size_t length_, size_t offset, int mode, int mapstyle, bool closefd = false);
 public:
 	MemoryMap();
-	MemoryMap(const std::string &filename, int length, int offset = 0, int mode = ro, int map = shared);
+	MemoryMap(const std::string &filename, size_t length = 0, size_t offset = 0, int mode = ro, int map = shared);
 
-	void open(const std::string &filename, int length, int offset = 0, int mode = ro, int map = shared);
+	void open(const std::string &filename, size_t length = 0, size_t offset = 0, int mode = ro, int map = shared);
 	void sync();
 	void close();
 
 	~MemoryMap();
 
 	operator void *() { return map; }
+
+	size_t size() const { return length; }
 };
 
 template<typename T>
@@ -66,7 +68,7 @@ public:
 	size_t siz;
 public:
 	MemoryMapVector() : MemoryMap(), siz(0) {}
-	void open(const std::string &filename, int size = -1, int offset = 0, int mode = ro, int mapstyle = shared)
+	void open(const std::string &filename, size_t size = -1, size_t offset = 0, int mode = ro, int mapstyle = shared)
 	{
 		MemoryMap::open(filename, sizeof(T)*size, offset, mode, mapstyle);
 		if(size < 0) { siz = length/sizeof(T); } else { siz = size; }

@@ -15,19 +15,19 @@ const int MemoryMap::pagesize = getpagesize();
 
 void MemoryMap::pagesizealign(ostream &out)
 {
-	int at = out.tellp();
-	int offs = at % pagesize;
+	size_t at = out.tellp();
+	size_t offs = at % pagesize;
 	if(offs) { out.seekp(pagesize - offs, ios::cur); }
 }
 
 void MemoryMap::pagesizealign(istream &in)
 {
-	int at = in.tellg();
-	int offs = at % pagesize;
+	size_t at = in.tellg();
+	size_t offs = at % pagesize;
 	if(offs) { in.seekg(pagesize - offs, ios::cur); }
 }
 
-void MemoryMap::open(const std::string &fn, int length_, int offset, int mode, int mapstyle)
+void MemoryMap::open(const std::string &fn, size_t length_, size_t offset, int mode, int mapstyle)
 {
 	if(offset > 0 && (offset % pagesize)) { ERROR("Invalid offset requested for memory mapped area - not a multiple of pagesize (" + str(pagesize) + ")"); }
 
@@ -45,7 +45,7 @@ void MemoryMap::open(const std::string &fn, int length_, int offset, int mode, i
 		ERROR(string("Error opening file [") + fn + "]");
 	}
 
-	if(length_ < 0)
+	if(length_ == 0 && !(flags & O_WRONLY))
 	{
 		struct stat buf;
 		fstat(fd, &buf);
@@ -57,7 +57,7 @@ void MemoryMap::open(const std::string &fn, int length_, int offset, int mode, i
 	open(fd, length_, offset, mode, mapstyle, true);
 }
 
-void MemoryMap::open(int fd_, int length_, int offset, int prot, int mapstyle, bool closefd_)
+void MemoryMap::open(int fd_, size_t length_, size_t offset, int prot, int mapstyle, bool closefd_)
 {
 	close();
 	length = length_;
@@ -103,7 +103,7 @@ MemoryMap::MemoryMap()
 {
 }
 
-MemoryMap::MemoryMap(const std::string &fn, int length_, int offset, int mode, int mapstyle)
+MemoryMap::MemoryMap(const std::string &fn, size_t length_, size_t offset, int mode, int mapstyle)
 : filename(fn), fd(0), map(NULL), length(length_)
 {
 	open(fn, length, offset, mode, mapstyle);

@@ -51,7 +51,7 @@ struct ibfstream
 std::ostream &operator<<(std::ostream &out, const swarm::body &b)
 {
 	char buf[1000];
-	sprintf(buf, "% .6e  %9d %d %d  % .5e  % .5e % .5e % .5e  % .5e % .5e % .5e  %9d\n", b.T, b.evtref, b.sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, b.user_data);
+	sprintf(buf, "%d  % .5e  % .5e % .5e % .5e  % .5e % .5e % .5e\n", b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 	return out << buf;
 }
 
@@ -90,6 +90,7 @@ public:
 };
 */
 
+#if 0
 /*
 	Given the events.bin and bodies.bin file, extract all snapshots (EVT_SNAPSHOT)
 	of the system <sys> and store it into the output file <output> in binary or
@@ -185,6 +186,8 @@ int split_into_per_system(const std::string &events_fn, const std::string &bodie
 
 	return sys_seen.size();
 }
+
+#endif
 
 // aux class to sort indices by time (smallest first)
 namespace swarm {

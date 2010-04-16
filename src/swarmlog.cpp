@@ -1,6 +1,7 @@
 #include "swarmlog.h"
 #include <iostream>
 #include <astro/binarystream.h>
+#include <astro/memorymap.h>
 #include <fstream>
 #include <sstream>
 #include <memory>
@@ -11,6 +12,165 @@ extern "C" void debug_hook()
 	// won't stop in nvcc-compiled code.
 	std::cerr << "";
 }
+
+namespace swarm
+{
+	std::auto_ptr<writer> log_writer;
+
+	void init_logs(const std::string &writer_cfg)
+	{
+		log_writer.reset(writer::create(writer_cfg));
+	}
+
+	void flush_logs(bool ifneeded)
+	{
+		// TODO: Implement flush-only-if-near-capacity
+
+		if(!log_writer.get())
+		{
+			std::cerr << "No output writer attached!\n";
+			assert(0);
+		}
+
+		// flush the CPU and GPU buffers
+		replay_printf(std::cerr, hlog);
+		log_writer->process(hlog.internal_buffer(), hlog.size());
+
+		copy(hlog, "dlog", gpulog::LOG_DEVCLEAR);
+		replay_printf(std::cerr, hlog);
+		log_writer->process(hlog.internal_buffer(), hlog.size());
+
+		hlog.clear();
+	}
+
+	// Note: the header _MUST_ be padded to 16-byte boundary
+	struct ALIGN(16) file_header
+	{
+		char magic[4];
+		char version[2];
+		uint16_t flags;
+		uint64_t datalen;
+
+		file_header(const int ver, uint16_t flags_, uint64_t datalen_)
+		{
+			magic[0] = 'S'; magic[1] = 'W'; magic[2] = 'R'; magic[3] = 'M';
+			version[0] = ver + '0';
+			version[1] = '\x17';
+			flags = flags_;
+			datalen = datalen_;
+		}
+	};
+
+	// Sort the raw outputs
+	struct idx_t
+	{
+		const char *ptr;	// pointer to this packet in memory
+		uint64_t offs;		// offset to this packet in memory
+		int len;		// length of this packet (including header and data)
+
+		void gethdr(double &T, int &sys) const
+		{
+			gpulog::logrecord lr(ptr);
+			if(lr.msgid() < 0)
+			{
+				// system-defined events that have no (T,sys) heading
+				T = -1; sys = -1;
+			}
+			else
+			{
+				std::cerr << "msgid=" << lr.msgid() << "\n";
+				lr >> T >> sys;
+			}
+		}
+
+		bool operator< (const idx_t &a) const
+		{
+			double Tt, Ta;
+			int syst, sysa;
+			this->gethdr(Tt, syst);
+			a.gethdr(Ta, sysa);
+
+			return 	 Tt < Ta ||
+				(Tt == Ta && syst < sysa);
+		}
+	};
+
+	/*
+		Implementation note: This implementation will probably barf
+		when log sizes reach a few GB. A better implementation, using merge
+		sort could/should be written.
+	*/
+	void sort_binary_log_file(const std::string &outfn, const std::string &infn)
+	{
+		MemoryMap mm(infn);
+		gpulog::ilogstream ils((const char*)(void*)mm, mm.size());
+		std::vector<idx_t> idx;
+		gpulog::logrecord lr;
+
+		// load record information
+		uint64_t datalen = 0;
+		for(int i=0; lr = ils.next(); i++)
+		{
+			idx_t ii;
+			ii.ptr = lr.ptr;
+			ii.len = lr.len();
+			idx.push_back(ii);
+
+			datalen += ii.len;
+		}
+
+		// sort
+		std::sort(idx.begin(), idx.end());
+
+		// output file header
+		std::ofstream out(outfn.c_str());
+		file_header fh(0, 0, datalen);
+		out.write((char*)&fh, sizeof(fh));
+
+		// write out the data
+		uint64_t at = 0;
+		for(int i = 0; i != idx.size(); i++)
+		{
+			out.write(idx[i].ptr, idx[i].len);
+			idx[i].offs = at;
+		}
+
+		// write out the index
+		// Index format: array of packed variable-sized packets of the form
+		//	{
+		//		double T;
+		//		uint64_t offs;
+		//		int N;
+		//		int sys[N];
+		//	}
+		double Tcur;
+		obstream bout(out);
+		for(int i = 0; i < idx.size(); i++)
+		{
+			double Tcur, T;
+			int sys;
+			idx[i].gethdr(Tcur, sys);
+			bout << Tcur << idx[i].offs;
+
+			// count the number of packets with the same T
+			int n; T = Tcur;
+			for(n=i+1; n != idx.size() && T == Tcur; n++)
+			{
+				idx[n].gethdr(T, sys);
+			}
+			bout << (int)(n-i);
+
+			// write out the packets
+			for(; i != n; i++)
+			{
+				idx[i].gethdr(T, sys);
+				bout << sys;
+			};
+		}
+	}
+}
+
+#if 0
 
 struct swarm::ievent::opaque_data
 {
@@ -433,6 +593,8 @@ bool next_message(ieventstream &evt, std::string &res)
 
 #endif
 
+#endif
+
 //
 // Default binary writer
 //
@@ -440,13 +602,11 @@ bool next_message(ieventstream &evt, std::string &res)
 class binary_writer : public swarm::writer
 {
 protected:
-	std::auto_ptr<std::ostream> eout_strm, bout_strm;
-	std::auto_ptr<obstream> eout, bout;
-	int ctr;
+	std::auto_ptr<std::ostream> output;
 
 public:
 	binary_writer(const std::string &cfg);
-	virtual void process(const swarm::output_buffers &ob);
+	virtual void process(const char *log_data, size_t length);
 };
 
 extern "C" swarm::writer *create_writer_binary(const std::string &cfg)
@@ -456,29 +616,23 @@ extern "C" swarm::writer *create_writer_binary(const std::string &cfg)
 
 binary_writer::binary_writer(const std::string &cfg)
 {
-	ctr = 0;
-
-	std::string event_fn, bodies_fn;
+	std::string output_fn;
 	std::istringstream ss(cfg);
-	if(!(ss >> event_fn >> bodies_fn))
-		ERROR("Expected 'binary <events_fn> <bodies_fn>' form of configuration for writer.")
+	if(!(ss >> output_fn))
+		ERROR("Expected 'binary <filename.bin>' form of configuration for writer.")
 
 	// TODO: check error return codes
-	eout_strm.reset(new std::ofstream(event_fn.c_str()));
-	bout_strm.reset(new std::ofstream(bodies_fn.c_str()));
-	eout.reset(new obstream(*eout_strm));
-	bout.reset(new obstream(*bout_strm));
+	output.reset(new std::ofstream(output_fn.c_str()));
 }
 
 // store the accumulated events and bodies into a file, while
 // printing out any printf() events to stdout
 BLESS_POD(swarm::body);
-BLESS_POD(swarm::event);
 
-void binary_writer::process(const swarm::output_buffers &ob)
+void binary_writer::process(const char *log_data, size_t length)
 {
-	using namespace swarm;
-
+	output->write(log_data, length);
+#if 0
 	// download and dump the log
 	// write out events
 	std::string msg;
@@ -514,5 +668,6 @@ void binary_writer::process(const swarm::output_buffers &ob)
 	{
 		std::cerr << "==== Ran out of body GPU output buffer space (" << ob.nbod_dropped << " body records dropped).\n";
 	}
+#endif
 }
 
