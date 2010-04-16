@@ -78,7 +78,7 @@ namespace swarm
 			}
 			else
 			{
-				std::cerr << "msgid=" << lr.msgid() << "\n";
+				//std::cerr << "msgid=" << lr.msgid() << "\n";
 				lr >> T >> sys;
 			}
 		}

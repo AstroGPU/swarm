@@ -126,7 +126,7 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 	// simple output
 	if(T >= ens.time_output(sys, 0) && sys < 10)
 	{
-		debug_hook();
+//		debug_hook();
 
 		// store the snapshot
 		log_snapshot(log, ens, sys, T);

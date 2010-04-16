@@ -1,6 +1,7 @@
 #ifndef lprintf_h__
 #define lprintf_h__
 
+#include <cstring>
 #include "gpulog.h"
 
 	/*
