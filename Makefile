@@ -57,6 +57,9 @@ swarm_demo2_SOURCES=src/swarm_demo2.cpp
 APPS+=swarm_demo3
 swarm_demo3_SOURCES=src/swarm_demo3.cpp 
 
+APPS+=peaShooter
+peaShooter_SOURCES=src/scatter/peaShooter.cpp
+
 ##########################################################
 #
 #  You shouldn't need to touch anything below this point

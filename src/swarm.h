@@ -220,23 +220,22 @@ class ensemble
 		}
 
 		// Should these pay attention to active flag?
-		__host__ void   set_time_all(const real_time tend) 
+		__host__ __device__ void   set_time_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time(sys) = tend;
 		}
-
-		__host__ void   set_time_end_all(const real_time tend) 
+		__host__ __device__ void   set_time_end_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) = tend;
 		}
-		__host__ void   advance_time_end_all(const real_time dur) 
+		__host__ __device__ void   advance_time_end_all(const real_time dur) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) += dur;
 		}
-		__host__ void   set_time_output_all(int k, const real_time tout) 
+		__host__ __device__ void   set_time_output_all(int k, const real_time tout) 
 		{ 
 		  for(int sys=0;sys<nsys();++sys)
 		    time_output(sys,k) = tout;

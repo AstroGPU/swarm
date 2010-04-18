@@ -1,0 +1,189 @@
+#!/usr/bin/python
+#
+#    "swarm_adap.py" is a python script that creates initial conditions and the observation
+#    file for use in swarm_adap.
+#    "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
+#    small N systems using the hermite_adap_gpu integrator.
+#    Copyright (C) 2010  Swarm-NG Development Group
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Contact aaron.boley at the domain gmail.com if you questions regarding
+#    this software.
+#
+#
+import math as M
+import random as R
+import scipy.special as SS
+#
+#
+# define basic parameters for ensemble
+# keep the primary mass the same for now
+# planets can vary in mass, size, location, and number
+# this does not consider stability, except for the Hill radius check
+# the outer planet is always set to 128 AU, but that can be changed where indicated
+# perturbers are drawn from a Maxwellian velocity distribution
+#
+# 
+nSystems=2048 # systems in ensemble
+mPrimary=1. # mass of the primary
+massMin=.001/32. # 10 Earth-mass minimum
+massMax=.001 # 1 Jupiter-mass maximum
+minPlanets=4 # keeps these the same for now.
+maxPlanets=4
+minAU=10. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
+maxAU=128. # outer planet
+pert=0.01 # perturbations for other velocities.
+HILLS=3. # make sure the planets are separated by HILLS many Hill radii
+timeStart=0.
+timeEnd=1e5 # time should be given in yr.
+incomingR=20626.5 # AU
+maxUnperturbedImpact=1000. # AU
+numObs=1000 # number of observations allowed
+ObserveFile="observeTimes.dat"
+VelSig=1./29.8 #(1km/s in code units) This is mean of Maxwellian velocity dispersion
+RANDOM_TIMES=0
+
+def getUniformLog(b0,b1):
+        a0=M.log10(b0)
+        a1=M.log10(b1)
+        a=10.**(R.uniform(a0,a1))
+        return a
+
+def Maxwell(v):
+        p=R.random()
+        s=0.
+        SqrtPi=M.sqrt(M.pi)
+        xinit=.001
+        x=xinit
+        while True:
+                s=M.pi/v*(SqrtPi*v*SS.erf(x/v)-2*x*M.exp(-(x/v)**2))/M.pi**1.5
+                err=(s-p)/p
+                if M.fabs(err)<1e-6:break
+                if(err<0.):x=x-x*err*.1
+                else:x=x-x*err*.1
+                if x<0.:
+                        xinit/=2.
+                        x=xinit
+        return x
+
+def createObservingFile():
+        R.seed()
+        obsTimes=[]
+        obsTimes.append(timeStart)
+        if RANDOM_TIMES:
+                for i in xrange(1,numObs):
+                        obsTimes.append(R.uniform(timeStart,timeEnd))
+                obsTimes.sort()
+        else:
+                dt=(timeEnd-timeStart)/float(numObs)
+                for i in xrange(1,numObs):
+                        obsTimes.append(timeStart+i*dt)
+
+        f=open(ObserveFile,"w")
+        for i in xrange(numObs):
+                f.write(repr(obsTimes[i])+"\n")
+        f.close()
+        return 0
+
+def getCollision():
+	# first use spherical coordinates to find position in sky as observed by planetary system
+	R.seed()
+	phi=2.*M.pi*R.random()
+	theta=M.pi*(2.*R.random()-1.)
+        VelSigPert=Maxwell(VelSig) 
+	x=incomingR*M.cos(theta)*M.cos(phi)
+	y=incomingR*M.cos(theta)*M.sin(phi)
+	z=incomingR*M.sin(theta)
+        impact=M.sqrt(maxUnperturbedImpact**2+2.*mPrimary*maxUnperturbedImpact/VelSigPert**2) # assuming reduced mass is mPmP/(mP+mP)
+	impact*=M.sqrt(R.random())
+	alpha0=impact/incomingR
+	alpha=1e-3*alpha0 # take advantage of large separation
+	ppf=(2.*(R.random())-1.)*alpha
+	tpf=(2.*(R.random())-1.)*alpha
+	while alpha<alpha0:
+       		phiPrime=phi+ppf
+               	thetaPrime=theta+tpf
+		ppf*=1.01;tpf*=1.01
+
+		alpha=M.cos(theta)*M.cos(phi)*M.cos(thetaPrime)*M.cos(phiPrime)
+		alpha+=M.cos(theta)*M.sin(phi)*M.cos(thetaPrime)*M.sin(phiPrime)
+		alpha+=M.sin(thetaPrime)*M.sin(theta)
+		alpha=M.acos(alpha)
+	vx=-VelSigPert*M.cos(thetaPrime)*M.cos(phiPrime)
+	vy=-VelSigPert*M.cos(thetaPrime)*M.sin(phiPrime)
+	vz=-VelSigPert*M.sin(thetaPrime)
+	return x,y,z,vx,vy,vz
+
+def main():
+	R.seed()
+	for i in xrange(nSystems):
+		nPlanets=R.randint(minPlanets,maxPlanets)
+		print " Working on system ", i
+		buffer="data."+repr(i)
+		f=open(buffer,"w")
+
+		f.write(repr(nPlanets+2)+"\n")
+                buffer=""
+		listx=[]
+		pvx=0.;pvy=0.;pvz=0.
+		for j in xrange(nPlanets):
+			mass=getUniformLog(massMin,massMax)
+			x=getUniformLog(minAU,maxAU)
+			if j==0: x=maxAU
+			#if j==1: x=2.
+			#if j==2: x=4. # set these if you want to constrain planet locations
+			#if j==3: x=8.
+			listx.append(x)
+			OK=0
+			if j==0: OK=1
+                	while not OK:
+				OK=1
+				for k in xrange(j):
+					minSep=abs(x)*HILLS*(mass/mPrimary/3.)**(1./3.)
+					if( abs(abs(x)-abs(listx[k]))<minSep):
+						OK=0
+						x=getUniformLog(minAU,maxAU)
+						listx[j]=x
+					
+
+			y=0.;z=0.
+			vy=x/abs(x)*M.sqrt(mPrimary/abs(x))
+			vx=vy*pert*(R.random()*2.-1.)
+			vz=vy*pert*(R.random()*2.-1.)
+                        pvy-=vy*mass
+			pvx-=vx*mass
+			pvz-=vz*mass
+			buffer+=repr(mass)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
+		buffer0=repr(mPrimary)+" "+repr(0.)+" "+repr(0.)+" "+repr(0.)+" "+repr(pvx/mPrimary)+" "+repr(pvy/mPrimary)+" "+repr(pvz/mPrimary)+"\n"
+		f.write(buffer0)
+		f.write(buffer)
+		
+		# now find and write collider information
+		x,y,z,vx,vy,vz=getCollision()
+		buffer=repr(mPrimary)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
+		f.write(buffer)
+
+		f.close()		
+
+	test=createObservingFile()
+        if test!=0:
+		print "Error when creating observing file."
+		return -1
+ 
+	return 0
+
+test=main()
+if test==0: print "Program exited sucessfully."
+else: "Error in main. Results may be unreliable."
