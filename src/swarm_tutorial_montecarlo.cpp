@@ -323,10 +323,11 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 
 	      double a, e, i, O, w, M;
 	      calc_keplerian_for_cartesian(a,e,i,O,w,M, x,y,z,vx,vy,vz, mass_enclosed);
+	      i *= 180/M_PI;
 	      O *= 180/M_PI;
 	      w *= 180/M_PI;
 	      M *= 180/M_PI;
-	      std::cout << " a= " << a << " e= " << e << " i= " << i << " O= " << O << " w= " << w << " M= " << M << "\n";
+	      std::cout << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
 	    }
 
 	}
