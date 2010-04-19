@@ -48,6 +48,26 @@ public:
 	operator bool() const { return bin; }
 };
 
+	struct file_header;
+	struct mmapped_swarm_file : public MemoryMap
+	{
+	protected:
+		file_header *fh;
+		char *m_data;
+		int m_size;
+
+	public:
+		mmapped_swarm_file(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true);
+		void open(const std::string &filename, const std::string &type, int mode = ro, bool validate = true);
+		
+		// override MemoryMap::size() to return the length of the data without the header
+		size_t size() const { return m_size; }
+
+		// accessors
+		char *data() const { return m_data; }
+		file_header &hdr() const { return *fh; }
+	};
+
 	class swarmdb
 	{
 	public:
@@ -62,19 +82,18 @@ public:
 	protected:
 		struct index_handle
 		{
-			MemoryMap mm;
+			mmapped_swarm_file mm;
 			const index_entry *begin, *end;
 		};
 
-		MemoryMap datamm;
-		const char *data;
+		mmapped_swarm_file mmdata;
 
 		index_handle idx_time, idx_sys;
 		std::string datafile;
 
 		void open(const std::string &datafile);
 		void open_indexes(bool recreate = true);
-		void open_index(index_handle &h, const std::string &idxfile);
+		void open_index(index_handle &h, const std::string &idxfile, const std::string &filetype);
 
 	public:
 		static struct range_special { } ALL;

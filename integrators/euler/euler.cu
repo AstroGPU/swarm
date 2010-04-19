@@ -263,7 +263,7 @@ struct stop_on_ejection
 			if(r < rmax) { return; }
 //			::debug_hook();
 			ts.eject = true;
-			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
+//			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
 			log_event(dlog, EVT_EJECTION, T, sys, r, body_set(ens, sys, bod));
 		}
 

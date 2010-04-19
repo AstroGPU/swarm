@@ -17,7 +17,7 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarmdump</mainprogram>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
       <programargs>integrator-mjuric.cfg</programargs>
       <globaldebugarguments>integrator-mjuric.cfg</globaldebugarguments>
       <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>

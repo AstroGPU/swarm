@@ -26,25 +26,71 @@ namespace swarm
 	// Note: the header _MUST_ be padded to 16-byte boundary
 	struct ALIGN(16) file_header
 	{
-		char magic[4];		// Magic string to quickly verify this is a swarm file (== 'SWRM')
-		char version[2];	// version character (starting with '0' and increasing for increasing versions)
-		uint16_t flags;		// any flags
-		uint64_t datalen;	// length of data in the file
+		char magic[6];		// Magic string to quickly verify this is a swarm file (== 'SWARM\0')
+		char version[2];	// File format version
+		char m_type[76];	// user-defined file content ID/description
+		uint32_t flags;		// user-defined flags
+		uint64_t datalen;	// length of data in the file (0xFFFFFFFFFFFFFFFF for unknown)
 
-		file_header(const int ver, uint16_t flags_ = 0, uint64_t datalen_ = 0)
+		static const uint64_t npos = 0xFFFFFFFFFFFFFFFFLL;
+
+		file_header(const std::string &type, int flags_ = 0, uint64_t datalen_ = npos)
 		{
-			magic[0] = 'S'; magic[1] = 'W'; magic[2] = 'R'; magic[3] = 'M';
-			version[0] = ver + '0';
-			version[1] = '\x17';
+			strcpy(magic, "SWARM");
+			strcpy(version, "0");
+
+			strncpy(this->m_type, type.c_str(), sizeof(this->m_type));
+			this->m_type[sizeof(this->m_type)-1] = '\0';
+
 			flags = flags_;
 			datalen = datalen_;
 		}
-		
+
+		std::string type() const
+		{
+			char *c = strstr(m_type, "//");
+			if(!c) { return trim(m_type); }
+			return trim(std::string(m_type, c - m_type));
+		}
+
 		bool is_compatible(const file_header &a)
 		{
-			return memcmp(magic, a.magic, 6) == 0;
+			bool ffver_ok = memcmp(magic, a.magic, 8) == 0;
+			std::string t = type();
+			bool type_ok = t.empty() || (t == a.type());
+			return ffver_ok && type_ok;
 		}
 	};
+
+	mmapped_swarm_file::mmapped_swarm_file(const std::string &filename, const std::string &type, int mode, bool validate)
+		: fh(NULL), m_data(NULL)
+	{
+		if(!filename.empty())
+		{
+			open(filename, type, mode, validate);
+		}
+	}
+
+	void mmapped_swarm_file::open(const std::string &filename, const std::string &type, int mode, bool validate)
+	{
+		MemoryMap::open(filename.c_str(), 0, 0, mode, shared);
+
+		// read/check header
+		fh = (file_header *)map;
+		file_header ref_ver(type);
+		if(validate && !ref_ver.is_compatible(*fh))
+		{
+			std::cerr << "Expecting: " << ref_ver.type() << "\n";
+			std::cerr << "Got      : " << fh->type() << "\n";
+			ERROR("Input file corrupted or incompatible with this version of swarm");
+		}
+
+		// get the pointer to data
+		m_data = (char *)&fh[1];
+		
+		// data size
+		m_size = length - sizeof(file_header);
+	}
 
 	void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 	{
@@ -107,19 +153,23 @@ namespace swarm
 	class index_creator : public index_creator_base
 	{
 	protected:
-		std::string suffix;
+		std::string suffix, filetype;
 		std::ofstream out;
 		std::string filename;
 		int nentries;
 
 	public:
-		index_creator(const std::string &suffix_) : suffix(suffix_), nentries(0) {}
+		index_creator(const std::string &suffix_, const std::string &filetype_) : suffix(suffix_), filetype(filetype_), nentries(0) {}
 
 		virtual bool start(const std::string &datafile)
 		{
 			filename = datafile + suffix;
 			out.open(filename.c_str());
 			assert(out);
+
+			// write header
+			swarm::file_header fh(filetype);
+			out.write((char*)&fh, sizeof(fh));
 		}
 		virtual bool add_entry(uint64_t offs, gpulog::logrecord &lr)
 		{
@@ -134,8 +184,8 @@ namespace swarm
 			out.close();
 
 			// sort by time
-			MemoryMap mm(filename.c_str(), 0, 0, MemoryMap::rw);
-			swarmdb::index_entry *begin = (swarmdb::index_entry *)(void*)mm, *end = begin + mm.size()/sizeof(swarmdb::index_entry);
+			mmapped_swarm_file mm(filename, filetype, MemoryMap::rw);
+			swarmdb::index_entry *begin = (swarmdb::index_entry *)mm.data(), *end = begin + mm.size()/sizeof(swarmdb::index_entry);
 			assert((end - begin) == nentries);
 
 			std::sort(begin, end, Cmp());
@@ -154,16 +204,8 @@ namespace swarm
 	void index_binary_log_file(std::vector<boost::shared_ptr<index_creator_base> > &ic, const std::string &datafile)
 	{
 		// open datafile
-		MemoryMap mm(datafile.c_str());
-		file_header *fh = (file_header *)(void*)mm;
-		static file_header ref_ver0(0);
-		if(!ref_ver0.is_compatible(*fh))
-		{
-			ERROR("Input file corrupted or incompatible with this version of swarm");
-		}
-
-		const char *data = (const char*)&fh[1];
-		gpulog::ilogstream ils(data, mm.size() - sizeof(file_header));
+		mmapped_swarm_file mm(datafile, "T_sorted_output");
+		gpulog::ilogstream ils(mm.data(), mm.size());
 		gpulog::logrecord lr;
 
 		// postprocess (this is where the creator may sort or store the index)
@@ -177,7 +219,7 @@ namespace swarm
 		{
 			for(int i=0; i != ic.size(); i++)
 			{
-				ic[i]->add_entry(lr.ptr - data, lr);
+				ic[i]->add_entry(lr.ptr - mm.data(), lr);
 			}
 		}
 
@@ -199,8 +241,8 @@ namespace swarm
 	*/
 	bool sort_binary_log_file(const std::string &outfn, const std::string &infn)
 	{
-		MemoryMap mm(infn);
-		gpulog::ilogstream ils((const char*)(void*)mm, mm.size());
+		mmapped_swarm_file mm(infn, "unsorted_output");
+		gpulog::ilogstream ils(mm.data(), mm.size());
 		std::vector<idx_t> idx;
 		gpulog::logrecord lr;
 
@@ -222,7 +264,7 @@ namespace swarm
 
 		// output file header
 		std::ofstream out(outfn.c_str());
-		file_header fh(0, 0, datalen);
+		file_header fh("T_sorted_output // Output file sorted by time", 0, datalen);
 		out.write((char*)&fh, sizeof(fh));
 
 		// write out the data
@@ -375,7 +417,7 @@ namespace swarm
 			if(T   && !T.in(at->T))     { at++; continue; }
 			if(sys && !sys.in(at->sys)) { at++; continue; }
 
-			return gpulog::logrecord(db.data + (at++)->offs);
+			return gpulog::logrecord(db.mmdata.data() + (at++)->offs);
 		}
 
 		static gpulog::header hend(-1, 0);
@@ -402,14 +444,7 @@ namespace swarm
 		this->datafile = datafile;
 
 		// open the datafile
-		datamm.open(datafile);
-		file_header *fh = (file_header *)(void*)datamm;
-		static file_header ref_ver0(0);
-		if(!ref_ver0.is_compatible(*fh))
-		{
-			ERROR("Input file corrupted or incompatible with this version of swarm");
-		}
-		data = (const char*)&fh[1];
+		mmdata.open(datafile, "T_sorted_output");
 
 		// open the indexes
 		open_indexes();
@@ -423,11 +458,11 @@ namespace swarm
 		// auto-create indices if needed
 		if(recreate || access((datafile + ".time.idx").c_str(), R_OK) != 0)
 		{
-			ic.push_back( boost::make_shared< index_creator<index_entry_time_cmp> >(".time.idx") );
+			ic.push_back( boost::make_shared< index_creator<index_entry_time_cmp> >(".time.idx", "T_sorted_index") );
 		}
 		if(recreate || access((datafile + ".sys.idx").c_str(), R_OK) != 0)
 		{
-			ic.push_back( boost::make_shared< index_creator<index_entry_sys_cmp> >(".sys.idx") );
+			ic.push_back( boost::make_shared< index_creator<index_entry_sys_cmp> >(".sys.idx", "sys_sorted_index") );
 		}
 		if(!ic.empty())
 		{
@@ -435,19 +470,19 @@ namespace swarm
 		}
 
 		// open index maps
-		open_index(idx_time, datafile + ".time.idx");
-		open_index(idx_sys,  datafile + ".sys.idx");
+		open_index(idx_time, datafile + ".time.idx", "T_sorted_index");
+		open_index(idx_sys,  datafile + ".sys.idx", "sys_sorted_index");
 	}
 
-	void swarmdb::open_index(index_handle &h, const std::string &filename)
+	void swarmdb::open_index(index_handle &h, const std::string &filename, const std::string &filetype)
 	{
 		if(access(filename.c_str(), R_OK) != 0)
 		{
 			ERROR("Cannot open index file '" + filename + "'");
 		}
 
-		h.mm.open(filename.c_str());
-		h.begin = (swarmdb::index_entry *)(void*)h.mm;
+		h.mm.open(filename.c_str(), filetype);
+		h.begin = (swarmdb::index_entry *)h.mm.data();
 		h.end   = h.begin + h.mm.size()/sizeof(swarmdb::index_entry);
 	}
 }
@@ -481,8 +516,13 @@ binary_writer::binary_writer(const std::string &cfg)
 		ERROR("Expected 'binary <filename.bin>' form of configuration for writer.")
 	rawfn = binfn + ".raw";
 
-	// TODO: check error return codes
 	output.reset(new std::ofstream(rawfn.c_str()));
+	if(!*output)
+		ERROR("Could not open '" + rawfn + "' for writing");
+
+	// write header
+	swarm::file_header fh("unsorted_output // Unsorted output file");
+	output->write((char*)&fh, sizeof(fh));
 }
 
 binary_writer::~binary_writer()

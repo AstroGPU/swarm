@@ -272,8 +272,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	int iter = 0;
 	do
 	{
-		lprintf(hlog, "Starting kernel run #%d\n", iter);
-		lprintf(hlog, "Another unnecessary message from the CPU side\n");
+//		lprintf(hlog, "Starting kernel run #%d\n", iter);
+//		lprintf(hlog, "Another unnecessary message from the CPU side\n");
 
 		retval_gpu.memset(0);
 		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id);
@@ -298,7 +298,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 			nactive0 = retval.nactive;
 		}
 	} while(true);
-	lprintf(hlog, "Exiting integrate");
+//	lprintf(hlog, "Exiting integrate");
 
 	flush_logs(false);
 }
