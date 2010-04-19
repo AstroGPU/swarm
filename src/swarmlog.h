@@ -21,7 +21,6 @@ namespace swarm
 {
 	void init_logs(const std::string &writer_cfg);
 	void flush_logs(bool ifneeded = false);
-	void sort_binary_log_file(const std::string &outfn, const std::string &infn);
 
 	static const int EVT_SNAPSHOT		= 1000000;	// marks a snapshot of a system. see system_snapshot() down below
 
@@ -150,7 +149,7 @@ namespace swarm
 	template<typename L>
 	__device__ __host__ void log_snapshot(L &l, const ensemble &ens, const int sys, const double T)
 	{
-		body *bodies = log_event(l, EVT_SNAPSHOT, T, sys, gpulog::array<body>(ens.nbod()));
+		body *bodies = log_event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
 		for(int bod=0; bod != ens.nbod(); bod++)
 		{
 			bodies[bod].set(ens, sys, bod);

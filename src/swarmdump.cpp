@@ -217,9 +217,8 @@ void write_output(const swarm::cpu_ensemble &ens, const int sys, std::valarray<d
 	}
 }
 
-//
-// NOTE: This code currently assumes there are two and only two snapshots in the output file
-//
+#define SWARMDB 1
+
 int main()
 {
 	//split_into_per_system("events.bin", "bodies.bin", "system.%04d.txt", false);
@@ -231,8 +230,14 @@ int main()
 	// load the ensemble
 	cpu_ensemble ens;
 
+#if SWARMDB
+	swarmdb in("log.bin");
+	swarmdb::snapshots snaps = in.get_snapshots(swarmdb::ALL);
+	snaps.next(ens);
+#else
 	ens_reader in("output.bin");
 	in >> ens;
+#endif
 	unsigned int nprint = std::min(2, ens.nsys());
 
 	// Calculate energy at beginning of integration
@@ -245,8 +250,13 @@ int main()
 	printf("\n");
 
 	// find the final snapshot
+#if SWARMDB
+	int cnt = 0;
+	while(snaps.next(ens)) { cnt++; }
+#else
 	int cnt = 0;
 	while(in >> ens) { cnt++; }
+#endif
 
 	// Calculate energy at end of integration
 	calc_total_energy(ens, Efinal);

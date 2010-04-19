@@ -2,9 +2,12 @@
 #define swarmio_h__
 
 #include "swarm.h"
+#include "swarmlog.h"
 #include <astro/binarystream.h>
+#include <astro/memorymap.h>
 #include <fstream>
 #include <sstream>
+#include <limits>
 
 // Convert a variable of arbitrary type to a string.
 // NOTE: heavy (unoptimized) function, use sparingly
@@ -44,6 +47,111 @@ public:
 	ens_reader &operator >>(cpu_ensemble &ens);
 	operator bool() const { return bin; }
 };
+
+	class swarmdb
+	{
+	public:
+		struct index_entry
+		{
+			uint64_t offs;	// data offset for the record
+	
+			double T;	// time
+			int sys;	// system at the record
+		};
+
+	protected:
+		struct index_handle
+		{
+			MemoryMap mm;
+			const index_entry *begin, *end;
+		};
+
+		MemoryMap datamm;
+		const char *data;
+
+		index_handle idx_time, idx_sys;
+		std::string datafile;
+
+		void open(const std::string &datafile);
+		void open_indexes(bool recreate = true);
+		void open_index(index_handle &h, const std::string &idxfile);
+
+	public:
+		static struct range_special { } ALL;
+		static struct range_MAX
+		{
+			template<typename T> operator T() const
+			{
+				return std::numeric_limits<T>::max();
+			};
+		} MAX;
+		static struct range_MIN
+		{
+			template<typename T> operator T() const
+			{
+				return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
+			};
+		} MIN;
+
+		template<typename T>
+		struct range
+		{
+			T begin, end;
+
+			range(const T &a) : begin(a), end(a + 1) {}
+			range(const T &a, const T &b) : begin(a), end(b) {}
+			range(const range_special &r) : begin(MIN), end(MAX) {}
+
+			bool in(const T& v) { return begin <= v && v < end; }
+			operator bool() const { return begin < end; }
+			ptrdiff_t width() const { return end - begin; }
+		};
+
+		typedef range<int> sys_range_t;
+		typedef range<double> time_range_t;
+
+		struct result
+		{
+			const swarmdb &db;
+
+			sys_range_t  sys;
+			time_range_t T;
+			
+			const index_entry *begin, *end, *at, *atprev;
+
+			result(const swarmdb &db_, const sys_range_t &sys, const time_range_t &T);
+
+			gpulog::logrecord next();
+			void unget();
+		};
+
+	public:
+		swarmdb(const std::string &datafile);
+
+		// return a stream of events with msgid, and system sys, at time T
+		result query(sys_range_t sys, time_range_t T) const
+		{
+			return result(*this, sys, T);
+		}
+
+	public:
+		struct snapshots
+		{
+			const swarmdb &db;
+			result r;
+
+			double Tabserr, Trelerr;
+
+			bool next(cpu_ensemble &ens, bool keep_existing = true);
+			snapshots(const swarmdb &db, time_range_t T, double Tabserr = 0, double Trelerr = 0);
+		};
+
+		snapshots get_snapshots(time_range_t T, double Tabserr = 0, double Trelerr = 0)
+		{
+			return snapshots(*this, T, Tabserr, Trelerr);
+		}
+	};
+
 
 } // end namespace swarm
 

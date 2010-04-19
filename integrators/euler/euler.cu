@@ -270,6 +270,11 @@ struct stop_on_ejection
 		// called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
 		{
+			if(ts.eject)
+			{
+				// store the last snapshot before going inactive
+				log_snapshot(dlog, ens, sys, T);
+			}
 			return ts.eject;
 		}
 	};

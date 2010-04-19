@@ -124,7 +124,7 @@ template<typename L>
 __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
 	// simple output
-	if(T >= ens.time_output(sys, 0) && sys < 10)
+	if(T >= ens.time_output(sys, 0))
 	{
 //		debug_hook();
 

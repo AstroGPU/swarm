@@ -103,7 +103,6 @@ int main(int argc, const char **argv)
 
 	out << ens;
 	flush_logs();
-	sort_binary_log_file("log.bin", "log.raw");
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
