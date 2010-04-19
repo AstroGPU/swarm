@@ -71,6 +71,21 @@ int gpu_ensemble::get_nactive() const
 	return nactive;
 }
 #endif
+	
+#if 0  // compiler says not allowed, need to figure out
+__device__ void gpu_ensemble::set_time_end_all_kernel(const real_time tend) 	
+{
+int sys = threadId();
+if(sys>= nsys()) { return; }
+time_end(sys) = tend;
+}
+
+void gpu_ensemble::set_time_end_all(const real_time tend) 	
+{
+  set_time_end_all_kernel<<<60, 64>>>(tend);
+}
+#endif
+
 
 
 ///////////////////

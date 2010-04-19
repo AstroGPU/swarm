@@ -63,9 +63,94 @@
 				break;
 		}
 	}
+	else if(ens.nbod()==6) {
+		// execute the kernel
+		switch(prec){
+			// double precision
+			case 1:
+				gpu_hermite_integrator_kernel<1,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// signle precision
+			case 2:
+				gpu_hermite_integrator_kernel<2,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// mixed precision
+			case 3:
+				gpu_hermite_integrator_kernel<3,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+		}
+	}
+	else if(ens.nbod()==7) {
+		// execute the kernel
+		switch(prec){
+			// double precision
+			case 1:
+				gpu_hermite_integrator_kernel<1,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// signle precision
+			case 2:
+				gpu_hermite_integrator_kernel<2,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// mixed precision
+			case 3:
+				gpu_hermite_integrator_kernel<3,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+		}
+	}
+	else if(ens.nbod()==8) {
+		// execute the kernel
+		switch(prec){
+			// double precision
+			case 1:
+				gpu_hermite_integrator_kernel<1,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// signle precision
+			case 2:
+				gpu_hermite_integrator_kernel<2,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// mixed precision
+			case 3:
+				gpu_hermite_integrator_kernel<3,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+		}
+	}
+	else if(ens.nbod()==9) {
+		// execute the kernel
+		switch(prec){
+			// double precision
+			case 1:
+				gpu_hermite_integrator_kernel<1,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// signle precision
+			case 2:
+				gpu_hermite_integrator_kernel<2,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// mixed precision
+			case 3:
+				gpu_hermite_integrator_kernel<3,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+		}
+	}
+	else if(ens.nbod()==10) {
+		// execute the kernel
+		switch(prec){
+			// double precision
+			case 1:
+				gpu_hermite_integrator_kernel<1,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// signle precision
+			case 2:
+				gpu_hermite_integrator_kernel<2,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+				// mixed precision
+			case 3:
+				gpu_hermite_integrator_kernel<3,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				break;
+		}
+	}
 	else {
 	// How do we get an error message out of here?
-	ERROR("Invalid number of bodies.");
+	ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
 	return;
 	}
 

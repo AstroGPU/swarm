@@ -1,6 +1,7 @@
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include <vector>
+#include <algorithm> // for swap
 #include <memory>
 #include <iostream>
 #include <dlfcn.h>
@@ -170,6 +171,77 @@ void cpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 //	memcpy(m_nactive, src.m_nactive, 1*sizeof(*m_nactive));
 
 	m_last_integrator = src.m_last_integrator;
+}
+
+
+  int cpu_ensemble::pack()
+  {
+    int openid=0;
+    for(int sysid=0;sysid<nsys();++sysid)
+      {
+	if(is_active(sysid))
+	  {
+	    if(sysid!=openid)
+	      {
+		std::swap(m_T[sysid],m_T[openid]);
+		std::swap(m_Tend[sysid],m_Tend[openid]);
+		std::swap(m_nstep[sysid],m_nstep[openid]);
+		std::swap(m_Toutput[sysid],m_Toutput[openid]);
+		std::swap(m_Toutput[sysid+nsys()],m_Toutput[openid+nsys()]);
+		std::swap(m_flags[sysid],m_flags[openid]);
+		std::swap(m_systemIndices[sysid],m_systemIndices[openid]);
+		for(int bod=0;bod<nbod();++bod)
+		  {
+		    double tmp;
+		    tmp = mass(openid,bod); mass(openid,bod) = mass(sysid,bod); mass(sysid,bod) = tmp;
+		    tmp = x(openid,bod);   x(openid,bod) =  x(sysid,bod);  x(sysid,bod) = tmp;
+		    tmp = y(openid,bod);   y(openid,bod) =  y(sysid,bod);  y(sysid,bod) = tmp;
+		    tmp = z(openid,bod);   z(openid,bod) =  z(sysid,bod);  z(sysid,bod) = tmp;
+		    tmp = vx(openid,bod); vx(openid,bod) = vx(sysid,bod); vx(sysid,bod) = tmp;
+		    tmp = vy(openid,bod); vy(openid,bod) = vy(sysid,bod); vy(sysid,bod) = tmp;
+		    tmp = vz(openid,bod); vz(openid,bod) = vz(sysid,bod); vz(sysid,bod) = tmp;
+		  }
+	      } // end if sysid!=openid
+			  ++openid;
+	  } // end if is_active
+      }  // end for sysid
+    return openid;
+  };
+  
+
+void cpu_ensemble::replace_inactive_from(cpu_ensemble &src, const int offset)	// Merge in systems from another cpu_ensemble
+{
+	int src_sys = 0, dest_sys = 0;
+	//	for(int dest_sys=start_sys;dest_sys<nsys();++dest_sys)
+	do
+	  {
+	    //	    do while(is_inactive(dest_sys)&&(dest_sys<nsys())) { ++dest_sys; };
+	    for(;is_inactive(dest_sys)&&(dest_sys<nsys());++dest_sys);
+	    if(dest_sys>=nsys()) break;
+	    do { ++src_sys; } while (src.is_inactive(src_sys)&&(src_sys<src.nsys()));
+	    if(src_sys>=src.nsys()) break;
+	    assert(src.is_active(src_sys));
+	    time(dest_sys) = src.time(src_sys);
+	    time_end(dest_sys) = src.time_end(src_sys);
+	    nstep(dest_sys) = src.nstep(src_sys);
+	    time_output(dest_sys,0) = src.time_output(src_sys,0);
+	    time_output(dest_sys,1) = src.time_output(src_sys,1);
+	    flags(dest_sys) = src.flags(src_sys);
+	    index_of_system(dest_sys) = src.index_of_system(src_sys) + offset;
+	    for(int bod=0;bod<nbod();++bod)
+	      {
+		mass(dest_sys,bod) = mass(src_sys,bod);
+		x (dest_sys,bod) = x (src_sys,bod);
+		y (dest_sys,bod) = y (src_sys,bod);
+		z (dest_sys,bod) = z (src_sys,bod);
+		vx(dest_sys,bod) = vx(src_sys,bod);
+		vy(dest_sys,bod) = vy(src_sys,bod);
+		vz(dest_sys,bod) = vz(src_sys,bod);
+	      }
+	    src.set_inactive(src_sys);
+	  } while(true);  // end loop over dest_sys
+
+	m_last_integrator = NULL;  // I beleive this is necessary since we don't know that other systems have been integrated the same way.  Any problem?
 }
 
 // GPU Ensembles ////////////////////////////////
