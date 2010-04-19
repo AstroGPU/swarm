@@ -8,6 +8,9 @@
 
 namespace swarm {
 
+/*!
+ * \brief cpu_verlet_integrator class
+ */
 class cpu_verlet_integrator : public integrator
 {
 public:
@@ -28,20 +31,24 @@ protected:
 	int				m_nsys, m_nbod;
 	int                             m_is_old_good;
 
-	// function to (re)allocate the integration state
+	/*!
+	 * \brief function to (re)allocate the integration state
+	 * 
+	 * @param[in] ens cpu_ensemble
+	 */
 	void alloc_state(cpu_ensemble &ens);
 
 public:
+	/*!
+	 * \brief Constructor for verlet cpu integrator
+	 *
+	 * @param[in] cfg configuration class needs a timestep.
+	 */
 	cpu_verlet_integrator(const config &cfg);
 
 public:
-	// No support for GPU execution. Note: we could make this function
-	// transparently copy the CPU ensemble to the GPU, and back once
-	// the integration is done
 	virtual void integrate(cpu_ensemble &ens, real_time T);
 
-	// Is it dangerous to provide these as public?
-	// If not, people could use them to interpolate to some specific time
 	void set_timestep(const real_time hnew) { h = hnew; };
 
 	int is_old_good() const { return m_is_old_good; };

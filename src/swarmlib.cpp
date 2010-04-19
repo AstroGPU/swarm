@@ -23,7 +23,11 @@ void die(const std::string &msg)
 
 
 namespace swarm {
+/*!
+   \brief  trim string
 
+   @param[in] str input string
+ */
 void trim(std::string& str)
 {
 	std::string::size_type pos = str.find_last_not_of(" \t");
@@ -36,7 +40,12 @@ void trim(std::string& str)
 	else str.erase(str.begin(), str.end());
 }
 
-// load a configuration file
+/*!
+   \brief  load a configuration file
+
+   @param[out] cfg configuration class
+   @param[in] fn file name sting
+ */
 void load_config(config &cfg, const std::string &fn)
 {
 	std::ifstream in(fn.c_str());
@@ -61,35 +70,56 @@ void load_config(config &cfg, const std::string &fn)
 	}
 }
 
-//
-// Ensemble class plumbing (mostly memory management)
-//
-
-// CPU Ensembles ////////////////////////////////
+/*!
+   \brief CPU Ensemble class plumbing (mostly memory management) 
+*/
 cpu_ensemble::cpu_ensemble()
 {
 	construct_base();
 }
 
+/*!
+   \brief CPU Ensemble class plumbing (mostly memory management) 
+
+  @param[in] sys number of systems
+  @param[in] nbod number of bodies 
+*/
 cpu_ensemble::cpu_ensemble(int nsys, int nbod)
 {
 	construct_base();
 	reset(nsys, nbod);
 }
 
+/*!
+   \brief CPU Ensemble class plumbing (mostly memory management) 
+
+  @param[in] source gpu_ensemble  
+*/
 cpu_ensemble::cpu_ensemble(const gpu_ensemble &source)
 {
 	construct_base();
 	copy_from(source);
 }
 
+/*!
+   \brief CPU Ensemble class plumbing (mostly memory management) 
+
+  @param[in] source cpu_ensemble  
+*/
 cpu_ensemble::cpu_ensemble(const cpu_ensemble &source)
 {
 	construct_base();
 	copy_from(source);
 }
 
-void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU memory for nsys systems of nbod planets each
+/*!
+   \brief  Allocate CPU memory for nsys systems of nbod planets each
+
+  @param[in] sys number of systems
+  @param[in] nbod number of bodies 
+  @param[in] reinitIndices flag for reinitialize indices  
+*/
+void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// 
 {
 	// do we need to realloc?
 	if(m_nsys != nsys || m_nbod != nbod)
@@ -121,7 +151,10 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	m_last_integrator = NULL;
 }
 
-void cpu_ensemble::free()			// Deallocate CPU memory
+/*!
+   \brief  Deallocate CPU memory
+*/
+void cpu_ensemble::free()	
 {
 //	hostFree(m_nactive); m_nactive = NULL;
 	hostFree(m_T); m_T = NULL;
@@ -135,7 +168,12 @@ void cpu_ensemble::free()			// Deallocate CPU memory
 	hostFree(m_systemIndices); m_systemIndices = NULL;
 }
 
-void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the GPU
+/*!
+   \brief Copy the data from the GPU
+
+  @param[in] src gpu_ensemble  
+*/
+void cpu_ensemble::copy_from(const gpu_ensemble &src)	
 {
 	reset(src.nsys(), src.nbod(), false);
 
@@ -154,7 +192,12 @@ void cpu_ensemble::copy_from(const gpu_ensemble &src)	// Copy the data from the 
 	m_last_integrator = src.m_last_integrator;
 }
 
-void cpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the CPU
+/*!
+   \brief Copy the data from the CPU
+
+  @param[in] src cpu_ensemble  
+*/
+void cpu_ensemble::copy_from(const cpu_ensemble &src)
 {
 	reset(src.nsys(), src.nbod(), false);
 
@@ -172,7 +215,6 @@ void cpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 
 	m_last_integrator = src.m_last_integrator;
 }
-
 
   int cpu_ensemble::pack()
   {
@@ -245,12 +287,21 @@ void cpu_ensemble::replace_inactive_from(cpu_ensemble &src, const int offset)	//
 }
 
 // GPU Ensembles ////////////////////////////////
+/*!
+   \brief GPU Ensemble class 
+*/
 gpu_ensemble::gpu_ensemble()
 {
 	construct_base();
 	nactive_gpu = NULL;
 }
 
+/*!
+   \brief GPU Ensemble class 
+
+  @param[in] sys number of systems
+  @param[in] nbod number of bodies 
+*/
 gpu_ensemble::gpu_ensemble(int nsys, int nbod)
 {
 	construct_base();
@@ -258,6 +309,11 @@ gpu_ensemble::gpu_ensemble(int nsys, int nbod)
 	nactive_gpu = NULL;
 }
 
+/*!
+   \brief GPU Ensemble class 
+
+  @param[in] source cpu_ensemble  
+*/
 gpu_ensemble::gpu_ensemble(const cpu_ensemble &source)
 {
 	construct_base();
@@ -271,7 +327,15 @@ gpu_ensemble::~gpu_ensemble()
 	cudaFree(nactive_gpu);
 }
 
-void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU memory for nsys systems of nbod planets each
+
+/*!
+   \brief  Allocate GPU memory for nsys systems of nbod planets each
+
+  @param[in] sys number of systems
+  @param[in] nbod number of bodies 
+  @param[in] reinitIndices flag for reinitialize indices  
+*/
+void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)
 {
 	// do we need to realloc?
 	if(m_nsys != nsys || m_nbod != nbod)
@@ -314,7 +378,10 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	// Allocate CPU
 	m_last_integrator = NULL;
 }
 
-void gpu_ensemble::free()			// Deallocate CPU memory
+/*!
+   \brief  Deallocate GPU memory
+*/
+void gpu_ensemble::free()
 {
 //	cudaFree(m_nactive); m_nactive = NULL;
 	cudaFree(m_T); m_T = NULL;
@@ -340,7 +407,12 @@ void debugger_stop()
 	std::cerr << "Block for debugger here!\n";
 }
 
-void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the GPU
+/*!
+   \brief Copy the data from the CPU
+
+  @param[in] src cpu_ensemble  
+*/
+void gpu_ensemble::copy_from(const cpu_ensemble &src)
 {
 	reset(src.nsys(), src.nbod(), false);
 
@@ -363,16 +435,25 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)	// Copy the data from the 
 // Commonly needed functions
 //
 
-// compute the total energy of each system in the ensemble and return it as valarray
+/*!
+   /brief Calculate totoal energy
+
+   compute the total energy of each system in the ensemble and return it as valarray
+  @param[in] ens cpu_ensemble
+  @param[out] E total energy
+*/
 void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E)
 {
 	E.resize(ens.nsys());
 	ens.calc_total_energy(&E[0]);
 }
 
-//
-// Ensemble loading support
-//
+/*!
+   /brief Ensemble loading support
+
+  @param[in] name string name
+  @param[out] ens cpu_ensemble
+*/
 void load_ensemble(const std::string &name, cpu_ensemble &ens)
 {
 	// Assume filenames are of the form "$name.xx" where xx is a sequence of
@@ -436,10 +517,11 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 	std::cerr << "Loaded " << nsys << " systems of " << nbod << " bodies each.\n";
 }
 
-//
-// Integrator instantiation support
-//
+/*!
+   /brief Integrator instantiation support
 
+  @param[in] cfg configuration class
+*/
 integrator *integrator::create(const config &cfg)
 {
 	std::auto_ptr<integrator> integ;
@@ -469,10 +551,12 @@ integrator *integrator::create(const config &cfg)
 	return integ.release();
 }
 
-//
-// Writer instantiation support
-//
 
+/*!
+   /brief Writer integrator instantiation support
+
+  @param[in] cfg configuration class
+*/
 writer *writer::create(const std::string &cfg)
 {
 	std::auto_ptr<writer> w;
@@ -506,10 +590,14 @@ writer *writer::create(const std::string &cfg)
 	return w.release();
 }
 
-//
-// Find the dimensions (bx,by) of a 2D grid of blocks that 
-// has as close to nblocks blocks as possible
-//
+/*!
+   /brief Find best factorization 
+
+   Find the dimensions (bx,by) of a 2D grid of blocks that has as close to nblocks blocks as possible
+  @param[out] bx
+  @param[out] by
+  @param[in] nblocks
+*/
 void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 {
 	bx = -1;
@@ -530,12 +618,20 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 	if(bx == -1) { std::cerr << "Unfactorizable?!\n"; exit(-1); }
 }
 
-//
-// Given a total number of threads, their memory requirements, and the
-// number of threadsPerBlock, compute the optimal allowable grid dimensions.
-// Returns false if the requested number of threads are impossible to fit to
-// shared memory.
-//
+/*!
+   /brief Configur grid
+
+   Given a total number of threads, their memory requirements, and the
+   number of threadsPerBlock, compute the optimal allowable grid dimensions.
+   Returns false if the requested number of threads are impossible to fit to
+   shared memory.
+
+  @param[out] gridDim
+  @param[in] threadsPerBlock
+  @param[in] nthreads
+  @param[in] dynShmemPerThread
+  @param[in] staticShmemPerBlcok
+ */
 bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
 {
 	const int shmemPerMP =  16384;
@@ -569,9 +665,9 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 	return true;
 }
 
-//
-// I/O and snapshotting functions
-//
+/*!
+  \brief I/O and snapshotting functions
+*/
 ens_writer::ens_writer(const std::string &fn_)
 	: fn(fn_), out(fn.c_str()), bout(out)
 {

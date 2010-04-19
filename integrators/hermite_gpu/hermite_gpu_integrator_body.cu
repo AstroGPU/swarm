@@ -153,9 +153,6 @@
 	ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
 	return;
 	}
-
-
-
-	printf("%s\n", cudaGetErrorString(cudaGetLastError())); 
+	//printf("%s\n", cudaGetErrorString(cudaGetLastError())); 
 };
 

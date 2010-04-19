@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <memory>
 
 #include<gsl/gsl_multifit.h>
 

@@ -1,8 +1,9 @@
 #include "swarm.h"
-#include "verlet.h"
+#include "rk4.h"
 #include "swarmlog.h"
 
 /*!
+
 	\brief gpu_generic_integrator - Versatile GPU integrator template
 
 	gpu_generic_integrator is a template class designed to make it easy to implement
@@ -159,12 +160,12 @@ namespace swarm {
 
 
 /*!  
- *  \brief propagator class for verlet integrator on GPU: Advance the system by one time step.
+ *  \brief propagator class for RK4 integrator on GPU: Advance the system by one time step.
  *
  *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
  *  Keep any data that needs to reside on the CPU here.
  */
-struct prop_verlet
+struct prop_rk4
 {
 	/*! 
 	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
@@ -175,8 +176,12 @@ struct prop_verlet
 	{
 		//! per-block variables, time step
 		double h;
-		//! per-block variables, acceleration
-		cuxDevicePtr<double, 3> aa;
+		//! per-block variables, acceleration0
+		cuxDevicePtr<double, 3> aa0;
+		//! per-block variables, acceleration1
+		cuxDevicePtr<double, 3> aa1;
+		//! per-block variables, acceleration2
+		cuxDevicePtr<double, 3> aa2;
 
 		/*!
 		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
@@ -195,6 +200,19 @@ struct prop_verlet
 		 * This function MUST return the new time of the system.
 		 * This function MUST also call stop.test_body() for every body
 		 * in the system, after that body has been advanced by a timestep.
+                 *
+  		 * see RK4 implementation by http://www.artcompsci.org/kali/vol/shared_timesteps/.nbody_sh1.rb.html
+		 * def rk4
+                 * old_pos = pos
+                 * a0 = acc(ba)
+                 * pos = old_pos + vel*0.5*dt + a0*0.125*dt*dt
+                 * a1 = acc(ba)
+                 * pos = old_pos + vel*dt + a1*0.5*dt*dt
+                 * a2 = acc(ba)
+                 * pos = old_pos + vel*dt + (a0+a1*2)*(1/6.)*dt*dt
+                 * vel += (a0_a1*4+a2)*(1/6.)*dt
+		 * end 
+                 *
 		 * @tparam stop_t ...
 		 * @param[in,out] ens ensemble
 		 * @param[in,out] pt ...
@@ -213,102 +231,56 @@ struct prop_verlet
 			//double h = T + this->h <= Tend ? this->h : Tend - T;
 			double h_half= h*0.5;
 
-			//Step(pos);
-			//CalcDerivForDrift(); -> returns velocity
+			double  x_old[3] = {ens.x(sys, 0), ens.x(sys, 1), ens.x(sys, 2)};
+			double  y_old[3] = {ens.y(sys, 0), ens.y(sys, 1), ens.y(sys, 2)};
+			double  z_old[3] = {ens.z(sys, 0), ens.z(sys, 1), ens.z(sys, 2)};
+			double  vx_old[3] = {ens.vx(sys, 0), ens.vx(sys, 1), ens.vx(sys, 2)};
+			double  vy_old[3] = {ens.vy(sys, 0), ens.vy(sys, 1), ens.vy(sys, 2)};
+			double  vz_old[3] = {ens.vz(sys, 0), ens.vz(sys, 1), ens.vz(sys, 2)};
+
+			// compute accelerations
+			compute_acc(ens, sys, aa0);
+
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				x += vx * h_half;
-				y += vy * h_half;
-				z += vz * h_half;
-				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h_half + aa0(sys, bod, 0) * h_half * h_half * 0.5;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h_half + aa0(sys, bod, 1) * h_half * h_half * 0.5;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h_half + aa0(sys, bod, 2) * h_half * h_half * 0.5;
 			}
 
-			//CalcDerivForKick();
 			// compute accelerations
-			compute_acc(ens, sys, aa);
+			compute_acc(ens, sys, aa1);
 
-			//Step(vel)
-			for(int bod = 0; bod != ens.nbod(); bod++) 
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				// load
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				// advance
-				//x += vx * h_half;
-				//y += vy * h_half;
-				//z += vz * h_half;
-				vx += aa(sys, bod, 0) * h_half;
-				vy += aa(sys, bod, 1) * h_half;
-				vz += aa(sys, bod, 2) * h_half;
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + aa1(sys, bod, 0) * h_half * h;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + aa1(sys, bod, 1) * h_half * h;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + aa1(sys, bod, 2) * h_half * h;
+			}
 
-				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
+			// compute accelerations
+			compute_acc(ens, sys, aa2);
 
-				// store
-				//ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
+			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
+			{
+				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * h * h / 6.0;
+				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * h * h / 6.0;
+				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * h * h / 6.0;
+				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* h/6.0;
+				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* h/6.0;
+				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* h/6.0;
 			}
 		        
-			T = T + h_half;
-			//Calculate New HalfDeltaT; HalfDeltaT =1./(2./(CalcTimeScaleFactor(mass, pos, nBodies)*DeltaTau)-1./HalfDeltaTLast);
-			//CalcTimeScaleFactor(mass, pos, nBodies)
-			double rinv3 = 0.;
-			for ( unsigned int i=0;i<ens.nbod();++i )
-			{
-				//V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
-				double xi0= ens.x ( sys,i );
-				double xi1= ens.y ( sys,i );
-				double xi2= ens.z ( sys,i );
-				
-				double mass_sum = ens.mass(sys,i);
-				for (int j=i+1; j < ens.nbod(); ++j) {
-					//double msum = g_mass[i]+g_mass[j];
-					mass_sum += ens.mass(sys,j); 
-					//V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
-					//double r2 = dx.MagnitudeSquared();
-					double dx0=ens.x(sys,j) - xi0;
-					double dx1=ens.y(sys,j) - xi1;
-					double dx2=ens.z(sys,j) - xi2;
-					double r2 = dx0*dx0 + dx1*dx1 + dx2*dx2;
-					double rinv = 1./sqrt ( r2 );
-					rinv *= mass_sum;
-					rinv3 += rinv/r2;
-				}
-			}
 
-			double h_new= 1./(1.+sqrt(rinv3)); 
-			// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
-			h_new = 1./(2./(h_new*h)-1./h_half);
-			h_half = h_new;
-
-			//Step(vel)
-			for(int bod = 0; bod != ens.nbod(); bod++) 
-			{
-				// load
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				vx += aa(sys, bod, 0) * h_half;
-				vy += aa(sys, bod, 1) * h_half;
-				vz += aa(sys, bod, 2) * h_half;
-				x += vx * h_half;
-				y += vy * h_half;
-				z += vz * h_half;
-
-				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
-
-				// store
-				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
-			}
-
-
-			return T + h_half;
+			return T + h;
 		}
+
 	};
 
 	//! CPU state and interface
-	cuxDeviceAutoPtr<double, 3> aa;
+	cuxDeviceAutoPtr<double, 3> aa0;
+	cuxDeviceAutoPtr<double, 3> aa1;
+	cuxDeviceAutoPtr<double, 3> aa2;
 	gpu_t gpu_obj;
 
 	/*!
@@ -322,8 +294,12 @@ struct prop_verlet
 	{
 		// Here you'd initialize the object to be passed to the kernel, or
 		// upload any temporary data you need to constant/texture/global memory
-		aa.realloc(ens.nsys(), ens.nbod(), 3);
-		gpu_obj.aa = aa;
+		aa0.realloc(ens.nsys(), ens.nbod(), 3);
+		aa1.realloc(ens.nsys(), ens.nbod(), 3);
+		aa2.realloc(ens.nsys(), ens.nbod(), 3);
+		gpu_obj.aa0= aa0;
+		gpu_obj.aa1= aa1;
+		gpu_obj.aa2= aa2;
 	}
 
 	/*!
@@ -333,9 +309,9 @@ struct prop_verlet
          * It will be called during construction of gpu_generic_integrator. 
          * It should load any values necessary for initialization.
 	 */
-	prop_verlet(const config &cfg)
+	prop_rk4(const config &cfg)
 	{
-		if(!cfg.count("h")) ERROR("Integrator gpu_verlet needs a timestep ('h' keyword in the config file).");
+		if(!cfg.count("h")) ERROR("Integrator gpu_rk4 needs a timestep ('h' keyword in the config file).");
 		gpu_obj.h = atof(cfg.at("h").c_str());
 	}
 
@@ -354,9 +330,9 @@ struct prop_verlet
 
 
 // factory
-extern "C" integrator *create_gpu_verlet(const config &cfg)
+extern "C" integrator *create_gpu_rk4(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_verlet>(cfg);
+	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
 }
 
 } // end namespace swarm

@@ -73,7 +73,10 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateZ(const FloatT s, const FloatT c) throw() 
     {
+<<<<<<< HEAD
 //      assert(approx(c*c+s*s,1.,1.e-6));
+=======
+>>>>>>> master
       ThreeVectorT C(*this);
       X() = + C.X()*c - C.Y()*s;
       Y() = + C.X()*s + C.Y()*c;
@@ -82,7 +85,10 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateX(const FloatT s, const FloatT c)  throw() 
     {
+<<<<<<< HEAD
 //      assert(approx(c*c+s*s,1.,1.e-6));
+=======
+>>>>>>> master
       ThreeVectorT C(*this);
       Y() = + C.Y()*c - C.Z()*s;
       Z() = + C.Y()*s + C.Z()*c;
@@ -91,7 +97,10 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateY(const FloatT s, const FloatT c) throw() 
     {
+<<<<<<< HEAD
 //      assert(approx(c*c+s*s,1.,1.e-6));
+=======
+>>>>>>> master
       ThreeVectorT C(*this);
       Z() = + C.Z()*c - C.X()*s;
       X() = + C.Z()*s + C.X()*c;

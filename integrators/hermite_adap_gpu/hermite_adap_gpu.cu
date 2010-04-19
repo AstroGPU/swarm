@@ -1,10 +1,11 @@
 #include "swarm.h"
-#include "hermite_gpu.h"
+#include "user.h"
+#include "hermite_adap_gpu.h"
 
 namespace swarm {
-namespace hermite_gpu {
+namespace hermite_adap_gpu {
 
-namespace gpu_hermite_aux
+namespace gpu_hermite_adap_aux
 {
 	//
 	// Wrap all aux. functions in a separate namespace, to avoid
@@ -46,8 +47,27 @@ namespace gpu_hermite_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-/*!
- * \brief Copies array from a source to a target.
+// Adaptive time step algorithm.  It only considers the accelerations and jerks for now, so be careful
+// with your choice of stepfac.
+
+template<unsigned int nBodies, typename real_hi, typename real_lo>
+inline __device__ real_hi getAdaptiveTimeStep(real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
+ {
+         real_hi dt=LARGE_NUMBER;
+         real_hi magAcc, magJerk;
+         for(unsigned int i=0;i<nBodies;++i) 
+          {
+                   magAcc =SQRT(pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
+                   magJerk=SQRT(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) ;
+                   dt=min(dt,magAcc/(magJerk+magAcc*SMALL_NUMBER)*stepfac+h);
+          }
+         return dt;
+ }
+
+
+
+/**
+ * Copies array from a source to a target
  *
  * @tparam N number of elements to copy    
  * @tparam destT destination type
@@ -82,9 +102,8 @@ inline __device__ void copyArray(destT *target, srcT *source)
 		 }
 }
 
-/*!
- * \brief Predicts velocity and position
- *
+/**
+ * Predicts velocity and position
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam N 3*(number of bodies per system )    
@@ -146,9 +165,8 @@ inline __device__ void predict(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 		}
 }
 
-/*!
- * \brief Corrects velocity and position
- *
+/**
+ * Corrects velocity and position
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam N 3*(number of bodies per system )    
@@ -217,9 +235,8 @@ inline __device__ void correct(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real
 	    }
 }
 
-/*!
- * \brief Updates acceleration and jerk for 2 or 3 planets (optimized). 
- *
+/**
+ * Updates acceleration and jerk for 2 or 3 planets (optimized). 
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam nBodies number of bodies per system
@@ -464,9 +481,8 @@ __device__  void UpdateAccJerk23(real_hi * mPos, real_hi * mVel, real_lo* mAcc, 
 	mJerk[6] = ji2[0]; mJerk[7] = ji2[1]; mJerk[8] = ji2[2];
 }
 
-/*!
- * \brief Updates acceleration and jerk for more than 3 planets. 
- *
+/**
+ * Updates acceleration and jerk for more than 3 planets. 
  * For mixed precision, acceleration and jerk are saved in single precision.
  *
  * @tparam nBodies number of bodies per system
@@ -571,25 +587,10 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 	}
 }
 
-__constant__ ensemble gpu_hermite_ens;
+__constant__ ensemble gpu_hermite_adap_ens;
 
-/*!
- * \brief Hermite GPU integrator kernel function
- *
- * This kernel will do the followings, 
- *  1. Data load: position, velocity, and mass from global memory. 
- *  2. UpdateAccJerk(ens,sys);
- *  3. While (ens.time( sys ) < Tend )
- *      CopyToOld(ens,sys);
- *      predict(ens,sys, hh);
- *      UpdateAccJerk(ens,sys);
- *      Correct(ens,sys, hh);
- *      UpdateAccJerk(ens,sys); 
- *      Correct(ens,sys, hh);
- * Implementation is based on Hermite CPU integrator
- * @see swarm::cpu_hermite_integrator
- * UpdateAccJerk function is optimized for 2 or 3 plantes. 
- * According to precision, all data type will be set as double or float
+/**
+ * Hermite integrator kernel function
  *
  * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
  * @tparam nbod number of bodies per system 
@@ -597,16 +598,17 @@ __constant__ ensemble gpu_hermite_ens;
  * @param h time step       
  */
 template<unsigned int pre, unsigned int nbod>
-__global__ void gpu_hermite_integrator_kernel(double dT, double h)
+__global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double stepfac)
 {
-	using namespace gpu_hermite_aux;
+	using namespace gpu_hermite_adap_aux;
 
-	ensemble &ens = gpu_hermite_ens;
+	ensemble &ens = gpu_hermite_adap_ens;
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
 
 	double    T = ens.time(sys);
 	double Tend = T + dT;
+        double dt=h;
 
 	const unsigned int nData=3*nbod;
 	typename pos_type<pre>::type mPos       [nData];
@@ -620,13 +622,6 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 
 	float s_mass[nbod];
-
-	typename acc_type<pre>::type dtby2=h/2.;
-	typename acc_type<pre>::type dtby3=h/3.;
-	typename acc_type<pre>::type dtby6=h/6.;
-	typename acc_type<pre>::type dt7by30=h*7./30.;
-	typename acc_type<pre>::type dtby7=h/7.;
-	typename pos_type<pre>::type hh=h;
 
 	//load data from global memory
 	if(nbod>0)
@@ -726,16 +721,17 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
-	        if(T+h>Tend)
-	          {	
-			hh=Tend-T;
-			dtby2=hh/2.;
-			dtby3=hh/3.;
-			dtby6=hh/6.;
-			dt7by30=hh*7./30.;
-			dtby7=hh/7.;
-		  }
-		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, hh);
+                dt=getAdaptiveTimeStep<nbod>(&mAcc[0], &mJerk[0],  h, stepfac);
+                if(dt+T>Tend)dt=Tend-T;
+ 
+        	typename acc_type<pre>::type dtby2=dt/2.;
+	        typename acc_type<pre>::type dtby3=dt/3.;
+        	typename acc_type<pre>::type dtby6=dt/6.;
+ 	        typename acc_type<pre>::type dt7by30=dt*7./30.;
+	        typename acc_type<pre>::type dtby7=dt/7.;
+                typename pos_type<pre>::type dtdt=dt;
+
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, dtdt);
 
 		//mixed precision
 		if(pre==3)
@@ -783,7 +779,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
 		correct<nData>(mPos,mVel,mAcc,mJerk, mPosOld,mVelOld,mAccOld,mJerkOld, dtby2, dtby6, dtby7, dt7by30);
 
-		T += hh;
+		T += dt;
 		ens.nstep(sys)++;
 	}
 	//update system time
@@ -851,43 +847,37 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 }
 
 
-/*!
- * \brief host function to invoke a kernel (double precision) 
+/**
+ * host function to invoke a kernel (double precision) 
  *
- * Currently maximum number of bodies is set to 10.
- * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
 template<>
-void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_gpu_integrator_body.cu"
+void gpu_hermite_adap_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_adap_gpu_integrator_body.cu"
 
-/*!
- * \brief host function to invoke a kernel (mixed precision) 
+/**
+ * host function to invoke a kernel (mixed precision) 
  *
- * Currently maximum number of bodies is set to 10.
- * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
 template<>
-void gpu_hermite_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_gpu_integrator_body.cu"
+void gpu_hermite_adap_integrator<double,float>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_adap_gpu_integrator_body.cu"
 
-/*!
- * \brief host function to invoke a kernel (single precision) 
+/**
+ * host function to invoke a kernel (single precision) 
  *
- * Currently maximum number of bodies is set to 10.
- * In order to change, add if statement. 
  * @param[in,out] ens gpu_ensemble for data communication
  * @param[in] dT destination time 
  */
 template<>
-void gpu_hermite_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
-#include"hermite_gpu_integrator_body.cu"
+void gpu_hermite_adap_integrator<float,float>::integrate(gpu_ensemble &ens, double dT)
+#include"hermite_adap_gpu_integrator_body.cu"
 
 
-} // end namespace hermite_gpu
+} // end namespace hermite_adap_gpu
 } // end namespace swarm
 

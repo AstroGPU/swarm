@@ -57,6 +57,9 @@ swarm_demo2_SOURCES=src/swarm_demo2.cpp
 APPS+=swarm_demo3
 swarm_demo3_SOURCES=src/swarm_demo3.cpp 
 
+APPS+=peaShooter
+peaShooter_SOURCES=src/scatter/peaShooter.cpp
+
 ##########################################################
 #
 #  You shouldn't need to touch anything below this point
@@ -115,7 +118,7 @@ all: $(APPS)
 
 src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
 	@ echo "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
-	$(GENUI) ./bin/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
+	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
 src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o
 	$(GENUI) cp src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
@@ -128,7 +131,7 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 #
 
 test-dataset:
-	(cd run && (test -f data.0 || ../bin/easyGen.py))
+	(cd run && (test -f data.0 || ../scripts/easyGen.py))
 
 test: all test-dataset
 	(cd run && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
@@ -158,7 +161,7 @@ $(APPS): %: bin/%
 
 # Executables
 bin/Makefile.d: Makefile
-	$(GENUI) ./bin/generate_app_makefiles.sh $(APPS) > $@
+	$(GENUI) ./scripts/generate_app_makefiles.sh $(APPS) > $@
 -include bin/Makefile.d
 
 # CUDA object files
