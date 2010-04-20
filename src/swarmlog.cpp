@@ -7,7 +7,6 @@
 #include <memory>
 #include <limits>
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
 
 extern "C" void debug_hook()
 {

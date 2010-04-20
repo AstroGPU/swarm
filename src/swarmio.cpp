@@ -19,7 +19,6 @@
 #include <memory>
 #include <limits>
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
 
 namespace swarm
 {
@@ -448,11 +447,13 @@ namespace swarm
 		// auto-create indices if needed
 		if(recreate || access((datafile + ".time.idx").c_str(), R_OK) != 0)
 		{
-			ic.push_back( boost::make_shared< index_creator<index_entry_time_cmp> >(".time.idx", "T_sorted_index") );
+			boost::shared_ptr<index_creator_base> ii(new index_creator<index_entry_time_cmp>(".time.idx", "T_sorted_index"));
+			ic.push_back( ii );
 		}
 		if(recreate || access((datafile + ".sys.idx").c_str(), R_OK) != 0)
 		{
-			ic.push_back( boost::make_shared< index_creator<index_entry_sys_cmp> >(".sys.idx", "sys_sorted_index") );
+			boost::shared_ptr<index_creator_base> ii(new index_creator<index_entry_sys_cmp>(".sys.idx", "sys_sorted_index"));
+			ic.push_back( ii );
 		}
 		if(!ic.empty())
 		{
