@@ -84,7 +84,8 @@ namespace swarm
 
 	namespace log
 	{
-		static const int EVT_SNAPSHOT		= 1000000;	// marks a snapshot of a system. see swarm::log::system() down below
+		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
+		static const int EVT_EJECTION		= 2;	// marks an ejection event
 
 		enum { memory = 0x01, if_full = 0x02 };
 

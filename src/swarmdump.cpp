@@ -232,7 +232,7 @@ int main()
 
 #if SWARMDB
 	swarmdb in("log.bin");
-	swarmdb::snapshots snaps = in.get_snapshots(swarmdb::ALL);
+	swarmdb::snapshots snaps = in.get_snapshots(swarm::ALL);
 	snaps.next(ens);
 #else
 	ens_reader in("output.bin");

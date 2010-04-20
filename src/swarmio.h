@@ -11,6 +11,39 @@
 
 namespace swarm {
 
+	extern struct range_special { } ALL;
+	extern struct range_MAX
+	{
+		template<typename T> operator T() const
+		{
+			return std::numeric_limits<T>::max();
+		};
+	} MAX;
+	extern struct range_MIN
+	{
+		template<typename T> operator T() const
+		{
+			return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
+		};
+	} MIN;
+
+	template<typename T>
+	struct range
+	{
+		T begin, end;
+
+		range(const T &a) : begin(a), end(a + 1) {}
+		range(const T &a, const T &b) : begin(a), end(b) {}
+		range(const range_special &r = ALL) : begin(MIN), end(MAX) {}
+
+		bool in(const T& v) { return begin <= v && v < end; }
+		operator bool() const { return begin < end; }
+		ptrdiff_t width() const { return end - begin; }
+	};
+
+	typedef range<int> sys_range_t;
+	typedef range<double> time_range_t;
+
 	struct file_header;
 	struct mmapped_swarm_file : public MemoryMap
 	{
@@ -59,39 +92,6 @@ namespace swarm {
 		void open_index(index_handle &h, const std::string &idxfile, const std::string &filetype);
 
 	public:
-		static struct range_special { } ALL;
-		static struct range_MAX
-		{
-			template<typename T> operator T() const
-			{
-				return std::numeric_limits<T>::max();
-			};
-		} MAX;
-		static struct range_MIN
-		{
-			template<typename T> operator T() const
-			{
-				return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
-			};
-		} MIN;
-
-		template<typename T>
-		struct range
-		{
-			T begin, end;
-
-			range(const T &a) : begin(a), end(a + 1) {}
-			range(const T &a, const T &b) : begin(a), end(b) {}
-			range(const range_special &r) : begin(MIN), end(MAX) {}
-
-			bool in(const T& v) { return begin <= v && v < end; }
-			operator bool() const { return begin < end; }
-			ptrdiff_t width() const { return end - begin; }
-		};
-
-		typedef range<int> sys_range_t;
-		typedef range<double> time_range_t;
-
 		struct result
 		{
 			const swarmdb &db;

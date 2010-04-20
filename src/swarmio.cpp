@@ -20,6 +20,10 @@
 #include <limits>
 #include <boost/shared_ptr.hpp>
 
+swarm::range_special swarm::ALL;
+swarm::range_MIN swarm::MIN;
+swarm::range_MAX swarm::MAX;
+
 namespace swarm
 {
 	// Note: the header _MUST_ be padded to 16-byte boundary
@@ -109,7 +113,6 @@ namespace swarm
 	struct idx_t
 	{
 		const char *ptr;	// pointer to this packet in memory
-		uint64_t offs;		// offset to this packet in memory
 		int len;		// length of this packet (including header and data)
 
 		void gethdr(double &T, int &sys) const
@@ -125,8 +128,11 @@ namespace swarm
 			this->gethdr(Tt, syst);
 			a.gethdr(Ta, sysa);
 
-			return 	 Tt < Ta ||
-				(Tt == Ta && syst < sysa);
+			return 	 Tt < Ta || (
+					Tt == Ta && syst < sysa || (
+						syst == sysa && this->ptr < a.ptr
+					)
+				);
 		}
 	};
 
@@ -229,10 +235,6 @@ namespace swarm
 		}
 	}
 
-	swarmdb::range_special swarmdb::ALL;
-	swarmdb::range_MIN swarmdb::MIN;
-	swarmdb::range_MAX swarmdb::MAX;
-
 	/*
 		Implementation note: This implementation will probably barf
 		when log sizes reach a few GB. A better implementation, using merge
@@ -267,11 +269,9 @@ namespace swarm
 		out.write((char*)&fh, sizeof(fh));
 
 		// write out the data
-		uint64_t at = 0;
 		for(int i = 0; i != idx.size(); i++)
 		{
 			out.write(idx[i].ptr, idx[i].len);
-			idx[i].offs = at;
 		}
 		size_t tp = out.tellp();
 		assert(tp == sizeof(fh) + datalen);

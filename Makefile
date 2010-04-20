@@ -39,6 +39,9 @@ include integrators/*/Makefile.mk
 APPS+=swarm 
 swarm_SOURCES=src/swarm.cpp
 
+APPS+=swarmquery
+swarmquery_SOURCES=src/swarmquery.cpp
+
 APPS+=swarmdump
 swarmdump_SOURCES=src/swarmdump.cpp
 
@@ -84,7 +87,7 @@ CXXFLAGS+= -I ./src
 CXX+=-fPIC
 
 # Link command just adds the required bits to compiler command
-LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas -lboost_program_options -lboost_regex
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects
