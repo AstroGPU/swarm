@@ -502,8 +502,6 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 			ens.set_body(i, j, m, x, y, z, vx, vy, vz);
 		}
 	}
-
-	std::cerr << "Loaded " << nsys << " systems of " << nbod << " bodies each.\n";
 }
 
 /*!
@@ -649,7 +647,7 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 	std::cerr << "      Total threads to execute = " << nthreadsEx << "\n";
 	std::cerr << "- Grid configuration =========================\n";
 #else
-	std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
+	//std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
 #endif
 	return true;
 }
