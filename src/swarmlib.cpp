@@ -14,6 +14,21 @@
 // Utilities
 //
 
+/*
+	Initialize the swarm library. This function must be called before any other.
+*/
+static bool swarm_initialized = false;
+void swarm::init(const config &cfg)
+{
+	if(swarm_initialized) { return; }
+
+	// initialize the output log (default: log.bin)
+	std::string wcfg = cfg.count("output") ? cfg.at("output") : "binary log.bin";
+	swarm::log::init(wcfg);
+
+	swarm_initialized = true;
+}
+
 namespace swarm {
 /*!
    \brief  load a configuration file

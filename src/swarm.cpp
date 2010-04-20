@@ -38,6 +38,7 @@ int main(int argc, const char **argv)
 	SWATCH_START(swatch_all);
 	config cfg;
 	load_config(cfg, icfgfn);
+
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
 	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
 	bool ongpu;
@@ -46,10 +47,8 @@ int main(int argc, const char **argv)
 	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
 	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
-	// initialize output log
-	std::string wcfg = cfg.count("output") ? cfg["output"] : "binary log.bin";
-	std::cerr << "Output: " << wcfg << "\n";
-	log::init(wcfg);
+	// Initialize swarm
+	swarm::init(cfg);
 
 	// set end times of integration, first output time, and snapshot interval
 	double dT, Toutputstep;
@@ -61,10 +60,6 @@ int main(int argc, const char **argv)
 		ens.time_output(sys, 0) = ens.time(sys);	// output immediately on start
 		ens.time_output(sys, 1) = Toutputstep;		// output interval
 	}
-
-	// log initialization
-	hlog.alloc(1000000);
-	gpulog::alloc_device_log("dlog", hlog.capacity());
 
 	// perform the integration
 	if(ongpu)

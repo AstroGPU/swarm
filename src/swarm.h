@@ -27,6 +27,9 @@
 
 namespace swarm {
 
+	typedef std::map<std::string, std::string> config;
+	void init(const config &cfg);
+
 class integrator;
 class event;
 class writer;
@@ -354,8 +357,6 @@ class gpu_ensemble : public ensemble
 		void set_time_end_all(const real_time tend);
 		__device__ void set_time_end_all_kernel(const real_time tend);
 };
-
-typedef std::map<std::string, std::string> config;
 
 /// Load ensemble residing in files "name.XXX" where XXX \elem [0,nsys)
 void load_ensemble(const std::string &name, cpu_ensemble &ens);

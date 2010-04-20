@@ -21,13 +21,17 @@ namespace swarm
 {
 	namespace log
 	{
-		std::auto_ptr<writer> log_writer(writer::create("null"));
+		std::auto_ptr<writer> log_writer;
 	}
 }
 
-void swarm::log::init(const std::string &writer_cfg)
+void swarm::log::init(const std::string &writer_cfg, int host_buffer_size, int device_buffer_size)
 {
 	log_writer.reset(writer::create(writer_cfg));
+
+	// log memory allocation
+	hlog.alloc(host_buffer_size);
+	gpulog::alloc_device_log("dlog", device_buffer_size);
 }
 
 void swarm::log::shutdown()
