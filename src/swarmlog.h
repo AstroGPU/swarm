@@ -19,73 +19,8 @@ extern gpulog::host_log hlog;
 
 namespace swarm
 {
-	void init_logs(const std::string &writer_cfg);
-	void flush_logs(bool ifneeded = false);
-
-	static const int EVT_SNAPSHOT		= 1000000;	// marks a snapshot of a system. see system_snapshot() down below
-
-	template<typename L, typename T1>
-		__host__ __device__ inline PTR_T(SCALAR(T1)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1)
-		{
-			return l.write(recid, T, sys, v1);
-		}
-
-	template<typename L, typename T1, typename T2>
-		__host__ __device__ inline PTR_T(SCALAR(T2)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2)
-		{
-			return l.write(recid, T, sys, v1, v2);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3>
-		__host__ __device__ inline PTR_T(SCALAR(T3)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3)
-		{
-			return l.write(recid, T, sys, v1, v2, v3);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4>
-		__host__ __device__ inline PTR_T(SCALAR(T4)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5>
-		__host__ __device__ inline PTR_T(SCALAR(T5)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-		__host__ __device__ inline PTR_T(SCALAR(T6)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-		__host__ __device__ inline PTR_T(SCALAR(T7)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-		__host__ __device__ inline PTR_T(SCALAR(T8)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8);
-		}
-	#if 0
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-		__host__ __device__ inline PTR_T(SCALAR(T9)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8, v9);
-		}
-
-	template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-		__host__ __device__ inline PTR_T(SCALAR(T10)) log_event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9, const T10 &v10)
-		{
-			return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
-		}
-	#endif
-
 	// for on-GPU state logging of bodies
+	// TODO: Move this to swarm.h
 	// NOTE: I've written out the datatypes _explicitly_, because
 	// of alignment requirements that have to be hand-tuned between
 	// the device and host code. Yes, this _is_ unfortunate.
@@ -113,47 +48,123 @@ namespace swarm
 		}
 	};
 
+	// body_set class: hold a set of indices to bodies in a given system in
+	// a given ensemble. This class should be constructed using make_body_set() functions and
+	// used in conjunction with log::event to store a set of bodies in a single event
 	template<int N>
-	struct body_set_cls
+	struct body_set
 	{
 		const ensemble &ens;
 		int sys, bod[N];
 
-		__device__ __host__ inline body_set_cls(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
+		__device__ __host__ inline body_set(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
 	};
-	__device__ __host__ inline const body_set_cls<1> body_set(const ensemble &ens, int sys, int bod0)
+
+	__device__ __host__ inline const body_set<1> make_body_set(const ensemble &ens, int sys, int bod0)
 	{
-		body_set_cls<1> br(ens, sys);
+		body_set<1> br(ens, sys);
 		br.bod[0] = bod0;
 		return br;
 	}
-	__device__ __host__ inline const body_set_cls<2> body_set(const ensemble &ens, int sys, int bod0, int bod1)
+	__device__ __host__ inline const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, int bod1)
 	{
-		body_set_cls<2> br(ens, sys);
+		body_set<2> br(ens, sys);
 		br.bod[0] = bod0;
 		br.bod[1] = bod1;
 		return br;
 	}
-	__device__ __host__ inline const body_set_cls<3> body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
+	__device__ __host__ inline const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
 	{
-		body_set_cls<3> br(ens, sys);
+		body_set<3> br(ens, sys);
 		br.bod[0] = bod0;
 		br.bod[1] = bod1;
 		br.bod[2] = bod2;
 		return br;
 	}
-
-	/*
-		Store a snapshot of the entire system (EVT_SNAPSHOT).
-	*/
-	template<typename L>
-	__device__ __host__ void log_snapshot(L &l, const ensemble &ens, const int sys, const double T)
+	
+	namespace log
 	{
-		body *bodies = log_event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
-		for(int bod=0; bod != ens.nbod(); bod++)
+		static const int EVT_SNAPSHOT		= 1000000;	// marks a snapshot of a system. see swarm::log::system() down below
+
+		template<typename L, typename T1>
+			__host__ __device__ inline PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)
+			{
+				return l.write(recid, T, sys, v1);
+			}
+	
+		template<typename L, typename T1, typename T2>
+			__host__ __device__ inline PTR_T(SCALAR(T2)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2)
+			{
+				return l.write(recid, T, sys, v1, v2);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3>
+			__host__ __device__ inline PTR_T(SCALAR(T3)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3)
+			{
+				return l.write(recid, T, sys, v1, v2, v3);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4>
+			__host__ __device__ inline PTR_T(SCALAR(T4)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5>
+			__host__ __device__ inline PTR_T(SCALAR(T5)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+			__host__ __device__ inline PTR_T(SCALAR(T6)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+			__host__ __device__ inline PTR_T(SCALAR(T7)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+			__host__ __device__ inline PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8);
+			}
+		#if 0
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+			__host__ __device__ inline PTR_T(SCALAR(T9)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8, v9);
+			}
+	
+		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+			__host__ __device__ inline PTR_T(SCALAR(T10)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9, const T10 &v10)
+			{
+				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10);
+			}
+		#endif
+
+		/*
+			Store a snapshot of the entire system (EVT_SNAPSHOT).
+		*/
+		template<typename L>
+		__device__ __host__ void system(L &l, const ensemble &ens, const int sys, const double T)
 		{
-			bodies[bod].set(ens, sys, bod);
+			body *bodies = event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
+			for(int bod=0; bod != ens.nbod(); bod++)
+			{
+				bodies[bod].set(ens, sys, bod);
+			}
 		}
+
+		enum { memory = 0x01, if_full = 0x02 };
+
+		void init(const std::string &writer_cfg);
+		void flush(int flags = memory);
+		void shutdown();
 	}
 }
 
@@ -163,13 +174,13 @@ namespace gpulog
 	{
 		// body_set_cls is a proxy for an array of bodies, so make sure it reports
 		// the same alignment as body[N], as well as sizeof()
-		template<int N> struct alignment<swarm::body_set_cls<N> > : public alignment<swarm::body[N]> { };	// return alignment of body[N]
-		template<int N> struct    ttrait<swarm::body_set_cls<N> > : public    ttrait<swarm::body[N]> { };	// return traits of body[N]
+		template<int N> struct alignment<swarm::body_set<N> > : public alignment<swarm::body[N]> { };	// return alignment of body[N]
+		template<int N> struct    ttrait<swarm::body_set<N> > : public    ttrait<swarm::body[N]> { };	// return traits of body[N]
 
 		// serialization of a list of bodies
-		template<int N> struct     argio<swarm::body_set_cls<N> >
+		template<int N> struct     argio<swarm::body_set<N> >
 		{
-			__host__ __device__ static inline void put(char *ptr, const swarm::body_set_cls<N> &br, int start, int datalen)
+			__host__ __device__ static inline void put(char *ptr, const swarm::body_set<N> &br, int start, int datalen)
 			{
 				DHOST( std::cerr << "Writing [" << br << "] start=" << start << " len=" << datalen << "\n" );
 				DGPU( printf("Writing start=%d len=%d\n", start, datalen); );

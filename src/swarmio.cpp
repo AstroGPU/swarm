@@ -306,7 +306,7 @@ namespace swarm
 		while(lr = r.next())
 		{
 			// find next EVT_SNAPSHOT
-			if(lr.msgid() != EVT_SNAPSHOT) { continue; }
+			if(lr.msgid() != log::EVT_SNAPSHOT) { continue; }
 
 			// get time & system ID
 			double T; int nbod_tmp; sysinfo si;

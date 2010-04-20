@@ -52,7 +52,7 @@ int main(int argc, const char **argv)
 	// initialize output log
 	std::string wcfg = cfg.count("output") ? cfg["output"] : "binary log.bin";
 	std::cerr << "Output: " << wcfg << "\n";
-	init_logs(wcfg);
+	log::init(wcfg);
 
 	// set end times of integration, first output time, and snapshot interval
 	double dT, Toutputstep;
@@ -102,7 +102,7 @@ int main(int argc, const char **argv)
 	SWATCH_STOP(swatch_all);
 
 	out << ens;
-	flush_logs();
+	log::shutdown();
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;

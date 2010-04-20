@@ -18,33 +18,43 @@ extern "C" void debug_hook()
 
 namespace swarm
 {
-	std::auto_ptr<writer> log_writer(writer::create("null"));
-
-	void init_logs(const std::string &writer_cfg)
+	namespace log
 	{
-		log_writer.reset(writer::create(writer_cfg));
+		std::auto_ptr<writer> log_writer(writer::create("null"));
+	}
+}
+
+void swarm::log::init(const std::string &writer_cfg)
+{
+	log_writer.reset(writer::create(writer_cfg));
+}
+
+void swarm::log::shutdown()
+{
+	swarm::log::init("null");
+}
+
+void swarm::log::flush(int flags)
+{
+	// TODO: Implement flushing of writer as well
+	assert(flags & memory);
+
+	// TODO: Implement flush-only-if-near-capacity (observe the if_full flag)
+	if(!log_writer.get())
+	{
+		std::cerr << "No output writer attached!\n";
+		assert(0);
 	}
 
-	void flush_logs(bool ifneeded)
-	{
-		// TODO: Implement flush-only-if-near-capacity
+	// flush the CPU and GPU buffers
+	replay_printf(std::cerr, hlog);
+	log_writer->process(hlog.internal_buffer(), hlog.size());
 
-		if(!log_writer.get())
-		{
-			std::cerr << "No output writer attached!\n";
-			assert(0);
-		}
+	copy(hlog, "dlog", gpulog::LOG_DEVCLEAR);
+	replay_printf(std::cerr, hlog);
+	log_writer->process(hlog.internal_buffer(), hlog.size());
 
-		// flush the CPU and GPU buffers
-		replay_printf(std::cerr, hlog);
-		log_writer->process(hlog.internal_buffer(), hlog.size());
-
-		copy(hlog, "dlog", gpulog::LOG_DEVCLEAR);
-		replay_printf(std::cerr, hlog);
-		log_writer->process(hlog.internal_buffer(), hlog.size());
-
-		hlog.clear();
-	}
+	hlog.clear();
 }
 
 #if 0

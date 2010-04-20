@@ -129,7 +129,7 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 //		debug_hook();
 
 		// store the snapshot
-		log_snapshot(log, ens, sys, T);
+		log::system(log, ens, sys, T);
 
 		// set next stopping time
 		ens.time_output(sys, 0) += ens.time_output(sys, 1);
@@ -265,7 +265,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	}
 
 	// flush CPU/GPU logs
-	flush_logs(true);
+	log::flush(log::memory | log::if_full);
 
 	// execute the kernel in blocks of steps_per_kernel_run timesteps
 	int nactive0 = -1;
@@ -281,7 +281,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		iter++;
 
 		// flush CPU/GPU logs
-		flush_logs(true);
+		log::flush(log::memory | log::if_full);
 
 		retval_t retval;
 		retval_gpu.get(&retval);
@@ -300,7 +300,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	} while(true);
 //	lprintf(hlog, "Exiting integrate");
 
-	flush_logs(false);
+	log::flush(log::memory);
 }
 
 /*!

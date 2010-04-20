@@ -264,7 +264,7 @@ struct stop_on_ejection
 //			::debug_hook();
 			ts.eject = true;
 //			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
-			log_event(dlog, EVT_EJECTION, T, sys, r, body_set(ens, sys, bod));
+			log::event(dlog, EVT_EJECTION, T, sys, r, make_body_set(ens, sys, bod));
 		}
 
 		// called after the entire system has completed a single timestep advance.
@@ -273,7 +273,7 @@ struct stop_on_ejection
 			if(ts.eject)
 			{
 				// store the last snapshot before going inactive
-				log_snapshot(dlog, ens, sys, T);
+				log::system(dlog, ens, sys, T);
 			}
 			return ts.eject;
 		}
