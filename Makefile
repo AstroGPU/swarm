@@ -42,8 +42,8 @@ swarm_SOURCES=src/swarm.cpp
 APPS+=swarmquery
 swarmquery_SOURCES=src/swarmquery.cpp
 
-APPS+=swarmdump
-swarmdump_SOURCES=src/swarmdump.cpp
+APPS+=swarm_test_energy
+swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
 
 APPS+=swarm_tutorial_cpu
 swarm_tutorial_cpu_SOURCES=src/swarm_tutorial_cpu.cpp 
@@ -75,6 +75,7 @@ peaShooter_SOURCES=src/scatter/peaShooter.cpp
 CCUDA?=/opt/cuda/bin/nvcc -arch=sm_13
 CXX?=g++
 CCUDAFLAGS?=
+CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
 CXXFLAGS?=-g -O0 -I /opt/cuda/include -I ./src
 LDFLAGS?=-L /opt/cuda/lib64  -L /usr/lib64
@@ -91,7 +92,7 @@ LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects
-EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarmdump
+EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
 LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
@@ -127,7 +128,7 @@ src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o
 	$(GENUI) cp src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
 
 bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
-	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
 
 #
 # Utilities
@@ -137,13 +138,26 @@ test-dataset:
 	(cd run && (test -f data.0 || ../scripts/easyGen.py))
 
 test: all test-dataset
-	(cd run && ../bin/swarm $(INTEGRATORCFG) && ../bin/swarmdump)
+	@ echo
+	@ echo === Integrating =========================================================================================
+	@ echo
+	(cd run && ../bin/swarm $(INTEGRATORCFG))
+	@ echo
+	@ echo === Energy conservation test ============================================================================
+	@ echo
+	./bin/swarm_test_energy run/log.bin
+	@ echo
+	@ echo === Simple output datafile query ========================================================================
+	@ echo
+	./bin/swarmquery -s 42 -t 0.1..0.2002 run/log.bin
+	@ echo
+	@ echo =========================================================================================================
 
 clean:
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
 
 tidy: clean
-	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/output.bin run/*.bin
+	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/*.bin run/*.idx
 	$(TIDYUI) rmdir bin
 
 info:
@@ -165,13 +179,12 @@ $(APPS): %: bin/%
 
 # Executables
 bin/Makefile.d: Makefile
-	mkdir -p bin
-	$(GENUI) ./scripts/generate_app_makefiles.sh $(APPS) > $@
+	$(GENUI) mkdir -p bin && ./scripts/generate_app_makefiles.sh $(APPS) > $@
 -include bin/Makefile.d
 
 # CUDA object files
 %.cu_o:%.cu
-	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
 
 # C++ object files
 %.o:%.cpp
@@ -194,7 +207,7 @@ bin/Makefile.d: Makefile
 # The 2nd sed is a workaround for nvcc 2.3 (or gcc?) bug where the file directory is listed as a dependency
 # The 3rd sed fixes a problem where multiple slashes (i.e. //) may be present in the target, because $(dir $<) leaves the trailing slash, and nvcc -odir expects there to be none
 %.cu_d: %.cu
-	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< \
+	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< \
 		| sed 's,\($$*\)\.o[ :]*,\1.cu_o $@ : ,g' \
 		| sed 's,.*/ \\,    \\,g' \
 		| sed 's,//,/,g' \
