@@ -70,7 +70,7 @@ namespace swarm
 		static boost::regex r("(.+?)(?:\\.\\.(.+))?");
 		boost::smatch match;
 		if (boost::regex_match(s, match, r)) {
-			for(int i=0; i != match.size(); i++) { std::cerr << match[i] << "\n"; }
+			//for(int i=0; i != match.size(); i++) { std::cerr << match[i] << "\n"; }
 			if(match[2] == "")
 			{
 				v = boost::any(rangeT(arg_parse<T>(match[1])));
@@ -206,8 +206,8 @@ int main(int argc, char **argv)
 	po::options_description desc(std::string("Usage: ") + argv[0] + " <datafile>\n\nOptions");
 	desc.add_options()
 		("help", "produce help message")
-		("T", po::value<time_range_t>(), "range of times to query")
-		("sys", po::value<sys_range_t>(), "range of systems to query")
+		("time,t", po::value<time_range_t>(), "range of times to query")
+		("system,s", po::value<sys_range_t>(), "range of systems to query")
 		("datafile", po::value<std::string>(), "the datafile to query")
 	;
 	po::positional_options_description pd;
@@ -221,8 +221,8 @@ int main(int argc, char **argv)
 
 	time_range_t T;
 	sys_range_t sys;
-	if (vm.count("T")) { T = vm["T"].as<time_range_t>(); }
-	if (vm.count("sys")) { sys = vm["sys"].as<sys_range_t>(); }
+	if (vm.count("time")) { T = vm["time"].as<time_range_t>(); }
+	if (vm.count("system")) { sys = vm["system"].as<sys_range_t>(); }
 
 	std::cerr << "Printing outputs satisfying T=" << T << " sys=" << sys << "\n";
 
