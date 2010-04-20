@@ -30,15 +30,14 @@ namespace swarm {
 	template<typename T>
 	struct range
 	{
-		T begin, end;
+		T first, last;
 
-		range(const T &a) : begin(a), end(a + 1) {}
-		range(const T &a, const T &b) : begin(a), end(b) {}
-		range(const range_special &r = ALL) : begin(MIN), end(MAX) {}
+		range(const T &a) : first(a), last(a) {}
+		range(const T &a, const T &b) : first(a), last(b) {}
+		range(const range_special &r = ALL) : first(MIN), last(MAX) {}
 
-		bool in(const T& v) { return begin <= v && v < end; }
-		operator bool() const { return begin < end; }
-		ptrdiff_t width() const { return end - begin; }
+		bool in(const T& v) { return first <= v && v <= last; }
+		operator bool() const { return first <= last; }
 	};
 
 	typedef range<int> sys_range_t;

@@ -91,13 +91,12 @@ namespace swarm
 	template<typename T>
 	std::ostream &operator<<(std::ostream &out, const swarm::range<T> &r)
 	{
-		if(r.begin == T(MIN) && r.end == T(MAX)) { return out << "ALL"; }
+		if(r.first == T(MIN) && r.last == T(MAX)) { return out << "ALL"; }
+		if(r.first == r.last) { return out << r.first; }
 
-		if(r.width() == 1) { return out << r.begin; }
-
-		if(r.begin == T(MIN)) { out << "MIN"; } else { out << r.begin; }
+		if(r.first == T(MIN)) { out << "MIN"; } else { out << r.first; }
 		out << "..";
-		if(r.end == T(MAX)) { out << "MAX"; } else { out << r.end; }
+		if(r.last == T(MAX)) { out << "MAX"; } else { out << r.last; }
 
 		return out;
 	}

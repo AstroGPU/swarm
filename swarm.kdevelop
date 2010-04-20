@@ -17,9 +17,9 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarm_tutorial_gpu</mainprogram>
-      <programargs>integrator-mjuric.cfg</programargs>
-      <globaldebugarguments>integrator-mjuric.cfg</globaldebugarguments>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarmquery</mainprogram>
+      <programargs>-s 5 log.bin</programargs>
+      <globaldebugarguments>-s 0..3 -t 0.1..0.001 log.bin</globaldebugarguments>
       <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
@@ -27,7 +27,7 @@
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
       <envvars>
-        <envvar value="/opt/cuda/lib" name="LD_LIBRARY_PATH" />
+        <envvar value="/opt/cuda/lib:/opt/cudatools/2.3/lib64/" name="LD_LIBRARY_PATH" />
       </envvars>
     </run>
     <filetypes>
@@ -157,8 +157,8 @@
       <includestyle>3</includestyle>
       <root>/usr/lib64/qt-3.3</root>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
-      <qmake></qmake>
-      <designer></designer>
+      <qmake>/usr/lib64/qt-3.3/bin/qmake</qmake>
+      <designer>/usr/lib64/qt-3.3/bin/designer</designer>
       <designerpluginpaths/>
     </qt>
     <codecompletion>
