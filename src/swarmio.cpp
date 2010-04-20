@@ -488,7 +488,22 @@ namespace swarm
 }
 
 //
-// Default binary writer
+// Default null-writer (does nothing)
+//
+
+class null_writer : public swarm::writer
+{
+public:
+	virtual void process(const char *log_data, size_t length) {}
+};
+
+extern "C" swarm::writer *create_writer_null(const std::string &cfg)
+{
+	return new null_writer();
+}
+
+//
+// Binary writer
 //
 
 class binary_writer : public swarm::writer
@@ -543,6 +558,7 @@ BLESS_POD(swarm::body);
 
 void binary_writer::process(const char *log_data, size_t length)
 {
+	// TODO: migth want to filter out the printfs
 	output->write(log_data, length);
 #if 0
 	// download and dump the log

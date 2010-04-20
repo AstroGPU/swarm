@@ -18,7 +18,7 @@ extern "C" void debug_hook()
 
 namespace swarm
 {
-	std::auto_ptr<writer> log_writer;
+	std::auto_ptr<writer> log_writer(writer::create("null"));
 
 	void init_logs(const std::string &writer_cfg)
 	{
