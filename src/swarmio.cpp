@@ -139,7 +139,7 @@ namespace swarm
 	struct index_creator_base
 	{
 		virtual bool start(const std::string &datafile) = 0;
-		virtual bool add_entry(uint64_t offs, gpulog::logrecord &lr) = 0;
+		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr) = 0;
 		virtual bool finish() = 0;
 		virtual ~index_creator_base() {};
 	};
@@ -176,12 +176,13 @@ namespace swarm
 			swarm::file_header fh(filetype);
 			out.write((char*)&fh, sizeof(fh));
 		}
-		virtual bool add_entry(uint64_t offs, gpulog::logrecord &lr)
+		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr)
 		{
 			swarmdb::index_entry ie;
 			ie.offs = offs;
 			get_Tsys(lr, ie.T, ie.sys);
 			out.write((const char *)&ie, sizeof(ie));
+
 			nentries++;
 		}
 		virtual bool finish()
