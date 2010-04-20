@@ -1,4 +1,7 @@
-README FILE FOR SWARM_ADAP
+Title:  README FILE FOR SWARM_ADAP
+Author: aboley
+
+
 ==========================
 
 INSTALL
@@ -29,11 +32,12 @@ ICS and PROGRAM EXECUTION
 -------------------------
 
 * Generate ICs. Execute swarm_adap.py in the ic directory. Feel free to modify
-the generator.  Its default is to generate 2048 4-planet systems plus one
+the generator.  The default is to generate 2048 4-planet systems plus one
 perturbering body.  The pertuber is given a Maxwellian speed distribution.
 
 * cfg file.  Make sure that integrator-adap.cfg is in the run directory and that
-it has pre, h, and stepfac defined.  pre is the precision, h is the minimum 
-time step, and stepfac is the fraction of accerlation/jerk you wish to take. 
-Values between 0.03 and 0.01 offer a compromise between speed and accuracy.
+it has pre, h, and stepfac defined. 
+    * pre is the precision,
+    * h is the minimum time step, and 
+    * stepfac is a parameter for the adaptive timestep criterion.  Technically, it is the fraction of accerlation/jerk you wish to take.  Values between 0.03 and 0.01 offer a compromise between speed and accuracy.
 

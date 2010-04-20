@@ -42,20 +42,20 @@ swarm_SOURCES=src/swarm.cpp
 APPS+=swarmdump
 swarmdump_SOURCES=src/swarmdump.cpp
 
-APPS+=swarm_demo1c 
-swarm_demo1c_SOURCES=src/swarm_demo1c.cpp 
+APPS+=swarm_tutorial_cpu
+swarm_tutorial_cpu_SOURCES=src/swarm_tutorial_cpu.cpp 
 
-APPS+=swarm_demo1g 
-swarm_demo1g_SOURCES=src/swarm_demo1g.cpp 
+APPS+=swarm_tutorial_gpu 
+swarm_tutorial_gpu_SOURCES=src/swarm_tutorial_gpu.cpp 
 
-APPS+=swarm_demo1b 
-swarm_demo1b_SOURCES=src/swarm_demo1b.cpp 
+APPS+=swarm_tutorial_compare 
+swarm_tutorial_compare_SOURCES=src/swarm_tutorial_compare.cpp 
 
-APPS+=swarm_demo2 
-swarm_demo2_SOURCES=src/swarm_demo2.cpp 
+APPS+=swarm_tutorial_montecarlo
+swarm_tutorial_montecarlo_SOURCES=src/swarm_tutorial_montecarlo.cpp 
 
-APPS+=swarm_demo3
-swarm_demo3_SOURCES=src/swarm_demo3.cpp 
+APPS+=swarm_tutorial_montecarlo_rv
+swarm_tutorial_montecarlo_rv_SOURCES=src/swarm_tutorial_montecarlo_rv.cpp 
 
 APPS+=peaShooter
 peaShooter_SOURCES=src/scatter/peaShooter.cpp
