@@ -22,7 +22,7 @@ class ThreeVector
   __device__ __host__ ThreeVector(const FloatT &x, const FloatT &y, const FloatT &z=0.) : mX(x), mY(y), mZ(z) {};
   ThreeVector(const std::vector<T>& v)
     {
-      assert(v.size()==3);
+//      assert(v.size()==3);
       mX = v[0];
       mY = v[1];
       mZ = v[2];
@@ -73,6 +73,9 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateZ(const FloatT s, const FloatT c) throw() 
     {
+#if !__CUDACC__	
+      assert(approx(c*c+s*s,1.,1.e-6));
+#endif
       ThreeVectorT C(*this);
       X() = + C.X()*c - C.Y()*s;
       Y() = + C.X()*s + C.Y()*c;
@@ -81,6 +84,9 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateX(const FloatT s, const FloatT c)  throw() 
     {
+#if !__CUDACC__	
+      assert(approx(c*c+s*s,1.,1.e-6));
+#endif
       ThreeVectorT C(*this);
       Y() = + C.Y()*c - C.Z()*s;
       Z() = + C.Y()*s + C.Z()*c;
@@ -89,6 +95,9 @@ class ThreeVector
 
   __device__ __host__ ThreeVectorT& RotateY(const FloatT s, const FloatT c) throw() 
     {
+#if !__CUDACC__	
+      assert(approx(c*c+s*s,1.,1.e-6));
+#endif
       ThreeVectorT C(*this);
       Z() = + C.Z()*c - C.X()*s;
       X() = + C.Z()*s + C.X()*c;

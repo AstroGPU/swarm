@@ -3,6 +3,8 @@ Author: mjuric
 
 =========================
 
+* NOTE TO MARIO: SHOULD WE SEARCH AND REPLACE clog -> hlog and glog -> dlog? ...
+
 Despite the horrendously complicated implementation in swarmlog.h, the ideas
 behind it are quite simple:
 
@@ -14,8 +16,8 @@ behind it are quite simple:
   global objects, both on CPU and GPU (somewhat like cout in C++)
 
 * There are two types of messages you can send to these log buffers. They
-  differ in that get stored to their individual "sub-buffers", each being
-  optimized for the message of a given type:
+  differ in that they get stored to their individual "sub-buffers", each 
+  being optimized for the message of a given type:
 
   1) Bodies - using log_body(ens, sys, bod, T) you can store the current
               (m,x,v,T) coordinates of a body bod in system sys, plus an
@@ -128,7 +130,7 @@ behind it are quite simple:
   before launching a kernel from which you'll use glog, you MUST call
   clog.prepare_for_gpu(). Failure to do so will result in a rupture in
   space-time continuum and death of countless kittens. And you don't want to
-  be a kitten-killer, don't you?
+  be a kitten-killer.
 
 * Post-final notes: The implementation is rather dirty at this point, as I
   didn't have the time to make it prettier.  The design has passed through a
