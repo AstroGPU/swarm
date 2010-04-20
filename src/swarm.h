@@ -27,10 +27,12 @@
 
 namespace swarm {
 
+	typedef std::map<std::string, std::string> config;
+	void init(const config &cfg);
+
 class integrator;
 class event;
 class writer;
-class output_buffers;
 class gpu_ensemble;
 class cpu_ensemble;
 
@@ -356,8 +358,6 @@ class gpu_ensemble : public ensemble
 		__device__ void set_time_end_all_kernel(const real_time tend);
 };
 
-typedef std::map<std::string, std::string> config;
-
 /// Load ensemble residing in files "name.XXX" where XXX \elem [0,nsys)
 void load_ensemble(const std::string &name, cpu_ensemble &ens);
 /// Load configuration from file fn
@@ -398,8 +398,8 @@ inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 class writer
 {
 	public:
-		virtual void process(const output_buffers &ob) = 0;
-		virtual ~writer() {};	//!< has to be here to ensure the derived class' destructor is called (if it exists)
+		virtual void process(const char *log_data, size_t length) = 0;
+		virtual ~writer() {};	// has to be here to ensure the derived class' destructor is called (if it exists)
 
 	public:
 		/// Integrator factory functions (and supporting typedefs)
@@ -499,11 +499,6 @@ T* hostAlloc(T* var, int nelem, bool usePinned = false)
 //
 // Utilities
 //
-
-/** 
-  \brief trim whitespaces from the beginning and the end of a string
-*/
-void trim(std::string& str);
 
 // NOTE: The ifdef here is a workaround for CUDA 2.2 device emulation mode bug, where C++
 // is disabled in emulation mode. If you want to use the functions below, use them only

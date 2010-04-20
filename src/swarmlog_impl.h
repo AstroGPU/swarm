@@ -76,12 +76,19 @@
 #endif
 
 public:	
-	__DEVICE__ void log_system(const ensemble &ens, int sys, double T, int user_data = -1)
+	__DEVICE__ void log_system(const ensemble &ens, int sys, double T)
 	{
+		// write out event header
+		int snapid = log_event(EVT_SNAPSHOT_MARKER);
+
+		int bod_begin, bod_last;
 		for(int bod = 0; bod != ens.nbod(); bod++)
 		{
-			log_body(ens, sys, bod, T, user_data);
+			bod_last = log_body(ens, sys, bod, T, snapid);
+			if(bod == 0) { bod_begin = bod_last; }
 		}
+
+		log_event(EVT_SNAPSHOT, (int)sys, (int)ens.nbod(), (double)T, (int)snapid, (int)bod_begin, (int)bod_last);
 	}
 #if 0
 	template<typename T>
