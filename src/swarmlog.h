@@ -165,6 +165,18 @@ namespace swarm
 				bodies[bod].set(ens, sys, bod);
 			}
 		}
+
+		/*
+			Store a snapshot of the entire ensemble (convenience).
+		*/
+		template<typename L>
+		__device__ __host__ void ensemble(L &l, const swarm::ensemble &ens)
+		{
+			for(int sys = 0; sys != ens.nsys(); sys++)
+			{
+				system(l, ens, sys, ens.time(sys));
+			}
+		}
 	}
 }
 

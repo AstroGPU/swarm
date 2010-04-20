@@ -31,9 +31,6 @@ int main(int argc, const char **argv)
 //	gpulog::internal::dump_ttraits(body_set(ens, 1, 1, 3));
 //	return -1;
 
-	ens_writer out("output.bin");
-	out << ens;
-
 	// performance stopwatches
 	stopwatch swatch_kernel, swatch_mem, swatch_temps, swatch_all;
 
@@ -68,7 +65,6 @@ int main(int argc, const char **argv)
 	// log initialization
 	hlog.alloc(1000000);
 	gpulog::alloc_device_log("dlog", hlog.capacity());
-//	hlog.attach_sink(w.get());
 
 	// perform the integration
 	if(ongpu)
@@ -101,7 +97,6 @@ int main(int argc, const char **argv)
 	}
 	SWATCH_STOP(swatch_all);
 
-	out << ens;
 	log::shutdown();
 
 	// print out timings
