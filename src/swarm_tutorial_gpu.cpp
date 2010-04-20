@@ -14,10 +14,11 @@ int main(int argc, const char **argv)
   using namespace swarm;
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
-  cfg["integrator"] = "gpu_hermite"; // integrator name
+  cfg["integrator"] = "gpu_rk4"; // integrator name
   cfg["h"] = "0.0005";               // time step
   cfg["precision"] = "1";            // use double precision
-  
+  cfg["rmax"] = "100.";              // hermite ignores this, needed for rk4 or verlet 
+ 
   std:: cerr << "Initialize the integrator\n";
   std::auto_ptr<integrator> integ(integrator::create(cfg));
   
