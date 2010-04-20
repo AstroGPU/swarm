@@ -3,6 +3,7 @@
 #include <cassert>
 
 ////////// Utilities
+extern "C" void debug_hook();
 
 // Computes the global linear ID of the thread. Used from kernels.
 // NOTE: Supports 3D grids with 1D blocks of threads
@@ -123,14 +124,12 @@ template<typename L>
 __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
 	// simple output
-//	debug_hook();
-	if(T >= ens.time_output(sys, 0) && sys < 10)
+	if(T >= ens.time_output(sys, 0))
 	{
-		// for debugging
-		log.printf("Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, T, ens.time_output(sys, 0));
+//		debug_hook();
 
-		int evtref = dlog.log_event(EVT_SNAPSHOT, sys, T);
-		log.log_system(ens, sys, T, evtref);
+		// store the snapshot
+		log::system(log, ens, sys, T);
 
 		// set next stopping time
 		ens.time_output(sys, 0) += ens.time_output(sys, 1);
@@ -201,9 +200,6 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens[gpu_ensemble_id];
 	int sys = threadId();
-//	if(sys == 0) dlog.printf(" Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, ens.time(sys), ens.time_output(sys, 0));
-//	if(sys == 0) dlog.printf("123 Stored a system snapshot: sys=%d, T=%f (Tnext=%f).", sys, 22.2, 11.11);
-//	return;
 
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
 	{
@@ -268,26 +264,28 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		if(dT == 0.) { return; }
 	}
 
+	// flush CPU/GPU logs
+	log::flush(log::memory | log::if_full);
+
 	// execute the kernel in blocks of steps_per_kernel_run timesteps
 	int nactive0 = -1;
 	int iter = 0;
 	do
 	{
-		hlog.printf("Starting kernel run #%d", iter);
-		hlog.printf("Another unnecessary message from the CPU side");
-//		debug_hook();
+//		lprintf(hlog, "Starting kernel run #%d\n", iter);
+//		lprintf(hlog, "Another unnecessary message from the CPU side\n");
+
 		retval_gpu.memset(0);
-		hlog.prepare_for_gpu();
 		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id);
 		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
 
+		// flush CPU/GPU logs
+		log::flush(log::memory | log::if_full);
+
 		retval_t retval;
 		retval_gpu.get(&retval);
 		if(nactive0 == -1) { nactive0 = retval.nactive; }
-
-		// check if we should download and clear the output buffers
-		hlog.flush_if_needed();
 
 		// check if we should compactify or stop
 		if(retval.nactive == 0)
@@ -300,9 +298,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 			nactive0 = retval.nactive;
 		}
 	} while(true);
-	hlog.printf("Exiting integrate");
+//	lprintf(hlog, "Exiting integrate");
 
-	hlog.flush();
+	log::flush(log::memory);
 }
 
 /*!

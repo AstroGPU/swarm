@@ -7,8 +7,6 @@
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
 void print_selected_systems_for_demo(swarm::ensemble& ens);
 
-swarm::host_eventlog swarm::hlog;  // Swarm requires declaring swarm::hlog to be a global host_eventlog
-
 int main(int argc, const char **argv)
 {
   using namespace swarm;

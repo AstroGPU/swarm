@@ -840,12 +840,12 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 	unsigned int idx = 15;
 	for(unsigned int plid=5;plid<nbod;++plid)
 		{	
-		mPos[idx]=ens.x(sys,plid);
-		mVel[idx]=ens.vx(sys,plid); ++idx;
-		mPos[idx]=ens.y(sys,plid);
-		mVel[idx]=ens.vy(sys,plid); ++idx;
-		mPos[idx]=ens.z(sys,plid);
-		mVel[idx]=ens.vz(sys,plid); ++idx;
+		ens.x(sys,plid)=mPos[idx];
+		ens.vx(sys,plid)=mVel[idx]; ++idx;
+		ens.y(sys,plid)=mPos[idx];
+		ens.vy(sys,plid)=mVel[idx]; ++idx;
+		ens.z(sys,plid)=mPos[idx];
+		ens.vz(sys,plid)=mVel[idx]; ++idx;
 		}
 	}
 }
