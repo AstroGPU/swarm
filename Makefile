@@ -141,6 +141,7 @@ clean:
 
 tidy: clean
 	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/output.bin run/*.bin
+	$(TIDYUI) rmdir bin
 
 info:
 	@ echo LIBSWARM_SOURCES=$(LIBSWARM_SOURCES)
@@ -161,6 +162,7 @@ $(APPS): %: bin/%
 
 # Executables
 bin/Makefile.d: Makefile
+	mkdir -p bin
 	$(GENUI) ./scripts/generate_app_makefiles.sh $(APPS) > $@
 -include bin/Makefile.d
 
