@@ -53,6 +53,17 @@ namespace util {
 	inline std::string str(char c) { char buf[2] = {c, 0}; return buf; }
 	/// convert double to std::string
 	inline std::string str(double n, const char *fmt = "%f") { char buf[20]; sprintf(buf, fmt, n); return buf; }
+	#if 0
+	/// Convert a variable of arbitrary type to a string.
+	/// NOTE: heavy (unoptimized) function, use sparringly
+	template<typename T>
+	inline std::string str(const T& var)
+	{
+		std::ostringstream ss;
+		ss << var;
+		return ss.str();
+	}
+	#endif
 
 	/// type-name demangler
 	inline std::string type_name(const std::type_info &ti)

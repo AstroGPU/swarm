@@ -278,16 +278,6 @@ namespace swarm
 		assert(tp == sizeof(fh) + datalen);
 		out.close();
 
-	#if 0
-		swarmdb db(outfn);
-		cpu_ensemble ens;
-		swarmdb::snapshots s = db.get_snapshots(swarmdb::ALL);
-		while(s.next(ens))
-		{
-			std::cerr << ens.nsys() << "\n";
-		}
-	#endif
-
 		return true;
 	}
 
@@ -552,50 +542,8 @@ binary_writer::~binary_writer()
 	}
 }
 
-// store the accumulated events and bodies into a file, while
-// printing out any printf() events to stdout
-BLESS_POD(swarm::body);
-
 void binary_writer::process(const char *log_data, size_t length)
 {
-	// TODO: migth want to filter out the printfs
+	// TODO: filter out the printfs
 	output->write(log_data, length);
-#if 0
-	// download and dump the log
-	// write out events
-	std::string msg;
-	for(int i = 0; i != ob.nevt; i++)
-	{
-		ievent es(ob.events[i]);
-		if(es.isprintf())
-		{
-			std::string msg = es.printf();
-			std::cout << "[Event #" << es.evtref() << " from thread " << es.threadId() << "]: " << msg << "\n";
-		}
-		else
-		{
-			// Write it to file
-			const event &evt = ob.events[i];
-			*eout << evt;
-
-			//std::cout << "[Event #" << evt.evtref() << " from thread " << evt.threadId() << "] EVT=" << evt.evtid() << ", " << evt.len() << " bytes long data payload.\n";
-		}
-	}
-	if(ob.nevt_dropped)
-	{
-		std::cerr << "==== Ran out of event GPU output buffer space (" << ob.nevt_dropped << " event records dropped).\n";
-	}
-
-	// write out bodies
-	for(int bod = 0; bod != ob.nbod; bod++)
-	{
-		const body &b = ob.bodies[bod];
-		*bout << b;
-	}
-	if(ob.nbod_dropped)
-	{
-		std::cerr << "==== Ran out of body GPU output buffer space (" << ob.nbod_dropped << " body records dropped).\n";
-	}
-#endif
 }
-

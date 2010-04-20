@@ -31,6 +31,7 @@ src/ThreeVector.hpp
 src/astro
 src/astro/BinaryStream.cpp
 src/astro/MemoryMap.cpp
+src/astro/Util.cpp
 src/astro/binarystream.h
 src/astro/constants.h
 src/astro/macros.h
@@ -68,4 +69,3 @@ src/swarmlib.cpp
 src/swarmlib.cu
 src/swarmlog.cpp
 src/swarmlog.h
-src/swarmlog_impl.h

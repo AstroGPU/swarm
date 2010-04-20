@@ -499,11 +499,6 @@ T* hostAlloc(T* var, int nelem, bool usePinned = false)
 // Utilities
 //
 
-/** 
-  \brief trim whitespaces from the beginning and the end of a string
-*/
-void trim(std::string& str);
-
 // NOTE: The ifdef here is a workaround for CUDA 2.2 device emulation mode bug, where C++
 // is disabled in emulation mode. If you want to use the functions below, use them only
 // from units compiled with g++

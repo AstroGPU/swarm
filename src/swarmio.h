@@ -9,16 +9,6 @@
 #include <sstream>
 #include <limits>
 
-// Convert a variable of arbitrary type to a string.
-// NOTE: heavy (unoptimized) function, use sparingly
-template<typename T>
-std::string str(const T& var)
-{
-	std::ostringstream ss;
-	ss << var;
-	return ss.str();
-}
-
 namespace swarm {
 
 //

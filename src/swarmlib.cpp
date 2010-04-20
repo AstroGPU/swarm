@@ -14,32 +14,7 @@
 // Utilities
 //
 
-// Appears unused
-void die(const std::string &msg)
-{
-	std::cerr << msg << "\n";
-	abort();
-}
-
-
 namespace swarm {
-/*!
-   \brief  trim string
-
-   @param[in] str input string
- */
-void trim(std::string& str)
-{
-	std::string::size_type pos = str.find_last_not_of(" \t");
-	if (pos != std::string::npos)
-	{
-		str.erase(pos + 1);
-		pos = str.find_first_not_of(" \t");
-		if (pos != std::string::npos) str.erase(0, pos);
-	}
-	else str.erase(str.begin(), str.end());
-}
-
 /*!
    \brief  load a configuration file
 
@@ -56,15 +31,14 @@ void load_config(config &cfg, const std::string &fn)
 	while(std::getline(in, line))
 	{
 		iline++;
-		trim(line);
+		line = trim(line);
 		if(line.empty()) { continue; }
 		if(line[0] == '#') { continue; }
 
 		size_t eqpos = line.find('=');
-		if(eqpos == std::string::npos) ERROR("Error on line " + str(line) + ": '=' sign expected.");
+		if(eqpos == std::string::npos) ERROR("Error on line " + line + ": '=' sign expected.");
 
-		std::string key = line.substr(0, eqpos-1), val = line.substr(eqpos+1);
-		trim(key); trim(val);
+		std::string key = trim(line.substr(0, eqpos-1)), val = trim(line.substr(eqpos+1));
 
 		cfg[key] = val;
 	}
@@ -579,7 +553,7 @@ writer *writer::create(const std::string &cfg)
 	{
 		std::string wcfg;
 		getline(ss, wcfg);
-		trim(wcfg);
+		wcfg = trim(wcfg);
 		w.reset(factory(wcfg));
 	}
 	else
