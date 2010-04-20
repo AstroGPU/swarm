@@ -55,14 +55,10 @@ int main()
 
 	// set up the integrator and integrator config (TODO: load from config file)
 	config cfg;
-	load_config(cfg, "integrator-adap.cfg");
+	load_config(cfg, "integrator.cfg");
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
-	bool ongpu;
-	     if(runon == "gpu") { ongpu = true; }
-	else if(runon == "cpu") { ongpu = false; }
-	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
-	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
+        check_cfg_input(ens,cfg);
+        init(cfg);
 
         //get Observing Times
         vector<real>   ObsTimes=getObsTimes();
@@ -94,6 +90,7 @@ int main()
            real dT=ObsTimes[observation]-startTime;
         // check progress by writing to stdout
            cout<<" Working on observation "<<observation<<" of "<<nObs-1<<' ' <<"with time interval "<<dT/yrToCodeTime<<" in yr \n";
+
            integ->integrate(gpu_ens, dT);				// integrate
            cudaThreadSynchronize();
            ens.copy_from(gpu_ens);					// download to host

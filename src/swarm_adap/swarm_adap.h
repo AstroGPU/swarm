@@ -35,7 +35,23 @@
 #define secondsToCodeTime (2.*M_PI)/(365.25*24.*3600.)
 #define kmpsToCodeVel (1./(AUCGS*1e-5*secondsToCodeTime))
 
-// compute the energies of each system
+// let's check the configuration file
+void check_cfg_input(cpu_ensemble &ens, config &cfg)
+{
+	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
+        bool ongpu;
+        if     (runon == "gpu") { ongpu = true; }
+        else if(runon == "cpu") { ongpu = false; }
+        else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
+        std::string integrator_name = cfg["integrator"];
+        std::cout << " Integrator: " << integrator_name << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
+        if(integrator_name == "gpu_hermite_adap")
+        { std::cout<<" Using minimum time step h = "<<cfg["h"]<<" and stepfac = "<<cfg["stepfac"]<<'\n'; } 
+        else { std::cout<<" Using time step h = "<<cfg["h"]<<'\n'; }
+        std::cout<<" Using rmax = "<<cfg["rmax"]<<'\n';
+}
+
+// compute the energy of a given system
 double calc_system_energy(const cpu_ensemble &ens, const int sys)
 {
   double E = 0.;
