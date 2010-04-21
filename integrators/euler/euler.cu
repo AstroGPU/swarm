@@ -236,8 +236,6 @@ struct prop_euler
 	}
 };
 
-const int EVT_EJECTION = 1;
-
 struct stop_on_ejection
 {
 	// GPU state and interface (per-grid)
@@ -264,7 +262,7 @@ struct stop_on_ejection
 //			::debug_hook();
 			ts.eject = true;
 //			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
-			log::event(dlog, EVT_EJECTION, T, sys, r, make_body_set(ens, sys, bod));
+			log::event(dlog, swarm::log::EVT_EJECTION, T, sys, make_body_set(ens, sys, bod));
 		}
 
 		// called after the entire system has completed a single timestep advance.

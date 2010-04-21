@@ -10,16 +10,16 @@
     <projectname>swarm</projectname>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description/>
-    <defaultencoding/>
+    <description></description>
+    <defaultencoding></defaultencoding>
     <versioncontrol/>
   </general>
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
-      <programargs>integrator-mjuric.cfg</programargs>
-      <globaldebugarguments>integrator-mjuric.cfg</globaldebugarguments>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarmquery</mainprogram>
+      <programargs>-s 5 log.bin</programargs>
+      <globaldebugarguments>-s 0..3 -t 0.1..0.001 log.bin</globaldebugarguments>
       <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
@@ -27,7 +27,7 @@
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
       <envvars>
-        <envvar value="/opt/cuda/lib" name="LD_LIBRARY_PATH" />
+        <envvar value="/opt/cuda/lib:/opt/cudatools/2.3/lib64/" name="LD_LIBRARY_PATH" />
       </envvars>
     </run>
     <filetypes>
@@ -52,13 +52,13 @@
     <blacklist/>
     <build>
       <buildtool>make</buildtool>
-      <builddir/>
+      <builddir></builddir>
     </build>
     <other>
       <prio>0</prio>
-      <otherbin/>
-      <defaulttarget/>
-      <otheroptions/>
+      <otherbin></otherbin>
+      <defaulttarget></defaulttarget>
+      <otheroptions></otheroptions>
       <selectedenvironment>default</selectedenvironment>
       <environments>
         <default/>
@@ -69,9 +69,9 @@
       <numberofjobs>2</numberofjobs>
       <prio>0</prio>
       <dontact>false</dontact>
-      <makebin/>
-      <defaulttarget/>
-      <makeoptions/>
+      <makebin></makebin>
+      <defaulttarget></defaulttarget>
+      <makeoptions></makeoptions>
       <selectedenvironment>default</selectedenvironment>
       <environments>
         <default/>
@@ -80,11 +80,11 @@
   </kdevcustomproject>
   <kdevdebugger>
     <general>
-      <dbgshell/>
-      <gdbpath/>
-      <configGdbScript/>
-      <runShellScript/>
-      <runGdbScript/>
+      <dbgshell></dbgshell>
+      <gdbpath></gdbpath>
+      <configGdbScript></configGdbScript>
+      <runShellScript></runShellScript>
+      <runGdbScript></runGdbScript>
       <breakonloadinglibs>true</breakonloadinglibs>
       <separatetty>false</separatetty>
       <floatingtoolbar>false</floatingtoolbar>
@@ -185,7 +185,7 @@
       <includePaths>.;</includePaths>
     </codecompletion>
     <creategettersetter>
-      <prefixGet/>
+      <prefixGet></prefixGet>
       <prefixSet>set</prefixSet>
       <prefixVariable>m_,_</prefixVariable>
       <parameterName>theValue</parameterName>

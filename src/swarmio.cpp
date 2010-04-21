@@ -19,11 +19,21 @@
 #include <memory>
 #include <limits>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+swarm::range_special swarm::ALL;
+swarm::range_MIN swarm::MIN;
+swarm::range_MAX swarm::MAX;
 
 namespace swarm
 {
 	// Note: the header _MUST_ be padded to 16-byte boundary
-	struct ALIGN(16) file_header
+	struct ALIGN(16) swarm_header
 	{
 		char magic[6];		// Magic string to quickly verify this is a swarm file (== 'SWARM\0')
 		char version[2];	// File format version
@@ -33,7 +43,7 @@ namespace swarm
 
 		static const uint64_t npos = 0xFFFFFFFFFFFFFFFFLL;
 
-		file_header(const std::string &type, int flags_ = 0, uint64_t datalen_ = npos)
+		swarm_header(const std::string &type, int flags_ = 0, uint64_t datalen_ = npos)
 		{
 			strcpy(magic, "SWARM");
 			strcpy(version, "0");
@@ -52,7 +62,7 @@ namespace swarm
 			return trim(std::string(m_type, c - m_type));
 		}
 
-		bool is_compatible(const file_header &a)
+		bool is_compatible(const swarm_header &a)
 		{
 			bool ffver_ok = memcmp(magic, a.magic, 8) == 0;
 			std::string t = type();
@@ -61,7 +71,19 @@ namespace swarm
 		}
 	};
 
-	mmapped_swarm_file::mmapped_swarm_file(const std::string &filename, const std::string &type, int mode, bool validate)
+	struct ALIGN(16) swarm_index_header : public swarm_header
+	{
+		uint64_t	timestamp;	// datafile timestamp (mtime)
+		uint64_t	datafile_size;	// datafile file size
+
+		swarm_index_header(const std::string &type, uint64_t timestamp_, uint64_t datafile_size_, uint64_t datalen_ = npos)
+			: swarm_header(type, 0, datalen_), timestamp(timestamp_), datafile_size(datafile_size_)
+		{
+		}
+	};
+
+	template<typename Header>
+	mmapped_file_with_header<Header>::mmapped_file_with_header(const std::string &filename, const std::string &type, int mode, bool validate)
 		: fh(NULL), m_data(NULL)
 	{
 		if(!filename.empty())
@@ -70,13 +92,14 @@ namespace swarm
 		}
 	}
 
-	void mmapped_swarm_file::open(const std::string &filename, const std::string &type, int mode, bool validate)
+	template<typename Header>
+	void mmapped_file_with_header<Header>::open(const std::string &filename, const std::string &type, int mode, bool validate)
 	{
 		MemoryMap::open(filename.c_str(), 0, 0, mode, shared);
 
 		// read/check header
-		fh = (file_header *)map;
-		file_header ref_ver(type);
+		fh = (Header *)map;
+		swarm_header ref_ver(type);
 		if(validate && !ref_ver.is_compatible(*fh))
 		{
 			std::cerr << "Expecting: " << ref_ver.type() << "\n";
@@ -88,7 +111,7 @@ namespace swarm
 		m_data = (char *)&fh[1];
 		
 		// data size
-		m_size = length - sizeof(file_header);
+		m_size = length - sizeof(Header);
 	}
 
 	void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
@@ -109,7 +132,6 @@ namespace swarm
 	struct idx_t
 	{
 		const char *ptr;	// pointer to this packet in memory
-		uint64_t offs;		// offset to this packet in memory
 		int len;		// length of this packet (including header and data)
 
 		void gethdr(double &T, int &sys) const
@@ -125,15 +147,18 @@ namespace swarm
 			this->gethdr(Tt, syst);
 			a.gethdr(Ta, sysa);
 
-			return 	 Tt < Ta ||
-				(Tt == Ta && syst < sysa);
+			return 	 Tt < Ta || (
+					Tt == Ta && syst < sysa || (
+						syst == sysa && this->ptr < a.ptr
+					)
+				);
 		}
 	};
 
 	struct index_creator_base
 	{
 		virtual bool start(const std::string &datafile) = 0;
-		virtual bool add_entry(uint64_t offs, gpulog::logrecord &lr) = 0;
+		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr) = 0;
 		virtual bool finish() = 0;
 		virtual ~index_creator_base() {};
 	};
@@ -147,6 +172,20 @@ namespace swarm
  	{
  		bool operator()(const swarmdb::index_entry &a, const swarmdb::index_entry &b) const { return a.sys < b.sys || (a.sys == b.sys && a.T < b.T) || (a.T == b.T && a.offs < b.offs); }
  	};
+
+	bool get_file_info(uint64_t &timestamp, uint64_t &filesize, const std::string &fn)
+	{
+		struct stat sb;
+		if(stat(fn.c_str(), &sb) == -1)
+		{
+			ERROR(strerror(errno));
+		}
+
+		timestamp = (uint64_t(sb.st_mtim.tv_sec) << 32) + uint64_t(sb.st_mtim.tv_nsec);
+		filesize = sb.st_size;
+		
+		return true;
+	}
 
 	template<typename Cmp>
 	class index_creator : public index_creator_base
@@ -166,16 +205,21 @@ namespace swarm
 			out.open(filename.c_str());
 			assert(out);
 
+			// get the timestamp and file size of the data file
+			uint64_t timestamp, filesize;
+			get_file_info(timestamp, filesize, datafile);
+
 			// write header
-			swarm::file_header fh(filetype);
+			swarm::swarm_index_header fh(filetype, timestamp, filesize);
 			out.write((char*)&fh, sizeof(fh));
 		}
-		virtual bool add_entry(uint64_t offs, gpulog::logrecord &lr)
+		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr)
 		{
 			swarmdb::index_entry ie;
 			ie.offs = offs;
 			get_Tsys(lr, ie.T, ie.sys);
 			out.write((const char *)&ie, sizeof(ie));
+
 			nentries++;
 		}
 		virtual bool finish()
@@ -183,7 +227,7 @@ namespace swarm
 			out.close();
 
 			// sort by time
-			mmapped_swarm_file mm(filename, filetype, MemoryMap::rw);
+			mmapped_swarm_index_file mm(filename, filetype, MemoryMap::rw);
 			swarmdb::index_entry *begin = (swarmdb::index_entry *)mm.data(), *end = begin + mm.size()/sizeof(swarmdb::index_entry);
 			assert((end - begin) == nentries);
 
@@ -229,10 +273,6 @@ namespace swarm
 		}
 	}
 
-	swarmdb::range_special swarmdb::ALL;
-	swarmdb::range_MIN swarmdb::MIN;
-	swarmdb::range_MAX swarmdb::MAX;
-
 	/*
 		Implementation note: This implementation will probably barf
 		when log sizes reach a few GB. A better implementation, using merge
@@ -263,15 +303,13 @@ namespace swarm
 
 		// output file header
 		std::ofstream out(outfn.c_str());
-		file_header fh("T_sorted_output // Output file sorted by time", 0, datalen);
+		swarm_header fh("T_sorted_output // Output file sorted by time", 0, datalen);
 		out.write((char*)&fh, sizeof(fh));
 
 		// write out the data
-		uint64_t at = 0;
 		for(int i = 0; i != idx.size(); i++)
 		{
 			out.write(idx[i].ptr, idx[i].len);
-			idx[i].offs = at;
 		}
 		size_t tp = out.tellp();
 		assert(tp == sizeof(fh) + datalen);
@@ -369,19 +407,21 @@ namespace swarm
 	swarmdb::result::result(const swarmdb &db_, const sys_range_t &sys_, const time_range_t &T_)
 		: db(db_), sys(sys_), T(T_)
 	{
-		if(sys.width() == 1 || !T)
+		using namespace boost;
+
+		if(sys.first == sys.last || !T)
 		{
 			// find the sys index range
-			swarmdb::index_entry dummy = { 0, 0, 0 };
-			dummy.sys = sys,begin; begin = std::lower_bound(db.idx_sys.begin, db.idx_sys.end, dummy, index_entry_sys_cmp());
-			dummy.sys = sys.end;   end   = std::upper_bound(db.idx_sys.begin, db.idx_sys.end, dummy, index_entry_sys_cmp());
+			swarmdb::index_entry dummy;
+			dummy.sys = sys.first; begin = std::lower_bound(db.idx_sys.begin, db.idx_sys.end, dummy, bind( &index_entry::sys, _1 ) < bind( &index_entry::sys, _2 ));
+			dummy.sys = sys.last;  end   = std::upper_bound(db.idx_sys.begin, db.idx_sys.end, dummy, bind( &index_entry::sys, _1 ) < bind( &index_entry::sys, _2 ));
 		}
 		else if(T)
 		{
 			// find the first T in the range
-			swarmdb::index_entry dummy = { 0, 0, 0 };
-			dummy.T = T.begin; begin = std::lower_bound(db.idx_time.begin, db.idx_time.end, dummy, index_entry_time_cmp());
-			dummy.T = T.end;   end   = std::upper_bound(db.idx_time.begin, db.idx_time.end, dummy, index_entry_time_cmp());
+			swarmdb::index_entry dummy;
+			dummy.T = T.first; begin = std::lower_bound(db.idx_time.begin, db.idx_time.end, dummy, bind( &index_entry::T, _1 ) < bind( &index_entry::T, _2 ));
+			dummy.T = T.last;  end   = std::upper_bound(db.idx_time.begin, db.idx_time.end, dummy, bind( &index_entry::T, _1 ) < bind( &index_entry::T, _2 ));
 		}
 		else
 		{
@@ -403,8 +443,8 @@ namespace swarm
 
 		while(at < end)
 		{
-			if(T   && !T.in(at->T))     { at++; continue; }
-			if(sys && !sys.in(at->sys)) { at++; continue; }
+			if(!T.in(at->T))     { at++; continue; }
+			if(!sys.in(at->sys)) { at++; continue; }
 
 			return gpulog::logrecord(db.mmdata.data() + (at++)->offs);
 		}
@@ -439,42 +479,63 @@ namespace swarm
 		open_indexes();
 	}
 
-	void swarmdb::open_indexes(bool recreate)
+	void swarmdb::open_indexes(bool force_recreate)
 	{
 		std::vector<boost::shared_ptr<index_creator_base> > ic;
 		std::string fn;
 
 		// auto-create indices if needed
-		if(recreate || access((datafile + ".time.idx").c_str(), R_OK) != 0)
+		bool tidx_open = !force_recreate && open_index(idx_time, datafile, ".time.idx", "T_sorted_index");
+		if(!tidx_open)
 		{
 			boost::shared_ptr<index_creator_base> ii(new index_creator<index_entry_time_cmp>(".time.idx", "T_sorted_index"));
 			ic.push_back( ii );
 		}
-		if(recreate || access((datafile + ".sys.idx").c_str(), R_OK) != 0)
+		bool sysidx_open = !force_recreate && open_index(idx_sys,  datafile, ".sys.idx", "sys_sorted_index");
+		if(!sysidx_open)
 		{
 			boost::shared_ptr<index_creator_base> ii(new index_creator<index_entry_sys_cmp>(".sys.idx", "sys_sorted_index"));
 			ic.push_back( ii );
 		}
+
+		// create indices if needed
 		if(!ic.empty())
 		{
 			index_binary_log_file(ic, datafile);
 		}
 
 		// open index maps
-		open_index(idx_time, datafile + ".time.idx", "T_sorted_index");
-		open_index(idx_sys,  datafile + ".sys.idx", "sys_sorted_index");
+		if(!tidx_open && !open_index(idx_time, datafile, ".time.idx", "T_sorted_index"))
+		{
+ 			ERROR("Cannot open index file '" + datafile + ".time.idx'");
+ 		}
+		if(!sysidx_open && !open_index(idx_sys,  datafile, ".sys.idx", "sys_sorted_index"))
+		{
+ 			ERROR("Cannot open index file '" + datafile + ".sys.idx'");
+ 		}
 	}
 
-	void swarmdb::open_index(index_handle &h, const std::string &filename, const std::string &filetype)
+	bool swarmdb::open_index(index_handle &h, const std::string &datafile, const std::string &suffix, const std::string &filetype)
 	{
-		if(access(filename.c_str(), R_OK) != 0)
-		{
-			ERROR("Cannot open index file '" + filename + "'");
-		}
+		std::string filename = datafile + suffix;
 
+		// check for existence
+		if(access(filename.c_str(), R_OK) != 0) { return false; }
+		
+		// check for modification timestamp and size
 		h.mm.open(filename.c_str(), filetype);
+		uint64_t timestamp, filesize;
+		get_file_info(timestamp, filesize, datafile);
+		if(h.mm.hdr().datafile_size != filesize || h.mm.hdr().timestamp != timestamp)
+		{
+			// std::cerr << "Index " << filename << " not up to date. Will regenerate.\n";
+			return false;
+		}
+	
 		h.begin = (swarmdb::index_entry *)h.mm.data();
 		h.end   = h.begin + h.mm.size()/sizeof(swarmdb::index_entry);
+		
+		return true;
 	}
 }
 
@@ -527,7 +588,7 @@ binary_writer::binary_writer(const std::string &cfg)
 		ERROR("Could not open '" + rawfn + "' for writing");
 
 	// write header
-	swarm::file_header fh("unsorted_output // Unsorted output file");
+	swarm::swarm_header fh("unsorted_output // Unsorted output file");
 	output->write((char*)&fh, sizeof(fh));
 }
 

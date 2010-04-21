@@ -62,6 +62,14 @@ src/gpulog/lprintf.h
 src/stopwatch.h
 src/swarm.cpp
 src/swarm.h
+src/swarm_adap
+src/swarm_adap/swarm_adap.cpp
+src/swarm_adap/swarm_adap.h
+src/swarm_tutorial_compare.cpp
+src/swarm_tutorial_cpu.cpp
+src/swarm_tutorial_gpu.cpp
+src/swarm_tutorial_montecarlo.cpp
+src/swarm_tutorial_montecarlo_rv.cpp
 src/swarmdump.cpp
 src/swarmio.cpp
 src/swarmio.h
@@ -69,3 +77,4 @@ src/swarmlib.cpp
 src/swarmlib.cu
 src/swarmlog.cpp
 src/swarmlog.h
+src/swarmquery.cpp
