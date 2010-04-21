@@ -353,13 +353,13 @@ int main(int argc, const char **argv)
   std:: cerr << "Initialize the library\n";
   swarm::init(cfg);
 
+  std:: cerr << "Initialize the GPU integrator\n";
+  std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
+  
   std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
   unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
   unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
   cpu_ensemble ens(nsystems, nbodyspersystem);
-  
-  std:: cerr << "Initialize the GPU integrator\n";
-  std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
   
   std::cerr << "Set initial conditions on CPU.\n";
   set_initial_conditions_for_demo(ens,cfg);

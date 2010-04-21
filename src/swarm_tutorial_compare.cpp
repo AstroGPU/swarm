@@ -34,6 +34,13 @@ int main(int argc, const char **argv)
   std::cerr << "Set initial conditions.\n";
   set_initial_conditions_for_demo(ens);
   
+#if 1 // TO REMOVE ONCE WORKS AGAIN
+  // Calculate energy at beginning of integration
+  std::vector<double> energy_init(ens.nsys()), energy_final(ens.nsys());
+  //  calc_total_energy(ens, &energy_init[0]);
+  ens.calc_total_energy(&energy_init[0]);
+#endif
+
   // Print initial conditions on CPU for use w/ GPU
   std::cerr << "Print selected initial conditions for GPU.\n";
   print_selected_systems_for_demo(ens);
@@ -76,6 +83,21 @@ int main(int argc, const char **argv)
   std::cerr << "Print selected results from CPU's calculation.\n";
   print_selected_systems_for_demo(ens_check);
   
+#if 1 // TO REMOVE ONCE WORKS AGAIN
+  // Check Energy conservation
+  ens.calc_total_energy(&energy_final[0]);
+  double max_deltaE = 0;
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+      if(fabs(deltaE)>max_deltaE)
+	{ max_deltaE = fabs(deltaE); }
+      if(fabs(deltaE)>0.00001)
+	std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
+    }
+  std::cerr << "# Max dE/E= " << max_deltaE << "\n";
+#endif  
+
   // both the integrator & the ensembles are automatically deallocated on exit
   // so there's nothing special we have to do here.
   return 0;

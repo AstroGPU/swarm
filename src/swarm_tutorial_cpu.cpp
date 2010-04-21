@@ -14,12 +14,17 @@ int main(int argc, const char **argv)
   config cfg;
   cfg["integrator"] = "cpu_hermite"; // integrator name
   cfg["h"] = "0.0005";               // time step
+  cfg["stepfac"] = "0.0025";               // time step parameter for hermite_adap
   cfg["precision"] = "1";            // use double precision
   // Parameters like rmax should be optional, not required
   // If we can delete the next line, let's do that.
   // It looks to me like only euler uses this.
   //  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
   cfg["output"] = "null";            // store no output
+  cfg["output interval"] = "0.1";
+  cfg["rmax"] = "1000";  
+  cfg["Toutstep"] = "0.1";
+  cfg["runon"] = "cpu";             // whether to run on cpu or gpu (must match integrator)
 
   std:: cerr << "Initialize the library\n";
   swarm::init(cfg);
@@ -36,8 +41,9 @@ int main(int argc, const char **argv)
   
 #if 1 // TO REMOVE ONCE WORKS AGAIN
   // Calculate energy at beginning of integration
-  std::valarray<double> energy_init(ens.nsys()), energy_final(ens.nsys());
-  calc_total_energy(ens, energy_init);
+  std::vector<double> energy_init(ens.nsys()), energy_final(ens.nsys());
+  //  calc_total_energy(ens, &energy_init[0]);
+  ens.calc_total_energy(&energy_init[0]);
 #endif
 
   std::cerr << "Print selected initial conditions for CPU.\n";
@@ -47,7 +53,7 @@ int main(int argc, const char **argv)
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
   // Shouldn't this take care of it self?  If we can remove the next line, let's do it.
-  //  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
+  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
 
   std::cerr << "Integrate ensemble on CPU.\n";
   integ->integrate(ens, dT);				
