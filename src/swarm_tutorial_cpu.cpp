@@ -14,7 +14,7 @@ int main(int argc, const char **argv)
   config cfg;
   cfg["integrator"] = "cpu_hermite"; // integrator name
   cfg["h"] = "0.0005";               // time step
-  cfg["stepfac"] = "0.0025";               // time step parameter for hermite_adap
+  cfg["stepfac"] = "0.0025";         // time step parameter for hermite_adap
   cfg["precision"] = "1";            // use double precision
   // Parameters like rmax should be optional, not required
   // If we can delete the next line, let's do that.

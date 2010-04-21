@@ -1,29 +1,143 @@
-== Compiling and running the code ==
+README for Swarm-NG
+===================
+Swarm-NG Development Team
+v0.1, April 2010: Initial release + 
+Swarm-NG v0.1 (c) Swarm-NG Development Team 2010
 
-To build and run the executable:
+Introduction
+------------
 
-	make
-	./bin/swarm
+.What is Swarm-NG?
+Swarm-NG is a collection of code which to help scientists and engineers harness the power of GPUs.
+In the early releases, Swarm-NG will focus on the integration of an ensemble of N-body systems evolving under Newtonian gravity.
+There are existing libraries to perform the force calculation for large-N systems on GPUs.  
+Swarm-NG does not replicate these, but rather focuses on integrating an ensemble of many systems where N is small. 
+This is of partiular interest for astronomers who study the chaotic evolution of planetary systems.
+In the long term, we hope Swarm-NG will allow for the efficient parallel integration of user-defined systems of ordinary differential equations.  
 
-or to build and immediately run a test in ./run subdirectory:
+.What is included in {revdate} release of Swarm-NG {revnumber}?
+This initial release contains GPU-based integrators for few-body systems, along with a draft of the public interface for setting initial conditions, calling the GPU-based integration algorithms and accessing the output data.  Small example programs are provided to demonstrate functionality and how to program with Swarm-NG.  
 
-	make test
+.Quick Start Tips
+Read link:doc/build_system.html for how to build the library and example programs. + 
+Read link:doc/for_deveopers.html for an overview of how to write your own programs which build on Swarm-NG functionality.
 
+
+Buliding the Swarm-NG Libraries and Demo Programs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.What hardware & software is required to build & run Swarm-NG?
+* Hardware
+** Linux-based workstation (certain kernel versions?)
+** nVidia GPU with G80 or G92 chip (we intend to support Fermi in near future)
+* Software
+** CUDA v2.3 and/or v3.0 
+** g++ v?.? (later versions likely to work as well)
+** Boost++ v?.? (later versions likely to work as well)
+** Anything else?
+
+.How do I build Swarm-NG for Linux? [Mario]
+Run `make`.  Users can specify the paths to compiler, libaries, and include files, as well as compiler flags in the file ''Makefile.user''.  
+
+.How do I build Swarm-NG for Windows? [Young In]
+While we do not intend to support Swarm-NG for Windows, we can pass along some of the following tips.
+
+.How do I test Swarm-NG? [Mario]
+`make test`
+
+Demo Programs [authors of each demo code]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Commands to run demo codes
+First, build the tutorials and demos with `make`.  Then, you can run the following demos from the tutorial.
+
+- swarm_tutorial_cpu:  run `bin/swarm_tutorial_cpu`
+- swarm_tutorial_gpu:  run `bin/swarm_tutorial_gpu`
+- swarm_tutorial_compare:  run `bin/swarm_tutorial_compare`
+- swarm_tutorial_montecarlo:  change into the run sub-directory and run `../bin/swarm_tutorial_montecarlo integrator-tutorial_montecarlo.cfg`
+The behavior of this tutorial can be easily adjusted by changing the configuration file.  See the section below on xref:<DemoOptions>[Demo Options] for a list of required/valid parameters.
+
+[[DemoOptions]]
+.Demo Program Features/Options [authors of each demo program]
+
+- Parameters for swarm_tutorial_montecarlo include:
+** integrator: Specifies which integration algorithm will be used
+** runon: Must be "cpu" or "gpu".  In v0.1, this must match the type of integrator specified by "integrator"
+** dT: Specifies the duration of the integration
+** h: Specifies the timestep of fixed timestep algorithms (e.g., hermite, rk4)
+** Complete list
+
+- Parameters for swarm include:
+** integrator: Specifies which integration algorithm will be used
+** runon: Must be "cpu" or "gpu".  In v0.1, this must match the type of integrator specified by "integrator"
+** dT: Specifies the duration of the integration
+** h: Specifies the timestep of fixed timestep algorithms (e.g., hermite, rk4)
+** Complete list
+
+.Known Limitations and/or Bugs [Young In]
+
+- Limited to N-body systems with 3-10 bodies
+- Must be many more!
+
+Organization of Swarm-NG
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.Organization of files [Young In]
+Add text/lists here
+
+.Overview of file contents [Young In]
+Add text/lists here
+
+.Where can I find additional documentation?
+There is additional documentation for various componets of Swarm-NG in the docs subdirectory.
+As the library interface solidifies, we anticipate providing additional documention in future releases and/or at the http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website]
+
+.What should I do if I think I found a compile-time bug?
+- Please first check that you can successfully run `make test`.  If this fails, then please double check that you have the required drivers, libraries installed and paths set correctly.  You may need to create a Makefile.user to specify the path to your compilers, libraries, include files.  You may also need to specify the path to your cuda libraries via LD_LIBRARY_PATH.
+- Please identify the minimal ammount of code that produces the compiler error.
+- Contact Swarm-NG developers via the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list']
+
+.What should I do if I think I found a run-time bug?
+Unfortunately, GPUs can sometime get stuck in a problematic state, particularly during code development and when not running in console mode.  Before reporting a runtime bug, please test the code immediately after reboot your system into console mode.  
+If the problem persists, then please check the archives of the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'] at the http://groups.google.com/group/swarm-ng[Google Group for Swarm-NG] to see if the bug has already been disussed.
+If not, then please contact Swarm-NG developers via the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'].
+
+.How can I learn more about and/or contribute to the the Swarm-NG project?
+- Visit the http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website].
+- Complete the http://astro.ufl.edu/~eford/code/swarm/[Swarm-NG User Questionnaire]
+- Download, install and user Swarm-NG code (via link above)
+- Read the archives of the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'] at the http://groups.google.com/group/swarm-ng[Google Group for Swarm-NG].
+- Join the http://groups.google.com/group/swarm-ng[Google Group for Swarm-NG] to sign up for announcements via the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'].
+- Contact Swarm-NG developers via the mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'].
+
+.Licensing Information
+Swarm-NG v0.1 may be licensed under the GPL v3, avaliable link:doc/gpl-3.0.txt[here].
+
+.Acknowledging use of Swarm-NG
+When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper descibing Swarm-NG.  We will provide a citation as soon as a preprint of this paper is avaliable.
+
+.Acknowledgements
+Contributors to the Swarm-NG codebase include: Eric Ford, Ameya Gancchha, Jianwei Gao, Mario Juric and Young In Yeo.  
+We have adapted code from the GNU Science Library and John Chamber's Mercury code, which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan's Swift code.
+We greatfully acknowledge financial support from the University of Florida's Research Opportunity Seed Fund and the NASA Applied Information Systems Research Program.
+
+Older Text (to be incorporated into this or other Documentation Files)
+----------------------------------------------------------------------
 == General layout ==
 
 - swarm.cpp
-	Main program file (main() is here)
+        Main program file (main() is here)
 - swarm.h
-	Declarations of ensemble and integrator interfaces
+        Declarations of ensemble and integrator interfaces
 - swarmlib.cpp
-	Library of supporting host-only functions for the integrator, ensembles, etc.
+        Library of supporting host-only functions for the integrator, ensembles, etc.
 - swarmlib.cu
-	Library of supporting device functions for the integrators
+        Library of supporting device functions for the integrators
 
 - swarm.cu
-	Autogenerated file (don't edit it by hand!) consisting of include
-	statements including swarmlib.cu and all integ.*.cu files from the
-	current directory.
+        Autogenerated file (don't edit it by hand!) consisting of include
+        statements including swarmlib.cu and all integ.*.cu files from the
+        current directory.
 
 == Adding integrators ==
 
@@ -42,16 +156,16 @@ Your integrator must:
   function (where XXXX is the name of the integrator) that will return
   an instance of the integrator when called. Example:
 
-	// factory
-	extern "C" integrator *create_gpu_euler(const config &cfg)
-	{
-		return new gpu_euler_integrator(cfg);
-	}
+        // factory
+        extern "C" integrator *create_gpu_euler(const config &cfg)
+        {
+                return new gpu_euler_integrator(cfg);
+        }
 
 == Existing integrators: description and configuration parameters ==
 
 * Hermite
-	- h (real number)
-		Timestep of the integrator
-	- precision (integer)
-		1 == double precision, 3 == mixed precision
+        - h (real number)
+                Timestep of the integrator
+        - precision (integer)
+                1 == double precision, 3 == mixed precision
