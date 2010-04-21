@@ -15,7 +15,15 @@ int main(int argc, const char **argv)
   cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["h"] = "0.0005";               // time step
   cfg["precision"] = "1";            // use double precision
-  
+  cfg["output"] = "null";            // store no output
+  // Parameters like rmax should be optional, not required
+  // If we can delete the next line, let's do that.
+  // It looks to me like only euler uses this.
+  //  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
+
+  std:: cerr << "Initialize the library\n";
+  swarm::init(cfg);
+
   std:: cerr << "Initialize the GPU integrator\n";
   std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
   
@@ -40,7 +48,9 @@ int main(int argc, const char **argv)
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
-  
+  // Shouldn't this take care of it self?  If we can remove the next line, let's do it.
+  //  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
+
   // Perform the integration on gpu
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);

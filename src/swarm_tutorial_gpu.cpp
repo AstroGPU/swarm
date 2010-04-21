@@ -12,10 +12,13 @@ int main(int argc, const char **argv)
   using namespace swarm;
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
-  cfg["integrator"] = "gpu_rk4"; // integrator name
+  cfg["integrator"] = "gpu_hermite_adap"; // integrator name
   cfg["h"] = "0.0005";               // time step
   cfg["precision"] = "1";            // use double precision
-  cfg["rmax"] = "1000.";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
+  // Parameters like rmax should be optional, not required
+  // If we can delete the next line, let's do that.
+  // It looks to me like only euler uses this.
+  //  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
   cfg["output"] = "null";            // store no output
 
   std:: cerr << "Initialize the library\n";
@@ -31,13 +34,20 @@ int main(int argc, const char **argv)
   std::cerr << "Set initial conditions.\n";
   set_initial_conditions_for_demo(ens);
   
+#if 1 // TO REMOVE ONCE WORKS AGAIN
+  // Calculate energy at beginning of integration
+  std::valarray<double> energy_init(ens.nsys()), energy_final(ens.nsys());
+  calc_total_energy(ens, energy_init);
+#endif
+
   std::cerr << "Print selected initial conditions for GPU.\n";
   print_selected_systems_for_demo(ens);
   
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
-  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
+  // Shouldn't this take care of it self?  If we can remove the next line, let's do it.
+  //  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
   
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
@@ -54,6 +64,21 @@ int main(int argc, const char **argv)
   std::cerr << "Print selected results from GPU's calculation.\n";
   print_selected_systems_for_demo(ens);
   
+#if 1 // TO REMOVE ONCE WORKS AGAIN
+  // Check Energy conservation
+  ens.calc_total_energy(&energy_final[0]);
+  double max_deltaE = 0;
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+      if(fabs(deltaE)>max_deltaE)
+	{ max_deltaE = fabs(deltaE); }
+      if(fabs(deltaE)>0.00001)
+	std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
+    }
+  std::cerr << "# Max dE/E= " << max_deltaE << "\n";
+#endif  
+
   // both the integrator & the ensembles are automatically deallocated on exit
   // so there's nothing special we have to do here.
   return 0;
