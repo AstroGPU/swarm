@@ -54,7 +54,7 @@ int main(int argc, const char **argv)
 	}
 
 	// perform the integration
-	std::cerr << "\nIntegrating. ";
+	std::cerr << "\nIntegrating... ";
 	if(ongpu)
 	{
 		SWATCH_START(swatch_mem);

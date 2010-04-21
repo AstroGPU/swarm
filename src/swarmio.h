@@ -11,16 +11,48 @@
 
 namespace swarm {
 
-	struct file_header;
-	struct mmapped_swarm_file : public MemoryMap
+	extern struct range_special { } ALL;
+	extern struct range_MAX
+	{
+		template<typename T> operator T() const
+		{
+			return std::numeric_limits<T>::max();
+		};
+	} MAX;
+	extern struct range_MIN
+	{
+		template<typename T> operator T() const
+		{
+			return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
+		};
+	} MIN;
+
+	template<typename T>
+	struct range
+	{
+		T first, last;
+
+		range(const T &a) : first(a), last(a) {}
+		range(const T &a, const T &b) : first(a), last(b) {}
+		range(const range_special &r = ALL) : first(MIN), last(MAX) {}
+
+		bool in(const T& v) { return first <= v && v <= last; }
+		operator bool() const { return first <= last; }
+	};
+
+	typedef range<int> sys_range_t;
+	typedef range<double> time_range_t;
+
+	template<typename Header>
+	struct mmapped_file_with_header : public MemoryMap
 	{
 	protected:
-		file_header *fh;
+		Header *fh;
 		char *m_data;
 		int m_size;
 
 	public:
-		mmapped_swarm_file(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true);
+		mmapped_file_with_header(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true);
 		void open(const std::string &filename, const std::string &type, int mode = ro, bool validate = true);
 		
 		// override MemoryMap::size() to return the length of the data without the header
@@ -28,8 +60,13 @@ namespace swarm {
 
 		// accessors
 		char *data() const { return m_data; }
-		file_header &hdr() const { return *fh; }
+		Header &hdr() const { return *fh; }
 	};
+
+	struct swarm_header;
+	struct swarm_index_header;
+	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
+	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
 
 	class swarmdb
 	{
@@ -45,7 +82,7 @@ namespace swarm {
 	protected:
 		struct index_handle
 		{
-			mmapped_swarm_file mm;
+			mmapped_swarm_index_file mm;
 			const index_entry *begin, *end;
 		};
 
@@ -55,43 +92,10 @@ namespace swarm {
 		std::string datafile;
 
 		void open(const std::string &datafile);
-		void open_indexes(bool recreate = true);
-		void open_index(index_handle &h, const std::string &idxfile, const std::string &filetype);
+		void open_indexes(bool force_recreate = false);
+		bool open_index(index_handle &h, const std::string &datafile, const std::string &suffix, const std::string &filetype);
 
 	public:
-		static struct range_special { } ALL;
-		static struct range_MAX
-		{
-			template<typename T> operator T() const
-			{
-				return std::numeric_limits<T>::max();
-			};
-		} MAX;
-		static struct range_MIN
-		{
-			template<typename T> operator T() const
-			{
-				return std::numeric_limits<T>::is_integer ? std::numeric_limits<T>::min() : -std::numeric_limits<T>::max();
-			};
-		} MIN;
-
-		template<typename T>
-		struct range
-		{
-			T begin, end;
-
-			range(const T &a) : begin(a), end(a + 1) {}
-			range(const T &a, const T &b) : begin(a), end(b) {}
-			range(const range_special &r) : begin(MIN), end(MAX) {}
-
-			bool in(const T& v) { return begin <= v && v < end; }
-			operator bool() const { return begin < end; }
-			ptrdiff_t width() const { return end - begin; }
-		};
-
-		typedef range<int> sys_range_t;
-		typedef range<double> time_range_t;
-
 		struct result
 		{
 			const swarmdb &db;

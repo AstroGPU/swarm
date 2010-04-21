@@ -2,12 +2,11 @@ run/integrator.cfg
 run/data*
 tarballs
 Makefile.user
-bin/swarm
-bin/swarmdump
 integrators/*/*.o
 src/*.o
 run/output.bin
 run/*.bin
+run/*.idx
 run/observeTimes.dat
 src/astro/*.o
 src/cux/*.o
@@ -17,4 +16,4 @@ swarm.kdevses
 *~
 src/*~
 *.d
-bin/libswarm.so
+bin/*

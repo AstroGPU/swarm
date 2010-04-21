@@ -15,7 +15,7 @@ int main(int argc, const char **argv)
   cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["h"] = "0.0005";               // time step
   cfg["precision"] = "1";            // use double precision
-  cfg["rmax"] = 1000;                // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
+  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
   cfg["output"] = "null";            // store no output
 
   std:: cerr << "Initialize the library\n";
