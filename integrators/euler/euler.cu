@@ -156,6 +156,8 @@
 
 */
 
+extern "C" void debug_hook();
+
 namespace swarm {
 
 
@@ -234,8 +236,6 @@ struct prop_euler
 	}
 };
 
-const int EVT_EJECTION = 1;
-
 struct stop_on_ejection
 {
 	// GPU state and interface (per-grid)
@@ -259,15 +259,20 @@ struct stop_on_ejection
 		{
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
+//			::debug_hook();
 			ts.eject = true;
-			//dlog.printf("Ejection detected: sys=%d, bod=%d, r=%f, T=%f.", sys, bod, r, T);
-			int evtref = dlog.log_event(EVT_EJECTION, sys, bod, r, T);
-			dlog.log_body(ens, sys, bod, T, evtref);
+//			lprintf(dlog, "Ejection detected: sys=%d, bod=%d, r=%f, T=%f.\n", sys, bod, r, T);
+			log::event(dlog, swarm::log::EVT_EJECTION, T, sys, make_body_set(ens, sys, bod));
 		}
 
 		// called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
 		{
+			if(ts.eject)
+			{
+				// store the last snapshot before going inactive
+				log::system(dlog, ens, sys, T);
+			}
 			return ts.eject;
 		}
 	};

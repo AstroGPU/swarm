@@ -7,8 +7,6 @@
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
 void print_selected_systems_for_demo(swarm::ensemble& ens);
 
-swarm::host_eventlog swarm::hlog;  // Swarm requires declaring swarm::hlog to be a global host_eventlog
-
 int main(int argc, const char **argv)
 {
   using namespace swarm;
@@ -17,8 +15,12 @@ int main(int argc, const char **argv)
   cfg["integrator"] = "gpu_rk4"; // integrator name
   cfg["h"] = "0.0005";               // time step
   cfg["precision"] = "1";            // use double precision
-  cfg["rmax"] = "100.";              // hermite ignores this, needed for rk4 or verlet 
- 
+  cfg["rmax"] = "1000.";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
+  cfg["output"] = "null";            // store no output
+
+  std:: cerr << "Initialize the library\n";
+  swarm::init(cfg);
+
   std:: cerr << "Initialize the integrator\n";
   std::auto_ptr<integrator> integ(integrator::create(cfg));
   
@@ -35,6 +37,7 @@ int main(int argc, const char **argv)
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
+  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
   
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);

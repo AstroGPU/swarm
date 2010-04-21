@@ -14,32 +14,22 @@
 // Utilities
 //
 
-// Appears unused
-void die(const std::string &msg)
+/*
+	Initialize the swarm library. This function must be called before any other.
+*/
+static bool swarm_initialized = false;
+void swarm::init(const config &cfg)
 {
-	std::cerr << msg << "\n";
-	abort();
-}
+	if(swarm_initialized) { return; }
 
+	// initialize the output log (default: log.bin)
+	std::string wcfg = cfg.count("output") ? cfg.at("output") : "binary log.bin";
+	swarm::log::init(wcfg);
+
+	swarm_initialized = true;
+}
 
 namespace swarm {
-/*!
-   \brief  trim string
-
-   @param[in] str input string
- */
-void trim(std::string& str)
-{
-	std::string::size_type pos = str.find_last_not_of(" \t");
-	if (pos != std::string::npos)
-	{
-		str.erase(pos + 1);
-		pos = str.find_first_not_of(" \t");
-		if (pos != std::string::npos) str.erase(0, pos);
-	}
-	else str.erase(str.begin(), str.end());
-}
-
 /*!
    \brief  load a configuration file
 
@@ -56,15 +46,14 @@ void load_config(config &cfg, const std::string &fn)
 	while(std::getline(in, line))
 	{
 		iline++;
-		trim(line);
+		line = trim(line);
 		if(line.empty()) { continue; }
 		if(line[0] == '#') { continue; }
 
 		size_t eqpos = line.find('=');
-		if(eqpos == std::string::npos) ERROR("Error on line " + str(line) + ": '=' sign expected.");
+		if(eqpos == std::string::npos) ERROR("Error on line " + line + ": '=' sign expected.");
 
-		std::string key = line.substr(0, eqpos-1), val = line.substr(eqpos+1);
-		trim(key); trim(val);
+		std::string key = trim(line.substr(0, eqpos-1)), val = trim(line.substr(eqpos+1));
 
 		cfg[key] = val;
 	}
@@ -513,8 +502,6 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 			ens.set_body(i, j, m, x, y, z, vx, vy, vz);
 		}
 	}
-
-	std::cerr << "Loaded " << nsys << " systems of " << nbod << " bodies each.\n";
 }
 
 /*!
@@ -579,7 +566,7 @@ writer *writer::create(const std::string &cfg)
 	{
 		std::string wcfg;
 		getline(ss, wcfg);
-		trim(wcfg);
+		wcfg = trim(wcfg);
 		w.reset(factory(wcfg));
 	}
 	else
@@ -660,79 +647,10 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
 	std::cerr << "      Total threads to execute = " << nthreadsEx << "\n";
 	std::cerr << "- Grid configuration =========================\n";
 #else
-	std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
+	//std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
 #endif
 	return true;
 }
 
-/*!
-  \brief I/O and snapshotting functions
-*/
-ens_writer::ens_writer(const std::string &fn_)
-	: fn(fn_), out(fn.c_str()), bout(out)
-{
-	if(!out) ERROR("Problem opening output file '" + fn + "'");
-}
-
-ens_writer &ens_writer::operator <<(const cpu_ensemble &ens)
-{
-	bout << ens.nsys() << ens.nbod();// << ens.nactive();
-
-	for(int sysID=0; sysID != ens.nsys(); sysID++)
-	{
-		int sys = ens.index_of_system(sysID);
-
-		bout << ens.time(sys) << ens.time_end(sys);
-		bout << ens.flags(sys);
-
-		for(int bod = 0; bod != ens.nbod(); bod++)
-		{
-			bout << ens.mass(sys, bod);
-			bout << ens.x(sys, bod) << ens.y(sys, bod) << ens.z(sys, bod);
-			bout << ens.vx(sys, bod) << ens.vy(sys, bod) << ens.vz(sys, bod);
-		}
-	}
-
-	return *this;
-}
-
-ens_reader::ens_reader(const std::string &fn_)
-	: fn(fn_), in(fn.c_str()), bin(in)
-{
-	if(!in) ERROR("Problem opening input file '" + fn + "'");
-}
-
-ens_reader &ens_reader::operator >>(cpu_ensemble &ens)
-{
-	int nsys, nbod;//, nactive;
-	if(!(bin >> nsys))
-	{
-		//if(in.eof())
-			return *this;
-		//ERROR("Data file " + fn + " corrupted.");
-	}
-
-	if(!(bin >> nbod/* >> nactive*/))
-		ERROR("Data file " + fn + " corrupted.");
-
-	ens.reset(nsys, nbod);
-
-	for(int sys=0; sys != ens.nsys(); sys++)
-	{
-		bin >> ens.time(sys) >> ens.time_end(sys);
-		bin >> ens.flags(sys);
-
-		for(int bod = 0; bod != ens.nbod(); bod++)
-		{
-			bin >> ens.mass(sys, bod);
-			bin >> ens.x(sys, bod) >> ens.y(sys, bod) >> ens.z(sys, bod);
-			bin >> ens.vx(sys, bod) >> ens.vy(sys, bod) >> ens.vz(sys, bod);
-		}
-
-		if(!bin) ERROR("Data file " + fn + " corrupted.");
-	}
-
-	return *this;
-}
 
 } // end namespace swarm

@@ -17,16 +17,18 @@
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
-      <programargs>integrator-mjuric.cfg</programargs>
-      <globaldebugarguments>integrator-mjuric.cfg</globaldebugarguments>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarmquery</mainprogram>
+      <programargs>-s 5 log.bin</programargs>
+      <globaldebugarguments>-s 0..3 -t 0.1..0.001 log.bin</globaldebugarguments>
       <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
-      <envvars/>
+      <envvars>
+        <envvar value="/opt/cuda/lib:/opt/cudatools/2.3/lib64/" name="LD_LIBRARY_PATH" />
+      </envvars>
     </run>
     <filetypes>
       <filetype>*.java</filetype>
