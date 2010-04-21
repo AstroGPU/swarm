@@ -43,7 +43,7 @@ namespace gpu_hermite_adap_aux
 
 }
 
-// Be careful, do we want the lower precission sqrt?
+// Be careful, do we want the lower precision sqrt?
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
