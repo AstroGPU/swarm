@@ -75,7 +75,7 @@ double calc_system_energy(const cpu_ensemble &ens, const int sys)
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 // Read observing file
-vector<real> getObsTimes()
+vector<real> getObsTimes(string directory)
  {
      ifstream ThisFile;
      stringstream buffer;
@@ -83,7 +83,7 @@ vector<real> getObsTimes()
      vector<real> ObsTimes;
 
      buffer.str("");//clear buffer
-     buffer<<"../ic"<<"/"<<"observeTimes.dat";
+     buffer<<directory<<"/"<<"observeTimes.dat";
      ThisFile.open(buffer.str().c_str());
      assert(ThisFile.good());
 
