@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 
+#define PARANOID_CPU_CHECK 1
+
 double DrawUniform01() 
 { return static_cast<double>(rand())/static_cast<double>(RAND_MAX); }
 
@@ -348,80 +350,83 @@ int main(int argc, const char **argv)
   config cfg;
   load_config(cfg,icfgfn);
 
-	std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
-	unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
-	unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
-	cpu_ensemble ens(nsystems, nbodyspersystem);
+  std:: cerr << "Initialize the library\n";
+  swarm::init(cfg);
 
-	std:: cerr << "Initialize the GPU integrator\n";
-	std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
-
-	std::cerr << "Set initial conditions on CPU.\n";
-	set_initial_conditions_for_demo(ens,cfg);
-
-	std::vector<double> energy_init(nsystems), energy_final(nsystems);
-	ens.calc_total_energy(&energy_init[0]);
-
-	// Print initial conditions on CPU for use w/ GPU
-	std::cerr << "Print selected initial conditions for upload to GPU.\n";
-	print_selected_systems_for_demo(ens);
-
-#if 0
-	std::cerr << "Create identical ensemble on host to check w/ CPU.\n";
-	cpu_ensemble ens_check(ens);
-
-	// Print initial conditions for checking w/ CPU 
-	std::cerr << "Print selected initial conditions for CPU.\n";
-	print_selected_systems_for_demo(ens_check);	
+  std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
+  unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
+  unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
+  cpu_ensemble ens(nsystems, nbodyspersystem);
+  
+  std:: cerr << "Initialize the GPU integrator\n";
+  std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
+  
+  std::cerr << "Set initial conditions on CPU.\n";
+  set_initial_conditions_for_demo(ens,cfg);
+  
+  std::vector<double> energy_init(nsystems), energy_final(nsystems);
+  ens.calc_total_energy(&energy_init[0]);
+  
+  // Print initial conditions on CPU for use w/ GPU
+  std::cerr << "Print selected initial conditions for upload to GPU.\n";
+  print_selected_systems_for_demo(ens);
+  
+#if PARANOID_CPU_CHECK
+  std::cerr << "Create identical ensemble on host to check w/ CPU.\n";
+  cpu_ensemble ens_check(ens);
+  
+  // Print initial conditions for checking w/ CPU 
+  std::cerr << "Print selected initial conditions for CPU.\n";
+  print_selected_systems_for_demo(ens_check);	
 #endif
-
-	std::cerr << "Set integration duration for all systems.\n";
-	double dT = 10.;
-	get_config(dT,cfg,"dT");
-	dT *= 2.*M_PI;
-	ens.set_time_end_all(dT);
-
-	// Perform the integration on gpu
-	std::cerr << "Upload data to GPU.\n";
-	gpu_ensemble gpu_ens(ens);
-	std::cerr << "Integrate ensemble on GPU.\n";
-	integ_gpu->integrate(gpu_ens, dT);				
-	std::cerr << "Download data to host.\n";
-	ens.copy_from(gpu_ens);					
-	std::cerr << "GPU integration complete.\n";
-
-#if 0	
-	// Perform the integration on the cpu
-	std:: cerr << "Initialize the CPU integrator\n";
-	cfg["integrator"] = "cpu_hermite";
-	std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
-	std::cerr << "Integrate a copy of ensemble on CPU to check.\n";
-	integ_cpu->integrate(ens_check, dT);				
-	std::cerr << "CPU integration complete.\n";
+  
+  std::cerr << "Set integration duration for all systems.\n";
+  double dT = 10.;
+  get_config(dT,cfg,"dT");
+  dT *= 2.*M_PI;
+  ens.set_time_end_all(dT);
+  
+  // Perform the integration on gpu
+  std::cerr << "Upload data to GPU.\n";
+  gpu_ensemble gpu_ens(ens);
+  std::cerr << "Integrate ensemble on GPU.\n";
+  integ_gpu->integrate(gpu_ens, dT);				
+  std::cerr << "Download data to host.\n";
+  ens.copy_from(gpu_ens);					
+  std::cerr << "GPU integration complete.\n";
+  
+#if PARANOID_CPU_CHECK
+  // Perform the integration on the cpu
+  std:: cerr << "Initialize the CPU integrator\n";
+  cfg["integrator"] = "cpu_hermite";
+  std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
+  std::cerr << "Integrate a copy of ensemble on CPU to check.\n";
+  integ_cpu->integrate(ens_check, dT);				
+  std::cerr << "CPU integration complete.\n";
 #endif
-
-	// Check Energy conservation
-	ens.calc_total_energy(&energy_final[0]);
-	double max_deltaE = 0;
-	for(int sysid=0;sysid<ens.nsys();++sysid)
-	  {
-	    double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
-	    if(fabs(deltaE)>max_deltaE)
-	      { max_deltaE = fabs(deltaE); }
-	    if(fabs(deltaE)>0.00001)
-	      std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
-	  }
-	std::cerr << "# Max dE/E= " << max_deltaE << "\n";
-
-	// Print results
-	std::cerr << "Print selected results from GPU's calculation.\n";
-	print_selected_systems_for_demo(ens);
-#if 0
-	std::cerr << "Print selected results from CPU's calculation.\n";
-	print_selected_systems_for_demo(ens_check);
+  
+  // Check Energy conservation
+  ens.calc_total_energy(&energy_final[0]);
+  double max_deltaE = 0;
+  for(int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+      if(fabs(deltaE)>max_deltaE)
+	{ max_deltaE = fabs(deltaE); }
+      if(fabs(deltaE)>0.00001)
+	std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
+    }
+  std::cerr << "# Max dE/E= " << max_deltaE << "\n";
+  
+  // Print results
+  std::cerr << "Print selected results from GPU's calculation.\n";
+  print_selected_systems_for_demo(ens);
+#if PARANOID_CPU_CHECK
+  std::cerr << "Print selected results from CPU's calculation.\n";
+  print_selected_systems_for_demo(ens_check);
 #endif
-	// both the integrator & the ensembles are automatically deallocated on exit
-	// so there's nothing special we have to do here.
-	return 0;
+  // both the integrator & the ensembles are automatically deallocated on exit
+  // so there's nothing special we have to do here.
+  return 0;
 }
 

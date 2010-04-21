@@ -616,6 +616,9 @@ int main(int argc, const char **argv)
   config cfg;
   load_config(cfg,icfgfn);
 
+  std:: cerr << "Initialize the library\n";
+  swarm::init(cfg);
+
   if(!cfg.count("observation_file")) 
     {
       std::cerr << "# Must specify observation_file in configuration file.\n";
