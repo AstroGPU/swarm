@@ -8,29 +8,25 @@ import random as R
 # define basic parameters for ensemble
 # keep the primary mass the same for now
 # planets can vary in mass, size, location, and number
-# this does not consider stability whatsoever
+# this does not consider stability execpt for simple
+# Hill radius criterion
 #
 # 
 nSystems=1000
 mPrimary=1. # mass of the primary
-massMin=.001/330. # 1 earth-mass minimum
+massMin=.001/320. # 1 earth-mass minimum
 minPlanets=2 # keeps these the same
 maxPlanets=2
 basePlanetMass=0.001 # work on one Jupiter mass.  Variations around that.
-minAU=0.1 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
+minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
 pert=0.01 # perturbations for other velocities.
 HILLS=3. # make sure the planets are separated by this many Hill radii
 timeStart=0.
 timeEnd=100. # time should be given in yr.
-numObs=1000 # number of observations allowed
+numObs=1000 # number of system observations. File is unnecessary for most demos.
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
-
-def getRadius():
-	a=0.
-	a=maxAU*(2.*R.random()-1.)
-	return a+abs(a)/a+minAU
 
 def createObservingFile():
 	R.seed()
@@ -66,8 +62,8 @@ def main():
 		f.write(buffer)
 		listx=[]
 		for j in xrange(nPlanets):
-			mass=max(basePlanetMass*R.random(),massMin)
-			x=getRadius()
+                        mass=getUniformLog(massMin,massMax)
+                        x=getUniformLog(minAU,maxAU)
 			listx.append(x)
 			OK=0
 			if j==0: OK=1
