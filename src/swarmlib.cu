@@ -1,5 +1,6 @@
 #include "swarm.h"
 #include <cux/cux.h>
+#include <astro/util.h>
 #include <cassert>
 
 ////////// Utilities
@@ -22,6 +23,15 @@ inline __device__ uint32_t threadId()
 	return id;
 }
 
+inline __device__ uint32_t threadsPerBlock()
+{
+#if USE_1D_GRID
+	return blockDim.x;
+#else
+	return blockDim.x * blockDim.y * blockDim.z;
+#endif
+}
+
 #include "swarmlog.h"
 
 namespace swarm {
@@ -29,30 +39,35 @@ namespace swarm {
 /*!
   \brief compute and store the number of systems that remain active
 
-  NOTE: assumes 64 threads per block
+  NOTE: assumes not more than MAXTHREADSPERBLOCK threads per block
+  NOTE: assumes a nthreads is a power of 2
   NOTE: assumes *nrunning = 0 on input
  @param[out] nrunning number of active systems 
  @param[in] ens ensemble
 */
+static const int MAXTHREADSPERBLOCK = 256;
 __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 {
-	__shared__ int running[64];
+	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory
 	int sys = threadId();
-	const int widx = sys % 64;
+	const int widx = sys % sizeof(running);
 	running[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
 
-	// prefix sum algorithm (assumes block size = 64)
-	__syncthreads();
-	if(widx %  2 == 0) { running[widx] += running[widx+ 1]; } __syncthreads();
-	if(widx %  4 == 0) { running[widx] += running[widx+ 2]; } __syncthreads();
-	if(widx %  8 == 0) { running[widx] += running[widx+ 4]; } __syncthreads();
-	if(widx % 16 == 0) { running[widx] += running[widx+ 8]; } __syncthreads();
-	if(widx % 32 == 0) { running[widx] += running[widx+ 16]; } __syncthreads();
+	// prefix sum algorithm (assumes block size <= sizeof(running))
+
+	int tpb = threadsPerBlock();
+	for(int i = 2; i <= tpb; i *= 2)
+	{
+		 __syncthreads();
+		if(widx % i) { running[widx] += running[widx + i/2]; }
+	}
+
 	if(widx == 0)
 	{
-		running[   0] += running[widx+32];
 		atomicAdd(nrunning, running[0]);
 	}
+
+	#undef PARALLEL_SUM
 }
 
 #if 0
@@ -345,6 +360,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
  ...
  @param[in] cfg 
 */
+
+inline bool is_power_of_two(int x) { return !(x & (x-1)); }
+
 template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
@@ -352,6 +370,11 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 100;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 	gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
+	
+	// test the number of threads for validity
+	if(threadsPerBlock <= 0) { ERROR("'threads per block' must be greater than zero (currently, " + str(threadsPerBlock) + ")"); }
+	if(!is_power_of_two(threadsPerBlock)) { ERROR("'threads per block' must be a power of two (currently, " + str(threadsPerBlock) + ")"); }
+	if(threadsPerBlock > MAXTHREADSPERBLOCK) { ERROR("'threads per block' cannot be greater than " + str(MAXTHREADSPERBLOCK) + " (currently, " + str(threadsPerBlock) + ")"); }
 }
 
 } // end namespace swarm
