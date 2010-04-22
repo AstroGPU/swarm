@@ -27,6 +27,7 @@ timeEnd=100. # time should be given in yr.
 numObs=1000 # number of system observations. File is unnecessary for most demos.
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
+thisSeed = 314159 # Seed for generator
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)
@@ -35,10 +36,10 @@ def getUniformLog(b0,b1):
         return a
 
 def createObservingFile():
-	R.seed()
 	obsTimes=[]
         obsTimes.append(timeStart) 
         if RANDOM_TIMES:
+		R.seed(thisSeed)
 		for i in xrange(1,numObs):
 			obsTimes.append(R.uniform(timeStart,timeEnd))
 		obsTimes.sort()
@@ -54,7 +55,7 @@ def createObservingFile():
 	return 0
 
 def main():
-	R.seed()
+	R.seed(thisSeed)
 	for i in xrange(nSystems):
 		# print "Working on system ",i
 		nPlanets=R.randint(minPlanets,maxPlanets)
