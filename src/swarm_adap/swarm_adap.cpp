@@ -47,7 +47,7 @@ int main()
         cout.setf(ios::scientific,ios::floatfield);
 	// load the ensemble
 	cpu_ensemble ens;
-	load_ensemble("../ic/data", ens);
+	load_ensemble("../scripts/ic/data", ens);
         unsigned int nSystems=ens.nsys(); 
 	vector<double> E(nSystems,0.);
 
@@ -55,17 +55,13 @@ int main()
 
 	// set up the integrator and integrator config (TODO: load from config file)
 	config cfg;
-	load_config(cfg, "integrator-adap.cfg");
+	load_config(cfg, "integrator.cfg");
+        check_cfg_input(ens,cfg);
+        init(cfg);
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
-	bool ongpu;
-	     if(runon == "gpu") { ongpu = true; }
-	else if(runon == "cpu") { ongpu = false; }
-	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
-	std::cerr << "Integrator: " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
         //get Observing Times
-        vector<real>   ObsTimes=getObsTimes();
+        vector<real>   ObsTimes=getObsTimes("../scripts/ic/");
         unsigned int nObs=ObsTimes.size();
 
         //open and clear files
@@ -83,17 +79,28 @@ int main()
 
 
         //
+        // Set timing and disable logging -- will do it by hand below
+        //
+
+        unsigned int observation=0;
+        ens.set_time_all(ObsTimes[observation]); // initial time
+        ens.set_time_end_all(ObsTimes[nObs-1]);  // max integration time
+        ens.set_time_output_all(1, 1.01*ObsTimes[nObs-1]);
+
+        gpu_ensemble gpu_ens(ens);				// upload to GPU
+
+        //
         //Now integrate, but stop at each observation time to check progress and log data.
         //
 
-        gpu_ensemble gpu_ens(ens);				// upload to GPU
-        unsigned int observation=0;
+ 
         real startTime=ObsTimes[observation];
         while(observation++<nObs-1)
          {
            real dT=ObsTimes[observation]-startTime;
         // check progress by writing to stdout
            cout<<" Working on observation "<<observation<<" of "<<nObs-1<<' ' <<"with time interval "<<dT/yrToCodeTime<<" in yr \n";
+
            integ->integrate(gpu_ens, dT);				// integrate
            cudaThreadSynchronize();
            ens.copy_from(gpu_ens);					// download to host
