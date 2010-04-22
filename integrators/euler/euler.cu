@@ -156,8 +156,6 @@
 
 */
 
-extern "C" void debug_hook();
-
 namespace swarm {
 
 
