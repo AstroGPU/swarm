@@ -1,9 +1,14 @@
 #include "swarm.h"
 #include <cux/cux.h>
+#include <astro/util.h>
 #include <cassert>
 
 ////////// Utilities
-extern "C" void debug_hook();
+#if __DEVICE_EMULATION__
+	extern "C" void debug_hook();
+#else
+	#define debug_hook()
+#endif
 
 // Computes the global linear ID of the thread. Used from kernels.
 // NOTE: Supports 3D grids with 1D blocks of threads
@@ -18,6 +23,15 @@ inline __device__ uint32_t threadId()
 	return id;
 }
 
+inline __device__ uint32_t threadsPerBlock()
+{
+#if USE_1D_GRID
+	return blockDim.x;
+#else
+	return blockDim.x * blockDim.y * blockDim.z;
+#endif
+}
+
 #include "swarmlog.h"
 
 namespace swarm {
@@ -25,44 +39,49 @@ namespace swarm {
 /*!
   \brief compute and store the number of systems that remain active
 
-  NOTE: assumes 64 threads per block
-  NOTE: assumes *nactive = 0 on input
- @param[out] nactive number of active systems 
+  NOTE: assumes not more than MAXTHREADSPERBLOCK threads per block
+  NOTE: assumes a nthreads is a power of 2
+  NOTE: assumes *nrunning = 0 on input
+ @param[out] nrunning number of active systems 
  @param[in] ens ensemble
 */
-__device__ void count_nactive(int *nactive, ensemble &ens)
+static const int MAXTHREADSPERBLOCK = 256;
+__device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 {
-	__shared__ int active[64];
+	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory
 	int sys = threadId();
-	const int widx = sys % 64;
-	active[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE) : 0;
+	const int widx = sys % sizeof(running);
+	running[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
 
-	// prefix sum algorithm (assumes block size = 64)
-	__syncthreads();
-	if(widx %  2 == 0) { active[widx] += active[widx+ 1]; } __syncthreads();
-	if(widx %  4 == 0) { active[widx] += active[widx+ 2]; } __syncthreads();
-	if(widx %  8 == 0) { active[widx] += active[widx+ 4]; } __syncthreads();
-	if(widx % 16 == 0) { active[widx] += active[widx+ 8]; } __syncthreads();
-	if(widx % 32 == 0) { active[widx] += active[widx+ 16]; } __syncthreads();
+	// prefix sum algorithm (assumes block size <= sizeof(running))
+
+	int tpb = threadsPerBlock();
+	for(int i = 2; i <= tpb; i *= 2)
+	{
+		 __syncthreads();
+		if(widx % i) { running[widx] += running[widx + i/2]; }
+	}
+
 	if(widx == 0)
 	{
-		active[   0] += active[widx+32];
-		atomicAdd(nactive, active[0]);
+		atomicAdd(nrunning, running[0]);
 	}
-}
 
-/*!
-  \brief Standalone kernel for counting the number of active ensembles in a GPU ensemble
-
- @param[out] nactive number of active systems 
- @param[in] ens ensemble
-*/
-__global__ void get_nactive_kernel(int *nactive, ensemble ens)
-{
-	count_nactive(nactive, ens);
+	#undef PARALLEL_SUM
 }
 
 #if 0
+/*!
+  \brief Standalone kernel for counting the number of active ensembles in a GPU ensemble
+
+ @param[out] nrunning number of active systems 
+ @param[in] ens ensemble
+*/
+__global__ void get_nactive_kernel(int *nrunning, ensemble ens)
+{
+	count_running(nrunning, ens);
+}
+
 TODO: Need to dynamically compute grid size for this to work properly.
       Do not enable until this is done.
 int gpu_ensemble::get_nactive() const
@@ -76,9 +95,9 @@ int gpu_ensemble::get_nactive() const
 	get_nactive_kernel<<<60, 64>>>(nactive_gpu, *this);
 
 	// fetch the result
-	int nactive;
-	memcpyToHost(&nactive, nactive_gpu, 1);
-	return nactive;
+	int nrunning;
+	memcpyToHost(&nrunning, nactive_gpu, 1);
+	return nrunning;
 }
 #endif
 	
@@ -108,7 +127,7 @@ __constant__ ensemble gpu_integ_ens[MAX_GPU_ENSEMBLES];
 /// generic GPU integrator return value
 struct retval_t
 {
-	int nactive;
+	int nrunning;
 };
 
 /*!
@@ -149,27 +168,26 @@ __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
  @param[in,out] stop
 */
 template<typename stopper_t, typename propagator_t>
-__device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop)
+__device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop, double Tstop)
 {
 	// initialize propagator and stopper per-thread states
 	double T = ens.time(sys);
-	double Tend = ens.time_end(sys);
-	typename stopper_t::thread_state_t    stop_ts(stop, ens, sys, T, Tend);
-	typename propagator_t::thread_state_t    H_ts(H, ens, sys, T, Tend);
+	typename stopper_t::thread_state_t    stop_ts(stop, ens, sys, T, Tstop);
+	typename propagator_t::thread_state_t    H_ts(H, ens, sys, T, Tstop);
 
-	// advance the system until we reach max_steps, Tend, or stop becomes true
+	// advance the system until we reach max_steps, Tstop, or stop becomes true
 	unsigned int step = 0;
 	while(true)
 	{
 		// stopping conditions
-		if(T >= Tend) 				{ ens.flags(sys) |= ensemble::INACTIVE; break; }
+		if(T >= Tstop) 				{ if(T >= ens.time_end(sys)) { ens.flags(sys) |= ensemble::INACTIVE; } break; }
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
 		output_if_needed(dlog, ens, T, sys);
 
 		// actual work
-		T = H.advance(ens, H_ts, sys, T, Tend, stop, stop_ts, step);
+		T = H.advance(ens, H_ts, sys, T, Tstop, stop, stop_ts, step);
 
 		step++;
 	}
@@ -190,23 +208,53 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
  @param[in] gpu_ensemble_id
 */
 template<typename stopper_t, typename propagator_t>
-__global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id)
+__global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id, real_time *Tstop, double dT)
 {
+	debug_hook();
+
 	// Need to test that don't get bogus gpu_ensemble_id
  	if((gpu_ensemble_id<0)||(gpu_ensemble_id>=MAX_GPU_ENSEMBLES))
 		// Is this proper way to bail from GPU?
- 		{ retval->nactive = -1; return; }	
+ 		{ retval->nrunning = -1; return; }	
 
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens[gpu_ensemble_id];
 	int sys = threadId();
 
+#if __DEVICE_EMULATION__
+	if(sys == 2)
+	{
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+	}
+#endif
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
 	{
-		generic_integrate_system(retval, ens, sys, max_steps, H, stop);
+		if(dT != 0)
+		{
+			// if dT != 0, recompute the stop time in Tstop array as the current 
+			// time + dT, making sure not to exceed the system end time, ens.time_end().
+
+			Tstop[sys] = min(ens.time_end(sys), ens.time(sys) + dT);
+		}
+
+		generic_integrate_system(retval, ens, sys, max_steps, H, stop, Tstop[sys]);
 	}
 
-	count_nactive(&retval->nactive, ens);
+#if __DEVICE_EMULATION__
+	if(sys == 2)
+	{
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+	}
+#endif
+
+	count_running(&retval->nrunning, Tstop, ens);
+	
+#if __DEVICE_EMULATION__
+	if(sys == 0)
+	{
+		printf("nrunning=%d\n", retval->nrunning);
+	}
+#endif
 }
 
 
@@ -267,6 +315,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	// flush CPU/GPU logs
 	log::flush(log::memory | log::if_full);
 
+	// initialize stop-time temporary array
+	cuxDeviceAutoPtr<real_time> Tstop(ens.nsys());
+
 	// execute the kernel in blocks of steps_per_kernel_run timesteps
 	int nactive0 = -1;
 	int iter = 0;
@@ -276,7 +327,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 //		lprintf(hlog, "Another unnecessary message from the CPU side\n");
 
 		retval_gpu.memset(0);
-		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id);
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id, Tstop, iter == 0 ? dT : 0.);
 		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
 
@@ -285,17 +336,17 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 
 		retval_t retval;
 		retval_gpu.get(&retval);
-		if(nactive0 == -1) { nactive0 = retval.nactive; }
+		if(nactive0 == -1) { nactive0 = retval.nrunning; }
 
 		// check if we should compactify or stop
-		if(retval.nactive == 0)
+		if(retval.nrunning == 0)
 		{
 			break;
 		}
-		if(retval.nactive - nactive0 > 128)
+		if(retval.nrunning - nactive0 > 128)
 		{
 			// TODO: compactify here
-			nactive0 = retval.nactive;
+			nactive0 = retval.nrunning;
 		}
 	} while(true);
 //	lprintf(hlog, "Exiting integrate");
@@ -309,6 +360,9 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
  ...
  @param[in] cfg 
 */
+
+inline bool is_power_of_two(int x) { return !(x & (x-1)); }
+
 template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
@@ -316,6 +370,11 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 100;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 	gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
+	
+	// test the number of threads for validity
+	if(threadsPerBlock <= 0) { ERROR("'threads per block' must be greater than zero (currently, " + str(threadsPerBlock) + ")"); }
+	if(!is_power_of_two(threadsPerBlock)) { ERROR("'threads per block' must be a power of two (currently, " + str(threadsPerBlock) + ")"); }
+	if(threadsPerBlock > MAXTHREADSPERBLOCK) { ERROR("'threads per block' cannot be greater than " + str(MAXTHREADSPERBLOCK) + " (currently, " + str(threadsPerBlock) + ")"); }
 }
 
 } // end namespace swarm

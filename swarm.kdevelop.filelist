@@ -70,7 +70,6 @@ src/swarm_tutorial_cpu.cpp
 src/swarm_tutorial_gpu.cpp
 src/swarm_tutorial_montecarlo.cpp
 src/swarm_tutorial_montecarlo_rv.cpp
-src/swarmdump.cpp
 src/swarmio.cpp
 src/swarmio.h
 src/swarmlib.cpp

@@ -22,8 +22,8 @@ void swarm::init(const config &cfg)
 {
 	if(swarm_initialized) { return; }
 
-	// initialize the output log (default: log.bin)
-	std::string wcfg = cfg.count("output") ? cfg.at("output") : "binary log.bin";
+	// initialize the output log (default: null)
+	std::string wcfg = cfg.count("output") ? cfg.at("output") : "null";
 	swarm::log::init(wcfg);
 
 	swarm_initialized = true;
@@ -53,7 +53,7 @@ void load_config(config &cfg, const std::string &fn)
 		size_t eqpos = line.find('=');
 		if(eqpos == std::string::npos) ERROR("Error on line " + line + ": '=' sign expected.");
 
-		std::string key = trim(line.substr(0, eqpos-1)), val = trim(line.substr(eqpos+1));
+		std::string key = trim(line.substr(0, eqpos)), val = trim(line.substr(eqpos+1));
 
 		cfg[key] = val;
 	}
