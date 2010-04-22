@@ -53,7 +53,7 @@ void load_config(config &cfg, const std::string &fn)
 		size_t eqpos = line.find('=');
 		if(eqpos == std::string::npos) ERROR("Error on line " + line + ": '=' sign expected.");
 
-		std::string key = trim(line.substr(0, eqpos-1)), val = trim(line.substr(eqpos+1));
+		std::string key = trim(line.substr(0, eqpos)), val = trim(line.substr(eqpos+1));
 
 		cfg[key] = val;
 	}
