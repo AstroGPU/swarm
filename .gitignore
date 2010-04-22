@@ -1,5 +1,6 @@
 run/integrator.cfg
 run/data*
+scripts/ic/data*
 tarballs
 Makefile.user
 integrators/*/*.o

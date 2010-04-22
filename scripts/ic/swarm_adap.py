@@ -38,16 +38,17 @@ import scipy.special as SS
 # 
 nSystems=2048 # systems in ensemble
 mPrimary=1. # mass of the primary
+nOther=2 # primary plus perturbers. E.g., 3 = primary plus two perturbers
 massMin=.001/32. # 10 Earth-mass minimum
 massMax=.001 # 1 Jupiter-mass maximum
 minPlanets=4 # keeps these the same for now.
 maxPlanets=4
-minAU=10. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
-maxAU=128. # outer planet
+minAU=2. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
+maxAU=100. # outer planet
 pert=0.01 # perturbations for other velocities.
 HILLS=3. # make sure the planets are separated by HILLS many Hill radii
 timeStart=0.
-timeEnd=1e5 # time should be given in yr.
+timeEnd=1e3 # time should be given in yr.
 incomingR=20626.5 # AU
 maxUnperturbedImpact=1000. # AU
 numObs=1000 # number of observations allowed
@@ -134,7 +135,7 @@ def main():
 		buffer="data."+repr(i)
 		f=open(buffer,"w")
 
-		f.write(repr(nPlanets+2)+"\n")
+		f.write(repr(nPlanets+nOther)+"\n")
                 buffer=""
 		listx=[]
 		pvx=0.;pvy=0.;pvz=0.
@@ -143,8 +144,8 @@ def main():
 			x=getUniformLog(minAU,maxAU)
 			if j==0: x=maxAU
 			#if j==1: x=2.
-			#if j==2: x=4. # set these if you want to constrain planet locations
-			#if j==3: x=8.
+			#if j==2: x=8. # set these if you want to constrain planet locations
+			#if j==3: x=32.
 			listx.append(x)
 			OK=0
 			if j==0: OK=1
@@ -170,10 +171,11 @@ def main():
 		f.write(buffer0)
 		f.write(buffer)
 		
-		# now find and write collider information
-		x,y,z,vx,vy,vz=getCollision()
-		buffer=repr(mPrimary)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
-		f.write(buffer)
+		# now find and write perturber information
+		for j in xrange(nOther-1):
+			x,y,z,vx,vy,vz=getCollision()
+			buffer=repr(mPrimary)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
+			f.write(buffer)
 
 		f.close()		
 

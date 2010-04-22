@@ -60,8 +60,8 @@ swarm_tutorial_montecarlo_SOURCES=src/swarm_tutorial_montecarlo.cpp
 APPS+=swarm_tutorial_montecarlo_rv
 swarm_tutorial_montecarlo_rv_SOURCES=src/swarm_tutorial_montecarlo_rv.cpp 
 
-APPS+=peaShooter
-peaShooter_SOURCES=src/scatter/peaShooter.cpp
+APPS+=swarm_adap
+swarm_adap_SOURCES=src/swarm_adap/swarm_adap.cpp
 
 ##########################################################
 #
@@ -136,6 +136,9 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 
 test-dataset:
 	(cd run && (test -f data.0 || ../scripts/easyGen.py))
+
+clean-test-dataset:
+	rm -rf run/data.*
 
 test: all test-dataset
 	@ echo

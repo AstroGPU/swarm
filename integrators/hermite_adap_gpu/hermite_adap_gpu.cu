@@ -43,24 +43,29 @@ namespace gpu_hermite_adap_aux
 
 }
 
-// Be careful, do we want the lower precission sqrt?
+// Be careful, do we want the lower precision sqrt?
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-// Adaptive time step algorithm.  It only considers the accelerations and jerks for now, so be careful
-// with your choice of stepfac.
+// Adaptive time step algorithm. 
 
 template<unsigned int nBodies, typename real_hi, typename real_lo>
-inline __device__ real_hi getAdaptiveTimeStep(real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
+inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
  {
-         real_hi dt=LARGE_NUMBER;
-         real_hi magAcc, magJerk;
+         real_hi dt;
+         real_hi JoAR=0.,VoPR=0.;
          for(unsigned int i=0;i<nBodies;++i) 
           {
-                   magAcc =SQRT(pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
-                   magJerk=SQRT(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) ;
-                   dt=min(dt,magAcc/(magJerk+magAcc*SMALL_NUMBER)*stepfac+h);
+                JoAR+=(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) /
+                      (pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
+                for (unsigned int j=0;j<nBodies;++j)
+                {
+                        if(i==j)continue;
+                        VoPR+=(pow(mVel[i*3]-mVel[j*3],2)+pow(mVel[i*3+1]-mVel[j*3+1],2)+pow(mVel[i*3+2]-mVel[j*3+2],2) ) /
+                              (pow(mPos[i*3]-mPos[j*3],2)+pow(mPos[i*3+1]-mPos[j*3+1],2)+pow(mPos[i*3+2]-mPos[j*3+2],2) ) ;
+                }
           }
+         dt=(RSQRT(JoAR+VoPR)*stepfac+h);
          return dt;
  }
 
@@ -721,7 +726,10 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
-                dt=getAdaptiveTimeStep<nbod>(&mAcc[0], &mJerk[0],  h, stepfac);
+                typename pos_type<pre>::type hh=h;
+                typename pos_type<pre>::type sstepfac=stepfac;
+
+                dt=getAdaptiveTimeStep<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], hh, sstepfac);
                 if(dt+T>Tend)dt=Tend-T;
  
         	typename acc_type<pre>::type dtby2=dt/2.;
@@ -729,9 +737,9 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
         	typename acc_type<pre>::type dtby6=dt/6.;
  	        typename acc_type<pre>::type dt7by30=dt*7./30.;
 	        typename acc_type<pre>::type dtby7=dt/7.;
-                typename pos_type<pre>::type dtdt=dt;
+                typename pos_type<pre>::type ddt=dt;
 
-		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, dtdt);
+		predict<nData>(mPos,mVel,mAcc,mJerk, dtby2, dtby3, ddt);
 
 		//mixed precision
 		if(pre==3)
@@ -835,14 +843,14 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 	{
 	unsigned int idx = 15;
 	for(unsigned int plid=5;plid<nbod;++plid)
-		{	
-		mPos[idx]=ens.x(sys,plid);
-		mVel[idx]=ens.vx(sys,plid); ++idx;
-		mPos[idx]=ens.y(sys,plid);
-		mVel[idx]=ens.vy(sys,plid); ++idx;
-		mPos[idx]=ens.z(sys,plid);
-		mVel[idx]=ens.vz(sys,plid); ++idx;
-		}
+                {
+                ens.x(sys,plid)=mPos[idx];
+                ens.vx(sys,plid)=mVel[idx]; ++idx;
+                ens.y(sys,plid)=mPos[idx];
+                ens.vy(sys,plid)=mVel[idx]; ++idx;
+                ens.z(sys,plid)=mPos[idx];
+                ens.vz(sys,plid)=mVel[idx]; ++idx;
+                }
 	}
 }
 

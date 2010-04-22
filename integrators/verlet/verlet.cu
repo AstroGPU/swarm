@@ -15,7 +15,7 @@
 	compactify() the ensemble when needed to efficiently utilize GPU resources
 	(NOTE: compactification not yet implemented).
 
-	For a cannonical example of how to build an integrator using
+	For a canonical example of how to build an integrator using
 	gpu_generic_integrator, look at the gpu_euler integrator.
 
 	Integration loop outline (I == gpu_generic_integrator object, H == propagator
@@ -46,7 +46,7 @@
 	// propagator class: advance the system by one time step
 	//
 	// CPU state and interface. Will be instantiated on construction
-	// of gpu_generic_integrator object. Keep any data that needs
+	// of gpu_generic_integrator object. Keep any data that need
 	// to reside on the CPU here.
 	struct propagator
 	{
@@ -97,7 +97,7 @@
 	// stopper class: mark a system inactive if conditions are met
 	//
 	// CPU state and interface. Will be instantiated on construction
-	// of gpu_generic_integrator object. Keep any data that needs
+	// of gpu_generic_integrator object. Keep any data that need
 	// to reside on the CPU here.
 	struct stopper
 	{
@@ -162,7 +162,7 @@ namespace swarm {
  *  \brief propagator class for verlet integrator on GPU: Advance the system by one time step.
  *
  *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
- *  Keep any data that needs to reside on the CPU here.
+ *  Keep any data that need to reside on the CPU here.
  */
 struct prop_verlet
 {
