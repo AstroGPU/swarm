@@ -15,9 +15,9 @@ import random as R
 nSystems=1000
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
+massMax=0.01 # 10 Jupiter mass max
 minPlanets=2 # keeps these the same
 maxPlanets=2
-basePlanetMass=0.001 # work on one Jupiter mass.  Variations around that.
 minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
 pert=0.01 # perturbations for other velocities.
@@ -27,12 +27,19 @@ timeEnd=100. # time should be given in yr.
 numObs=1000 # number of system observations. File is unnecessary for most demos.
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
+thisSeed = 314159 # Seed for generator
+
+def getUniformLog(b0,b1):
+        a0=M.log10(b0)
+        a1=M.log10(b1)
+        a=10.**(R.uniform(a0,a1))
+        return a
 
 def createObservingFile():
-	R.seed()
 	obsTimes=[]
         obsTimes.append(timeStart) 
         if RANDOM_TIMES:
+		R.seed(thisSeed)
 		for i in xrange(1,numObs):
 			obsTimes.append(R.uniform(timeStart,timeEnd))
 		obsTimes.sort()
@@ -48,7 +55,7 @@ def createObservingFile():
 	return 0
 
 def main():
-	R.seed()
+	R.seed(thisSeed)
 	for i in xrange(nSystems):
 		# print "Working on system ",i
 		nPlanets=R.randint(minPlanets,maxPlanets)
@@ -73,7 +80,7 @@ def main():
 					minSep=(x**2)**.5*HILLS*(mass/mPrimary/3.)**(1./3.)
 					if(abs(abs(x)-abs(listx[k]))<minSep):
 						OK=0
-						x=getRadius()
+                                                x=getUniformLog(minAU,maxAU)
 						listx[j]=x
 					
 
