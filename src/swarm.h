@@ -119,60 +119,102 @@ class ensemble
 
 	public:
 		// non-const versions
+
+		/// return system time
 		__host__ __device__ real_time&   time(int sys) { return m_T[sys]; }
+		/// return system destination time
 		__host__ __device__ real_time&   time_end(int sys) { return m_Tend[sys]; }
+		/// return system ... time 
 		__host__ __device__ real_time&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
 	
+		/// return the current position x of the body  
 		__host__ __device__ real_pos&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
+		/// return the current position y of the body  
 		__host__ __device__ real_pos&  y(int sys, int bod) { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		/// return the current position z of the body  
 		__host__ __device__ real_pos&  z(int sys, int bod) { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
+		/// return the current velocity x of the body  
 		__host__ __device__ real_vel& vx(int sys, int bod) { return m_vxyz[bod*m_nsys + sys]; }
+		/// return the current velocity y of the body  
 		__host__ __device__ real_vel& vy(int sys, int bod) { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		/// return the current velocity z of the body  
 		__host__ __device__ real_vel& vz(int sys, int bod) { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
+		/// return the mass of the body  
 		__host__ __device__ float& mass(int sys, int bod)   { return m_m[bod*m_nsys + sys]; }
 
+		/// return the flags of the system  
 		__host__ __device__ int& flags(int sys)	{ return m_flags[sys]; }
 
 //		__host__ __device__ int& nactive() { return *m_nactive; }
+
+		/// return the number of systems in the ensemble
 		__host__ __device__ int& nsys() { return m_nsys; }
+		/// return the number of bodies in a system 
 		__host__ __device__ int& nbod() { return m_nbod; }
 
+		/// return the index of the system 
 		__host__ __device__ int& index_of_system(int sysId) { return m_systemIndices[sysId]; }
+		/// return the step of the system 
 		__host__ __device__ uint&   nstep(int sys) { return m_nstep[sys]; }
 
+
+
 		// const versions
+		
+		/// return system time
 		__host__ __device__ real_time time(int sys) const { return m_T[sys]; }
+		/// return system destination time
 		__host__ __device__ real_time time_end(int sys) const { return m_Tend[sys]; }
+		/// return system ... time 
 		__host__ __device__ real_time time_output(int sys, int k) const { return m_Toutput[k*m_nsys + sys]; }
 	
+		/// return the current position x of the body  
 		__host__ __device__ real_pos  x(int sys, int bod) const { return m_xyz[bod*m_nsys + sys]; }
+		/// return the current position y of the body  
 		__host__ __device__ real_pos  y(int sys, int bod) const { return m_xyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		/// return the current position z of the body  
 		__host__ __device__ real_pos  z(int sys, int bod) const { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
+		/// return the current velocity x of the body  
 		__host__ __device__ real_vel vx(int sys, int bod) const { return m_vxyz[bod*m_nsys + sys]; }
+		/// return the current velocity y of the body  
 		__host__ __device__ real_vel vy(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys + bod*m_nsys + sys]; }
+		/// return the current velocity z of the body  
 		__host__ __device__ real_vel vz(int sys, int bod) const { return m_vxyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
+		/// return the mass of the body  
 		__host__ __device__ float mass(int sys, int bod) const { return m_m[bod*m_nsys + sys]; }
 
+		/// return the flags of the system  
 		__host__ __device__ int flags(int sys)		const { return m_flags[sys]; }
 
 //		__host__ __device__ int nactive() const { return *m_nactive; }
+		
+		/// return the number of systems in the ensemble
 		__host__ __device__ int nsys() const { return m_nsys; }
+		/// return the number of bodies in a system 
 		__host__ __device__ int nbod() const { return m_nbod; }
 
+		/// return the index of the system 
 		__host__ __device__ int index_of_system(int sysId) const { return m_systemIndices[sysId]; }
+		/// return the step of the system 
 		__host__ __device__ uint nstep(int sys) const { return m_nstep[sys]; }
 
 
 		// convenience
+
+		/// check if the system is active 
 		__host__ __device__ int is_active(int sys)		const { return !(m_flags[sys] & ensemble::INACTIVE); }
+		/// check if the system is inactive 
 		__host__ __device__ int is_inactive(int sys)		const { return m_flags[sys] & ensemble::INACTIVE; }
+		/// set the system as active 
 		__host__ __device__ void set_active(int sys)	{ m_flags[sys] = m_flags[sys] & ~ensemble::INACTIVE; }
+		/// set the system as inactive 
 		__host__ __device__ void set_inactive(int sys)	{ m_flags[sys] = m_flags[sys] |  ensemble::INACTIVE; }
 
+		/// set the body with the mass, position, and velocity 
 		__host__ __device__ void set_body(int sys, int bod,  float m, real_pos x, real_pos y, real_pos z, real_vel vx, real_vel vy, real_vel vz)
 		{
 			int idx = bod*m_nsys + sys;
@@ -182,6 +224,7 @@ class ensemble
 			m_vxyz[idx]  = vx;  m_vxyz[m_nbod*m_nsys + idx] = vy;   m_vxyz[m_nbod*m_nsys*2 + idx] = vz;
 		}
 
+		/// return the mass, position, and velocity of the body 
 		__host__ __device__ void get_body(int sys, int bod, float &m, real_pos &x, real_pos &y, real_pos &z, real_vel &vx, real_vel &vy, real_vel &vz) const
 		{
 			int idx = bod*m_nsys + sys;
@@ -192,6 +235,8 @@ class ensemble
 		}
 
 		// utilities
+
+		/// return barycenter of the system
                 __host__ __device__ void get_barycenter(const int sys, real_pos& x, real_pos& y, real_pos& z, real_vel& vx, real_vel& vy, real_vel& vz, const int max_body_id) const 
                 {
 		  
@@ -216,33 +261,40 @@ class ensemble
                   vz /= mass_sum;
                 };
 
+		/// return barycenter of the system
                 __host__ __device__ void get_barycenter(const int sys, real_pos& x, real_pos& y, real_pos& z, real_vel& vx, real_vel& vy, real_vel& vz) const 
 		{
 		  get_barycenter(sys, x, y, z, vx, vy, vz, nbod()-1);
 		}
 
 		// Should these pay attention to active flag?
+
+		/// set all systems time 
 		__host__ __device__ void   set_time_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time(sys) = tend;
 		}
+		/// set all systems destination time 
 		__host__ __device__ void   set_time_end_all(const real_time tend) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) = tend;
 		}
+		/// advance all systems time 
 		__host__ __device__ void   advance_time_end_all(const real_time dur) 
 		{
 		  for(int sys=0;sys<nsys();++sys)
 		    time_end(sys) += dur;
 		}
+		/// ... 
 		__host__ __device__ void   set_time_output_all(int k, const real_time tout) 
 		{ 
 		  for(int sys=0;sys<nsys();++sys)
 		    time_output(sys,k) = tout;
 		}
 
+		/// return the total energy of the system  
 		__host__ __device__ double calc_total_energy(int sys) const
 		{
 			double E = 0.;
@@ -264,6 +316,7 @@ class ensemble
 			return E;
 		}
 
+		/// calculate the total energy of all systems in the ensemble
 		__host__ void calc_total_energy(double *E) const
 		{
 			for (int sys = 0; sys != nsys(); sys++)
@@ -365,8 +418,11 @@ void load_config(config &cfg, const std::string &fn);
 
 #ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
 
-// get a configuration value for 'key', throwing an error if it doesn't exist
-// NOTE: heavy (unoptimized) function, use sparingly
+/*!
+  \brief get a configuration value for 'key', throwing an error if it doesn't exist
+
+  NOTE: heavy (unoptimized) function, use sparingly
+*/
 template<typename T>
 void get_config(T &val, const config &cfg, const std::string &key)
 {
@@ -376,12 +432,24 @@ void get_config(T &val, const config &cfg, const std::string &key)
 }
 #endif
 
+/*!
+  \brief copy memory from host(CPU) to device(GPU)
+
+  @param[out] dest destination to device momory 
+  @param[in] src source from host memory
+*/
 template<typename T>
 inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
 {
 	cuxErrCheck( cudaMemcpy(dest, src, nelem*sizeof(T), cudaMemcpyHostToDevice) );
 }
 
+/*!
+  \brief copy memory from device(GPU) to host(CPI)
+
+  @param[out] dest destination to host momory 
+  @param[in] src source from device memory
+*/
 template<typename T>
 inline void memcpyToHost(T *dest, const T *src, int nelem = 1)
 {
