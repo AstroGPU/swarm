@@ -29,22 +29,25 @@ REQUIRED PARAMETERS
 ''precision''::
    Must specify the precision for the integrations.  0 results in single precision and 1 double.  Some integrators support additional values, which allows for mixed-precision calculations.  For example, gpu_hermite and gpu_hermite_adap allow a value of 2, which calculates positions and velocities in double precision, but accelerations and jerks are calculated in single precision.
 
-''h''::
-   For fixed time step algorithms, ''h'' specifies the time step for the duration of the simulation.  For gpu_hermite_adap, h is the *minimum* time step.
+''time step''::
+  For the fixed time step algorithms, ''time step'' is the constant time step.
 
-''stepfac''::
-   For adaptive algorithms, ''stepfac'' is the fraction of timescale used in determining the time step.  
+''min time step''::
+   For adaptive time step algorithms, ''min time step'' is the minimum time step allowed.
+
+''time step factor''::
+   For adaptive algorithms, ''time step factor'' is the fraction of the timescale used in determining the time step.  
 
 OPTIONAL PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 
-''obsFileName''::
+''obs filename''::
    File name that contains the list of times for which output will be generated.  Specifying this option will supersede the command line option ''-obs <observation file>''.
 
-''icsFilePrefix''::
+''ics file prefix''::
    File prefix, including the directory, for the ICs.  For example, ''../scripts/ic/data'' will look for files called ''../scripts/ic/data.*'' for * in the range [0,n). Specifying this option will supersede the command line option ''-ics <IC filename prefix>''.
 
-''outFilePrefix''::
+''out file prefix''::
    File prefix, including the directory, for the output files.  Specifying this option will supersede the command line option ''-ics <output filename prefix>''.
 
 ''rmax''::
@@ -75,8 +78,8 @@ integrator = gpu_hermite_adap
 runon = gpu
 
 # integrator-specific parameters
-h = 1e-6
-stepfac = 0.03
+min time step = 1e-6
+time step factor = 0.03
 precision = 1
 
 # GPU kernel configuration

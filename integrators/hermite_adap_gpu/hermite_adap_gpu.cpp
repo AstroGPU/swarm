@@ -18,11 +18,11 @@ namespace hermite_adap_gpu {
 template<typename real_hi, typename real_lo>
 gpu_hermite_adap_integrator<real_hi,real_lo>::gpu_hermite_adap_integrator(const config &cfg)
 {
-	if(!cfg.count("h")) ERROR("Integrator gpu_hermite_adap needs a timestep ('h' keyword in the config file).");
-	h = atof(cfg.at("h").c_str());
+	if(!cfg.count("min time step")) ERROR("Integrator gpu_hermite_adap needs a timestep ('min time step' keyword in the config file).");
+	h = atof(cfg.at("min time step").c_str());
 
-	if(!cfg.count("stepfac")) ERROR("Integrator gpu_hermite_adap needs a timestep ('stepfac' keyword in the config file).");
-	stepfac = atof(cfg.at("stepfac").c_str());
+	if(!cfg.count("time step factor")) ERROR("Integrator gpu_hermite_adap needs a time step factor ('time step factor' keyword in the config file).");
+	stepfac = atof(cfg.at("time step factor").c_str());
 
 	if(!cfg.count("precision")) ERROR("Integrator gpu_hermite_adap needs precision ('precision' keyword in the config file).");
 	prec = atoi(cfg.at("precision").c_str());

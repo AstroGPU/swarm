@@ -100,9 +100,9 @@ bool readCommandLine(int argc,char *argv[], string& cfgFileName, string& obsFile
 // let's check the configuration file
 void check_cfg_input(config &cfg, string& obsFileName, string& icsFilePrefix, string& outFilePrefix)
 {
-	obsFileName = cfg.count("obsFileName") ? cfg["obsFileName"] : obsFileName;
-	icsFilePrefix = cfg.count("icsFilePrefix") ? cfg["icsFilePrefix"] : icsFilePrefix;
-	outFilePrefix = cfg.count("outFilePrefix") ? cfg["outFilePrefix"] : outFilePrefix; 
+	obsFileName = cfg.count("obs file name") ? cfg["obs file name"] : obsFileName;
+	icsFilePrefix = cfg.count("ics file prefix") ? cfg["ics file prefix"] : icsFilePrefix;
+	outFilePrefix = cfg.count("out file prefix") ? cfg["out file prefix"] : outFilePrefix; 
 	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
         bool ongpu;
         if     (runon == "gpu") { ongpu = true; }
@@ -111,7 +111,7 @@ void check_cfg_input(config &cfg, string& obsFileName, string& icsFilePrefix, st
         std::string integrator_name = cfg["integrator"];
         std::cout << " Integrator: " << integrator_name << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
         if(integrator_name == "gpu_hermite_adap")
-        { std::cout<<" Using minimum time step h = "<<cfg["h"]<<" and stepfac = "<<cfg["stepfac"]<<'\n'; } 
+        { std::cout<<" Using minimum time step = "<<cfg["min time step"]<<" and step factor = "<<cfg["time step factor"]<<'\n'; } 
         else { std::cout<<" Using time step h = "<<cfg["h"]<<'\n'; }
         std::cout<<" Using rmax = "<<cfg["rmax"]<<'\n';
 	std::cout<<" Using obsFileName = "<<obsFileName<<"\n";
