@@ -134,29 +134,18 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 # Utilities
 #
 
-test-dataset:
-	(cd run && (test -f data.0 || ../scripts/easyGen.py))
+clean-test:
+	$(CLEANUI) rm -rf test-outputs
 
-clean-test-dataset:
-	rm -rf run/data.*
+test: all
+	@ ./scripts/run_tests.sh test
 
-test: all test-dataset
-	@ echo
-	@ echo === Integrating =========================================================================================
-	@ echo
-	(cd run && ../bin/swarm $(INTEGRATORCFG))
-	@ echo
-	@ echo === Energy conservation test ============================================================================
-	@ echo
-	./bin/swarm_test_energy run/log.bin
-	@ echo
-	@ echo === Simple output datafile query ========================================================================
-	@ echo
-	./bin/swarmquery -s 42 -t 0.1..0.2002 run/log.bin
-	@ echo
-	@ echo =========================================================================================================
+test-create: all
+	@ ./scripts/run_tests.sh create
 
-clean:
+.PHONY: test test-ref
+
+clean: clean-test
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
 
 tidy: clean
