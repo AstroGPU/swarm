@@ -60,8 +60,8 @@ swarm_tutorial_montecarlo_SOURCES=src/swarm_tutorial_montecarlo.cpp
 APPS+=swarm_tutorial_montecarlo_rv
 swarm_tutorial_montecarlo_rv_SOURCES=src/swarm_tutorial_montecarlo_rv.cpp 
 
-APPS+=swarm_adap
-swarm_adap_SOURCES=src/swarm_adap/swarm_adap.cpp
+APPS+=swarm_scatter_demo
+swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 
 ##########################################################
 #
