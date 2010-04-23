@@ -14,10 +14,13 @@
 // Utilities
 //
 
-/*
-	Initialize the swarm library. This function must be called before any other.
-*/
 static bool swarm_initialized = false;
+/*!
+   \brief Initialize the swarm library.
+
+   This function must be called before any other.
+   @param[in] cfg configuration class
+*/
 void swarm::init(const config &cfg)
 {
 	if(swarm_initialized) { return; }
@@ -205,6 +208,13 @@ void cpu_ensemble::copy_from(const cpu_ensemble &src)
 	m_last_integrator = src.m_last_integrator;
 }
 
+/*!
+   \brief data packing for CPU ensemble
+
+   ...
+  @param[in] src cpu_ensemble  
+  @return ...
+*/
   int cpu_ensemble::pack()
   {
     int openid=0;
@@ -240,6 +250,13 @@ void cpu_ensemble::copy_from(const cpu_ensemble &src)
   };
   
 
+/*!
+   \brief Merge in systems from another cpu_ensemble
+
+   ...
+  @param[in,out] src cpu_ensemble  ... 
+  @param[in] offset ... 
+*/
 void cpu_ensemble::replace_inactive_from(cpu_ensemble &src, const int offset)	// Merge in systems from another cpu_ensemble
 {
 	int src_sys = 0, dest_sys = 0;
@@ -277,7 +294,7 @@ void cpu_ensemble::replace_inactive_from(cpu_ensemble &src, const int offset)	//
 
 // GPU Ensembles ////////////////////////////////
 /*!
-   \brief GPU Ensemble class 
+   \brief GPU Ensemble class constructor
 */
 gpu_ensemble::gpu_ensemble()
 {
@@ -286,7 +303,7 @@ gpu_ensemble::gpu_ensemble()
 }
 
 /*!
-   \brief GPU Ensemble class 
+   \brief GPU Ensemble class constructor
 
   @param[in] sys number of systems
   @param[in] nbod number of bodies 
@@ -299,7 +316,7 @@ gpu_ensemble::gpu_ensemble(int nsys, int nbod)
 }
 
 /*!
-   \brief GPU Ensemble class 
+   \brief GPU Ensemble class constructor
 
   @param[in] source cpu_ensemble  
 */
@@ -310,6 +327,11 @@ gpu_ensemble::gpu_ensemble(const cpu_ensemble &source)
 	nactive_gpu = NULL;
 }
 
+/*!
+   \brief GPU Ensemble class destructor 
+
+   Deallocate GPU memory.
+*/
 gpu_ensemble::~gpu_ensemble()
 {
 	free();
@@ -425,7 +447,7 @@ void gpu_ensemble::copy_from(const cpu_ensemble &src)
 //
 
 /*!
-   /brief Calculate totoal energy
+   \brief Calculate totoal energy
 
    compute the total energy of each system in the ensemble and return it as valarray
   @param[in] ens cpu_ensemble
@@ -438,7 +460,7 @@ void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E)
 }
 
 /*!
-   /brief Ensemble loading support
+   \brief Ensemble loading support
 
   @param[in] name string name
   @param[out] ens cpu_ensemble
@@ -505,7 +527,7 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 }
 
 /*!
-   /brief Integrator instantiation support
+   \brief Integrator instantiation support
 
   @param[in] cfg configuration class
 */
@@ -540,9 +562,11 @@ integrator *integrator::create(const config &cfg)
 
 
 /*!
-   /brief Writer integrator instantiation support
+   \brief Writer integrator instantiation support
 
+   ...
   @param[in] cfg configuration class
+  @return writer  
 */
 writer *writer::create(const std::string &cfg)
 {
@@ -578,7 +602,7 @@ writer *writer::create(const std::string &cfg)
 }
 
 /*!
-   /brief Find best factorization 
+   \brief Find best factorization 
 
    Find the dimensions (bx,by) of a 2D grid of blocks that has as close to nblocks blocks as possible
   @param[out] bx
@@ -606,7 +630,7 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 }
 
 /*!
-   /brief Configur grid
+   \brief Configur grid
 
    Given a total number of threads, their memory requirements, and the
    number of threadsPerBlock, compute the optimal allowable grid dimensions.
@@ -618,6 +642,7 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
   @param[in] nthreads
   @param[in] dynShmemPerThread
   @param[in] staticShmemPerBlcok
+  @return boolean  
  */
 bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
 {

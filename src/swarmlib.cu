@@ -10,8 +10,12 @@
 	#define debug_hook()
 #endif
 
-// Computes the global linear ID of the thread. Used from kernels.
-// NOTE: Supports 3D grids with 1D blocks of threads
+/*!
+  \brief Computes the global linear ID of the thread. Used from kernels.
+
+  NOTE: Supports 3D grids with 1D blocks of threads
+  @return threadId
+*/
 inline __device__ uint32_t threadId()
 {
 // This will be in inner loops, so may want to optimize
@@ -23,6 +27,11 @@ inline __device__ uint32_t threadId()
 	return id;
 }
 
+/*!
+  \brief Computes the global linear ID of the thread. Used from kernels.
+
+  NOTE: Supports 3D grids with 1D blocks of threads
+*/
 inline __device__ uint32_t threadsPerBlock()
 {
 #if USE_1D_GRID
@@ -354,15 +363,15 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	log::flush(log::memory);
 }
 
+/// check a parameter is power of two
+inline bool is_power_of_two(int x) { return !(x & (x-1)); }
+
 /*!
  \brief gpu generic integrator 
  
  ...
  @param[in] cfg 
 */
-
-inline bool is_power_of_two(int x) { return !(x & (x-1)); }
-
 template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
