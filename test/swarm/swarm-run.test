@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #  This script is intended to be called from 'make test'. See 'Usage' below
 #  for how it works and how to call it from the command line.
