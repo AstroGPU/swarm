@@ -42,19 +42,29 @@ namespace swarm {
   NOTE: assumes not more than MAXTHREADSPERBLOCK threads per block
   NOTE: assumes a nthreads is a power of 2
   NOTE: assumes *nrunning = 0 on input
- @param[out] nrunning number of active systems 
+ @param[out] nrunning number of active systems
  @param[in] ens ensemble
 */
 static const int MAXTHREADSPERBLOCK = 256;
 __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 {
-	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory
+#if 0
+	// Direct counting (via atomicAdd) of the number of running threads. Slower
+	// but requires no shared memory.
+	// TODO: Test if this implementation is fast enough to be activated
 	int sys = threadId();
-	const int widx = sys % sizeof(running);
+	int running = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
+	if(running) { atomicAdd(nrunning, 1); }
+	return;
+#else
+	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
+
+	int sys = threadId();
+	const int widx = sys % MAXTHREADSPERBLOCK;
 	running[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
 
-	// prefix sum algorithm (assumes block size <= sizeof(running))
-
+	// Prefix sum algorithm (assumes block size <= MAXTHREADSPERBLOCK).
+	// 1) sum up the number of running threads in this block
 	int tpb = threadsPerBlock();
 	for(int i = 2; i <= tpb; i *= 2)
 	{
@@ -62,12 +72,12 @@ __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 		if(widx % i) { running[widx] += running[widx + i/2]; }
 	}
 
+	// 2) add the sum to the total number of running threads
 	if(widx == 0)
 	{
 		atomicAdd(nrunning, running[0]);
 	}
-
-	#undef PARALLEL_SUM
+#endif
 }
 
 #if 0
