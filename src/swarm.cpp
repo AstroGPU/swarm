@@ -25,7 +25,7 @@ int main(int argc, const char **argv)
 
 	// load the ensemble
 	std::string ensprefix;
-	swarm::get_config(ensprefix, cfg, "ensemble");
+	swarm::get_config(ensprefix, cfg, "initial conditions");
 	swarm::cpu_ensemble ens;
 	swarm::load_ensemble(ensprefix, ens);
 	std::cerr << "Ensemble                        : " << ensprefix << " (" << ens.nsys() << " systems, " << ens.nbod() << " bodies each).\n";
@@ -43,12 +43,12 @@ int main(int argc, const char **argv)
 	std::cerr << "Integrator                      : " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
 	// set end times of integration, first output time, and snapshot interval
-	double dT, Toutputstep;
-	swarm::get_config(dT, cfg, "dT");
+	double Tend, Toutputstep;
+	swarm::get_config(Tend, cfg, "integration end");
 	swarm::get_config(Toutputstep, cfg, "output interval");
 	for(int sys = 0; sys != ens.nsys(); sys++)
 	{
-		ens.time_end(sys) = ens.time(sys) + dT;
+		ens.time_end(sys) = Tend;
 		ens.time_output(sys, 0) = ens.time(sys);	// output immediately on start
 		ens.time_output(sys, 1) = Toutputstep;		// output interval
 	}
@@ -66,7 +66,7 @@ int main(int argc, const char **argv)
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(gpu_ens, dT);				// integrate
+		integ->integrate(gpu_ens, Tend);			// integrate
 		SWATCH_STOP(swatch_kernel);
 
 		SWATCH_START(swatch_mem);
@@ -80,7 +80,7 @@ int main(int argc, const char **argv)
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
-		integ->integrate(ens, dT);				// integrate
+		integ->integrate(ens, Tend);				// integrate
 		SWATCH_STOP(swatch_kernel);
 	}
 	SWATCH_STOP(swatch_all);

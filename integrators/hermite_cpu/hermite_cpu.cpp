@@ -22,8 +22,8 @@ extern "C" integrator *create_cpu_hermite(const config &cfg)
 cpu_hermite_integrator::cpu_hermite_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
-	if(!cfg.count("h")) ERROR("Integrator cpu_hermite needs a timestep ('h' keyword in the config file).");
-	m_h = atof(cfg.at("h").c_str());
+	if(!cfg.count("time step")) ERROR("Integrator cpu_hermite requires a timestep ('time step' keyword in the config file).");
+	m_h = atof(cfg.at("time step").c_str());
 }
 
 /*!

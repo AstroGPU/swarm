@@ -5,8 +5,8 @@
 namespace swarm {
 gpu_mvs_integrator::gpu_mvs_integrator(const config &cfg)
 {
-	if(!cfg.count("h")) ERROR("Integrator gpu_mvs needs a timestep ('h' keyword in the config file).");
-	h = atof(cfg.at("h").c_str());
+	if(!cfg.count("time step")) ERROR("Integrator gpu_mvs requires a timestep ('time step' keyword in the config file).");
+	h = atof(cfg.at("time step").c_str());
 
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }

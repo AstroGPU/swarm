@@ -311,8 +311,8 @@ struct prop_rk4
 	 */
 	prop_rk4(const config &cfg)
 	{
-		if(!cfg.count("h")) ERROR("Integrator gpu_rk4 needs a timestep ('h' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("h").c_str());
+		if(!cfg.count("time step")) ERROR("Integrator gpu_rk4 requires a timestep ('time step' keyword in the config file).");
+		gpu_obj.h = atof(cfg.at("time step").c_str());
 	}
 
 	/*!

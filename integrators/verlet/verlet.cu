@@ -335,8 +335,8 @@ struct prop_verlet
 	 */
 	prop_verlet(const config &cfg)
 	{
-		if(!cfg.count("h")) ERROR("Integrator gpu_verlet needs a timestep ('h' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("h").c_str());
+		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet needs a timestep ('time step' keyword in the config file).");
+		gpu_obj.h = atof(cfg.at("time step").c_str());
 	}
 
 	/*!

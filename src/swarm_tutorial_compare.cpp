@@ -13,7 +13,7 @@ int main(int argc, const char **argv)
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
   cfg["integrator"] = "gpu_hermite"; // integrator name
-  cfg["h"] = "0.0005";               // time step
+  cfg["time step"] = "0.0005";       // time step
   cfg["precision"] = "1";            // use double precision
   cfg["output"] = "null";            // store no output
   // Parameters like rmax should be optional, not required

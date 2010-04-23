@@ -112,7 +112,7 @@ void check_cfg_input(config &cfg, string& obsFileName, string& icsFilePrefix, st
         std::cout << " Integrator: " << integrator_name << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
         if(integrator_name == "gpu_hermite_adap")
         { std::cout<<" Using minimum time step = "<<cfg["min time step"]<<" and step factor = "<<cfg["time step factor"]<<'\n'; } 
-        else { std::cout<<" Using time step h = "<<cfg["h"]<<'\n'; }
+        else { std::cout<<" Using time step time step = "<<cfg["time step"]<<'\n'; }
         std::cout<<" Using rmax = "<<cfg["rmax"]<<'\n';
 	std::cout<<" Using obsFileName = "<<obsFileName<<"\n";
 	std::cout<<" Getting ICs from "<<icsFilePrefix<<"\n";

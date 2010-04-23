@@ -382,7 +382,7 @@ int main(int argc, const char **argv)
   
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 10.;
-  get_config(dT,cfg,"dT");
+  get_config(dT,cfg,"integration end");
   dT *= 2.*M_PI;
   ens.set_time_end_all(dT);
   

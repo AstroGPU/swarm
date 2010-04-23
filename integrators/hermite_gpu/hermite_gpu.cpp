@@ -19,8 +19,8 @@ namespace hermite_gpu {
 template<typename real_hi, typename real_lo>
 gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cfg)
 {
-	if(!cfg.count("h")) ERROR("Integrator gpu_hermite needs a timestep ('h' keyword in the config file).");
-	h = atof(cfg.at("h").c_str());
+	if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
+	h = atof(cfg.at("time step").c_str());
 
 	if(!cfg.count("precision")) ERROR("Integrator gpu_hermite needs precision ('precision' keyword in the config file).");
 	prec = atoi(cfg.at("precision").c_str());

@@ -46,8 +46,8 @@ void check_cfg_input(cpu_ensemble &ens, config &cfg)
         std::string integrator_name = cfg["integrator"];
         std::cout << " Integrator: " << integrator_name << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
         if(integrator_name == "gpu_hermite_adap")
-        { std::cout<<" Using minimum time step h = "<<cfg["h"]<<" and stepfac = "<<cfg["stepfac"]<<'\n'; } 
-        else { std::cout<<" Using time step h = "<<cfg["h"]<<'\n'; }
+        { std::cout<<" Using minimum time step = "<<cfg["time step"]<<" and stepfac = "<<cfg["time step factor"]<<'\n'; }
+        else { std::cout<<" Using time step = "<<cfg["time step"]<<'\n'; }
         std::cout<<" Using rmax = "<<cfg["rmax"]<<'\n';
 }
 

@@ -19,8 +19,8 @@ extern "C" integrator *create_cpu_verlet(const config &cfg)
 cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
-	if(!cfg.count("h")) ERROR("Integrator cpu_verlet needs a timestep ('h' keyword in the config file).");
-	h = atof(cfg.at("h").c_str());
+	if(!cfg.count("time step")) ERROR("Integrator cpu_verlet needs a timestep ('time step' keyword in the config file).");
+	h = atof(cfg.at("time step").c_str());
 }
 
 /*!

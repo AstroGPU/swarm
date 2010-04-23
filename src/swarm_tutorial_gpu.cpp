@@ -13,8 +13,8 @@ int main(int argc, const char **argv)
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
   cfg["integrator"] = "gpu_hermite_adap"; // integrator name
-  cfg["h"] = "0.0005";               // time step
-  cfg["stepfac"] = "0.0025";         // time step parameter for hermite_adap
+  cfg["time step"] = "0.0005";       // time step
+  cfg["time step factor"] = "0.0025";         // time step parameter for hermite_adap
   cfg["precision"] = "1";            // use double precision
   // Parameters like rmax should be optional, not required
   // If we can delete the next line, let's do that.
@@ -23,7 +23,7 @@ int main(int argc, const char **argv)
   cfg["output"] = "null";            // store no output
   cfg["output interval"] = "0.1";
   cfg["rmax"] = "1000";  
-  cfg["Toutstep"] = "0.1";
+  cfg["output interval"] = "0.1";
   cfg["runon"] = "gpu";             // whether to run on cpu or gpu (must match integrator)
 
   std:: cerr << "Initialize the library\n";
