@@ -449,11 +449,13 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 	// numbers 0..(NSYS-1).
 	//
 	// Initial conditions file format:
-	// <nbod>
+	// <nbod> [Tbegin [Tend]]
 	// <m1> <x1> <y1> <z1> <vx1> <vy1> <vz1>
 	// <m2> <x2> <y2> <z2> <vx2> <vy2> <vz2>
 	// ... (through nbod) ..
 	//
+	// Tbegin is the initial time for this system; T=0 if not given
+	// Tend is the end-of-integration time for this system; T=+inf if not given
 
 	// determine the number of systems
 	int nsys;
@@ -472,9 +474,13 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 		std::string fn = name + "." + ss.str();
 		std::ifstream in(fn.c_str());
 
+		std::string line;
+		std::getline(in, line);
+		std::istringstream iss(line);
+
 		// load the number of bodies
 		int nbod1;
-		in >> nbod1;
+		iss >> nbod1;
 		if(nbod == -1)
 		{
 			nbod = nbod1;
@@ -488,8 +494,16 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 			ERROR(err.str());
 		}
 
-		// set the initial time to 0 (NOTE: should we also load this from the config file?)
-		ens.time(i) = 0.;
+		// load the start and end times of the integration
+		double T;
+		ens.time(i)     = (iss >> T) ? T : 0.;
+		ens.time_end(i) = (iss >> T) ? T : std::numeric_limits<double>::infinity();
+
+		// set default output times (never) and interval (0)
+		// this will be overridden by programs that use swarm::log output, and for those
+		// that don't, this will effectivelly turn it off.
+		ens.time_output(i, 0) = ens.time_end(i) * 1.1;
+		ens.time_output(i, 1) = 0.;
 
 		// load the planets
 		double m, x, y, z, vx, vy, vz;
