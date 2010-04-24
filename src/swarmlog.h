@@ -158,9 +158,9 @@ namespace swarm
 			Store a snapshot of the entire system (EVT_SNAPSHOT).
 		*/
 		template<typename L>
-		__device__ __host__ void system(L &l, const ensemble &ens, const int sys, const double T)
+		__device__ __host__ inline void system(L &l, const ensemble &ens, const int sys, const double T)
 		{
-			body *bodies = event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
+			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
 			for(int bod=0; bod != ens.nbod(); bod++)
 			{
 				bodies[bod].set(ens, sys, bod);
@@ -171,13 +171,51 @@ namespace swarm
 			Store a snapshot of the entire ensemble (convenience).
 		*/
 		template<typename L>
-		__device__ __host__ void ensemble(L &l, const swarm::ensemble &ens)
+		__device__ __host__ inline void ensemble(L &l, const swarm::ensemble &ens)
 		{
 			for(int sys = 0; sys != ens.nsys(); sys++)
 			{
 				system(l, ens, sys, ens.time(sys));
 			}
 		}
+
+		__host__ __device__ inline bool needs_output(swarm::ensemble &ens, double T, int sys)
+		{
+			// simple output
+			return T >= ens.time_output(sys, 0);
+		}
+		
+		template<typename L>
+		__host__ __device__ inline void output_system(L &log, swarm::ensemble &ens, double T, int sys)
+		{
+			// store the snapshot
+			log::system(log, ens, sys, T);
+		
+			// set next stopping time
+			ens.time_output(sys, 0) += ens.time_output(sys, 1);
+		}
+		
+		/*!
+		\brief output if needed
+		
+		...
+		@param[out] log
+		@param[in] ens
+		@param[in] T
+		@param[in] sys
+		*/
+		template<typename L>
+		__host__ __device__ void output_if_needed(L &log, swarm::ensemble &ens, double T, int sys)
+		{
+			// simple output
+			if(needs_output(ens, T, sys))
+			{
+		//		debug_hook();
+		
+				output_system(log, ens, T, sys);
+			}
+		}
+
 	}
 }
 

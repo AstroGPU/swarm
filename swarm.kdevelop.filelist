@@ -17,6 +17,7 @@ integrators/hermite_gpu/Makefile.mk
 integrators/hermite_gpu/hermite_gpu.cpp
 integrators/hermite_gpu/hermite_gpu.cu
 integrators/hermite_gpu/hermite_gpu.h
+integrators/hermite_gpu/hermite_gpu_integrator_body.cu
 integrators/mvs
 integrators/mvs/Makefile.mk
 integrators/mvs/mvs.cpp
@@ -59,12 +60,16 @@ src/gpulog/bits/gpulog_types.h
 src/gpulog/bits/gpulog_write.h
 src/gpulog/gpulog.h
 src/gpulog/lprintf.h
+src/scatter_demo
+src/scatter_demo/swarm_scatter_demo.cpp
+src/scatter_demo/swarm_scatter_demo.h
 src/stopwatch.h
 src/swarm.cpp
 src/swarm.h
 src/swarm_adap
 src/swarm_adap/swarm_adap.cpp
 src/swarm_adap/swarm_adap.h
+src/swarm_test_energy.cpp
 src/swarm_tutorial_compare.cpp
 src/swarm_tutorial_cpu.cpp
 src/swarm_tutorial_gpu.cpp
@@ -77,3 +82,4 @@ src/swarmlib.cu
 src/swarmlog.cpp
 src/swarmlog.h
 src/swarmquery.cpp
+src/user.h

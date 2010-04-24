@@ -31,7 +31,6 @@ namespace swarm {
 	void init(const config &cfg);
 
 class integrator;
-class event;
 class writer;
 class gpu_ensemble;
 class cpu_ensemble;
