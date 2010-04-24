@@ -1,0 +1,918 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.5.2" />
+<title>Format/rules for configuration file</title>
+<style type="text/css">
+/* Debug borders */
+p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
+/*
+  border: 1px solid red;
+*/
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+tt {
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  font-family: sans-serif;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+
+div.sectionbody {
+  font-family: serif;
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revnumber, span#revdate, span#revremark {
+  font-family: sans-serif;
+}
+
+div#footer {
+  font-family: sans-serif;
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #dddddd;
+  color: #777777;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > div.content {
+  white-space: pre;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toc {
+  margin-bottom: 2.5em;
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+/* Workarounds for IE6's broken and incomplete CSS2. */
+
+div.sidebar-content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+div.sidebar-title, div.image-title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  margin-top: 0.0em;
+  margin-bottom: 0.5em;
+}
+
+div.listingblock div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock-attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock-content {
+  white-space: pre;
+}
+div.verseblock-attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+
+div.exampleblock-content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+window.onload = function(){asciidoc.footnotes();}
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  var cont = document.getElementById("content");
+  var noteholder = document.getElementById("footnotes");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      // Use [\s\S] in place of . so multi-line matches work.
+      // Because JavaScript has no s (dotall) regex flag.
+      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      spans[i].innerHTML =
+        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+        "' title='View footnote' class='footnote'>" + n + "</a>]";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+}
+
+}
+/*]]>*/
+</script>
+</head>
+<body>
+<div id="header">
+<h1>Format/rules for configuration file</h1>
+</div>
+<div id="content">
+<h2 id="_description">Description</h2>
+<div class="sectionbody">
+<div class="paragraph"><div class="title">What is configuration file?</div><p>The configuration file specifies several parameters. Examples are located at <tt>run/integrator.cfg</tt></p></div>
+<div class="paragraph"><div class="title">Format for the configuration file</div><p>Each parameter appears on its own line in a format:<br />
+<em>'key = value</em>'</p></div>
+<div class="paragraph"><div class="title">Rules for the configuration file</div><p>It is recommended to specify parameters as follows.</p></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-1">Required parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Commonly required parameters <em>'integrator</em>', <em>'runon</em>', <em>'num_systems</em>', <em>'num_bodies</em>', <em>'dT</em>'
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-2">Integrator-specific parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Integrator specific parameters <em>'h</em>', <em>'stepfac</em>', <em>'precision</em>'
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-3">Initial condition parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Users specify initial conditions
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-4">Stopper parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Optional
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-5">GPU kernel configuration parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Optional
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<a href="#anchor-6">Output parameters</a>
+<br />
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+Optional
+</p>
+</td>
+</tr>
+</table></div>
+<h3 id="anchor-1">REQUIRED PARAMETERS</h3><div style="clear:left"></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'integrator</em>'
+</dt>
+<dd>
+<p>
+   Must specify one of the following integrators: <em>'gpu_hermite</em>', <em>'gpu_hermite_adap</em>', <em>'gpu_rk4</em>', <em>'gpu_verlet</em>', <em>'cpu_hermite</em>'
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'runon</em>'
+</dt>
+<dd>
+<p>
+   Must specify either <em>'gpu</em>' or <em>'cpu</em>'.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'num_systems</em>'
+</dt>
+<dd>
+<p>
+   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'num_bodies</em>'
+</dt>
+<dd>
+<p>
+   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'dT</em>'
+</dt>
+<dd>
+<p>
+   Must specify the duration of each integration.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches dT*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
+</p>
+</dd>
+</dl></div>
+<h3 id="anchor-2">INTEGRATOR-SPECIFIC PARAMETERS</h3><div style="clear:left"></div>
+<div class="paragraph"><p>And either <em>'h</em>' or <em>'stepfac</em>':</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'h</em>'
+</dt>
+<dd>
+<p>
+   Specify the timestep for fixed time-step algorithms.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'stepfac</em>'
+</dt>
+<dd>
+<p>
+   Specifies the time step parameter for the integrator <em>'gpu_hermite_adap</em>'.   <strong>*</strong> <em>WARNING: Name will likely change</em>.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'precision</em>'
+</dt>
+<dd>
+<p>
+   Must specify the precission for the integrations.  0 results in single precission, 1 results in double precission.  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 2 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
+</p>
+</dd>
+</dl></div>
+<h3 id="anchor-3">PARAMETERS TO SPECIFY INITIAL CONDITIONS</h3><div style="clear:left"></div>
+<div class="paragraph"><p>In the case of swarm_tutorial_montecarlo, users specify initial conditions in terms of the mass of a central body and Keplerian orbital elements for each of 2-9 additional bodies.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'use_jacobi</em>'
+</dt>
+<dd>
+<p>
+   A non-zero value specifies that all orbital elements are to be interpretted in a Jacobi frame.  Default value is 0 (false).
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'mass_star</em>'
+</dt>
+<dd>
+<p>
+   The mass of body zero, the central object.  For planetary systems, this is typically the host star.  Default value is 1.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'mass_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The mass of the specified body.  Valid range is [0,mass_star).  (Body #0 is the central body.)
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'a_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial semi-major axis of the specified body.  Valid range is [0.001,10000.].
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'ecc_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial eccentricicty of the specified body.  Valid range is [0,1).
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'inc_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial inclination of the specified body in degrees.  Valid range is [-180,180].
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'node_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial ascending node of the specified body in degrees.  Valid range is [-720,720].
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'omega_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial arguement of periastron of the specified body in degrees.  Valid range is [-720,720].
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'meananom_[1-9]</em>'
+</dt>
+<dd>
+<p>
+   The initial mean anomaly of the specified body in degrees.  Valid range is [-720,720].
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p>Using only the above keywords would result in all systems being assigned the same initial conditions.  While this may be useful for some tests, most real calculations will want to assign different initial conditions to each system.  To generate initial conditions via a pseudo-random number generator, replace at least one of the above key names for the mass and orbital elements of one or more bodies with a similar keyword, but with one or more of the following suffixes:  <em>'_min</em>', <em>'_max</em>', and <em>'_sigma</em>'.</p></div>
+<div class="paragraph"><p>If only key_N_min and key_N_max are specified, then key for the Nth body will be generated from a uniform distribution between the minimum and maximum values.</p></div>
+<div class="paragraph"><p>If key_N and key_N_sigma are specified, then key for the Nth body will be generated from a Gaussian distribution with mean key_N and standard deviation key_N_sigma.  If key_N_min and/or key_N_max are also specified, then the distribution will be truncated at these values.</p></div>
+<div class="paragraph"><p>If only key_N is specified, then key for the Nth body will be exactly the specified value.</p></div>
+<div class="paragraph"><p>Other combinations of key suffixes are not allowed.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'time_init</em>'
+</dt>
+<dd>
+<p>
+   Initial time for all simulations.  Default value is 0.
+</p>
+</dd>
+</dl></div>
+<h3 id="anchor-4">STOPPER PRAMETERS</h3><div style="clear:left"></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'rmax</em>'
+</dt>
+<dd>
+<p>
+   Integrations are halted once a body reaches a distance greater than <em>'rmax</em>' from the origin?  (or is it central body?).  <em>Only some integrators support this parameter at this time.</em>
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'Toutstep</em>'
+</dt>
+<dd>
+<p>
+   Specifies how often data should be logged.  <em>Only some integrators support this parameter at this time.</em>
+</p>
+</dd>
+</dl></div>
+<h3 id="anchor-5">GPU KERNEL CONFIGURATION PARAMETERS</h3><div style="clear:left"></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'threads per block</em>'
+</dt>
+<dd>
+<p>
+   Specifies how many threads the GPU uses per block.  <em>We recommend most users not set this explicitly, except when performing performance benchmarks.</em>  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
+</p>
+</dd>
+</dl></div>
+<h3 id="anchor-6">OUTPUT PARAMETERS</h3><div style="clear:left"></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'output</em>'
+</dt>
+<dd>
+<p>
+   Specifies files to be used for output.  In current demo set this value to <em>'null</em>'.  <strong>* <em>Is this functional?  Required?</em> </strong>*
+</p>
+</dd>
+</dl></div>
+<div class="paragraph"><p><em>'output interval</em>':
+   Specifies how often data should be logged.  <em>Only some integrators support this parameter at this time.</em>  <strong>* <em>What is difference between Toutstep?</em> </strong>*</p></div>
+</div>
+<h2 id="_example">EXAMPLE</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><tt>integrator-tutorial_montecarlo.cfg</tt></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt># Demo2 parameters
+num_systems = 15360
+integrator = gpu_hermite
+runon = gpu
+dT = 10
+
+# Integrator-specific parameters
+h = 0.0005
+stepfac = 0.0025
+precision = 1
+
+# Initial Conditions
+time_init = 0.
+use_jacobi = 1
+mass_star = 1.
+mass_1 = 0.001
+mass_1_sigma = 0.
+mass_1_min = 0.
+mass_1_max = 0.01
+a_1 = 1.
+ecc_1 = 0.
+inc_1 = 90.
+node_1 = 0.
+omega_1 = 0.
+meananom_1_min = 0.
+meananom_1_max = 360.
+
+mass_2 = 0.001
+mass_2_sigma = 0.
+mass_2_min = 0.
+mass_2_max = 0.01
+a_2 = 1.31
+a_2_sigma = 0.01
+a_2_min = 1.29
+a_2_max = 1.33
+ecc_2 = 0.
+inc_2 = 90.
+node_2 = 0.
+omega_2 = 0.
+meananom_2_min = 0.
+meananom_2_max = 360.
+
+# Stopper parameters
+rmax = 1000
+Toutstep = 0.1
+
+# GPU kernel configuration
+threads per block = 64
+
+# Output parameters
+output = null
+output interval = 0.1</tt></pre>
+</div></div>
+</div>
+<h2 id="_limitations_amp_bugs">LIMITATIONS &amp; BUGS</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>See <a href="http://www.astro.ufl.edu/~eford/code/swarm/">website</a> for updated information on bugs.</p></div>
+</div>
+<h2 id="_resources">RESOURCES</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Main web site: <a href="http://www.astro.ufl.edu/~eford/code/swarm/">http://www.astro.ufl.edu/~eford/code/swarm/</a></p></div>
+<div class="paragraph"><p>Google Group: <a href="http://groups.google.com/group/swarm-ng">http://groups.google.com/group/swarm-ng</a></p></div>
+</div>
+<h2 id="_copying">COPYING</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Copyright (C) 2008-2010 Eric B. Ford.<br />
+Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.</p></div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2010-04-23 03:26:04 Eastern Daylight Time
+</div>
+</div>
+</body>
+</html>

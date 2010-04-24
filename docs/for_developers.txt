@@ -1,0 +1,42 @@
+How to write your own program
+=============================
+
+
+Description
+-----------
+...
+
+Overview of namespaces
+~~~~~~~~~~~~~~~~~~~~~~
+`swarm`::
+   ...
+`gpulog`::
+   ...
+`gpulog::internal`::
+   ...
+
+Overview of public interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Overview of private interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+How to add your own integrator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+LIMITATIONS & BUGS
+------------------
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated information on bugs.
+
+RESOURCES
+---------
+
+Main web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+
+COPYING
+-------
+Copyright \(C) 2008-2010 Eric B. Ford. + 
+Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.

@@ -1,0 +1,1233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.5.2" />
+<title>README for Swarm-NG</title>
+<style type="text/css">
+/* Debug borders */
+p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
+/*
+  border: 1px solid red;
+*/
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+tt {
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  font-family: sans-serif;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+
+div.sectionbody {
+  font-family: serif;
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revnumber, span#revdate, span#revremark {
+  font-family: sans-serif;
+}
+
+div#footer {
+  font-family: sans-serif;
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #dddddd;
+  color: #777777;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > div.content {
+  white-space: pre;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toc {
+  margin-bottom: 2.5em;
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+/* Workarounds for IE6's broken and incomplete CSS2. */
+
+div.sidebar-content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+div.sidebar-title, div.image-title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  margin-top: 0.0em;
+  margin-bottom: 0.5em;
+}
+
+div.listingblock div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock-attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock-content {
+  white-space: pre;
+}
+div.verseblock-attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+
+div.exampleblock-content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+window.onload = function(){asciidoc.footnotes();}
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([2-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  var cont = document.getElementById("content");
+  var noteholder = document.getElementById("footnotes");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      // Use [\s\S] in place of . so multi-line matches work.
+      // Because JavaScript has no s (dotall) regex flag.
+      note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      spans[i].innerHTML =
+        "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+        "' title='View footnote' class='footnote'>" + n + "</a>]";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+}
+
+}
+/*]]>*/
+</script>
+</head>
+<body>
+<div id="header">
+<h1>README for Swarm-NG</h1>
+<span id="author">Swarm-NG Development Team</span><br />
+<span id="revnumber">version 0.1,</span>
+<span id="revdate">April 2010</span>
+<br /><span id="revremark">Initial release<br />
+Swarm-NG v0.1 (c) Swarm-NG Development Team 2010</span>
+</div>
+<div id="content">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph"><div class="title">What is Swarm-NG?</div><p>Swarm-NG is a collection of code which to help scientists and engineers harness the power of GPUs.
+In the early releases, Swarm-NG will focus on the integration of an ensemble of N-body systems evolving under Newtonian gravity.
+There are existing libraries to perform the force calculation for large-N systems on GPUs.
+Swarm-NG does not replicate these, but rather focuses on integrating an ensemble of many systems where N is small.
+This is of partiular interest for astronomers who study the chaotic evolution of planetary systems.
+In the long term, we hope Swarm-NG will allow for the efficient parallel integration of user-defined systems of ordinary differential equations.</p></div>
+<div class="paragraph"><div class="title">What is included in April 2010 release of Swarm-NG 0.1?</div><p>This initial release contains GPU-based integrators for few-body systems, along with a draft of the public interface for setting initial conditions, calling the GPU-based integration algorithms and accessing the output data.  Small example programs are provided to demonstrate functionality and how to program with Swarm-NG.</p></div>
+<div class="paragraph"><div class="title">Quick Start Tips</div><p>Read link:doc/build_system.html for how to build the library and example programs.<br />
+Read link:doc/for_deveopers.html for an overview of how to write your own programs which build on Swarm-NG functionality.</p></div>
+<h3 id="_buliding_the_swarm_ng_libraries_and_demo_programs">Buliding the Swarm-NG Libraries and Demo Programs</h3><div style="clear:left"></div>
+<div class="ulist"><div class="title">What hardware &amp; software is required to build &amp; run Swarm-NG?</div><ul>
+<li>
+<p>
+Hardware
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Linux-based workstation (certain kernel versions?)
+</p>
+</li>
+<li>
+<p>
+nVidia GPU with G80 or G92 chip (we intend to support Fermi in near future)
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Software
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+CUDA v2.3 and/or v3.0
+</p>
+</li>
+<li>
+<p>
+g++ v?.? (later versions likely to work as well)
+</p>
+</li>
+<li>
+<p>
+Boost++ v?.? (later versions likely to work as well)
+</p>
+</li>
+<li>
+<p>
+Anything else?
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><div class="title">How do I build Swarm-NG for Linux? [Mario]</div><p>Run &#8216;make`.  Users can specify the paths to compiler, libaries, and include files, as well as compiler flags in the file <em>'Makefile.user</em>&#8217;.</p></div>
+<div class="paragraph"><div class="title">How do I build Swarm-NG for Windows? [Young In]</div><p>While we do not intend to support Swarm-NG for Windows, we can pass along some of the following tips.</p></div>
+<div class="paragraph"><div class="title">How do I test Swarm-NG? [Mario]</div><p><tt>make test</tt></p></div>
+<h3 id="_demo_programs_authors_of_each_demo_code">Demo Programs [authors of each demo code]</h3><div style="clear:left"></div>
+<div class="paragraph"><div class="title">Commands to run demo codes</div><p>First, build the tutorials and demos with <tt>make</tt>.  Then, you can run the following demos from the tutorial.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+swarm_tutorial_cpu:  run <tt>bin/swarm_tutorial_cpu</tt>
+</p>
+</li>
+<li>
+<p>
+swarm_tutorial_gpu:  run <tt>bin/swarm_tutorial_gpu</tt>
+</p>
+</li>
+<li>
+<p>
+swarm_tutorial_compare:  run <tt>bin/swarm_tutorial_compare</tt>
+</p>
+</li>
+<li>
+<p>
+swarm_tutorial_montecarlo:  change into the run sub-directory and run <tt>../bin/swarm_tutorial_montecarlo integrator-tutorial_montecarlo.cfg</tt>
+The behavior of this tutorial can be easily adjusted by changing the configuration file.  See the section below on <a href="#&lt;DemoOptions&gt;">Demo Options</a> for a list of required/valid parameters.
+</p>
+</li>
+</ul></div>
+<div class="ulist" id="DemoOptions"><div class="title">Demo Program Features/Options [authors of each demo program]</div><ul>
+<li>
+<p>
+Parameters for swarm_tutorial_montecarlo include:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+integrator: Specifies which integration algorithm will be used
+</p>
+</li>
+<li>
+<p>
+runon: Must be "cpu" or "gpu".  In v0.1, this must match the type of integrator specified by "integrator"
+</p>
+</li>
+<li>
+<p>
+dT: Specifies the duration of the integration
+</p>
+</li>
+<li>
+<p>
+h: Specifies the timestep of fixed timestep algorithms (e.g., hermite, rk4)
+</p>
+</li>
+<li>
+<p>
+Complete list
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Parameters for swarm include:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+integrator: Specifies which integration algorithm will be used
+</p>
+</li>
+<li>
+<p>
+runon: Must be "cpu" or "gpu".  In v0.1, this must match the type of integrator specified by "integrator"
+</p>
+</li>
+<li>
+<p>
+dT: Specifies the duration of the integration
+</p>
+</li>
+<li>
+<p>
+h: Specifies the timestep of fixed timestep algorithms (e.g., hermite, rk4)
+</p>
+</li>
+<li>
+<p>
+Complete list
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="ulist"><div class="title">Known Limitations and/or Bugs [Young In]</div><ul>
+<li>
+<p>
+Limited to N-body systems with 3-10 bodies
+</p>
+</li>
+<li>
+<p>
+Must be many more!
+</p>
+</li>
+</ul></div>
+<h3 id="_organization_of_swarm_ng">Organization of Swarm-NG</h3><div style="clear:left"></div>
+<div class="listingblock">
+<div class="title">swarm directory listing</div>
+<div class="content">
+<pre><tt>  &lt;DIR&gt;     docs              <b>&lt;1&gt;</b>
+  &lt;DIR&gt;     integrators       <b>&lt;2&gt;</b>
+  &lt;DIR&gt;     run               <b>&lt;3&gt;</b>
+  &lt;DIR&gt;     scripts           <b>&lt;4&gt;</b>
+  &lt;DIR&gt;     src               <b>&lt;5&gt;</b>
+  &lt;DIR&gt;     test              <b>&lt;6&gt;</b>
+            .gitignore
+            Doxyfile
+            Makefile
+            README
+            swarm.kdevelop
+            swarm.kdevelop.filelist</tt></pre>
+</div></div>
+<div class="colist arabic"><ol>
+<li>
+<p>
+<a href="#anchor-d1">docs</a> contains documentations (tutorial, &#8230;)
+</p>
+</li>
+<li>
+<p>
+<a href="#anchor-d2">integrators</a> contains integrators (verlet, hermite, &#8230;)
+</p>
+</li>
+<li>
+<p>
+<a href="#anchor-d3">run</a> contains &#8230;
+</p>
+</li>
+<li>
+<p>
+<a href="#anchor-d4">scripts</a> contains &#8230;
+</p>
+</li>
+<li>
+<p>
+<a href="#anchor-d5">src</a> contains &#8230;
+</p>
+</li>
+<li>
+<p>
+<a href="#anchor-d6">test</a> contains &#8230;
+</p>
+</li>
+</ol></div>
+<div class="listingblock" id="anchor-d1">
+<div class="title">docs listing</div>
+<div class="content">
+<pre><tt>            build_system.txt  <b>&lt;1&gt;</b>
+            eventlog.txt      <b>&lt;2&gt;</b>
+            README.swarm_adap <b>&lt;3&gt;</b>
+            snapshotting.txt  <b>&lt;4&gt;</b></tt></pre>
+</div></div>
+<div class="colist arabic"><ol>
+<li>
+<p>
+build system
+</p>
+</li>
+<li>
+<p>
+eventlog
+</p>
+</li>
+<li>
+<p>
+README
+</p>
+</li>
+<li>
+<p>
+snapshotting
+</p>
+</li>
+</ol></div>
+<div class="listingblock" id="anchor-d2">
+<div class="title">integrators listing</div>
+<div class="content">
+<pre><tt>  &lt;DIR&gt;     euler                                      <b>&lt;1&gt;</b>
+                 euler.cpp
+                 euler.cu
+                 euler.h
+                 Makefile.mk
+
+  &lt;DIR&gt;     hermite_adap_gpu                           <b>&lt;2&gt;</b>
+                 hermite_adap_gpu.cpp
+                 hermite_adap_gpu.cu
+                 hermite_adap_gpu.h
+                 hermite_adap_gpu_integrator_body.cu
+                 Makefile.mk
+
+  &lt;DIR&gt;     hermite_cpu                                <b>&lt;3&gt;</b>
+                 hermite_cpu.cpp
+                 hermite_cpu.h
+                 Makefile.mk
+                 ThreeVector.hpp
+
+  &lt;DIR&gt;     hermite_gpu                                <b>&lt;4&gt;</b>
+                 hermite_gpu.cpp
+                 hermite_gpu.cu
+                 hermite_gpu.h
+                 hermite_gpu_integrator_body.cu
+                 Makefile.mk
+
+  &lt;DIR&gt;     mvs                                        <b>&lt;5&gt;</b>
+                 Makefile.mk
+                 mvs.cpp
+                 mvs.cu
+                 mvs.h
+
+  &lt;DIR&gt;     rk4                                        <b>&lt;6&gt;</b>
+                 Makefile.mk
+                 rk4.cpp
+                 rk4.cu
+                 rk4.h
+
+  &lt;DIR&gt;     verlet                                     <b>&lt;7&gt;</b>
+                 Makefile.mk
+                 verlet.cpp
+                 verlet.cu
+                 verlet.h
+
+  &lt;DIR&gt;     verlet_cpu                                 <b>&lt;8&gt;</b>
+                 Makefile.mk
+                 verlet_cpu.cpp
+                 verlet_cpu.h</tt></pre>
+</div></div>
+<div class="colist arabic"><ol>
+<li>
+<p>
+euler gpu
+</p>
+</li>
+<li>
+<p>
+hermite adaptive gpu
+</p>
+</li>
+<li>
+<p>
+hermite cpu
+</p>
+</li>
+<li>
+<p>
+hermite gpu
+</p>
+</li>
+<li>
+<p>
+mvs gpu
+</p>
+</li>
+<li>
+<p>
+rk4 gpu
+</p>
+</li>
+<li>
+<p>
+verlet gpu
+</p>
+</li>
+<li>
+<p>
+verlet cpu
+</p>
+</li>
+</ol></div>
+<div class="listingblock" id="anchor-d3">
+<div class="title">run</div>
+<div class="content">
+<pre><tt>           HD_82943.rvin
+           integrator-acboley.cfg
+           integrator-adap.cfg
+           integrator-mjuric.cfg
+           integrator-tutorial_montecarlo.cfg
+           integrator-tutorial_montecarlo_rv.cfg
+           integrator.cfg
+           README</tt></pre>
+</div></div>
+<div class="listingblock" id="anchor-d4">
+<div class="title">scripts</div>
+<div class="content">
+<pre><tt>  &lt;DIR&gt;    ic
+              peaShooterGen.py             <b>&lt;1&gt;</b>
+              swarm_adap.py                <b>&lt;2&gt;</b>
+
+           combine_cu_files.sh             <b>&lt;3&gt;</b>
+           easyGen.py                      <b>&lt;4&gt;</b>
+           generate_app_makefiles.sh       <b>&lt;5&gt;</b>
+           peaShooterGen.py                <b>&lt;6&gt;</b>
+           run_tests.sh                    <b>&lt;7&gt;</b>
+           silence_nvcc_warnings.sh        <b>&lt;8&gt;</b>
+           tarball_head.sh                 <b>&lt;9&gt;</b>
+           throwBinaryGen.py               <b>&lt;10&gt;</b></tt></pre>
+</div></div>
+<div class="colist arabic"><ol>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+<li>
+<p>
+&#8230;
+</p>
+</li>
+</ol></div>
+<div class="listingblock" id="anchor-d5">
+<div class="title">src</div>
+<div class="content">
+<pre><tt>  &lt;DIR&gt;    astro                                 <b>&lt;1&gt;</b>
+                 BinaryStream.cpp
+                 binarystream.h
+                 constants.h
+                 macros.h
+                 MemoryMap.cpp
+                 memorymap.h
+                 types.h
+                 Util.cpp
+                 util.h
+
+  &lt;DIR&gt;    cux                                   <b>&lt;2&gt;</b>
+                 cuda_rng.h
+                 cux.cpp
+                 cux.h
+                 cux_lowlevel.h
+
+  &lt;DIR&gt;    gpulog                                <b>&lt;3&gt;</b>
+  &lt;DIR&gt;          bits
+                     gpulog_align.h
+                     gpulog_constants.h
+                     gpulog_debug.h
+                     gpulog_ilogstream.h
+                     gpulog_log.h
+                     gpulog_logrecord.h
+                     gpulog_macro_cleanup.h
+                     gpulog_msg_layout.h
+                     gpulog_printf.h
+                     gpulog_ttraits.h
+                     gpulog_types.h
+                     gpulog_write.h
+
+                 gpulog.h
+                 lprintf.h
+
+  &lt;DIR&gt;    scatter                               <b>&lt;4&gt;</b>
+                 peaShooter.cpp
+
+  &lt;DIR&gt;    swarm_adap                            <b>&lt;5&gt;</b>
+                 COPYING.swarm_adap
+                 swarm_adap.cpp
+                 swarm_adap.h
+
+           stopwatch.h                           <b>&lt;6&gt;</b>
+           swarm.cpp                             <b>&lt;7&gt;</b>
+           swarm.h                               <b>&lt;8&gt;</b>
+           swarm_test_energy.cpp                 <b>&lt;9&gt;</b>
+           swarm_tutorial_compare.cpp            <b>&lt;10&gt;</b>
+           swarm_tutorial_cpu.cpp                <b>&lt;11&gt;</b>
+           swarm_tutorial_gpu.cpp                <b>&lt;12&gt;</b>
+           swarm_tutorial_montecarlo.cpp         <b>&lt;13&gt;</b>
+           swarm_tutorial_montecarlo_rv.cpp      <b>&lt;14&gt;</b>
+           swarmio.cpp                           <b>&lt;15&gt;</b>
+           swarmio.h                             <b>&lt;16&gt;</b>
+           swarmlib.cpp                          <b>&lt;17&gt;</b>
+           swarmlib.cu                           <b>&lt;18&gt;</b>
+           swarmlog.cpp                          <b>&lt;19&gt;</b>
+           swarmlog.h                            <b>&lt;20&gt;</b>
+           swarmquery.cpp                        <b>&lt;21&gt;</b>
+           ThreeVector.hpp                       <b>&lt;22&gt;</b></tt></pre>
+</div></div>
+<div class="listingblock" id="anchor-d6">
+<div class="title">test</div>
+<div class="content">
+<pre><tt>  &lt;DIR&gt;    swarm
+                filter
+                integrator.cfg
+                output.ref
+                swarm-run.create
+                swarm-run.test</tt></pre>
+</div></div>
+<div class="paragraph"><div class="title">Overview of file contents [Young In]</div><p>Add text/lists here</p></div>
+<div class="paragraph"><div class="title">Where can I find additional documentation?</div><p>There is additional documentation for various componets of Swarm-NG in the docs subdirectory.
+As the library interface solidifies, we anticipate providing additional documention in future releases and/or at the <a href="http://www.astro.ufl.edu/~eford/code/swarm/">Swarm-NG Website</a></p></div>
+<div class="ulist"><div class="title">What should I do if I think I found a compile-time bug?</div><ul>
+<li>
+<p>
+Please first check that you can successfully run <tt>make test</tt>.  If this fails, then please double check that you have the required drivers, libraries installed and paths set correctly.  You may need to create a Makefile.user to specify the path to your compilers, libraries, include files.  You may also need to specify the path to your cuda libraries via LD_LIBRARY_PATH.
+</p>
+</li>
+<li>
+<p>
+Please identify the minimal ammount of code that produces the compiler error.
+</p>
+</li>
+<li>
+<p>
+Contact Swarm-NG developers via the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a>
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><div class="title">What should I do if I think I found a run-time bug?</div><p>Unfortunately, GPUs can sometime get stuck in a problematic state, particularly during code development and when not running in console mode.  Before reporting a runtime bug, please test the code immediately after reboot your system into console mode.
+If the problem persists, then please check the archives of the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a> at the <a href="http://groups.google.com/group/swarm-ng">Google Group for Swarm-NG</a> to see if the bug has already been disussed.
+If not, then please contact Swarm-NG developers via the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a>.</p></div>
+<div class="ulist"><div class="title">How can I learn more about and/or contribute to the the Swarm-NG project?</div><ul>
+<li>
+<p>
+Visit the <a href="http://www.astro.ufl.edu/~eford/code/swarm/">Swarm-NG Website</a>.
+</p>
+</li>
+<li>
+<p>
+Complete the <a href="http://astro.ufl.edu/~eford/code/swarm/">Swarm-NG User Questionnaire</a>
+</p>
+</li>
+<li>
+<p>
+Download, install and user Swarm-NG code (via link above)
+</p>
+</li>
+<li>
+<p>
+Read the archives of the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a> at the <a href="http://groups.google.com/group/swarm-ng">Google Group for Swarm-NG</a>.
+</p>
+</li>
+<li>
+<p>
+Join the <a href="http://groups.google.com/group/swarm-ng">Google Group for Swarm-NG</a> to sign up for announcements via the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a>.
+</p>
+</li>
+<li>
+<p>
+Contact Swarm-NG developers via the <a href="mailto:swarm-ng@googlegroups.com"><em>Swarm-NG mailing list</em></a>.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><div class="title">Licensing Information</div><p>Swarm-NG v0.1 may be licensed under the GPL v3, avaliable <a href="doc/gpl-3.0.txt">here</a>.</p></div>
+<div class="paragraph"><div class="title">Acknowledging use of Swarm-NG</div><p>When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper descibing Swarm-NG.  We will provide a citation as soon as a preprint of this paper is avaliable.</p></div>
+<div class="paragraph"><div class="title">Acknowledgements</div><p>Contributors to the Swarm-NG codebase include: Eric Ford, Ameya Gancchha, Jianwei Gao, Mario Juric and Young In Yeo.
+We have adapted code from the GNU Science Library and John Chamber&#8217;s Mercury code, which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan&#8217;s Swift code.
+We greatfully acknowledge financial support from the University of Florida&#8217;s Research Opportunity Seed Fund and the NASA Applied Information Systems Research Program.</p></div>
+</div>
+<h2 id="_older_text_to_be_incorporated_into_this_or_other_documentation_files">Older Text (to be incorporated into this or other Documentation Files)</h2>
+<div class="sectionbody">
+</div>
+<h2 id="_general_layout">General layout</h2>
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+swarm.cpp
+        Main program file (main() is here)
+</p>
+</li>
+<li>
+<p>
+swarm.h
+        Declarations of ensemble and integrator interfaces
+</p>
+</li>
+<li>
+<p>
+swarmlib.cpp
+        Library of supporting host-only functions for the integrator, ensembles, etc.
+</p>
+</li>
+<li>
+<p>
+swarmlib.cu
+        Library of supporting device functions for the integrators
+</p>
+</li>
+<li>
+<p>
+swarm.cu
+        Autogenerated file (don&#8217;t edit it by hand!) consisting of include
+        statements including swarmlib.cu and all integ.*.cu files from the
+        current directory.
+</p>
+</li>
+</ul></div>
+</div>
+<h2 id="_adding_integrators">Adding integrators</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>To add a new integrator, follow the following simple steps:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+create a subdirectory integrators/&lt;integrator_name&gt;
+</p>
+</li>
+<li>
+<p>
+place any source files your integrator requires to that subdirectory
+</p>
+</li>
+<li>
+<p>
+create a Makefile.mk file there, based on example Makefile.mk files found with
+  other integrators (e.g., look at integrators/euler/Makefile.mk)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Your integrator must:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+derive from <em>integrator</em> class, and override one its virtual integrate()
+  methods.
+</p>
+</li>
+<li>
+<p>
+provide an <em>extern "C" integrator *create_XXXXX(const config &amp;cfg)</em>
+  function (where XXXX is the name of the integrator) that will return
+  an instance of the integrator when called. Example:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>// factory
+extern "C" integrator *create_gpu_euler(const config &amp;cfg)
+{
+        return new gpu_euler_integrator(cfg);
+}</tt></pre>
+</div></div>
+</li>
+</ul></div>
+</div>
+<h2 id="_existing_integrators_description_and_configuration_parameters">Existing integrators: description and configuration parameters</h2>
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+Hermite
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+h (real number)
+                Timestep of the integrator
+</p>
+</li>
+<li>
+<p>
+precision (integer)
+                1 == double precision, 3 == mixed precision
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Version 0.1<br />
+Last updated 2010-04-23 04:59:33 Eastern Daylight Time
+</div>
+</div>
+</body>
+</html>
