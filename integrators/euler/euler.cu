@@ -280,8 +280,14 @@ struct stop_on_ejection
 
 	stop_on_ejection(const config &cfg)
 	{
-		if(!cfg.count("rmax")) ERROR("Stopping condition 'stop_on_ejection' requires 'rmax' parameter.");
-		gpu_obj.rmax = atof(cfg.at("rmax").c_str());
+		if(!cfg.count("rmax"))
+		{
+			gpu_obj.rmax = std::numeric_limits<float>::max();
+		}
+		else
+		{
+			gpu_obj.rmax = atof(cfg.at("rmax").c_str());
+		}
 	}
 
 	void initialize(ensemble &ens)
