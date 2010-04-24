@@ -140,6 +140,22 @@ struct retval_t
 	int nrunning;
 };
 
+__device__ bool needs_output(ensemble &ens, double T, int sys)
+{
+	// simple output
+	return T >= ens.time_output(sys, 0);
+}
+
+template<typename L>
+__device__ void output_system(L &log, ensemble &ens, double T, int sys)
+{
+	// store the snapshot
+	log::system(log, ens, sys, T);
+
+	// set next stopping time
+	ens.time_output(sys, 0) += ens.time_output(sys, 1);
+}
+
 /*!
  \brief output if needed
  
@@ -153,15 +169,11 @@ template<typename L>
 __device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
 {
 	// simple output
-	if(T >= ens.time_output(sys, 0))
+	if(needs_output(ens, T, sys))
 	{
 //		debug_hook();
 
-		// store the snapshot
-		log::system(log, ens, sys, T);
-
-		// set next stopping time
-		ens.time_output(sys, 0) += ens.time_output(sys, 1);
+		output_system(log, ens, T, sys);
 	}
 }
 

@@ -12,6 +12,9 @@
 		if(dT == 0.) { return; } 
 	} 
  
+	// flush CPU/GPU output logs
+	log::flush(log::memory | log::if_full);
+
 	if(ens.nbod()==3) {
 		// execute the kernel
 		switch(prec){
@@ -154,5 +157,8 @@
 	return;
 	}
 	//printf("%s\n", cudaGetErrorString(cudaGetLastError())); 
+
+	// flush CPU/GPU output logs
+	log::flush(log::memory);
 };
 
