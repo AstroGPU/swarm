@@ -1,6 +1,7 @@
 #include "swarm.h"
 #include "euler.h"
 #include "swarmlog.h"
+#include <limits>
 
 /*
 
