@@ -96,6 +96,8 @@ EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
 LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
+DOCS_INPUT=README.txt docs/build_system.txt configuration_file.txt eventlog.txt for_developers.txt snapshotting.txt swarm_scatter_demo.txt	# all asciidoc documentation
+DOCS_OUTPUT=$(DOCS_INPUT:.txt=.html)				
 
 BIN=$(shell pwd)/bin
 
@@ -162,6 +164,14 @@ info:
 	@ echo APPS=$(APPS)
 	@ echo BIN=$(BIN)
 
+doc:    doc-asciidoc doc-doxygen
+
+doc-asciidoc: $(DOCS_OUTPUT)
+
+doc-doxygen: $(SOURCES)
+	doxygen 
+
+
 #
 # Build patterns
 #
@@ -214,3 +224,11 @@ ifneq ($(MAKECMDGOALS),tidy)
 -include src/autogen_dont_edit.cu_d
 endif
 endif
+
+#
+%.html:%.txt
+	asciidoc $<
+
+%.html:%.man
+	asciidoc $<
+
