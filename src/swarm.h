@@ -320,7 +320,7 @@ class ensemble
 		{
 			for (int sys = 0; sys != nsys(); sys++)
 			{
-				E[sys] = calc_total_energy(sys);
+			  E[sys] = calc_total_energy(sys);
 			}
 		}
 

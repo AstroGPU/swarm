@@ -2,7 +2,7 @@
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <meta name="generator" content="AsciiDoc 8.5.2" />
 <title>README for Swarm-NG</title>
 <style type="text/css">
@@ -568,8 +568,8 @@ Swarm-NG does not replicate these, but rather focuses on integrating an ensemble
 This is of partiular interest for astronomers who study the chaotic evolution of planetary systems.
 In the long term, we hope Swarm-NG will allow for the efficient parallel integration of user-defined systems of ordinary differential equations.</p></div>
 <div class="paragraph"><div class="title">What is included in April 2010 release of Swarm-NG 0.1?</div><p>This initial release contains GPU-based integrators for few-body systems, along with a draft of the public interface for setting initial conditions, calling the GPU-based integration algorithms and accessing the output data.  Small example programs are provided to demonstrate functionality and how to program with Swarm-NG.</p></div>
-<div class="paragraph"><div class="title">Quick Start Tips</div><p>Read link:doc/build_system.html for how to build the library and example programs.<br />
-Read link:doc/for_deveopers.html for an overview of how to write your own programs which build on Swarm-NG functionality.</p></div>
+<div class="paragraph"><div class="title">Quick Start Tips</div><p>Read <a href="doc/build_system.html">doc/build_system.html</a> for how to build the library and example programs.<br />
+Read <a href="doc/for_developers.html">doc/for_developers.html</a> for an overview of how to write your own programs which build on Swarm-NG functionality.</p></div>
 <h3 id="_buliding_the_swarm_ng_libraries_and_demo_programs">Buliding the Swarm-NG Libraries and Demo Programs</h3><div style="clear:left"></div>
 <div class="ulist"><div class="title">What hardware &amp; software is required to build &amp; run Swarm-NG?</div><ul>
 <li>
@@ -619,6 +619,38 @@ Anything else?
 </ul></div>
 <div class="paragraph"><div class="title">How do I build Swarm-NG for Linux? [Mario]</div><p>Run &#8216;make`.  Users can specify the paths to compiler, libaries, and include files, as well as compiler flags in the file <em>'Makefile.user</em>&#8217;.</p></div>
 <div class="paragraph"><div class="title">How do I build Swarm-NG for Windows? [Young In]</div><p>While we do not intend to support Swarm-NG for Windows, we can pass along some of the following tips.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Supported host compiler on Windows platform is The Microsoft Visual Studio compiler, cl.
+</p>
+</li>
+<li>
+<p>
+Supported build environments for nvcc on Windows are
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Windows DOS shell
+</p>
+</li>
+<li>
+<p>
+Windows CygWin shells, use nvcc&#8217;s drive prefix options.
+</p>
+</li>
+<li>
+<p>
+Windows MinGW shells, use nvcc&#8217;s drive prefix options.
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Although a variety of POSIX style shells is supported on Windows, nvcc will still
+assume the Microsoft Visual Studio compiler for host compilation. Use of gcc is not
+supported on Windows. You can find more information from <tt>/usr/local/cuda/doc/nvcc_3.0.pdf</tt></p></div>
 <div class="paragraph"><div class="title">How do I test Swarm-NG? [Mario]</div><p><tt>make test</tt></p></div>
 <h3 id="_demo_programs_authors_of_each_demo_code">Demo Programs [authors of each demo code]</h3><div style="clear:left"></div>
 <div class="paragraph"><div class="title">Commands to run demo codes</div><p>First, build the tutorials and demos with <tt>make</tt>.  Then, you can run the following demos from the tutorial.</p></div>
@@ -724,8 +756,8 @@ Must be many more!
 </li>
 </ul></div>
 <h3 id="_organization_of_swarm_ng">Organization of Swarm-NG</h3><div style="clear:left"></div>
+<div class="paragraph"><div class="title">Organization of files [Young In]</div><p>Swarm-NG has the following listing in the <strong>swarm</strong> directory.</p></div>
 <div class="listingblock">
-<div class="title">swarm directory listing</div>
 <div class="content">
 <pre><tt>  &lt;DIR&gt;     docs              <b>&lt;1&gt;</b>
   &lt;DIR&gt;     integrators       <b>&lt;2&gt;</b>
@@ -772,8 +804,8 @@ Must be many more!
 </p>
 </li>
 </ol></div>
-<div class="listingblock" id="anchor-d1">
-<div class="title">docs listing</div>
+<div class="paragraph" id="anchor-d1"><p><strong>docs</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>            build_system.txt  <b>&lt;1&gt;</b>
             eventlog.txt      <b>&lt;2&gt;</b>
@@ -802,8 +834,8 @@ snapshotting
 </p>
 </li>
 </ol></div>
-<div class="listingblock" id="anchor-d2">
-<div class="title">integrators listing</div>
+<div class="paragraph" id="anchor-d2"><p><strong>integrators</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>  &lt;DIR&gt;     euler                                      <b>&lt;1&gt;</b>
                  euler.cpp
@@ -896,8 +928,8 @@ verlet cpu
 </p>
 </li>
 </ol></div>
-<div class="listingblock" id="anchor-d3">
-<div class="title">run</div>
+<div class="paragraph" id="anchor-d3"><p><strong>run</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>           HD_82943.rvin
            integrator-acboley.cfg
@@ -908,8 +940,8 @@ verlet cpu
            integrator.cfg
            README</tt></pre>
 </div></div>
-<div class="listingblock" id="anchor-d4">
-<div class="title">scripts</div>
+<div class="paragraph" id="anchor-d4"><p><strong>scripts</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>  &lt;DIR&gt;    ic
               peaShooterGen.py             <b>&lt;1&gt;</b>
@@ -976,8 +1008,8 @@ verlet cpu
 </p>
 </li>
 </ol></div>
-<div class="listingblock" id="anchor-d5">
-<div class="title">src</div>
+<div class="paragraph" id="anchor-d5"><p><strong>src</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>  &lt;DIR&gt;    astro                                 <b>&lt;1&gt;</b>
                  BinaryStream.cpp
@@ -1040,8 +1072,8 @@ verlet cpu
            swarmquery.cpp                        <b>&lt;21&gt;</b>
            ThreeVector.hpp                       <b>&lt;22&gt;</b></tt></pre>
 </div></div>
-<div class="listingblock" id="anchor-d6">
-<div class="title">test</div>
+<div class="paragraph" id="anchor-d6"><p><strong>test</strong></p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>  &lt;DIR&gt;    swarm
                 filter
@@ -1226,7 +1258,7 @@ precision (integer)
 <div id="footer">
 <div id="footer-text">
 Version 0.1<br />
-Last updated 2010-04-23 04:59:33 Eastern Daylight Time
+Last updated 2010-04-24 12:16:39 Eastern Daylight Time
 </div>
 </div>
 </body>

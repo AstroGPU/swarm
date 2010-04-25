@@ -19,8 +19,8 @@ In the long term, we hope Swarm-NG will allow for the efficient parallel integra
 This initial release contains GPU-based integrators for few-body systems, along with a draft of the public interface for setting initial conditions, calling the GPU-based integration algorithms and accessing the output data.  Small example programs are provided to demonstrate functionality and how to program with Swarm-NG.  
 
 .Quick Start Tips
-Read link:doc/build_system.html for how to build the library and example programs. + 
-Read link:doc/for_deveopers.html for an overview of how to write your own programs which build on Swarm-NG functionality.
+Read link:doc/build_system.html[doc/build_system.html] for how to build the library and example programs. + 
+Read link:doc/for_developers.html[doc/for_developers.html] for an overview of how to write your own programs which build on Swarm-NG functionality.
 
 
 Buliding the Swarm-NG Libraries and Demo Programs
@@ -41,6 +41,17 @@ Run `make`.  Users can specify the paths to compiler, libaries, and include file
 
 .How do I build Swarm-NG for Windows? [Young In]
 While we do not intend to support Swarm-NG for Windows, we can pass along some of the following tips.
+
+* Supported host compiler on Windows platform is The Microsoft Visual Studio compiler, cl. 
+* Supported build environments for nvcc on Windows are 
+** Windows DOS shell
+** Windows CygWin shells, use nvcc's drive prefix options.
+** Windows MinGW shells, use nvcc's drive prefix options.
+
+Although a variety of POSIX style shells is supported on Windows, nvcc will still
+assume the Microsoft Visual Studio compiler for host compilation. Use of gcc is not
+supported on Windows. You can find more information from `/usr/local/cuda/doc/nvcc_3.0.pdf`
+
 
 .How do I test Swarm-NG? [Mario]
 `make test`
@@ -83,7 +94,7 @@ Organization of Swarm-NG
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .Organization of files [Young In]
-.swarm directory listing
+Swarm-NG has the following listing in the *swarm* directory. 
 ------------------------------
   <DIR>     docs              <1>
   <DIR>     integrators       <2>
@@ -108,8 +119,7 @@ Organization of Swarm-NG
 
 
 [[anchor-d1]]
-
-.docs listing
+*docs*
 ------------------------------
             build_system.txt  <1>
             eventlog.txt      <2>
@@ -124,7 +134,7 @@ Organization of Swarm-NG
 
 
 [[anchor-d2]]
-.integrators listing
+*integrators*
 ------------------------------
   <DIR>     euler                                      <1>
                  euler.cpp
@@ -188,7 +198,7 @@ Organization of Swarm-NG
 
 
 [[anchor-d3]]
-.run
+*run*
 ------------------------------
            HD_82943.rvin
            integrator-acboley.cfg
@@ -201,7 +211,7 @@ Organization of Swarm-NG
 ------------------------------
 
 [[anchor-d4]]
-.scripts
+*scripts*
 ------------------------------
   <DIR>    ic
               peaShooterGen.py             <1>
@@ -229,7 +239,7 @@ Organization of Swarm-NG
 
 
 [[anchor-d5]]
-.src
+*src*
 ------------------------------
   <DIR>    astro                                 <1>
                  BinaryStream.cpp
@@ -294,7 +304,7 @@ Organization of Swarm-NG
 ------------------------------
 
 [[anchor-d6]]
-.test
+*test*
 ------------------------------
   <DIR>    swarm
                 filter
