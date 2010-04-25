@@ -585,8 +585,97 @@ footnotes: function () {
 </dd>
 </dl></div>
 <h3 id="_overview_of_public_interface">Overview of public interface</h3><div style="clear:left"></div>
+<h4 id="_1_configuration_setting">1. Configuration setting</h4>
+<div class="paragraph"><p>Configuration can be either directly set or loaded from the cfg file.<br />
+Refer to <a href="configuration_file.html">configuration file</a> for the formats of parameters.</p></div>
+<div class="paragraph"><p><strong>setting</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  swarm::config cfg;
+  cfg["integrator"] = "gpu_hermite_adap";   // integrator name
+  cfg["time step"] = "0.0005";              // time step
+  cfg["time step factor"] = "0.0025";       // time step parameter for hermite_adap
+  cfg["precision"] = "1";                   // use double precision
+  cfg["output"] = "null";                   // store no output
+  cfg["output interval"] = "0.1";
+  cfg["rmax"] = "1000";
+  cfg["output interval"] = "0.1";
+  cfg["runon"] = "gpu";                     // whether to run on cpu or gpu (must match integrator)</tt></pre>
+</div></div>
+<div class="paragraph"><p><strong>loading</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  std::string icfgfn = argv[1];
+  swarm::config
+  swarm::load_config(cfg,icfgfn)</tt></pre>
+</div></div>
+<h4 id="_2_swarm_library_initialization">2. SWARM library initialization</h4>
+<div class="paragraph"><p>This is required before calling any (non-utility) swarm library function.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  swarm::init(cfg);</tt></pre>
+</div></div>
+<h4 id="_3_ensemble_initialization">3. Ensemble initialization</h4>
+<div class="paragraph"><p>Ensemble can be either initialzied or loaded on host to be used with integrators.</p></div>
+<div class="paragraph"><p><strong>initialization</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
+  unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
+  swarm::cpu_ensemble ens(nsystems, nbodyspersystem);</tt></pre>
+</div></div>
+<div class="paragraph"><p><strong>loading</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  std::string ensprefix;
+  swarm::get_config(ensprefix, cfg, "initial conditions");
+  swarm::cpu_ensemble ens;
+  swarm::load_ensemble(ensprefix, ens);</tt></pre>
+</div></div>
+<h4 id="_4_integrator_initialization">4. Integrator initialization</h4>
+<div class="paragraph"><p>Integrator can be initialized with configuration setting</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  std::auto_ptr&lt;integrator&gt; integ(integrator::create(cfg));</tt></pre>
+</div></div>
+<h4 id="_5_setting_end_times">5. Setting end times</h4>
+<div class="paragraph"><p>Set end times of integration, first output time, and snapshot interval</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  double Tend, Toutputstep;
+  swarm::get_config(Tend, cfg, "integration end");
+  swarm::get_config(Toutputstep, cfg, "output interval");
+  for(int sys = 0; sys != ens.nsys(); sys++)
+  {
+          ens.time_end(sys) = Tend;
+          ens.time_output(sys, 0) = ens.time(sys);        // output immediately on start
+          ens.time_output(sys, 1) = Toutputstep;          // output interval
+  }</tt></pre>
+</div></div>
+<h4 id="_6_performing_the_integration">6. Performing the integration</h4>
+<div class="paragraph"><p>GPU integrator needs data to be uploaded to GPU before the integration and downloaded to CPU after the integration.<br />
+CPU integrator doesn&#8217;t need &lt;1&gt; and &lt;2&gt;.</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  swarm::gpu_ensemble gpu_ens(ens);    <b>&lt;1&gt;</b>
+  integ-&gt;integrate(gpu_ens, dT);
+  ens.copy_from(gpu_ens);              <b>&lt;2&gt;</b></tt></pre>
+</div></div>
+<h4 id="_7_handling_output">7. Handling output</h4>
+<div class="paragraph"><p><strong>printing</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  print_selected_systems_for_demo(ens);</tt></pre>
+</div></div>
+<div class="paragraph"><p><strong>energy calculation</strong></p></div>
+<div class="listingblock">
+<div class="content">
+<pre><tt>  ens.calc_total_energy(&amp;energy_final[0]);</tt></pre>
+</div></div>
 <h3 id="_overview_of_private_interface">Overview of private interface</h3><div style="clear:left"></div>
+<div class="paragraph"><p>&#8230;</p></div>
 <h3 id="_how_to_add_your_own_integrator">How to add your own integrator</h3><div style="clear:left"></div>
+<div class="paragraph"><p>&#8230;</p></div>
 </div>
 <h2 id="_limitations_amp_bugs">LIMITATIONS &amp; BUGS</h2>
 <div class="sectionbody">
@@ -606,7 +695,7 @@ Free use of this software is granted under the terms of the GNU General Public L
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-04-23 13:47:05 Eastern Daylight Time
+Last updated 2010-04-24 13:47:09 Eastern Daylight Time
 </div>
 </div>
 </body>

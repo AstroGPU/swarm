@@ -31,7 +31,6 @@ namespace swarm {
 	void init(const config &cfg);
 
 class integrator;
-class event;
 class writer;
 class gpu_ensemble;
 class cpu_ensemble;
@@ -321,7 +320,7 @@ class ensemble
 		{
 			for (int sys = 0; sys != nsys(); sys++)
 			{
-				E[sys] = calc_total_energy(sys);
+			  E[sys] = calc_total_energy(sys);
 			}
 		}
 

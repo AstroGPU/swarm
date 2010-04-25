@@ -10,21 +10,15 @@ void print_selected_systems_for_demo(swarm::ensemble& ens);
 int main(int argc, const char **argv)
 {
   using namespace swarm;
+
+  srand(42u);   // Seed random number generator, so output is reproducible
+
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
-  cfg["integrator"] = "gpu_hermite_adap"; // integrator name
-  cfg["time step"] = "0.0005";       // time step
-  cfg["time step factor"] = "0.0025";         // time step parameter for hermite_adap
-  cfg["precision"] = "1";            // use double precision
-  // Parameters like rmax should be optional, not required
-  // If we can delete the next line, let's do that.
-  // It looks to me like only euler uses this.
-  //  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
-  cfg["output"] = "null";            // store no output
-  cfg["output interval"] = "0.1";
-  cfg["rmax"] = "1000";  
-  cfg["output interval"] = "0.1";
+  cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["runon"] = "gpu";             // whether to run on cpu or gpu (must match integrator)
+  cfg["time step"] = "0.0005";       // time step
+  cfg["precision"] = "1";            // use double precision
 
   std:: cerr << "Initialize the library\n";
   swarm::init(cfg);
@@ -41,8 +35,7 @@ int main(int argc, const char **argv)
   
 #if 1 // TO REMOVE ONCE WORKS AGAIN
   // Calculate energy at beginning of integration
-  std::vector<double> energy_init(ens.nsys()), energy_final(ens.nsys());
-  //  calc_total_energy(ens, &energy_init[0]);
+  std::vector<double> energy_init(ens.nsys());
   ens.calc_total_energy(&energy_init[0]);
 #endif
 
@@ -52,8 +45,7 @@ int main(int argc, const char **argv)
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
-  // Shouldn't this take care of it self?  If we can remove the next line, let's do it.
-  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
+  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
   
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
@@ -72,6 +64,7 @@ int main(int argc, const char **argv)
   
 #if 1 // TO REMOVE ONCE WORKS AGAIN
   // Check Energy conservation
+  std::vector<double> energy_final(ens.nsys());
   ens.calc_total_energy(&energy_final[0]);
   double max_deltaE = 0;
   for(int sysid=0;sysid<ens.nsys();++sysid)
@@ -113,8 +106,8 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens)
 	  double rmag = pow(1.4,bod-1);  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 	  double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
 	  double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
-	  x  = rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
-	  vx = vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
+	  x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
+	  vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);

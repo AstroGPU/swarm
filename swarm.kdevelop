@@ -10,17 +10,17 @@
     <projectname>swarm</projectname>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description/>
-    <defaultencoding/>
+    <description></description>
+    <defaultencoding></defaultencoding>
     <versioncontrol/>
   </general>
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarm</mainprogram>
-      <programargs>-s 0..3 -t 0.1..0.001 log.bin</programargs>
-      <globaldebugarguments>integrator.cfg</globaldebugarguments>
-      <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarm_test_energy</mainprogram>
+      <programargs>-s 5 log.bin</programargs>
+      <globaldebugarguments>log.bin</globaldebugarguments>
+      <globalcwd>/home/mjuric/projects/swarm/test-outputs/swarm/swarm-run.test/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
@@ -52,13 +52,13 @@
     <blacklist/>
     <build>
       <buildtool>make</buildtool>
-      <builddir/>
+      <builddir></builddir>
     </build>
     <other>
       <prio>0</prio>
-      <otherbin/>
-      <defaulttarget/>
-      <otheroptions/>
+      <otherbin></otherbin>
+      <defaulttarget></defaulttarget>
+      <otheroptions></otheroptions>
       <selectedenvironment>default</selectedenvironment>
       <environments>
         <default/>
@@ -66,12 +66,12 @@
     </other>
     <make>
       <abortonerror>false</abortonerror>
-      <numberofjobs>2</numberofjobs>
+      <numberofjobs>4</numberofjobs>
       <prio>0</prio>
       <dontact>false</dontact>
-      <makebin/>
-      <defaulttarget/>
-      <makeoptions/>
+      <makebin></makebin>
+      <defaulttarget></defaulttarget>
+      <makeoptions></makeoptions>
       <selectedenvironment>default</selectedenvironment>
       <environments>
         <default/>
@@ -80,11 +80,11 @@
   </kdevcustomproject>
   <kdevdebugger>
     <general>
-      <dbgshell/>
-      <gdbpath/>
-      <configGdbScript/>
-      <runShellScript/>
-      <runGdbScript/>
+      <dbgshell></dbgshell>
+      <gdbpath></gdbpath>
+      <configGdbScript></configGdbScript>
+      <runShellScript></runShellScript>
+      <runGdbScript></runGdbScript>
       <breakonloadinglibs>true</breakonloadinglibs>
       <separatetty>false</separatetty>
       <floatingtoolbar>false</floatingtoolbar>
@@ -157,8 +157,8 @@
       <includestyle>3</includestyle>
       <root>/usr/lib64/qt-3.3</root>
       <designerintegration>EmbeddedKDevDesigner</designerintegration>
-      <qmake></qmake>
-      <designer></designer>
+      <qmake>/usr/lib64/qt-3.3/bin/qmake</qmake>
+      <designer>/usr/lib64/qt-3.3/bin/designer</designer>
       <designerpluginpaths/>
     </qt>
     <codecompletion>
@@ -185,7 +185,7 @@
       <includePaths>.;</includePaths>
     </codecompletion>
     <creategettersetter>
-      <prefixGet/>
+      <prefixGet></prefixGet>
       <prefixSet>set</prefixSet>
       <prefixVariable>m_,_</prefixVariable>
       <parameterName>theValue</parameterName>
@@ -212,7 +212,7 @@
     </groups>
     <tree>
       <hidepatterns>*.o,*.lo,CVS</hidepatterns>
-      <hidenonprojectfiles>false</hidenonprojectfiles>
+      <hidenonprojectfiles>true</hidenonprojectfiles>
     </tree>
   </kdevfileview>
   <kdevdocumentation>

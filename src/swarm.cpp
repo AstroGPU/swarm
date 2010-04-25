@@ -1,4 +1,5 @@
 #include "swarm.h"
+#include "swarmlog.h"
 #include <memory>
 #include <iostream>
 
@@ -52,6 +53,9 @@ int main(int argc, const char **argv)
 		ens.time_output(sys, 0) = ens.time(sys);	// output immediately on start
 		ens.time_output(sys, 1) = Toutputstep;		// output interval
 	}
+
+	// log initial conditions
+	swarm::log::output_systems_needing_output(hlog, ens);
 
 	// perform the integration
 	std::cerr << "\nIntegrating... ";

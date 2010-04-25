@@ -17,12 +17,113 @@ Overview of namespaces
 
 Overview of public interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Configuration setting
+^^^^^^^^^^^^^^^^^^^^^^
+Configuration can be either directly set or loaded from the cfg file. +
+Refer to link:configuration_file.html[configuration file] for the formats of parameters.
+
+*setting*
+--------------------------------
+  swarm::config cfg;
+  cfg["integrator"] = "gpu_hermite_adap";   // integrator name
+  cfg["time step"] = "0.0005";              // time step
+  cfg["time step factor"] = "0.0025";       // time step parameter for hermite_adap
+  cfg["precision"] = "1";                   // use double precision
+  cfg["output"] = "null";                   // store no output
+  cfg["output interval"] = "0.1";
+  cfg["rmax"] = "1000";
+  cfg["output interval"] = "0.1";
+  cfg["runon"] = "gpu";                     // whether to run on cpu or gpu (must match integrator)
+--------------------------------
+
+*loading*
+--------------------------------
+  std::string icfgfn = argv[1];
+  swarm::config
+  swarm::load_config(cfg,icfgfn)
+--------------------------------
+
+2. SWARM library initialization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is required before calling any (non-utility) swarm library function.
+--------------------------------
+  swarm::init(cfg);
+--------------------------------
+
+3. Ensemble initialization
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Ensemble can be either initialzied or loaded on host to be used with integrators.
+
+*initialization*
+--------------------------------
+  unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;
+  unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
+  swarm::cpu_ensemble ens(nsystems, nbodyspersystem);
+--------------------------------
+
+*loading*
+--------------------------------
+  std::string ensprefix;
+  swarm::get_config(ensprefix, cfg, "initial conditions");
+  swarm::cpu_ensemble ens;
+  swarm::load_ensemble(ensprefix, ens);
+--------------------------------
+
+
+4. Integrator initialization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Integrator can be initialized with configuration setting
+--------------------------------
+  std::auto_ptr<integrator> integ(integrator::create(cfg));
+--------------------------------
+
+5. Setting end times
+^^^^^^^^^^^^^^^^^^^^
+Set end times of integration, first output time, and snapshot interval
+--------------------------------
+  double Tend, Toutputstep;
+  swarm::get_config(Tend, cfg, "integration end");
+  swarm::get_config(Toutputstep, cfg, "output interval");
+  for(int sys = 0; sys != ens.nsys(); sys++)
+  {
+          ens.time_end(sys) = Tend;
+          ens.time_output(sys, 0) = ens.time(sys);        // output immediately on start
+          ens.time_output(sys, 1) = Toutputstep;          // output interval
+  }
+--------------------------------
+
+6. Performing the integration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+GPU integrator needs data to be uploaded to GPU before the integration and downloaded to CPU after the integration. +
+CPU integrator doesn't need <1> and <2>. 
+--------------------------------
+  swarm::gpu_ensemble gpu_ens(ens);    <1>
+  integ->integrate(gpu_ens, dT);
+  ens.copy_from(gpu_ens);              <2>
+--------------------------------
+
+7. Handling output
+^^^^^^^^^^^^^^^^^^
+*printing*
+--------------------------------
+  print_selected_systems_for_demo(ens);
+--------------------------------
+*energy calculation*
+-----------------------------
+  ens.calc_total_energy(&energy_final[0]);
+-----------------------------
+
 
 Overview of private interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+
 
 How to add your own integrator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+
+
 
 LIMITATIONS & BUGS
 ------------------

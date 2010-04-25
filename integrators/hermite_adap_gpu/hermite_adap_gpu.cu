@@ -594,6 +594,85 @@ __device__  void UpdateAccJerkGeneral(real_hi * mPos, real_hi * mVel, real_lo* m
 
 __constant__ ensemble gpu_hermite_adap_ens;
 
+template<unsigned int pre, unsigned int nbod>
+	inline __device__ void store_to_gmem(
+		ensemble &ens,
+		const double T,
+		const int sys,
+		const typename gpu_hermite_adap_aux::pos_type<pre>::type mPos[3*nbod],
+		const typename gpu_hermite_adap_aux::pos_type<pre>::type mVel[3*nbod],
+		const typename gpu_hermite_adap_aux::acc_type<pre>::type mAcc[3*nbod],
+		const typename gpu_hermite_adap_aux::acc_type<pre>::type mJerk[3*nbod],
+		const typename gpu_hermite_adap_aux::pos_type<pre>::type mPosOld[3*nbod],
+		const typename gpu_hermite_adap_aux::pos_type<pre>::type mVelOld[3*nbod],
+		const typename gpu_hermite_adap_aux::acc_type<pre>::type mAccOld[3*nbod],
+		const typename gpu_hermite_adap_aux::acc_type<pre>::type mJerkOld[3*nbod]
+	)
+{
+	//update system time
+	ens.time(sys) = T;
+
+	//save data to global memory
+	if(nbod>0)
+	{
+	ens.x(sys,0)=mPos[0];
+	ens.y(sys,0)=mPos[1];
+	ens.z(sys,0)=mPos[2];
+	ens.vx(sys,0)=mVel[0];
+	ens.vy(sys,0)=mVel[1];
+	ens.vz(sys,0)=mVel[2];
+	}
+	if(nbod>1)
+	{
+	ens.x(sys,1)=mPos[3];
+	ens.y(sys,1)=mPos[4];
+	ens.z(sys,1)=mPos[5];
+	ens.vx(sys,1)=mVel[3];
+	ens.vy(sys,1)=mVel[4];
+	ens.vz(sys,1)=mVel[5];
+	}
+	if(nbod>2)
+	{
+	ens.x(sys,2)=mPos[6];
+	ens.y(sys,2)=mPos[7];
+	ens.z(sys,2)=mPos[8];
+	ens.vx(sys,2)=mVel[6];
+	ens.vy(sys,2)=mVel[7];
+	ens.vz(sys,2)=mVel[8];
+	}
+	if(nbod>3)
+	{
+	ens.x(sys,3)=mPos[9];
+	ens.y(sys,3)=mPos[10];
+	ens.z(sys,3)=mPos[11];
+	ens.vx(sys,3)=mVel[9];
+	ens.vy(sys,3)=mVel[10];
+	ens.vz(sys,3)=mVel[11];
+	}
+	if(nbod>4)
+	{
+	ens.x(sys,4)=mPos[12];
+	ens.y(sys,4)=mPos[13];
+	ens.z(sys,4)=mPos[14];
+	ens.vx(sys,4)=mVel[12];
+	ens.vy(sys,4)=mVel[13];
+	ens.vz(sys,4)=mVel[14];
+	}
+	if(nbod>5)
+	{
+	unsigned int idx = 15;
+	for(unsigned int plid=5;plid<nbod;++plid)
+                {
+                ens.x(sys,plid)=mPos[idx];
+                ens.vx(sys,plid)=mVel[idx]; ++idx;
+                ens.y(sys,plid)=mPos[idx];
+                ens.vy(sys,plid)=mVel[idx]; ++idx;
+                ens.z(sys,plid)=mPos[idx];
+                ens.vz(sys,plid)=mVel[idx]; ++idx;
+                }
+	}
+}
+
 /**
  * Hermite integrator kernel function
  *
@@ -789,69 +868,14 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 
 		T += dt;
 		ens.nstep(sys)++;
-	}
-	//update system time
-	ens.time(sys) = T;
 
-	//save data to global memory
-	if(nbod>0)
-	{
-	ens.x(sys,0)=mPos[0];
-	ens.y(sys,0)=mPos[1];
-	ens.z(sys,0)=mPos[2];
-	ens.vx(sys,0)=mVel[0];
-	ens.vy(sys,0)=mVel[1];
-	ens.vz(sys,0)=mVel[2];
+		if(log::needs_output(ens, T, sys))
+		{
+			store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
+			log::output_system(dlog, ens, T, sys);
+		}
 	}
-	if(nbod>1)
-	{
-	ens.x(sys,1)=mPos[3];
-	ens.y(sys,1)=mPos[4];
-	ens.z(sys,1)=mPos[5];
-	ens.vx(sys,1)=mVel[3];
-	ens.vy(sys,1)=mVel[4];
-	ens.vz(sys,1)=mVel[5];
-	}
-	if(nbod>2)
-	{
-	ens.x(sys,2)=mPos[6];
-	ens.y(sys,2)=mPos[7];
-	ens.z(sys,2)=mPos[8];
-	ens.vx(sys,2)=mVel[6];
-	ens.vy(sys,2)=mVel[7];
-	ens.vz(sys,2)=mVel[8];
-	}
-	if(nbod>3)
-	{
-	ens.x(sys,3)=mPos[9];
-	ens.y(sys,3)=mPos[10];
-	ens.z(sys,3)=mPos[11];
-	ens.vx(sys,3)=mVel[9];
-	ens.vy(sys,3)=mVel[10];
-	ens.vz(sys,3)=mVel[11];
-	}
-	if(nbod>4)
-	{
-	ens.x(sys,4)=mPos[12];
-	ens.y(sys,4)=mPos[13];
-	ens.z(sys,4)=mPos[14];
-	ens.vx(sys,4)=mVel[12];
-	ens.vy(sys,4)=mVel[13];
-	ens.vz(sys,4)=mVel[14];
-	}
-	if(nbod>5)
-	{
-	unsigned int idx = 15;
-	for(unsigned int plid=5;plid<nbod;++plid)
-                {
-                ens.x(sys,plid)=mPos[idx];
-                ens.vx(sys,plid)=mVel[idx]; ++idx;
-                ens.y(sys,plid)=mPos[idx];
-                ens.vy(sys,plid)=mVel[idx]; ++idx;
-                ens.z(sys,plid)=mPos[idx];
-                ens.vz(sys,plid)=mVel[idx]; ++idx;
-                }
-	}
+	store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
 }
 
 
