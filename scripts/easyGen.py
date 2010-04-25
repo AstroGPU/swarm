@@ -12,7 +12,7 @@ import random as R
 # Hill radius criterion
 #
 # 
-nSystems=1000
+nSystems=1024
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
 massMax=0.01 # 10 Jupiter mass max
