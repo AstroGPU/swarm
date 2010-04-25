@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-#    "swarm_adap.py" is a python script that creates initial conditions and the observation
-#    file for use in swarm_adap.
-#    "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
+#    "swarm_scatter_demo.py" is a python script that creates initial conditions and the observation
+#    file for use in swarm_scatter_demo.
+#    "swarm_scatter_demo" is a program that uses the Swarm-NG tools for modeling an ensemble of
 #    small N systems using the hermite_adap_gpu integrator.
 #    Copyright (C) 2010  Swarm-NG Development Group
 #
@@ -51,7 +51,7 @@ timeStart=0.
 timeEnd=1e3 # time should be given in yr.
 incomingR=20626.5 # AU
 maxUnperturbedImpact=1000. # AU
-numObs=1000 # number of observations allowed
+numObs=100 # number of observations allowed
 ObserveFile="observeTimes.dat"
 VelSig=1./29.8 #(1km/s in code units) This is mean of Maxwellian velocity dispersion
 RANDOM_TIMES=0
@@ -89,11 +89,11 @@ def createObservingFile():
                 obsTimes.sort()
         else:
                 dt=(timeEnd-timeStart)/float(numObs)
-                for i in xrange(1,numObs):
+                for i in xrange(1,numObs+1):
                         obsTimes.append(timeStart+i*dt)
 
         f=open(ObserveFile,"w")
-        for i in xrange(numObs):
+        for i in xrange(numObs+1):
                 f.write(repr(obsTimes[i])+"\n")
         f.close()
         return 0

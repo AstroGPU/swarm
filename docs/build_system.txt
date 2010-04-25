@@ -32,7 +32,7 @@ Author: mjuric
   compile in device emulation mode).
 
 * To disable the 'pretty printing' during the build process, define
-  VERBOSE=1 in your Makefile.user (or the environment)
+  VERBOSE=1 in your Makefile.user (or the environment).
 
 
 =========================
@@ -47,17 +47,17 @@ Author: mjuric
     * To build the core swarm code into a shared library (bin/libswarm.so)
 
     * To build various applications using the swarm code (e.g., swarm -- the
-      integrator, swarmdump -- output file inspector, etc.).
+      integrator, swarmdump -- output file inspector, etc.)
 
     * To help the developer by tracking dependencies and rebuilding the code
-      as needed
+      as needed.
 
 * To build libswarm.so, the Makefile:
  
     * Includes Makefiles matching integrators/*/Makefile.mk pattern.
       These files should add any integrator-specific sources to
       LIBSWARM_CUDA (.cu files) or LIBSWARM_SOURCES (.cpp files).  See the
-      text on top of, e.g.  integrators/euler/Makefile.mk for more
+      text on top of, e.g., integrators/euler/Makefile.mk for more
       instructions
 
     * Concatenates all .cu files (the ones from LIBSWARM_CUDA) into a single
