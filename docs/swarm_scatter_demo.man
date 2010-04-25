@@ -73,6 +73,7 @@ where integrator-scatter.cfg contains
 ___________________________________
 # swarm_scatter_demo cfg parameters
 initial conditions = ../scripts/ic/data
+list of times = ../scripts/ic/observeTimes.dat
 
 #integration
 integrator = gpu_hermite_adap
@@ -91,6 +92,10 @@ output = null
 out files = ../scatter_output/scatter
 ____________________________________
 
+OUTPUT
+______
+
+The current output for swarm_scatter_demo writes a single line per system observation time, as specified by the list of times file.  On that line the data are ordered: time, (m_i, x_i, y_i, z_i, vx_i, vy_i, vz_i [0,nbod)), total energy.
 
 LIMITATIONS & BUGS
 __________________

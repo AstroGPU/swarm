@@ -84,8 +84,8 @@ behind it are quite simple:
   printfs)).  This method is called whenever the event buffer is flushed
   (more below).
 
-  The argument, an ieventstream object, provides a istream-like interface to
-  the eventlog.  Example: if you stored the following event (eg., either in
+  The argument, an ieventstream object, provides an istream-like interface to
+  the eventlog.  Example: if you stored the following event (e.g., either in
   GPU code, or CPU code, doesn't matter):
 
     #define EVT_MYEVENT 1
