@@ -96,8 +96,11 @@ EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
 LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
-DOCS_INPUT=README.txt docs/build_system.txt configuration_file.txt eventlog.txt for_developers.txt snapshotting.txt swarm_scatter_demo.txt	# all asciidoc documentation
-DOCS_OUTPUT=$(DOCS_INPUT:.txt=.html)				
+DOC_INPUT=README.txt docs/build_system.txt docs/configuration_file.txt docs/for_developers.txt 	# asciidoc general documentation
+# Need to add following, once converted to asciidoc:  docs/eventlog.txt  docs/snapshotting.txt 
+MAN_INPUT=docs/swarm_scatter_demo.man docs/swarm_tutorial_montecarlo.man   # asciidoc man page documentation
+DOC_OUTPUT=$(DOC_INPUT:.txt=.html)
+MAN_OUTPUT=$(MAN_INPUT:.man=.html)
 
 BIN=$(shell pwd)/bin
 
@@ -136,6 +139,9 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 # Utilities
 #
 
+clean-doc:
+	rm -rf reference; rm -f README.html docs/*.html
+
 clean-test:
 	$(CLEANUI) rm -rf test-outputs
 
@@ -166,9 +172,9 @@ info:
 
 doc:    doc-asciidoc doc-doxygen
 
-doc-asciidoc: $(DOCS_OUTPUT)
+doc-asciidoc: $(DOC_OUTPUT) $(MAN_OUTPUT)
 
-doc-doxygen: $(SOURCES)
+doc-doxygen: Doxyfile $(SOURCES) 
 	doxygen 
 
 
@@ -215,6 +221,12 @@ bin/Makefile.d: Makefile
 		| sed 's,//,/,g' \
 		 > $@
 
+# Rules for generating html version of AsciiDoc documentation
+%.html: %.txt
+	asciidoc $<
+
+%.html: %.man
+	asciidoc $<
 
 # Include all auto-generated dependencies, unless we're clean-ing or tidy-ing
 #  (see http://ftp.gnu.org/old-gnu/Manuals/make-3.79.1/html_node/make_88.html )
@@ -225,10 +237,4 @@ ifneq ($(MAKECMDGOALS),tidy)
 endif
 endif
 
-#
-%.html:%.txt
-	asciidoc $<
-
-%.html:%.man
-	asciidoc $<
 
