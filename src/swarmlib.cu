@@ -178,7 +178,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
-		log::output_if_needed(dlog, ens, T, sys);
+		log::output_system_if_needed(dlog, ens, T, sys);
 
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tstop, stop, stop_ts, step);
@@ -186,7 +186,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		step++;
 	}
 	ens.nstep(sys) += step;
-	log::output_if_needed(dlog, ens, T, sys);
+	log::output_system_if_needed(dlog, ens, T, sys);
 
 	ens.time(sys) = T;
 }

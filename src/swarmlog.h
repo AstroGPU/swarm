@@ -191,8 +191,16 @@ namespace swarm
 			// store the snapshot
 			log::system(log, ens, sys, T);
 		
-			// set next stopping time
-			ens.time_output(sys, 0) += ens.time_output(sys, 1);
+			// set next stopping time -- find the next multiple
+			// of dT closest to the current time, unless it's greater than
+			// Tend, in which case set Tout = Tend.
+			// If the current time is within 0.01% of a multiple of dT, 
+			// set the _next_ multiple as the output time (otherwise
+			// we'd have two outputs with practically equal times).
+			const real_time &dT = ens.time_output(sys, 1);
+			real_time &Tout = ens.time_output(sys, 0);
+			Tout += ceil((T - Tout) / dT + 1e-4) * dT;
+			if(Tout > ens.time_end(sys)) { Tout = ens.time_end(sys); }
 		}
 		
 		/*!
@@ -205,7 +213,7 @@ namespace swarm
 		@param[in] sys
 		*/
 		template<typename L>
-		__host__ __device__ void output_if_needed(L &log, swarm::ensemble &ens, double T, int sys)
+		__host__ __device__ void output_system_if_needed(L &log, swarm::ensemble &ens, double T, int sys)
 		{
 			// simple output
 			if(needs_output(ens, T, sys))
@@ -216,6 +224,17 @@ namespace swarm
 			}
 		}
 
+		template<typename L>
+		__host__ __device__ void output_systems_needing_output(L &log, swarm::ensemble &ens)
+		{
+			for(int sys = 0; sys != ens.nsys(); sys++)
+			{
+				real_time T = ens.time(sys);
+				if(!needs_output(ens, T, sys)) { continue; }
+
+				output_system(log, ens, T, sys);
+			}
+		}
 	}
 }
 

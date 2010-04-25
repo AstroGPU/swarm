@@ -307,7 +307,7 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	      ens.time( sys ) += hh;
 	      ens.nstep(sys)++;
 
-		log::output_if_needed(hlog, ens, ens.time(sys), sys);
+		log::output_system_if_needed(hlog, ens, ens.time(sys), sys);
 	    }
 	} // end loop over systems
 
