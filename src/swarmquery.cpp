@@ -223,6 +223,7 @@ int main(int argc, char **argv)
 	if (vm.count("time")) { T = vm["time"].as<time_range_t>(); }
 	if (vm.count("system")) { sys = vm["system"].as<sys_range_t>(); }
 
+        std::cout.flush(); 
 	std::cerr << "Printing outputs satisfying T=" << T << " sys=" << sys << "\n";
 
 	std::string datafile(vm["datafile"].as<std::string>());

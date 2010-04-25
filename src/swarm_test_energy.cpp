@@ -84,13 +84,13 @@ int main(int argc, char **argv)
 	std::valarray<double> dEoverE = Efinal / Einit - 1.;
 	std::vector<int > idx; idx.reserve(ens.nsys());
 	for (int i = 0; i != ens.nsys(); i++) idx.push_back(i);
-	std::sort(idx.begin(), idx.end(), energy_sorter(dEoverE));
+	std::stable_sort(idx.begin(), idx.end(), energy_sorter(dEoverE));
 	printf("\nSystems with worst energy conservation:\n");
 	for (unsigned int i = 0;i < nprint;++i)
 		write_output(ens, idx[i], Einit, Efinal);
 
 	// find systems with smallest end-of-integration time
-	std::sort(idx.begin(), idx.end(), time_sorter(ens));
+	std::stable_sort(idx.begin(), idx.end(), time_sorter(ens));
 	printf("\nSystems that ended earliest:\n");
 	for (unsigned int i = 0;i < nprint;++i)
 		write_output(ens, idx[i], Einit, Efinal);
