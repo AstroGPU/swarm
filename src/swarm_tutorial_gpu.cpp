@@ -11,8 +11,7 @@ int main(int argc, const char **argv)
 {
   using namespace swarm;
 
-  // Seed random number generator, so output is reproducible
-  srand(42u);
+  srand(42u);   // Seed random number generator, so output is reproducible
 
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
@@ -36,8 +35,7 @@ int main(int argc, const char **argv)
   
 #if 1 // TO REMOVE ONCE WORKS AGAIN
   // Calculate energy at beginning of integration
-  std::vector<double> energy_init(ens.nsys()), energy_final(ens.nsys());
-  //  calc_total_energy(ens, &energy_init[0]);
+  std::vector<double> energy_init(ens.nsys());
   ens.calc_total_energy(&energy_init[0]);
 #endif
 
@@ -47,8 +45,7 @@ int main(int argc, const char **argv)
   std::cerr << "Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
-  // Shouldn't this take care of it self?  If we can remove the next line, let's do it.
-  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends -- effectively disable the outputs (not all integrators support this)
+  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
   
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
@@ -67,6 +64,7 @@ int main(int argc, const char **argv)
   
 #if 1 // TO REMOVE ONCE WORKS AGAIN
   // Check Energy conservation
+  std::vector<double> energy_final(ens.nsys());
   ens.calc_total_energy(&energy_final[0]);
   double max_deltaE = 0;
   for(int sysid=0;sysid<ens.nsys();++sysid)

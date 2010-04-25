@@ -8,7 +8,6 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
-#include <iostream>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
