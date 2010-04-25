@@ -48,13 +48,13 @@ OPTIONAL PARAMETERS
    File name that contains the list of times for which output will be generated.  Specifying this option will supersede the command line option ''-obs <observation filename>''.
 
 ''output'':: 
-   Specifies files to be used for built-in GPU logging.  _Only some integrators support this option at this time_.
+   Specifies files to be used for built-in GPU logging.  _Only some integrators support this option at this time_. See *eventlog* for more information.
 
 ''out files''::
    File prefix, including the directory, for the output files.  Specifying this option will supersede the command line option ''-ics <output filename prefix>''.
 
 ''output interval''::
-   Specifies how often data should be logged using the built-in GPU logging. _Only some integrators support this option at this time_.
+   Specifies how often data should be logged using the built-in GPU logging. _Only some integrators support this option at this time_. See *eventlog* for more information.
 
 ''rmax''::
    Stop integration once a body reaches a distance greater than ''rmax''. _Only some integrators support this option at this time_.
