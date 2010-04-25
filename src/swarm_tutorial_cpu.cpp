@@ -10,21 +10,16 @@ void print_selected_systems_for_demo(swarm::ensemble& ens);
 int main(int argc, const char **argv)
 {
   using namespace swarm;
+
+  // Seed random number generator, so output is reproducible
+  srand(42u);
+
   std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
   cfg["integrator"] = "cpu_hermite"; // integrator name
-  cfg["time step"] = "0.0005";       // time step
-  cfg["time step factor"] = "0.0025";// time step parameter for hermite_adap
-  cfg["precision"] = "1";            // use double precision
-  // Parameters like rmax should be optional, not required
-  // If we can delete the next line, let's do that.
-  // It looks to me like only euler uses this.
-  //  cfg["rmax"] = "1000";              // count the planet as "ejected" if it ventures beyond this radius (not all integrators support this)
-  cfg["output"] = "null";            // store no output
-  cfg["output interval"] = "0.1";
-  cfg["rmax"] = "1000";  
-  cfg["output interval"] = "0.1";
   cfg["runon"] = "cpu";             // whether to run on cpu or gpu (must match integrator)
+  cfg["time step"] = "0.0005";       // time step
+  cfg["precision"] = "1";            // use double precision
 
   std:: cerr << "Initialize the library\n";
   swarm::init(cfg);
@@ -104,8 +99,8 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens)
 	  double rmag = pow(1.4,bod-1);  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 	  double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
 	  double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
-	  x  = rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
-	  vx = vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
+	  x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
+	  vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
@@ -119,7 +114,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
   using namespace swarm;
   std::streamsize cout_precision_old = std::cout.precision();    // Restore prcission of cout before calling this function
   std::cout.precision(10);  // Print at higher precission
-  unsigned int nprint = 1;  // Limit output to first nprint system(s)
+  unsigned int nprint = 4;  // Limit output to first nprint system(s)
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
       std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << " nsteps= " << ens.nstep(systemid) << "\n";

@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -321,7 +322,7 @@ class ensemble
 		{
 			for (int sys = 0; sys != nsys(); sys++)
 			{
-				E[sys] = calc_total_energy(sys);
+			  E[sys] = calc_total_energy(sys);
 			}
 		}
 
