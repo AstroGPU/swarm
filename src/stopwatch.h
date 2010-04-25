@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-// Based on NVIDIA's LinuxStopWatch class
+/// Class for benchmarking cpu & gpu performance.  Based on NVIDIA's LinuxStopWatch class
 class stopwatch
 {
 protected:
@@ -25,15 +25,15 @@ public:
 		clock_sessions(0)
 	{ }
 
-	// Start time measurement
+	/// Start time measurement
 	void start()
 	{
 		gettimeofday( &start_time, 0);
 		running = true;
 	}
 
-	// Stop time measurement and increment add to the current diff_time summation
-	// variable. Also increment the number of times this clock has been run.
+	/// Stop time measurement and increment add to the current diff_time summation
+	/// variable. Also increment the number of times this clock has been run.
 	void stop()
 	{
 		diff_time = getDiffTime();

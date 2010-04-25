@@ -28,9 +28,10 @@ inline __device__ uint32_t threadId()
 }
 
 /*!
-  \brief Computes the global linear ID of the thread. Used from kernels.
+  \brief Computes the number of threads per block for 1D or 3D grid. Used from kernels.
 
   NOTE: Supports 3D grids with 1D blocks of threads
+  @return threadsPerBlock
 */
 inline __device__ uint32_t threadsPerBlock()
 {
@@ -348,7 +349,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	log::flush(log::memory);
 }
 
-/// check a parameter is power of two
+/// return true if input parameter is a power of two
 inline bool is_power_of_two(int x) { return !(x & (x-1)); }
 
 /*!
@@ -409,7 +410,7 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 			V3 dv(ens.vx(sys,j),ens.vy(sys,j),ens.vz(sys,j)); dv -= vi;
 			real r2 = dx.MagnitudeSquared();
 			real rv = dot ( dx,dv );
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rv *= 3./r2;
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
@@ -457,7 +458,7 @@ __device__ void compute_acc(ensemble &ens, const int sys, const cuxDevicePtr<rea
 
 			V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
 			real r2 = dx.MagnitudeSquared();
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
 

@@ -25,6 +25,7 @@
 #include <sstream>
 #endif
 
+/// The main namespace for the Swarm-NG library
 namespace swarm {
 
 	typedef std::map<std::string, std::string> config;

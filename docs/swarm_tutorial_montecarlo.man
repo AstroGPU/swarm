@@ -1,0 +1,191 @@
+swarm_tutorial_montecarlo(1)
+============================
+
+NAME
+---- 
+swarm_tutorial-montecarlo - Performs many n-body integrations with initial conditions chosen by Monte Carlo.  
+The demo code also uses the swarm utilities copy_from and accessor functions for formatting data output.
+
+SYMPOSIS
+--------
+*swarm_tutorial-montecarlo* CONFIG_FILE
+Several parameters must be specified in the configuration file.  
+
+Description
+-----------
+The configuration file specifieds several parameters.
+Each parameter appears on its own line with the format: +
+''key = value''
+
+REQUIRED PARAMETERS
+~~~~~~~~~~~~~~~~~~~
+
+''integrator''::
+   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+
+''runon''::
+   Must specify either ''gpu'' or ''cpu''.  In the initial release, the values of runout and integrator must match.  In future relases, the CPU and GPU integrators may be merged
+
+''precision''::
+   Must specify the precision for the integrations.  0 results in single precision and 1 in double.  Some integrators support additional values, which allows for mixed-precision calculations.  For example, gpu_hermite and gpu_hermite_adap allow a value of 2, which calculates positions and velocities in double precision, but accelerations and jerks are calculated in single precision.
+
+And either 'time step' or 'time step factor' and 'min time step'.
+''time step''::
+  For the fixed time stepping, ''time step'' is the constant time step.
+''time step factor''::
+   For adaptive time stepping, ''time step factor'' is the fraction of the timescale used in determining the time step.  
+
+''min time step''::
+   For adaptive time stepping, ''min time step'' is the minimum time step allowed.
+
+''num_systems''::
+Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.
+
+''num_bodies''::
+Must specify a positive integer number of bodies in each system. In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.
+
+
+PARAMETERS TO SPECIFY INITIAL CONDITIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Users specify initial conditions to swarm_tutorial_montecarlo in terms of the mass of a central body and Keplerian orbital elements for each of 2-9 additional bodies.
+
+''use_jacobi''::
+A non-zero value specifies that all orbital elements are to be interpretted in a Jacobi frame. Default value is 0 (false).
+
+''mass_star''::
+The mass of body zero, the central object. For planetary systems, this is typically the host star. Default value is 1.
+
+''mass_[1-9]''::
+The mass of the specified body. Valid range is [0,mass_star). (Body #0 is the central body.)
+
+''a_[1-9]''::
+The initial semi-major axis of the specified body. Valid range is [0.001,10000.].
+
+''ecc_[1-9]''::
+The initial eccentricicty of the specified body. Valid range is [0,1).
+
+''inc_[1-9]''::
+The initial inclination of the specified body in degrees. Valid range is [-180,180].
+
+''node_[1-9]''::
+The initial ascending node of the specified body in degrees. Valid range is [-720,720].
+
+''omega_[1-9]''::
+The initial arguement of periastron of the specified body in degrees. Valid range is [-720,720].
+
+''meananom_[1-9]''::
+The initial mean anomaly of the specified body in degrees. Valid range is [-720,720].
+
+Using only the above keywords would result in all systems being assigned the same initial conditions. While this may be useful for some tests, most real calculations will want to assign different initial conditions to each system. To generate initial conditions via a pseudo-random number generator, replace at least one of the above key names for the mass and orbital elements of one or more bodies with a similar keyword, but with one or more of the following suffixes: '_min', '_max', and '_sigma'.
+
+If only key_N_min and key_N_max are specified, then key for the Nth body will be generated from a uniform distribution between the minimum and maximum values.
+
+If key_N and key_N_sigma are specified, then key for the Nth body will be generated from a Gaussian distribution with mean key_N and standard deviation key_N_sigma. If key_N_min and/or key_N_max are also specified, then the distribution will be truncated at these values.
+
+If only key_N is specified, then key for the Nth body will be exactly the specified value.
+
+Other combinations of key suffixes are not allowed.
+
+
+OPTIONAL PARAMETERS
+~~~~~~~~~~~~~~~~~~~
+''time_init''::
+Initial time for all simulations. Default value is 0.
+
+''rmax''::
+   Stop integration once a body reaches a distance greater than ''rmax''. _Only some integrators support this option at this time_.
+
+''output'':: 
+   Specifies files to be used for built-in GPU logging.  _Only some integrators support this option at this time_. See *eventlog* for more information.
+
+''out files''::
+   File prefix, including the directory, for the output files.  _Only some integrators support this option at this time_. See *eventlog* for more information.
+
+''output interval''::
+   Specifies how often data should be logged using the built-in GPU logging. _Only some integrators support this option at this time_. See *eventlog* for more information.
+
+''threads per block''::
+   Specifies how many threads the GPU uses per block. _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
+
+
+
+EXAMPLE
+-------
+
+''make; cd run; ../bin/swarm_tutorial_montecarlo integrator-tutorial_montecarlo.cfg''
+where integrator-tutorial_montecarlo.cfg contains
+
+[literal]
+-------------------------------------
+# swarm_tutorial_montecarlo parameters
+num_systems = 15360
+integrator = gpu_hermite
+runon = gpu
+integration end = 10.
+
+# Integrator-specific parameters
+time step = 0.0005
+precision = 1
+
+# Initial Conditions
+time_init = 0.
+use_jacobi = 1
+mass_star = 1.
+mass_1 = 0.001
+mass_1_sigma = 0.
+mass_1_min = 0.
+mass_1_max = 0.01
+a_1 = 1.
+ecc_1 = 0.
+inc_1 = 90.
+node_1 = 0.
+omega_1 = 0.
+meananom_1_min = 0.
+meananom_1_max = 360.
+
+mass_2 = 0.001
+mass_2_sigma = 0.
+mass_2_min = 0.
+mass_2_max = 0.01
+a_2 = 1.31
+a_2_sigma = 0.01
+a_2_min = 1.29
+a_2_max = 1.33
+ecc_2 = 0.
+inc_2 = 90.
+node_2 = 0.
+omega_2 = 0.
+meananom_2_min = 0.
+meananom_2_max = 360.
+
+# GPU kernel configuration
+threads per block = 64
+
+# Output parameters
+output = null
+output interval = 0.1
+-------------------------------------
+
+
+OUTPUT
+------
+
+See *eventlog* for more information.
+
+
+LIMITATIONS & BUGS
+------------------
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated information on bugs.
+
+RESOURCES
+---------
+
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+COPYING
+-------
+Copyright \(C) 2008-2010 Eric B. Ford + 
+Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+
