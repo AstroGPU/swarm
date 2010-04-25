@@ -47,8 +47,7 @@ namespace gpu_hermite_adap_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-// Adaptive time step algorithm. 
-
+// Adaptive time step algorithm. Placed directly in the kernel for now
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
  {
@@ -56,16 +55,16 @@ inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real
          real_hi JoAR=0.,VoPR=0.;
          for(unsigned int i=0;i<nBodies;++i) 
           {
-                JoAR+=(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) /
-                      (pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
+                JoAR+=( mJerk[i*3]*mJerk[i*3]+mJerk[i*3+1]*mJerk[i*3+1]+mJerk[i*3+2]*mJerk[i*3+2] ) /
+                      (  mAcc[i*3]*mAcc[i*3] + mAcc[i*3+1]*mAcc[i*3+1] + mAcc[i*3+2]*mAcc[i*3+2] ) ;
                 for (unsigned int j=0;j<nBodies;++j)
                 {
-                        if(i==j)continue;
-                        VoPR+=(pow(mVel[i*3]-mVel[j*3],2)+pow(mVel[i*3+1]-mVel[j*3+1],2)+pow(mVel[i*3+2]-mVel[j*3+2],2) ) /
-                              (pow(mPos[i*3]-mPos[j*3],2)+pow(mPos[i*3+1]-mPos[j*3+1],2)+pow(mPos[i*3+2]-mPos[j*3+2],2) ) ;
+                        if(i==j)break;
+                        VoPR+=((mVel[i*3]-mVel[j*3])*(mVel[i*3]-mVel[j*3])+(mVel[i*3+1]-mVel[j*3+1])*(mVel[i*3+1]-mVel[j*3+1])+(mVel[i*3+2]-mVel[j*3+2])*(mVel[i*3+2]-mVel[j*3+2]) ) /
+                              ((mPos[i*3]-mPos[j*3])*(mPos[i*3]-mPos[j*3])+(mPos[i*3+1]-mPos[j*3+1])*(mPos[i*3+1]-mPos[j*3+1])+(mPos[i*3+2]-mPos[j*3+2])*(mPos[i*3+2]-mPos[j*3+2]) ) ;
                 }
           }
-         dt=(RSQRT(JoAR+VoPR)*stepfac+h);
+         dt=RSQRT(JoAR+VoPR)*stepfac+h;
          return dt;
  }
 
@@ -797,6 +796,8 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
 
+        typename pos_type<pre>::type hh=h;
+        typename pos_type<pre>::type sstepfac=stepfac;
 	while(T<Tend)
 	{
 
@@ -805,9 +806,7 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
-                typename pos_type<pre>::type hh=h;
-                typename pos_type<pre>::type sstepfac=stepfac;
-
+		// get adaptive time step
                 dt=getAdaptiveTimeStep<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], hh, sstepfac);
                 if(dt+T>Tend)dt=Tend-T;
  
