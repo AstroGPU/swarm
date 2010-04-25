@@ -12,15 +12,15 @@
     <absoluteprojectpath>false</absoluteprojectpath>
     <description></description>
     <defaultencoding></defaultencoding>
-    <versioncontrol></versioncontrol>
+    <versioncontrol/>
   </general>
   <kdevcustomproject>
     <run>
       <directoryradio>executable</directoryradio>
-      <mainprogram>/home/mjuric/projects/swarm/bin/swarmquery</mainprogram>
+      <mainprogram>/home/mjuric/projects/swarm/bin/swarm_test_energy</mainprogram>
       <programargs>-s 5 log.bin</programargs>
-      <globaldebugarguments>-s 0..3 -t 0.1..0.001 log.bin</globaldebugarguments>
-      <globalcwd>/home/mjuric/projects/swarm/run/</globalcwd>
+      <globaldebugarguments>log.bin</globaldebugarguments>
+      <globalcwd>/home/mjuric/projects/swarm/test-outputs/swarm/swarm-run.test/</globalcwd>
       <useglobalprogram>false</useglobalprogram>
       <terminal>false</terminal>
       <autocompile>true</autocompile>
@@ -217,9 +217,9 @@
   </kdevfileview>
   <kdevdocumentation>
     <projectdoc>
-      <docsystem></docsystem>
-      <docurl></docurl>
-      <usermanualurl></usermanualurl>
+      <docsystem/>
+      <docurl/>
+      <usermanualurl/>
     </projectdoc>
   </kdevdocumentation>
 </kdevelop>
