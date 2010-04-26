@@ -388,7 +388,12 @@ div#toc a:visited { color: blue; }
 </div>
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-<div class="paragraph"><div class="title">What is configuration file?</div><p>The configuration file specifies several parameters. Examples are located at <tt>run/integrator.cfg</tt></p></div>
+<div class="paragraph"><div class="title">What is a configuration file?</div><p>The configuration file specifies several parameters, including:
+- choice of integrator
+- parameters to integrator
+- parameters to output logging system
+For some programs, the configuration file also controls the initial conditions.<br />
+Examples are located at <tt>run/integrator.cfg</tt></p></div>
 <div class="paragraph"><div class="title">Format for the configuration file</div><p>Each parameter appears on its own line in a format:<br />
 <em>'key = value</em>'</p></div>
 <div class="paragraph"><div class="title">Rules for the configuration file</div><p>It is recommended to specify parameters as follows.</p></div>
@@ -400,7 +405,7 @@ div#toc a:visited { color: blue; }
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Commonly required parameters <em>'integrator</em>', <em>'runon</em>', <em>'num_systems</em>', <em>'num_bodies</em>', <em>'dT</em>'
+Currently the following parameters are required (for all programs that accept a configuration file): <em>'integrator</em>', <em>'runon</em>', <em>'integration end</em>'
 </p>
 </td>
 </tr>
@@ -411,7 +416,7 @@ Commonly required parameters <em>'integrator</em>', <em>'runon</em>', <em>'num_s
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Integrator specific parameters <em>'h</em>', <em>'stepfac</em>', <em>'precision</em>'
+Integrator specific parameters <em>'time step</em>' (fixed timestep algorithms), <em>'time step factor</em>' and <em>'min time step</em>' (adaptive timestep algorithms), <em>'precision</em>' (hermite_gpu and hermite_cpu only)
 </p>
 </td>
 </tr>
@@ -422,7 +427,7 @@ Integrator specific parameters <em>'h</em>', <em>'stepfac</em>', <em>'precision<
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Users specify initial conditions
+User-specified initial conditions (e.g., <em>'initial conditions</em>', <em>'num_systems</em>', <em>'num_bodies</em>')
 </p>
 </td>
 </tr>
@@ -433,7 +438,7 @@ Users specify initial conditions
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Optional
+Optional (e.g., <em>'rmax</em>')
 </p>
 </td>
 </tr>
@@ -444,7 +449,7 @@ Optional
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Optional
+Optional <em>'threads per block</em>'
 </p>
 </td>
 </tr>
@@ -455,7 +460,7 @@ Optional
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-Optional
+Optional <em>'output</em>', <em>'output interval</em>'
 </p>
 </td>
 </tr>
@@ -479,27 +484,11 @@ Optional
 </p>
 </dd>
 <dt class="hdlist1">
-<em>'num_systems</em>'
+<em>'integration end</em>'
 </dt>
 <dd>
 <p>
-   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'num_bodies</em>'
-</dt>
-<dd>
-<p>
-   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'dT</em>'
-</dt>
-<dd>
-<p>
-   Must specify the duration of each integration.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches dT*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
+   Must specify the time at which each integration will be stopped.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches T*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
 </p>
 </dd>
 </dl></div>
@@ -523,11 +512,11 @@ Optional
 </p>
 </dd>
 <dt class="hdlist1">
-<em>'precision</em>'
+<em>'precision</em>' (hermite only)
 </dt>
 <dd>
 <p>
-   Must specify the precission for the integrations.  0 results in single precission, 1 results in double precission.  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 2 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
+   Must specify the precission for the integrations.  1 results in double precission and is the default.  2 results in single precission (currently supported by hermite).  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 3 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
 </p>
 </dd>
 </dl></div>
@@ -738,10 +727,28 @@ output interval = 0.1</tt></pre>
 <div class="sectionbody">
 <div class="paragraph"><p>Copyright (C) 2008-2010 Eric B. Ford.<br />
 Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'num_systems</em>'
+</dt>
+<dd>
+<p>
+   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'num_bodies</em>'
+</dt>
+<dd>
+<p>
+   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.
+</p>
+</dd>
+</dl></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-04-25 17:37:56 EDT
+Last updated 2010-04-26 04:12:53 EDT
 </div>
 </div>
 </body>

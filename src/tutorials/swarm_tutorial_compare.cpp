@@ -87,12 +87,16 @@ int main(int argc, const char **argv)
   std::vector<double> energy_gpu_final(ens.nsys()), energy_cpu_final(ens.nsys());;
   ens.calc_total_energy(&energy_gpu_final[0]);
   ens_check.calc_total_energy(&energy_cpu_final[0]);
-  double max_deltaE = 0;
+  double max_deltaE = 0., max_deltaE_gpu = 0., max_deltaE_cpu = 0.;
   for(int sysid=0;sysid<ens.nsys();++sysid)
     {
       double deltaE_gpu = (energy_gpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
       double deltaE_cpu = (energy_cpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
       double deltaE = std::max(fabs(deltaE_gpu),fabs(deltaE_cpu));
+      if(deltaE_gpu>max_deltaE_gpu)
+	{ max_deltaE_gpu = deltaE_gpu; }
+      if(deltaE_cpu>max_deltaE_cpu)
+	{ max_deltaE_cpu = deltaE_cpu; }
       if(deltaE>max_deltaE)
 	{ max_deltaE = deltaE; }
       if(fabs(deltaE)>0.00001)
@@ -100,7 +104,7 @@ int main(int argc, const char **argv)
 '\n';
     }
   std::cout.flush();
-  std::cerr << "# Max dE/E= " << max_deltaE << "\n";
+  std::cerr << "# Max dE/E (gpu)= " << max_deltaE_gpu << "  Max dE/E (cpu)= " << max_deltaE_cpu << "\n";
 #endif  
 
   // both the integrator & the ensembles are automatically deallocated on exit

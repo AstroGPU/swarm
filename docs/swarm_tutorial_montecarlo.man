@@ -3,16 +3,23 @@ swarm_tutorial_montecarlo(1)
 
 NAME
 ---- 
-swarm_tutorial-montecarlo - Performs many n-body integrations with initial conditions chosen by Monte Carlo.  
-The demo code also uses the swarm utilities copy_from and accessor functions for formatting data output.
+swarm_tutorial_montecarlo - Performs many n-body integrations with
+initial conditions chosen by Monte Carlo based on a user-provided
+configuration file.
+
 
 SYMPOSIS
 --------
-*swarm_tutorial-montecarlo* CONFIG_FILE
+*swarm_tutorial_montecarlo* CONFIG_FILE
 Several parameters must be specified in the configuration file.  
 
 Description
 -----------
+This program demonstrates how to initialize the swarm library and an
+integrator from a configuration file.
+
+CONFIGURATION FILE
+------------------
 The configuration file specifieds several parameters.
 Each parameter appears on its own line with the format: +
 ''key = value''
@@ -21,7 +28,7 @@ REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 
 ''integrator''::
-   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+   Must specify one of the following  integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
 
 ''runon''::
    Must specify either ''gpu'' or ''cpu''.  In the initial release, the values of runout and integrator must match.  In future relases, the CPU and GPU integrators may be merged
@@ -186,6 +193,10 @@ Google Group: <http://groups.google.com/group/swarm-ng>
 
 COPYING
 -------
-Copyright \(C) 2008-2010 Eric B. Ford + 
-Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+Copyright \(C) 2010 Eric B. Ford + 
+Free use of this software is granted under the terms of the GNU
+General Public License (GPL) v3, which should be included as
+link:doc/gpl-3.0.txt and also avaliable
+http://www.gnu.org/licenses/gpl-3.0.html[online].
+
 

@@ -388,7 +388,7 @@ div#toc a:visited { color: blue; }
 </div>
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>&#8230;</p></div>
+<div class="paragraph"><p>The file needs major work!</p></div>
 <h3 id="_overview_of_namespaces">Overview of namespaces</h3><div style="clear:left"></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
@@ -505,9 +505,59 @@ CPU integrator doesn&#8217;t need &lt;1&gt; and &lt;2&gt;.</p></div>
 <pre><tt>  ens.calc_total_energy(&amp;energy_final[0]);</tt></pre>
 </div></div>
 <h3 id="_overview_of_private_interface">Overview of private interface</h3><div style="clear:left"></div>
-<div class="paragraph"><p>&#8230;</p></div>
+<div class="paragraph"><p>We&#8217;re likely to change the private interfaces in subsequent releases.
+Thus, we strongly encourage people not to use the private interface, without coordinating with the swarm-NG development team.</p></div>
 <h3 id="_how_to_add_your_own_integrator">How to add your own integrator</h3><div style="clear:left"></div>
-<div class="paragraph"><p>&#8230;</p></div>
+<div class="paragraph"><p>To add a new integrator, follow the following simple steps:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+create a subdirectory integrators/&lt;integrator_name&gt;
+</p>
+</li>
+<li>
+<p>
+place any source files your integrator requires to that subdirectory
+</p>
+</li>
+<li>
+<p>
+create a Makefile.mk file there, based on example Makefile.mk files found with
+  other integrators (e.g., look at integrators/euler/Makefile.mk)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Your integrator must:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+derive from <em>integrator</em> class, and override one its virtual integrate()
+  methods.
+</p>
+</li>
+<li>
+<p>
+provide an <em>extern "C" integrator *create_XXXXX(const config &amp;cfg)</em>
+  function (where XXXX is the name of the integrator) that will return
+  an instance of the integrator when called. Example:
+        // factory
+        extern "C" integrator *create_gpu_euler(const config &amp;cfg)
+        {
+                return new gpu_euler_integrator(cfg);
+        }
+</p>
+</li>
+<li>
+<p>
+there are additonial requirements for your integrator to work with the gpulogging systems.
+</p>
+</li>
+<li>
+<p>
+we&#8217;re trying to shift all integrators to use the generic integrator framework (see verlet or rk4).  In this framework you define a "propagator" for your new integrator.
+</p>
+</li>
+</ul></div>
 </div>
 <h2 id="_limitations_amp_bugs">LIMITATIONS &amp; BUGS</h2>
 <div class="sectionbody">
@@ -525,7 +575,7 @@ Free use of this software is granted under the terms of the GNU General Public L
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-04-25 13:25:07 EDT
+Last updated 2010-04-26 03:58:50 EDT
 </div>
 </div>
 </body>

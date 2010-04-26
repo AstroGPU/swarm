@@ -28,6 +28,12 @@
 LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
 LIBSWARM_CUDA=src/swarmlib.cu
 
+###
+### documentation in asciidoc format
+###
+DOC_INPUT=README.txt docs/build_system.txt docs/configuration_file.txt docs/for_developers.txt 	# asciidoc general documentation
+MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tutorial_compare.man docs/swarm_tutorial_benchmark.man docs/swarm_tutorial_montecarlo.man docs/swarm_scatter_demo.man  # asciidoc man page documentation
+
 ####
 #### Integrator pieces of libswarm
 ####
@@ -99,11 +105,8 @@ EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
 LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
-DOC_INPUT=README.txt docs/build_system.txt docs/configuration_file.txt docs/for_developers.txt 	# asciidoc general documentation
-# Need to add following, once converted to asciidoc:  docs/eventlog.txt  docs/snapshotting.txt 
-MAN_INPUT=docs/swarm_scatter_demo.man docs/swarm_tutorial_montecarlo.man   # asciidoc man page documentation
-DOC_OUTPUT=$(DOC_INPUT:.txt=.html)
-MAN_OUTPUT=$(MAN_INPUT:.man=.html)
+DOC_OUTPUT=$(DOC_INPUT:.txt=.html)              # html version of asciidoc text documentation
+MAN_OUTPUT=$(MAN_INPUT:.man=.html)              # html version of asciidoc man pages
 
 BIN=$(shell pwd)/bin
 
