@@ -7,8 +7,7 @@
 #include <boost/program_options.hpp>
 
 #define PRINT_OUTPUT 0
-#define PARANOID_ENERGY_CHECK 0
-
+#define PARANOID_ENERGY_CHECK 1
 
 
 // Declare functions to demonstrate setting/accessing system state
@@ -27,7 +26,7 @@ int main(int argc,  char **argv)
   stopwatch swatch_kernel_cpu, swatch_upload_cpu, swatch_temps_cpu, swatch_init_cpu;
   stopwatch swatch_all;
 
-  swatch_all.start();
+  swatch_all.start(); // Start timer for entire program
   srand(42u);    // Seed random number generator, so output is reproducible
 
   // Parse command line arguements (making it easy to compare)
@@ -38,37 +37,47 @@ int main(int argc,  char **argv)
     ("num_bodies,n", po::value<int>(),  "number of bodies per system [3,10]")
     ("time,t", po::value<double>(), "time to integrate (0,62832.)")
     ("blocksize,b", po::value<int>(),  "number of threads per block {16,32,48,64,128}")
-    ("precision,p", po::value<int>(),  "preision (0=single, 1=double, 2=mixed)")
+    ("precision,p", po::value<int>(),  "precision (1=double, 2=single, 3=mixed)")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
 
-  swatch_init_cpu.start();
-  swatch_init_gpu.start();
+  //
+  bool valid = true;
   std::cerr << "# Set integrator parameters (hardcoded in this demo, except for command line arguments.).\n";
   config cfg;
   cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["runon"] = "gpu";              // whether to run on cpu or gpu (must match integrator)
   cfg["time step"] = "0.0005";       // time step
 
-  cfg["precision"] = "1";            // use double precision
+  //  cfg["precision"] = "1";            // use double precision
 
   // Get values for config hashmap from command line arguements (or use defaults)
   {
   std::ostringstream precision_stream;
-  if(vm.count("preision")) 
-    precision_stream <<  vm["precision"].as<int>();
+  if(vm.count("precision")) 
+    {
+      int prec = vm["precision"].as<int>();
+      precision_stream <<  prec;
+      if(!((prec==1)||(prec==2)||(prec==3)))
+	 valid =false;
+    }
   else
-    precision_stream << "1"; 
+    precision_stream << 1; 
   cfg["precision"] = precision_stream.str();
   }
   {
     std::ostringstream blocksize_stream;
     if(vm.count("blocksize")) 
-      blocksize_stream <<  vm["blocksize"].as<int>();
+      {
+	int bs = vm["blocksize"].as<int>();
+	blocksize_stream << bs;
+	if((bs<16)||(bs>128)||(bs%16!=0))
+	 valid =false;
+      }
     else
-      blocksize_stream << "64"; 
+      blocksize_stream << 64; 
     cfg["threads per block"] = blocksize_stream.str();
   }
   
@@ -78,8 +87,11 @@ int main(int argc,  char **argv)
   double dT = (vm.count("time")) ? vm["time"].as<double>() : 2.*M_PI;
 
   // Print help message if used inappropriately
-  if (vm.count("help")||!(nsystems>=1)||!((nbodyspersystem>=3)&&(nbodyspersystem<=10))||!((dT>0.)&&(dT<=2.*M_PI*10000.+1.))) { std::cout << desc << "\n"; return 1; }
+  if (vm.count("help")||!(nsystems>=1)||!((nbodyspersystem>=3)&&(nbodyspersystem<=10))||!((dT>0.)&&(dT<=2.*M_PI*10000.+1.))||!valid) { std::cout << desc << "\n"; return 1; }
 
+  // Now that we've retreived parameters, start timers for initialization
+  swatch_init_cpu.start();
+  swatch_init_gpu.start();
   std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
   cpu_ensemble ens(nsystems, nbodyspersystem);
   
