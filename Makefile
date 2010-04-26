@@ -214,7 +214,9 @@ doc-doxygen: Doxyfile $(SOURCES)
 	doxygen 
 
 feedback:
+	@ echo "About to create feedback.tgz which will contain info that may help debug problems with setup and demos"
 	./scripts/make_feedback.sh
+	@ echo "Done."
 
 #
 # Build patterns
