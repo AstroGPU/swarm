@@ -3,6 +3,7 @@
 #include "ThreeVector.hpp"
 #include <cassert>
 #include <cmath>
+#include "swarmlog.h"
 
 namespace swarm {
 // We don't need to use this for CPU integrators
@@ -288,6 +289,9 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	    if(dT == 0.) { return; }
 	  }
 
+	// flush CPU/GPU output logs
+	log::flush(log::memory | log::if_full);
+
 	for ( unsigned int sys=0;sys<ens.nsys();++sys )
 	{
           real_time hh=m_h;
@@ -302,8 +306,13 @@ void cpu_hermite_integrator::integrate(cpu_ensemble &ens, real_time dT)
 	      Evolve ( ens,sys, hh );
 	      ens.time( sys ) += hh;
 	      ens.nstep(sys)++;
+
+		log::output_system_if_needed(hlog, ens, ens.time(sys), sys);
 	    }
 	} // end loop over systems
+
+	// flush CPU/GPU output logs
+	log::flush(log::memory);
 }
 
 } // end namespace swarm

@@ -128,7 +128,7 @@ namespace swarm {
 
 			double Tabserr, Trelerr;
 
-			bool next(cpu_ensemble &ens, bool keep_existing = true);
+			bool next(cpu_ensemble &ens/*, bool keep_existing = true*/);
 			snapshots(const swarmdb &db, time_range_t T, double Tabserr = 0, double Trelerr = 0);
 		};
 

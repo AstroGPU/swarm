@@ -322,14 +322,19 @@ namespace swarm
 	{
 		int sys, flags;
 		const body *bodies;
+
+		bool operator <(const sysinfo &a) const
+		{
+			return sys < a.sys;
+		}
 	};
 
-	bool swarmdb::snapshots::next(cpu_ensemble &ens, bool keep_existing)
+	bool swarmdb::snapshots::next(cpu_ensemble &ens)
 	{	
 		// find and load the next snapshot
 		int nbod = -1, sysmax = -1; double Tsnapend;
 		gpulog::logrecord lr;
-		std::vector<sysinfo> systems;
+		std::set<sysinfo> systems;
 		while(lr = r.next())
 		{
 			// find next EVT_SNAPSHOT
@@ -351,10 +356,16 @@ namespace swarm
 				r.unget();
 				break;
 			}
+			
+			// check if we already have a record of this system
+			if(systems.count(si))
+			{
+				continue;
+			}
 
 			// load the pointer to bodies
 			lr >> si.bodies;
-			systems.push_back(si);
+			systems.insert(si);
 
 			sysmax = std::max(si.sys, sysmax);
 		}
@@ -363,15 +374,7 @@ namespace swarm
 		if(!systems.size()) { return false; }
 
 		// pack everything to cpu_ensemble structure
-		if(keep_existing && ens.nsys() != 0)
-		{
-			assert(sysmax < ens.nsys());
-		}
-		else
-		{
-			ens.reset(sysmax+1, nbod);
-		}
-
+		ens.reset(sysmax+1, nbod);
 		// initially, mark everything as inactive
 		for(int sys = 0; sys != ens.nsys(); sys++)
 		{
@@ -379,9 +382,9 @@ namespace swarm
 		}
 		
 		// populate the systems with data and mark them active
-		for(int i = 0; i != systems.size(); i++)
+		for(std::set<sysinfo>::iterator i = systems.begin(); i != systems.end(); i++)
 		{
-			sysinfo &si = systems[i];
+			const sysinfo &si = *i;
 			assert(si.sys >= 0 && si.sys < ens.nsys());
 
 			// per-system data

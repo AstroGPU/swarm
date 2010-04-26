@@ -149,43 +149,6 @@ struct retval_t
 	int nrunning;
 };
 
-__device__ bool needs_output(ensemble &ens, double T, int sys)
-{
-	// simple output
-	return T >= ens.time_output(sys, 0);
-}
-
-template<typename L>
-__device__ void output_system(L &log, ensemble &ens, double T, int sys)
-{
-	// store the snapshot
-	log::system(log, ens, sys, T);
-
-	// set next stopping time
-	ens.time_output(sys, 0) += ens.time_output(sys, 1);
-}
-
-/*!
- \brief output if needed
- 
- ...
- @param[out] log
- @param[in] ens
- @param[in] T
- @param[in] sys
-*/
-template<typename L>
-__device__ void output_if_needed(L &log, ensemble &ens, double T, int sys)
-{
-	// simple output
-	if(needs_output(ens, T, sys))
-	{
-//		debug_hook();
-
-		output_system(log, ens, T, sys);
-	}
-}
-
 /*!
  \brief generic integrate system  
  
@@ -215,7 +178,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
 		if(step == max_steps) 			{ break; }
 
-		output_if_needed(dlog, ens, T, sys);
+		log::output_system_if_needed(dlog, ens, T, sys);
 
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tstop, stop, stop_ts, step);
@@ -223,7 +186,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 		step++;
 	}
 	ens.nstep(sys) += step;
-	output_if_needed(dlog, ens, T, sys);
+	log::output_system_if_needed(dlog, ens, T, sys);
 
 	ens.time(sys) = T;
 }
