@@ -45,7 +45,7 @@ int main(int argc, const char **argv)
   std::cerr << "# Print selected initial conditions for GPU.\n";
   print_selected_systems_for_demo(ens);
   
-  std::cerr << "# Create identical ensemble on host to check w/ CPU.\n";
+  std::cerr << "# Create identical ensemble on host for omparison w/ CPU.\n";
   cpu_ensemble ens_check(ens);
   
   // Print initial conditions for checking w/ CPU 
@@ -72,7 +72,7 @@ int main(int argc, const char **argv)
   std:: cerr << "# Initialize the CPU integrator\n";
   cfg["integrator"] = "cpu_hermite";
   std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
-  std::cerr << "# Integrate a copy of ensemble on CPU to check.\n";
+  std::cerr << "# Integrate a copy of ensemble on CPU for comparison.\n";
   integ_cpu->integrate(ens_check, dT);				
   std::cerr << "# CPU integration complete.\n";
   

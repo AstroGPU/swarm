@@ -1,6 +1,8 @@
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <memory>
 #include <boost/program_options.hpp>
 
@@ -28,41 +30,64 @@ int main(int argc,  char **argv)
   swatch_all.start();
   srand(42u);    // Seed random number generator, so output is reproducible
 
+  // Parse command line arguements (making it easy to compare)
   po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
   desc.add_options()
-    ("help", "produce help message")
-    ("time,t", po::value<double>(), "time to integrate")
-    ("systems,s", po::value<int>(), "number of systems")
-    ("num_bodies,n", po::value<int>(),  "number of bodies per system")
-    ("blocksize,b", po::value<int>(),  "number of threads per block")
+    ("help,h", "produce help message")
+    ("systems,s", po::value<int>(), "number of systems [1,30720]")
+    ("num_bodies,n", po::value<int>(),  "number of bodies per system [3,10]")
+    ("time,t", po::value<double>(), "time to integrate (0,62832.)")
+    ("blocksize,b", po::value<int>(),  "number of threads per block {16,32,48,64,128}")
+    ("precision,p", po::value<int>(),  "preision (0=single, 1=double, 2=mixed)")
     ;
   po::variables_map vm;
-  //  po::positional_options_description pd;
-  //  po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().positional(pd).run(), vm);
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
 
   swatch_init_cpu.start();
   swatch_init_gpu.start();
-  std::cerr << "# Set integrator parameters (hardcoded in this demo).\n";
+  std::cerr << "# Set integrator parameters (hardcoded in this demo, except for command line arguments.).\n";
   config cfg;
   cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["runon"] = "gpu";              // whether to run on cpu or gpu (must match integrator)
   cfg["time step"] = "0.0005";       // time step
+
   cfg["precision"] = "1";            // use double precision
-  cfg["threads per block"] = (vm.count("blocksize")) ? 
-      vm["blocksize"].as<std::string>() : std::string("64"); // number of threads per block
+
+  // Get values for config hashmap from command line arguements (or use defaults)
+  {
+  std::ostringstream precision_stream;
+  if(vm.count("preision")) 
+    precision_stream <<  vm["precision"].as<int>();
+  else
+    precision_stream << "1"; 
+  cfg["precision"] = precision_stream.str();
+  }
+  {
+    std::ostringstream blocksize_stream;
+    if(vm.count("blocksize")) 
+      blocksize_stream <<  vm["blocksize"].as<int>();
+    else
+      blocksize_stream << "64"; 
+    cfg["threads per block"] = blocksize_stream.str();
+  }
+  
+  // Get simple values from command line arguements (or use defaults)
+  int nsystems = (vm.count("systems")) ? vm["systems"].as<int>() : 960;
+  int nbodyspersystem = (vm.count("num_bodies")) ? vm["num_bodies"].as<int>() : 3;
+  double dT = (vm.count("time")) ? vm["time"].as<double>() : 2.*M_PI;
+
+  // Print help message if used inappropriately
+  if (vm.count("help")||!(nsystems>=1)||!((nbodyspersystem>=3)&&(nbodyspersystem<=10))||!((dT>0.)&&(dT<=2.*M_PI*10000.+1.))) { std::cout << desc << "\n"; return 1; }
 
   std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
-  int nsystems = (vm.count("systems")>0) ? vm["systems"].as<int>() : 960;
-  int nbodyspersystem = (vm.count("num_bodies")>0) ? vm["num_bodies"].as<int>() : 3;
   cpu_ensemble ens(nsystems, nbodyspersystem);
   
   std::cerr << "# Set integration duration for all systems.\n";
-  double dT = (vm.count("time")>0) ? vm["time"].as<double>() : 2.*M_PI;
   ens.set_time_end_all(dT);
   ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
 
+  std::cerr << "# Parameters: systems= " << nsystems << " num_bodies= " << nbodyspersystem << " time= " << dT << " blocksize= " << cfg["threads per block"] << ".\n";
   std:: cerr << "# Initialize the library\n";
   swarm::init(cfg);
   swatch_init_cpu.stop();
@@ -87,7 +112,7 @@ int main(int argc,  char **argv)
   print_selected_systems_for_demo(ens);
 #endif
   
-  std::cerr << "# Create identical ensemble on host to check w/ CPU.\n";
+  std::cerr << "# Create identical ensemble on host for comparison w/ CPU.\n";
   swatch_upload_cpu.start();
   cpu_ensemble ens_check(ens);
   swatch_upload_cpu.stop();
@@ -132,7 +157,7 @@ int main(int argc,  char **argv)
   std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
   swatch_init_cpu.stop();
 
-  std::cerr << "# Integrate a copy of ensemble on CPU to check.\n";
+  std::cerr << "# Integrate a copy of ensemble on CPU for comparison.\n";
   swatch_temps_cpu.start();
   integ_cpu->integrate(ens_check, 0.);				
   swatch_temps_cpu.stop();
@@ -156,12 +181,16 @@ int main(int argc,  char **argv)
   std::vector<double> energy_gpu_final(ens.nsys()), energy_cpu_final(ens.nsys());;
   ens.calc_total_energy(&energy_gpu_final[0]);
   ens_check.calc_total_energy(&energy_cpu_final[0]);
-  double max_deltaE = 0;
+  double max_deltaE = 0., max_deltaE_gpu = 0., max_deltaE_cpu = 0.;
   for(int sysid=0;sysid<ens.nsys();++sysid)
     {
       double deltaE_gpu = (energy_gpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
       double deltaE_cpu = (energy_cpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
       double deltaE = std::max(fabs(deltaE_gpu),fabs(deltaE_cpu));
+      if(deltaE_gpu>max_deltaE_gpu)
+	{ max_deltaE_gpu = deltaE_gpu; }
+      if(deltaE_cpu>max_deltaE_cpu)
+	{ max_deltaE_cpu = deltaE_cpu; }
       if(deltaE>max_deltaE)
 	{ max_deltaE = deltaE; }
       if(fabs(deltaE)>0.00001)
@@ -169,16 +198,16 @@ int main(int argc,  char **argv)
 '\n';
     }
   std::cout.flush();
-  std::cerr << "# Max dE/E= " << max_deltaE << "\n";
+  std::cerr << "# Max dE/E (gpu)= " << max_deltaE_gpu << "  Max dE/E (cpu)= " << max_deltaE_cpu << "\n";
 #endif  
 
 
-  std::cerr << "# Time per system (all, combined): " << swatch_all.getTime()*1000. << " ms.\n";
-  std::cerr << "# Time per system (init lib)     : " << swatch_init_gpu.getTime()*1000. << " ms on GPU,   " << swatch_init_gpu.getTime()*1000. << " ms on CPU.\n";
-  std::cerr << "# Time per system (upload)       : " << swatch_upload_gpu.getTime()*1000. << " ms on GPU,   " << swatch_upload_gpu.getTime()*1000. << " ms on CPU.\n";
-  std::cerr << "# Time per system (0th step)     : " << swatch_temps_gpu.getTime()*1000. << " ms on GPU,   " << swatch_temps_gpu.getTime()*1000. << " ms on CPU.\n";
-  std::cerr << "# Time per system (integration)  : " << swatch_kernel_gpu.getTime()*1000. << " ms on GPU,   " << swatch_kernel_gpu.getTime()*1000. << " ms on CPU.\n";
-  std::cerr << "# Time per system (download)     : " << swatch_download_gpu.getTime()*1000. << " ms on GPU,   " << 0. << " ms on CPU.\n";
+  std::cerr << "# Time (all, combined): " << swatch_all.getTime()*1000. << " ms.\n";
+  std::cerr << "# Time (init lib)     : " << swatch_init_gpu.getTime()*1000. << " ms on GPU,   " << swatch_init_cpu.getTime()*1000. << " ms on CPU.\n";
+  std::cerr << "# Time (upload)       : " << swatch_upload_gpu.getTime()*1000. << " ms on GPU,   " << swatch_upload_cpu.getTime()*1000. << " ms on CPU.\n";
+  std::cerr << "# Time (0th step)     : " << swatch_temps_gpu.getTime()*1000. << " ms on GPU,   " << swatch_temps_cpu.getTime()*1000. << " ms on CPU.\n";
+  std::cerr << "# Time (integration)  : " << swatch_kernel_gpu.getTime()*1000. << " ms on GPU,   " << swatch_kernel_cpu.getTime()*1000. << " ms on CPU.\n";
+  std::cerr << "# Time (download)     : " << swatch_download_gpu.getTime()*1000. << " ms on GPU,   " << 0. << " ms on CPU.\n";
 
   
   std::cerr << "# Speed up (kernel only)         : " << swatch_kernel_cpu.getTime()/swatch_kernel_gpu.getTime() << ".\n";
