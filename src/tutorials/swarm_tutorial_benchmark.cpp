@@ -163,7 +163,6 @@ int main(int argc,  char **argv)
   std::cerr << "# Download complete.\n";
   
   // Get ready to perform the same integration on the cpu
-
   cfg["integrator"] = "cpu_hermite"; // change to CPU version of integrator
   cfg["runon"]      = "cpu";         // change to runon CPU
   swatch_init_cpu.start();           // restart timer for initializing CPU integrator
@@ -180,7 +179,7 @@ int main(int argc,  char **argv)
   integ_cpu->integrate(ens_check, dT);	 // Actually do the integration w/ CPU!
   swatch_kernel_cpu.stop();      // Stop timer for CPU integration kernel
 
-  swatch_all.stop();
+  swatch_all.stop();             // Stop timer for all calculations
   std::cerr << "# CPU integration complete.\n";
 
 #if PRINT_OUTPUT

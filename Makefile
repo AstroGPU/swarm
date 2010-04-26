@@ -157,10 +157,31 @@ test-create: all
 .PHONY: test test-ref
 
 benchmark-quick: bin/swarm_tutorial_benchmark
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s 3840
+	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s 3840 | tee benchmark.out
 
 benchmark: bin/swarm_tutorial_benchmark
-	cd run; ../bin/swarm_tutorial_benchmark -t 6.28 -n 3 -p 1 -s 7680
+	cd run; rm -f benchmark.out ;
+	@ echo "num systems" > benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s   960 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  1920 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  7680 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s 15360 >> benchmark.out
+	@ echo "num bodys per system" >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 4 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 5 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 6 -s  3840 >> benchmark.out
+	@ echo "blocksize" >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  16 -s  7680 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  32 -s  7680 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  64 -s  7680 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  96 -s  7680 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b 128 -s  7680 >> benchmark.out
+	@ echo "preision" >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 2 -s  3840 >> benchmark.out
+	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 3 -s  3840 >> benchmark.out
 
 clean: clean-test
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
@@ -186,6 +207,8 @@ doc-asciidoc: $(DOC_OUTPUT) $(MAN_OUTPUT)
 doc-doxygen: Doxyfile $(SOURCES) 
 	doxygen 
 
+feedback:
+	./scripts/make_feedback.sh
 
 #
 # Build patterns
