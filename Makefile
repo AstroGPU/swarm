@@ -142,6 +142,8 @@ bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
 # Utilities
 #
 
+apps:  $(APPS)
+
 clean-doc:
 	rm -rf reference; rm -f README.html docs/*.html
 
@@ -160,28 +162,29 @@ benchmark-quick: bin/swarm_tutorial_benchmark
 	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s 3840 | tee benchmark.out
 
 benchmark: bin/swarm_tutorial_benchmark
-	cd run; rm -f benchmark.out ;
-	@ echo "num systems" > benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s   960 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  1920 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  7680 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s 15360 >> benchmark.out
-	@ echo "num bodys per system" >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 4 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 5 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 6 -s  3840 >> benchmark.out
-	@ echo "blocksize" >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  16 -s  7680 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  32 -s  7680 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  64 -s  7680 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  96 -s  7680 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b 128 -s  7680 >> benchmark.out
-	@ echo "preision" >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 2 -s  3840 >> benchmark.out
-	../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 3 -s  3840 >> benchmark.out
+	rm -f run/benchmark.out ;
+	@ echo "# Benchmarking num systems (Please be patient)" |tee run/benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s   960 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  1920 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s 15360 2>> benchmark.out
+	@ echo "# Benchmarking num bodys per system (Please be patient)" |tee -a run/benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 4 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 5 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 6 -s  3840 2>> benchmark.out
+	@ echo "# Benchmarking blocksize (Please be patient)" |tee -a run/benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  16 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  32 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  64 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  96 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b 128 -s  7680 2>> benchmark.out
+	@ echo "# Benchmarking preision (Please be patient)" |tee -a run/benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 2 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 3 -s  3840 2>> benchmark.out
+	@ echo "# Thank you for your patience" | tee -a run/benchmark.out
 
 clean: clean-test
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
