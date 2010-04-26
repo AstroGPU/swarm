@@ -156,6 +156,12 @@ test-create: all
 
 .PHONY: test test-ref
 
+benchmark-quick: bin/swarm_tutorial_benchmark
+	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s 3840
+
+benchmark: bin/swarm_tutorial_benchmark
+	cd run; ../bin/swarm_tutorial_benchmark -t 6.28 -n 3 -p 1 -s 7680
+
 clean: clean-test
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
 
