@@ -155,6 +155,7 @@
 
 */
 
+/// namespace for Swarm-NG library
 namespace swarm {
 
 

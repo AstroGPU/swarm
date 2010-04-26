@@ -156,8 +156,8 @@
 
 */
 
+/// namespace for Swarm-NG library
 namespace swarm {
-
 
 /*!  
  *  \brief propagator class for RK4 integrator on GPU: Advance the system by one time step.

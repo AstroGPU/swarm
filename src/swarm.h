@@ -581,3 +581,13 @@ namespace swarm {
 #endif
 
 #endif
+
+/** @mainpage Swarm-NG library & demonstration programs
+
+ \brief @authors Aaron Boley, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
+
+ @section intro Introduction
+ For more information see http://www.astro.ufl.edu/~eford/code/swarm/
+*/
+
+

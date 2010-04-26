@@ -1,4 +1,10 @@
-#include "swarm.h"
+/*! \file swarm.cpp
+    \brief Main program for integrating an ensemble of many N-body systems on a GPU
+
+    Swarm assumes that N is small (3-10) and systems evolve Newtonian Graviry 
+*/
+
+#include "swarm.h" 
 #include "swarmlog.h"
 #include <memory>
 #include <iostream>
