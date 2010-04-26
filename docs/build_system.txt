@@ -1,8 +1,10 @@
-Title:  Makefile-based swarm build system
-Author: mjuric
+Makefile-based swarm build system
+=================================
+Mario Juric
 
-=========================
 
+Overview
+--------
 * Usage:
 
        make all
@@ -31,12 +33,12 @@ Author: mjuric
   (location of nvcc) or DEVEMU (that you'd set to --device-emulation to
   compile in device emulation mode).
 
+
+Advanced Features
+-----------------
+
 * To disable the 'pretty printing' during the build process, define
   VERBOSE=1 in your Makefile.user (or the environment)
-
-
-=========================
-
 
 * Unless something is wrong, or you want to tinker with the Makefiles, or
   you're trying to diagnose a bug you suspect is caused by the build system,

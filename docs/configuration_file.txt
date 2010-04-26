@@ -4,8 +4,13 @@ Format/rules for configuration file
 
 Description
 -----------
-.What is configuration file?
-The configuration file specifies several parameters. Examples are located at `run/integrator.cfg`
+.What is a configuration file?
+The configuration file specifies several parameters, including:  
+- choice of integrator
+- parameters to integrator
+- parameters to output logging system
+For some programs, the configuration file also controls the initial conditions. +
+Examples are located at `run/integrator.cfg`
 
 .Format for the configuration file
 Each parameter appears on its own line in a format: + 
@@ -15,12 +20,14 @@ Each parameter appears on its own line in a format: +
 It is recommended to specify parameters as follows.
 
 [horizontal]
-<<anchor-1,Required parameters>>:: Commonly required parameters ''integrator'', ''runon'', ''num_systems'', ''num_bodies'', ''dT''
-<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''h'', ''stepfac'', ''precision''
-<<anchor-3,Initial condition parameters>>:: Users specify initial conditions
-<<anchor-4,Stopper parameters>>:: Optional
-<<anchor-5,GPU kernel configuration parameters>>:: Optional
-<<anchor-6,Output parameters>>:: Optional
+<<anchor-1,Required parameters>>:: Currently the following parameters are required (for all programs that accept a configuration file): ''integrator'', ''runon'', ''integration end''
+<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''time step'' (fixed timestep algorithms), ''time step factor'' and ''min time step'' (adaptive timestep algorithms), ''precision'' (hermite_gpu and hermite_cpu only)
+<<anchor-3,Initial condition parameters>>:: User-specified initial conditions (e.g., ''initial conditions'', ''num_systems'', ''num_bodies'')
+
+<<anchor-4,Stopper parameters>>:: Optional (e.g., ''rmax'')
+<<anchor-5,GPU kernel configuration parameters>>:: Optional ''threads per block''
+<<anchor-6,Output parameters>>:: Optional ''output'', ''output interval''
+
 
 [[anchor-1]]
 REQUIRED PARAMETERS
@@ -32,14 +39,9 @@ REQUIRED PARAMETERS
 ''runon''::
    Must specify either ''gpu'' or ''cpu''.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged
 
-''num_systems''::
-   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.  
 
-''num_bodies''::
-   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.  
-
-''dT''::
-   Must specify the duration of each integration.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches dT*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
+''integration end''::
+   Must specify the time at which each integration will be stopped.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches T*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
 
 
 [[anchor-2]]
@@ -54,8 +56,8 @@ And either ''h'' or ''stepfac'':
 ''stepfac''::
    Specifies the time step parameter for the integrator ''gpu_hermite_adap''.   *** _WARNING: Name will likely change_.
 
-''precision''::
-   Must specify the precission for the integrations.  0 results in single precission, 1 results in double precission.  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 2 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
+''precision'' (hermite only)::
+   Must specify the precission for the integrations.  1 results in double precission and is the default.  2 results in single precission (currently supported by hermite).  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 3 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
 
 
 
@@ -212,3 +214,11 @@ COPYING
 -------
 Copyright \(C) 2008-2010 Eric B. Ford. + 
 Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+
+
+
+''num_systems''::
+   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.  
+
+''num_bodies''::
+   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.  

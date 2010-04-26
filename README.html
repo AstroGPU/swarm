@@ -400,8 +400,104 @@ Swarm-NG does not replicate these, but rather focuses on integrating an ensemble
 This is of partiular interest for astronomers who study the chaotic evolution of planetary systems.
 In the long term, we hope Swarm-NG will allow for the efficient parallel integration of user-defined systems of ordinary differential equations.</p></div>
 <div class="paragraph"><div class="title">What is included in April 2010 release of Swarm-NG 0.1?</div><p>This initial release contains GPU-based integrators for few-body systems, along with a draft of the public interface for setting initial conditions, calling the GPU-based integration algorithms and accessing the output data.  Small example programs are provided to demonstrate functionality and how to program with Swarm-NG.</p></div>
-<div class="paragraph"><div class="title">Quick Start Tips</div><p>Read <a href="doc/build_system.html">doc/build_system.html</a> for how to build the library and example programs.<br />
-Read <a href="doc/for_developers.html">doc/for_developers.html</a> for an overview of how to write your own programs which build on Swarm-NG functionality.</p></div>
+<div class="ulist"><div class="title">Quick Start Tips</div><ul>
+<li>
+<p>
+Read <a href="doc/build_system.html">doc/build_system.html</a> for more info on how to build the library and example programs.
+</p>
+</li>
+<li>
+<p>
+Do a few quick tests with <em>make test</em>.
+</p>
+</li>
+<li>
+<p>
+See how much of a speedup you get with <em>make benchmark</em>.  (Warning, this requires performing the integrations on both the CPU and GPU, so it can take a long time.  Please be patient.)
+</p>
+</li>
+<li>
+<p>
+To learn how to access the Swarm-NG library from you own code, work through the series of introductory tutorials in src/tutorials (in the following order).
+</p>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+<em>src/tutorials/swarm_tutorial_cpu.cpp</em>: uses swarm library with CPU)
+</p>
+</li>
+<li>
+<p>
+<em>src/tutorials/swarm_tutorial_gpu.cpp</em>: uses swarm library with GPU
+</p>
+</li>
+<li>
+<p>
+<em>src/tutorials/swarm_tutorial_compare.cpp</em>: compares results from GPU &amp; CPU
+</p>
+</li>
+<li>
+<p>
+<em>src/tutorials/swarm_tutorial_benchmark.cpp</em>: compares performance using GPU &amp; CPU
+</p>
+</li>
+<li>
+<p>
+<em>src/tutorials/swarm_tutorial_montecarlo.cpp</em>: performs many n-body integrations in Monte Carlo fashion in user-specified region of parameter space.  This program uses a configuration file.  The format is desribed in <a href="docs/swarm_tutorial_montecarlo.html">docs/swarm_tutorial_montecarlo.html</a>.
+</p>
+</li>
+<li>
+<p>
+<em>src/swarm.cpp</em>: this reads in an ensemble of initial conditions and writes output to binary files.  The output can be easily accessed via the swarmquery program.
+</p>
+</li>
+</ol></div>
+</li>
+<li>
+<p>
+To see how an end user can use <em>swarm</em> as is:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Take a look at the test <em>test/swarm/swarm-run.test</em>.  If you run <em>make test</em>, the output will be stored in <em>test-outputs/swarm/swarm-run.test/output.log</em>
+</p>
+</li>
+<li>
+<p>
+Read <a href="doc/configuration_file.html">doc/configuration_file.html</a> for a desription of the configuration file format and valid parameters for the <em>bin/swarm</em> program.  (Some of the demos use a configuration file with the same format, but they may not accept all the parameters.)
+</p>
+</li>
+<li>
+<p>
+To see how end users can access data written by the swarm logging system, use <em>swarmquery output_file</em>.  For info on options, run <em>swarmquery --help</em>
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+To learn how developers an use the swarm library:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Read <a href="doc/for_developers.html">doc/for_developers.html</a> for an overview of how to write your own programs which build on Swarm-NG functionality.
+</p>
+</li>
+<li>
+<p>
+Take a look at <em>doc/swarm_scatter_demo.html</em> and <em>src/scatter_demo/swarm_scatter_demo.cpp</em> for an example
+</p>
+</li>
+<li>
+<p>
+Read <a href="doc/eventlog.txt">doc/eventlog.txt</a> and <a href="snapshotting.txt">do/snapshotting.txt</a> for info on using the swarm output system.
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
 <h3 id="_buliding_the_swarm_ng_libraries_and_demo_programs">Buliding the Swarm-NG Libraries and Demo Programs</h3><div style="clear:left"></div>
 <div class="ulist"><div class="title">What hardware &amp; software is required to build &amp; run Swarm-NG?</div><ul>
 <li>
@@ -1088,7 +1184,7 @@ precision (integer)
 <div id="footer">
 <div id="footer-text">
 Version 0.1<br />
-Last updated 2010-04-25 17:37:56 EDT
+Last updated 2010-04-26 02:56:01 EDT
 </div>
 </div>
 </body>
