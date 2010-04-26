@@ -40,7 +40,6 @@ REQUIRED PARAMETERS
 OPTIONAL PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 
-
 ''initial conditions''::
    File prefix, including the directory, for the ICs.  For example, ''../scripts/ic/data'' will look for files called ''../scripts/ic/data.*'' for * in the range [0,n). Specifying this option will supersede the command line option ''-ics <IC filename prefix>''.
 

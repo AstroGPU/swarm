@@ -1,20 +1,9 @@
 //
 // C++ Implementation: swarmquery
 //
-// Description: 
-//
-//
 // Author: Mario Juric <mjuric@cfa.harvard.edu>, (C) 2010
 //
 // Copyright: See COPYING file that comes with this distribution
-//
-//
-
-//
-// Examples:
-//	swarmquery -T 10-20 -sys 5-END
-//
-//	
 //
 
 /*! \file swarmquery.cpp
@@ -23,7 +12,19 @@
  *
  * swarmquery is a useful tool for extracting information about selected systems at all or selected times.
  * usage: swarmquery datafile [Options]
- * swarmquery --help for overview of options
+ * swarmquery --help for overview of options:
+ *  --help                produce help message
+ * -t [ --time ] arg     range of times to query
+ * -s [ --system ] arg   range of systems to query
+ * --datafile arg        the datafile to query
+ * 
+ * A range has the format xx..yy.  
+ * Since system id's are integers, the range 
+ * for the system id, can also be a single integer.
+ * 
+ * Example:
+ * ../bin/swarmquery -s 42 -t 0.1..0.2002 log.bin 
+ *
 */
 
 #include <iostream>
