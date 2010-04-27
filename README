@@ -15,7 +15,7 @@ N-body systems evolving under Newtonian gravity.  There are existing
 libraries to perform the force calculation for large-N systems on
 GPUs.  Swarm-NG does not replicate these, but rather focuses on
 integrating an ensemble of many systems where N is small.  This is of
-partiular interest for astronomers who study the chaotic evolution of
+particular interest for astronomers who study the chaotic evolution of
 planetary systems.  In the long term, we hope Swarm-NG will allow for
 the efficient parallel integration of user-defined systems of ordinary
 differential equations.
@@ -44,8 +44,16 @@ demonstrate functionality and how to program with Swarm-NG.
 
 * Read some documentation.
 
-** To make a pretty html version of the documentation in the docs subdirectory, run 'make doc-asciidoc' (requires asciidoc).  Even without asciidoc you can read the text files in the *docs* subdirectory or browse the documentation http://www.astro.ufl.edu/~eford/code/swarm/docs/[online].  
-** To generate reference information via doxygen in the reference subdirectory, run 'make doc-doxygen' (requires doxygen).  This information for the most recent version is also avaliable http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[online] 
+** To make a pretty html version of the documentation in the docs
+   subdirectory, run 'make doc-asciidoc' (requires asciidoc).  Even
+   without asciidoc you can read the text files in the *docs*
+   subdirectory or browse the documentation
+   http://www.astro.ufl.edu/~eford/code/swarm/docs/[online].
+
+** To generate reference information via doxygen in the reference
+   subdirectory, run 'make doc-doxygen' (requires doxygen).  This
+   information for the most recent version is also avaliable
+   http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[online]
 
 * To see how an end user can use 'swarm' as is:
 
@@ -53,11 +61,11 @@ demonstrate functionality and how to program with Swarm-NG.
    'make test' successfully, then the output will be stored in
    'test-outputs/swarm/swarm-run.test/output.log'
 
-** Read link:swarm.html[] and link:configuration_file.html[]
-   for a desription of swarm, the configuration file format and valid
-   parameters for the 'bin/swarm' program.  (Some of the other
-   demos use a configuration file with the same format, but they 
-   may not accept all the parameters.)
+** Read link:swarm.html[] and link:configuration_file.html[] for a
+   description of swarm, the configuration file format and valid
+   parameters for the 'bin/swarm' program.  (Some of the other demos
+   use a configuration file with the same format, but they may not
+   accept all the parameters.)
 
 ** To see how end users can access data written by the swarm logging
    system, use 'swarmquery output_file'.  For info on options, run
@@ -76,9 +84,9 @@ using GPU & CPU
 . 'src/tutorials/swarm_tutorial_montecarlo.cpp': performs many n-body
 integrations in Monte Carlo fashion in user-specified region of
 parameter space.  This program uses a configuration file.  The format
-is desribed in link:swarm_tutorial_montecarlo.html[].
+is described in link:swarm_tutorial_montecarlo.html[].
 
-* To learn more from examplse of non-trivial codes, take a look at the following applications:
+* To learn more from examples of non-trivial codes, take a look at the following applications:
 - 'src/scatter_demo/swarm_scatter_demo.cpp':  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]
 - ''src/swarm.cpp': this reads in an ensemble of initial conditions and
@@ -96,7 +104,7 @@ is desribed in link:swarm_tutorial_montecarlo.html[].
 
 
 [[Building]]
-Buliding the Swarm-NG Libraries and Demo Programs
+Building the Swarm-NG Libraries and Demo Programs
 --------------------------------------------------
 
 [[Requirements]]
@@ -122,7 +130,7 @@ Buliding the Swarm-NG Libraries and Demo Programs
 
 .How do I build Swarm-NG for Linux? 
 
-Run `make`.  Users can specify the paths to compiler, libaries, and
+Run `make`.  Users can specify the paths to compiler, libraries, and
 include files, as well as compiler flags in the file
 ''Makefile.user''.
 
@@ -155,7 +163,7 @@ occur, please take a look at the output file indicated to check
 whether the difference is significant.
 
 If so and you can not solve the problem, then run 'make feedback',
-whih will generate a file named 'feedback.tgz' which we may request
+which will generate a file named 'feedback.tgz' which we may request
 that you send the developers.
 
 
@@ -207,10 +215,10 @@ Known Limitations and/or Bugs
   your cuda libraries via LD_LIBRARY_PATH.
 
 - If the error arises while compiling the included tests, then run
-  'make feedback', whih will generate a file named 'feedback.tgz'
+  'make feedback', which will generate a file named 'feedback.tgz'
   which we may request that you send us.
 
-- Otherwise, please identify the minimal ammount of code that produces
+- Otherwise, please identify the minimal amount of code that produces
   the compiler error.
 
 - Contact Swarm-NG developers via the
@@ -226,7 +234,7 @@ immediately after reboot your system into console mode_.
 If the problem persists, then please check the archives of the
 mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'] at the
 http://groups.google.com/group/swarm-ng[Google Group for Swarm-NG] to
-see if the bug has already been disussed.
+see if the bug has already been discussed.
 
 If not, then please contact Swarm-NG developers via the
 mailto:swarm-ng@googlegroups.com['Swarm-NG mailing list'].
@@ -243,7 +251,7 @@ subdirectory. +
 
 If you have asciidoc installed, then you can generate pretty html (or
 other formats) with 'make doc-asciidoc'.  An online version of the
-most rececnt documentation for the current version is
+most recent documentation for the current version is
 avaliable http://www.astro.ufl.edu/~eford/code/swarm/docs/[online]. + 
 
 While documenting source code is an ongoing projet, there is
@@ -255,7 +263,7 @@ http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[here].+
 
 .Organization of executables
 
-- All swarm executables and the swarm libary (libswarm.so) are placed in
+- All swarm executables and the swarm library (libswarm.so) are placed in
 the *bin* directory. +
 
 - The *run* directory contains configuration files and is where swarm is
@@ -284,7 +292,7 @@ Digging Deeper
 ~~~~~~~~~~~~~~
 .Where can I find additional documentation?
 
-There is additional documentation for various componets of Swarm-NG in
+There is additional documentation for various components of Swarm-NG in
 the docs subdirectory.  Most are written in asciidoc format.  To
 generate html versions, run 'make doc-asciidoc'.+
 
@@ -292,7 +300,7 @@ After running 'make doc-doxygen', you can also browse the
 link:../reference/html/index.html[doxygen reference]. +
 
 As the library interface solidifies, we anticipate providing
-additional documention in future releases and/or at the
+additional documentation in future releases and/or at the
 http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website]
 
 .How can I learn more about and/or contribute to the the Swarm-NG project?
@@ -327,7 +335,7 @@ link:gpl-3.0.txt[here].
 .Acknowledging use of Swarm-NG
 
 When writing papers which made use of Swarm-NG, we strongly encourage
-you to cite the technical paper descibing Swarm-NG.  We will provide a
+you to cite the technical paper describing Swarm-NG.  We will provide a
 citation as soon as a preprint of this paper is avaliable.  In the
 mean time, please mention the
 http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website].
@@ -356,7 +364,7 @@ which builds on a long history of n-body integrators, including Hal
 Levison and Martin Duncan's
 http://www.boulder.swri.edu/~hal/swift.html[Swift code]. +
 
-We greatfully acknowledge financial support from:
+We are happy to acknowledge financial support from:
 
 * the University of Florida's Research Opportunity Seed Fund, 
 
