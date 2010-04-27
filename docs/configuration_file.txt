@@ -81,6 +81,7 @@ Certain integrators have additional parameters:
 [[anchor-3]]
 PARAMETERS TO SPECIFY INITIAL CONDITIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 These parameters varry from one program to the next.  Please see the
 documentation for the specific program you are interested in.
 
@@ -108,6 +109,16 @@ GPU CONTROL PARAMETERS
    Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
 
 
+
+[[anchor-6]]
+OUTPUT PARAMETERS
+~~~~~~~~~~~~~~~~~
+
+''output''::
+   Specifies files to be used for output using the built-in logging.  In current demo, set this value to ''null''.  See *eventlog* for more information.
+
+''output interval'':
+   Specifies how often data should be logged for built-in logging.  _Only some integrators support this parameter at this time._ See *eventlog* for more information.
 
 EXAMPLE
 -------

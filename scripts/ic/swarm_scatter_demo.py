@@ -1,4 +1,5 @@
 #!/usr/bin/python
+''' Simple python script for generating an ensemble of planetary systems with an intruding star.'''
 #
 #    "swarm_scatter_demo.py" is a python script that creates initial conditions and the observation
 #    file for use in swarm_scatter_demo.
@@ -36,7 +37,7 @@ import scipy.special as SS
 # perturbers are drawn from a Maxwellian velocity distribution
 #
 # 
-nSystems=2048 # systems in ensemble
+nSystems=1000 # systems in ensemble
 mPrimary=1. # mass of the primary
 nOther=2 # primary plus perturbers. E.g., 3 = primary plus two perturbers
 massMin=.001/32. # 10 Earth-mass minimum
@@ -53,8 +54,14 @@ incomingR=20626.5 # AU
 maxUnperturbedImpact=1000. # AU
 numObs=100 # number of observations allowed
 ObserveFile="observeTimes.dat"
+MAXWELL=1 # use max
 VelSig=1./29.8 #(1km/s in code units) This is mean of Maxwellian velocity dispersion
-RANDOM_TIMES=0
+ObserveFile="observeTimes.dat" # list of times file used by swarm_scattering_demo
+MAXWELL=1 # use Maxwellian velocity.  Anything else gives the same initial speed 
+#         # between the binary and the planetary system for each ensemble constituent.
+RANDOM_TIMES=0 # set to 1 if you want the list of times file to have random intervals
+thisSeed=314159 # random number generator seed
+
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)
@@ -103,11 +110,12 @@ def getCollision():
 	R.seed()
 	phi=2.*M.pi*R.random()
 	theta=M.pi*(2.*R.random()-1.)
-        VelSigPert=Maxwell(VelSig) 
+        if MAXWELL==1: VelSigPert=Maxwell(VelSig) 
+	else: VelSigPert=VelSig
 	x=incomingR*M.cos(theta)*M.cos(phi)
 	y=incomingR*M.cos(theta)*M.sin(phi)
 	z=incomingR*M.sin(theta)
-        impact=M.sqrt(maxUnperturbedImpact**2+2.*mPrimary*maxUnperturbedImpact/VelSigPert**2) # assuming reduced mass is mPmP/(mP+mP)
+        impact=M.sqrt(maxUnperturbedImpact**2+4.*mPrimary*maxUnperturbedImpact/VelSigPert**2)  # assumes perturber is the same mass as the primary
 	impact*=M.sqrt(R.random())
 	alpha0=impact/incomingR
 	alpha=1e-3*alpha0 # take advantage of large separation
@@ -117,7 +125,6 @@ def getCollision():
        		phiPrime=phi+ppf
                	thetaPrime=theta+tpf
 		ppf*=1.01;tpf*=1.01
-
 		alpha=M.cos(theta)*M.cos(phi)*M.cos(thetaPrime)*M.cos(phiPrime)
 		alpha+=M.cos(theta)*M.sin(phi)*M.cos(thetaPrime)*M.sin(phiPrime)
 		alpha+=M.sin(thetaPrime)*M.sin(theta)

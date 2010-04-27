@@ -11,7 +11,8 @@ import random as R
 # this does not consider stability execpt for simple
 # Hill radius criterion
 #
-# 
+# Example parameters 
+#
 nSystems=1024
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
@@ -20,14 +21,14 @@ minPlanets=2 # keeps these the same
 maxPlanets=2
 minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
-pert=0.01 # perturbations for other velocities.
+pert=0.01 # perturbations for other velocities
 HILLS=3. # make sure the planets are separated by this many Hill radii
 timeStart=0.
-timeEnd=100. # time should be given in yr.
-numObs=1000 # number of system observations. File is unnecessary for most demos.
+timeEnd=100. # time should be given in yr
+numObs=100 # number of system observations. File is unnecessary for most demos. Used as the list of times file in swarm_scatter_demo
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
-thisSeed = 314159 # Seed for generator
+thisSeed = 314159 # Seed for random generator
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)

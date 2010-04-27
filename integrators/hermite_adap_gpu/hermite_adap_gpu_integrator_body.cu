@@ -181,7 +181,6 @@
 		}
 	}
 	else {
-		// How do we get an error message out of here?
 		ERROR("Invalid number of bodies using definition N_BODY. Ensemble should equal N_BODY");
 		return;
 	}
