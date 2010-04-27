@@ -64,7 +64,9 @@ OPTIONAL PARAMETERS
 EXAMPLE
 -------
 
-''Generate ICs; make; cd run; mkdir scatter_output; ../bin/swarm_scatter_demo -cfg integrator-scatter.cfg'',
+First, make the applications with 'make' and generate files specifying the initial conditions, e.g.
+'cd scripts/ic; ./swarm_scatter_demo.py ; cd ../..`
+'cd run; mkdir scatter_output; ../bin/swarm_scatter_demo -cfg integrator-scatter.cfg'',
 where integrator-scatter.cfg contains the following:
 
 [literal]
@@ -87,7 +89,7 @@ threads per block = 64
 
 # Output parameters
 output = null
-out files = ../scatter_output/scatter
+out files = ./scatter_output/scatter
 -----------------------------------
 
 
