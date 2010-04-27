@@ -1,3 +1,9 @@
+/*! \file stopwatch.h
+ * \brief declares stopwatch class for benchmarking cpu & gpu performance
+ * 
+ * class stopwath is based on NVIDIA's LinuxStopWatch class
+ */
+
 #ifndef stopwatch_h__
 #define stopwatch_h__
 

@@ -1,3 +1,14 @@
+/*! \file hermite_gpu_integrator_body.cu
+ *  \brief inluded multiple times to acheive template specialization for various precisions
+ *
+ *  This is included from hermite_gpu.cu like
+ *  template<>
+ *  void gpu_hermite_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
+ *  #include"hermite_gpu_integrator_body.cu"
+ *
+*/
+
+
 //template<>
 //void gpu_hermite_integrator<real_hi,real_lo>::integrate(gpu_ensemble &ens, double dT)
 { 

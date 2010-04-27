@@ -17,7 +17,7 @@
 #endif
 
 namespace peyton {
-/// contains string processing functions, type name demangling,
+// contains string processing functions, type name demangling,
 namespace util {
 
 	/// return approximate longitude of the Sun for a given \a time

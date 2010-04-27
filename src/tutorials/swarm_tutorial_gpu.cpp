@@ -1,3 +1,6 @@
+/*! \file swarm_tutorial_gpu.cpp
+ *  \brief simplest demo of using Swarm library and GPU integrator
+*/
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>

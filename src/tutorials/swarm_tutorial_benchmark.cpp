@@ -1,3 +1,6 @@
+/*! \file swarm_tutorial_benchmark.cpp
+ *  \brief program compares GPU and CPU speed
+*/
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>

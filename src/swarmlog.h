@@ -1,3 +1,8 @@
+/*! \file swarmlog.h
+ *  \brief declares hlog & dlog
+ *
+*/
+
 #ifndef swarmlog_h__
 #define swarmlog_h__
 
@@ -82,7 +87,7 @@ namespace swarm
 		return br;
 	}
 
-        /// gpu logging subsystem.  See docs/eventlog.txt
+        /// swarm logging system.  See docs/eventlog.html
 	namespace log
 	{
 		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
@@ -239,7 +244,7 @@ namespace swarm
 	}
 }
 
-/// For use by gpu logging subsystem.  See docs/eventlog.txt
+/// For use by gpu logging subsystem.  See docs/eventlog.html
 namespace gpulog
 {
 	namespace internal

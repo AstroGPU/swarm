@@ -2,7 +2,7 @@
 #define _astro_constants_h
 
 namespace peyton {
-/// Various physical and mathematical constants
+// Various physical and mathematical constants
 namespace constants {
 
 	const double pi = 3.14159265358979323846264338;

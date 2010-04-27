@@ -1,3 +1,9 @@
+/*! \file swarm.h
+ *   \brief Main header file for swarm library
+ *
+ *   Declares swarm_error, ensemble, cpu_ensemble, gpu_ensemble, writer (abstract), 
+ *   Also contains some memory management funcctions
+*/
 #ifndef __swarm_h
 #define __swarm_h
 
@@ -14,6 +20,7 @@
 #include <cux/cux.h>
 
 #include "stopwatch.h"
+#include "mainpage.h"
 
 #ifdef THROW_IS_ABORT
 	#include <cassert>
@@ -582,12 +589,5 @@ namespace swarm {
 
 #endif
 
-/** @mainpage Swarm-NG library & demonstration programs
-
- \brief @authors Aaron Boley, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
-
- @section intro Introduction
- For more information see http://www.astro.ufl.edu/~eford/code/swarm/
-*/
 
 

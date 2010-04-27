@@ -1,3 +1,9 @@
+/*! \file mvs.h
+ * \brief declares gpu_mvs_integrator
+ *
+ * \todo implememnt gpu_mvs_integrator class
+*/
+
 #ifndef integ_mvs_h__
 #define integ_mvs_h__
 

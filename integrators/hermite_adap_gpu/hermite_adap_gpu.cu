@@ -1,3 +1,8 @@
+/*! \file hermite_adap_gpu.cu
+ * \brief GPU kernels for hermite_adap_gpu_integrator
+ * 
+ * also contains associated template metaprogramming in gpu_hermite_adap_aux namespace 
+*/
 #include "swarm.h"
 #include "user.h"
 #include "hermite_adap_gpu.h"
@@ -47,8 +52,12 @@ namespace gpu_hermite_adap_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-// Adaptive time step algorithm. 
-
+/**
+ * \brief Calculate adaptive timestep for hermite_adap
+ *
+ * \todo Make hermite_adap efficient on GPU, probably by moving the functionality of
+ * this function into correct and/or using a different time step criterion
+ */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
  {
@@ -674,7 +683,7 @@ template<unsigned int pre, unsigned int nbod>
 }
 
 /**
- * Hermite integrator kernel function
+ * \brief Hermite integrator kernel function
  *
  * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
  * @tparam nbod number of bodies per system 

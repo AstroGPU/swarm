@@ -31,27 +31,28 @@ demonstrate functionality and how to program with Swarm-NG.
 
 * Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html
 
-* Build the library and example programs.  See <<Building>> for an
-  overview of key points or read
-  link:build_system.html[] for more info.
+* Build the library and example programs with 'make'.  See <<Building>> 
+  for an overview of key points or read link:build_system.html[] for 
+  even more info.
 
 * Do a few quick tests with 'make test'.  See <<Testing>> for more info.
 
 * See how much of a speedup you get with 'make benchmark'.  (Warning:
   This requires performing the integrations on both the CPU and GPU,
-  so it can take a long time.  Please be patient.)
+  so it can take a long time.  Please be patient.)  Report your
+  results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 
 * To see how an end user can use 'swarm' as is:
 
-** Take a look at the test 'test/swarm/swarm-run.test'.  If you run
-   'make test', the output will be stored in
+** Take a look at the test 'test/swarm/swarm-run.test'.  If you ran
+   'make test' successfully, then the output will be stored in
    'test-outputs/swarm/swarm-run.test/output.log'
 
-** Read link:configuration_file.html[]
-   for a desription of the configuration file format and valid
-   parameters for the 'bin/swarm' program.  (Some of the demos use a
-   configuration file with the same format, but they may not accept
-   all the parameters.)
+** Read link:swarm.html[] and link:configuration_file.html[]
+   for a desription of swarm, the configuration file format and valid
+   parameters for the 'bin/swarm' program.  (Some of the other
+   demos use a configuration file with the same format, but they 
+   may not accept all the parameters.)
 
 ** To see how end users can access data written by the swarm logging
    system, use 'swarmquery output_file'.  For info on options, run

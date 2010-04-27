@@ -1,3 +1,8 @@
+/*! \file swarmlog.cpp
+ *  \brief public interface to swarm logging system
+ *
+*/
+
 #include "swarmlog.h"
 #include <iostream>
 #include <astro/binarystream.h>

@@ -1,3 +1,10 @@
+/*! \file hermite_cpu.h
+ *  \brief declares cpu_hermite_integrator
+ *
+ *  Note that while this clas derivers from integrator, it does not use cpu_generic_integrator
+*/
+
+
 #ifndef integ_hermite_cpu_h__
 #define integ_hermite_cpu_h__
 
@@ -65,6 +72,7 @@ protected:
 
 	public:
 	// non-const versions
+	/// returns reference to x component of acceleration for system sys and body bod
 	double&  ax(int sys, int bod) { return m_acc[bod*m_nsys + sys]; }
 	double&  ay(int sys, int bod) { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double&  az(int sys, int bod) { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }

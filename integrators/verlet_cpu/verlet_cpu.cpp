@@ -1,3 +1,7 @@
+/*! \file verlet_cpu.cpp
+ *  \brief contains member functions of cpu_verlet_integrator and factory to create_cpu_verlet
+*/
+
 #include "swarm.h"
 #include "verlet_cpu.h"
 #include <cassert>

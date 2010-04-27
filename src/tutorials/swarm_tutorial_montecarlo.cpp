@@ -1,3 +1,6 @@
+/*! \file swarm_tutorial_montecarlo.cpp
+ *  \brief program for Monte Carlo integrations based on user specified initial conditions
+*/
 #include "swarm.h"
 #include <iostream>
 #include <sstream>

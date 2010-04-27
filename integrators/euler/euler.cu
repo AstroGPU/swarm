@@ -1,3 +1,7 @@
+/*! \file euler.cu
+ * \brief declares prop_euler & factory 
+ */
+
 #include "swarm.h"
 #include "euler.h"
 #include "swarmlog.h"

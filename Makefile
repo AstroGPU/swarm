@@ -132,7 +132,11 @@ all: $(APPS)
 #
 
 src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
-	@ echo "// AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
+	@ echo "/*! \file autogen_dont_edit.cu"
+	@ echo " *  \brief merged cu files for nvcc"
+	@ echo " * " > $@
+	@ echo " * AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
+	@ echo " */"
 	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
 src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o

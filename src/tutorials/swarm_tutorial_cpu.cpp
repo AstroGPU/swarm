@@ -1,3 +1,6 @@
+/*! \file swarm_tutorial_cpu.cpp
+ *  \brief simplest demo of using Swarm library and CPU integrator
+*/
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>

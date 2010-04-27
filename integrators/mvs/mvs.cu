@@ -1,3 +1,9 @@
+/*! \file mvs.cu
+ * \brief dummy placeholder until mvs is implemented
+ *
+ * \todo implement mvs GPU kernels (currently just placeholder)
+ */
+
 #include "swarm.h"
 #include "mvs.h"
 
