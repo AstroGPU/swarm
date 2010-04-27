@@ -1,0 +1,146 @@
+easyGen.py, swarm_scatter_demo.py, and throwBinaryGen.py(1)
+===========================================================
+
+NAME
+---- 
+easyGen.py, swarm_scatter_demo.py, and throwBinaryGen.py -- Python scripts for generating initial conditions (ICs) for use by swarm.   
+
+SYMPOSIS
+--------
+*easyGen.py* or *swarm_scatter_demo.py* or *throwBinaryGen.py*
+
+Description
+-----------
+easyGen.py, swarm_scatter_demo.py, and throwBinaryGen.py each generate ICs to load as a swarm ensemble, but with slight variations (described above)  between each.
+
+PURPOSE
+~~~~~~~
+
+''easyGen.py''::
+   Simple ensemble with N elements, each element having M planets around a single primary. The primary mass is held fixed between ensemble elements, but planet masses and separations can be varied.  
+
+''swarm_scatter_demo.py''::
+   Like easyGen.py, but with a N perturbing bodies.  The pertuber's mass and intial distance from the primary are held fixed between ensemble elements, but the position of the perturber on the sky, relative to the primary, is varied.  In addition, the initial speed assigned to the perturber can be drawn from a Maxwellian distribution or held fixed between ensemble elements.
+
+''throwBinaryGen.py''::
+   Like swarm_scatter_demo.py, but the perturbers are now in equal-mass binaries. 
+
+PARAMETERS
+~~~~~~~~~~
+
+The following parameters can be changed near the top of each script, if applicable.
+
+''nSystems''::
+  The number of constituents in the ensemble.
+
+''mPrimary''::
+  The mass of the primary (1=1Msun).
+
+''mBinary''::
+  The mass of each star in the equal-mass binary (_throwBinaryGen.py only_).
+
+''nOther''::
+  Primary plus perturbers.  For example, one binary requires nOther=3, while for a single perturber, nOther=2.
+
+''massMin''::
+  Minimum planet mass to be drawn from a uniform-log distribution between the minimum and maximum.
+
+''massMax''::
+  Maximum planet mass to be drawn from a uniform-log distribution between the minimum and maximum. minMass can equal massMax.
+
+''minPlanets''::
+  The minimum number of planets in an ensemble element.
+
+''maxPlanets''::
+  The maximum number of planets in an ensemble element.  minPlanets can equal maxPlanets.
+
+''minAU''::
+  Minimum initial primary-planet separation.  
+
+''maxAU''::
+  Maximum initial primary-planet separation.  _NOTE: If ''SET_OUTER_ORBIT=1'', one planet will be forced to have an initial separation of maxAU_.
+
+''SET_OUTER_ORBIT''::
+  Set SET_OUTER_ORBIT=1 if the outer planet is to be forced to have an initial separation of maxAU.
+
+''minBinarySep''::
+  Minimum binary separation. (_throwBinaryGen.py only_)
+
+''maxBinarySep''::
+  Maximum binary separation.  minBinarySep can equal maxBinarySep. (_throwBinaryGen.py only_)
+
+''HILLS''::
+  The minimum number of Hill radii, based on the current planet's mass, must be separated from any other planet. _NOTE: Because only the current mass is considered, it is possible to have overlapping Hill radii. This will be addressed in future releases._
+
+''pert''::
+   Perturbations for velocities.  If the circular orbit is found to be v_c = v_y, then v_x=v_c*pert and v_z = v_c*pert.
+
+''timeStart''::
+   Starting time for the integration. Used for creating the list-of-times file used by swarm_scatter_demo.
+
+''timeEnd''::
+   Stopping time for the integration.  Used for creating the list-of-times file used by swarm_scatter_demo.
+
+''numObs''::
+   The number of snapshots (observations) desired for the list-of-times file used by swarm_scatter_demo.
+
+''ObserveFile''::
+   The list-of-times file (when to observe the system) for use by swarm_scatter_demo.
+
+''incomingR''::
+   The initial perturber-primary or binary-primary separation in AU.  (_throwBinaryGen.py or swarm_scatter_demo.py only_).
+
+''maxUnperturbedImpact''::
+   The pericenter (AU) for the perturber or binary center, without gravitational focusing.  Focusing is taken into account by the script based on the initial speed of the perturbers.  (_throwBinaryGen.py or swarm_scatter_demo.py only_).
+
+''VelSig''::
+   Either the mean of the Maxwellian velocity distribution or the initial speed of the perturbers.  (_throwBinaryGen.py or swarm_scatter_demo.py only_).
+
+''MAXWELL''::
+   Set MAXWELL=1 if a Maxwellian velocity distribution is desired.  Any other value uses a constant speed of VelSig between ensemble constituents.
+
+''RANDOM_TIMES''::
+  Set RANDOM_TIMES=1 if random times for the list-of-times file are desired. Otherwise, evenly spaced intervals are used.
+
+''thisSeed''::
+  Seed for the random number generator.
+
+DEPENDENCIES
+------------
+
+easyGen.py uses python and only the standard math and random libraries.  throwBinaryGen.py and swarm_scatter_demo.py use python and the libraries math, random, and scipy.  The library scipy can be acquired at www.scipy.org. 
+
+GENERATING NINITIAL CONDITIONS
+______________________________
+
+The scripts can be found in $SWARMHOME/scripts for easyGen.py and throwBinaryGen.py or in $SWARMHOME/scripts/ic for swarm_scatter_demo.py, where $SWARMHOME is root home directory for swarm. Data generated by running the scripts are ordered as follows:
+
+[literal]
+---------------------------------
+Total_number_of_bodies
+Mass_1 x_1 y_1 z_1 vx_1 vy_1 vz_1
+Mass_2 x_2 y_2 z_2 vx_2 vy_2 vz_2
+Mass_3 x_3 y_3 z_3 vx_3 vy_3 vz_3
+.
+.
+. 
+Mass_N x_N y_N z_N vx_N vy_N vz_N
+_________________________________
+
+
+LIMITATIONS & BUGS
+__________________
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated information on bugs.
+
+RESOURCES
+_________
+
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+COPYING
+_______
+Copyright \(C) 2008-2010 A. C. Boley + 
+Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+
