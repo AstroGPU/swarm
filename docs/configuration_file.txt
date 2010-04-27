@@ -3,7 +3,6 @@ Format/rules for configuration file
 
 Description
 -----------
-<<<<<<< HEAD
 .What is a configuration file?
 The configuration file specifies several parameters, including:  
 - <<anchor-1,choice of integrator and other required parameters>>
@@ -15,17 +14,12 @@ The configuration file specifies several parameters, including:
 
 For some programs, the configuration file also controls the initial conditions. +
 Examples are located in `run/integrator*.cfg`
-=======
-.What is configuration file?
-The configuration file specifies several runi-time parameters. Examples are located in `run/integrator.cfg`
->>>>>>> acboley
 
 .Format for the configuration file
-Each parameter appears on its own line with a format: + 
+Each parameter appears on its own line in a format: + 
 ''key = value''
 
 [horizontal]
-<<<<<<< HEAD
 <<anchor-1,Required parameters>>:: Currently the following parameters are required (for all programs that accept a configuration file): ''integrator'', ''runon'', ''integration end''
 <<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''time step'' (fixed timestep algorithms), ''time step factor'' and ''min time step'' (adaptive timestep algorithms), ''precision'' (hermite_gpu and hermite_cpu only)
 <<anchor-3,Initial condition parameters>>:: User-specified initial conditions (e.g., ''initial conditions'', ''num_systems'', ''num_bodies'')
@@ -34,14 +28,6 @@ Each parameter appears on its own line with a format: +
 <<anchor-5,GPU kernel configuration parameters>>:: Optional ''threads per block''
 <<anchor-6,Output parameters>>:: Optional ''output'', ''output interval''
 
-=======
-<<anchor-1,Required parameters>>:: Commonly required parameters ''integrator'', ''runon'', ''num_systems'', ''num_bodies'', ''dT''
-<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''h'', ''min time step'', ''time step factor'', ''precision''
-<<anchor-3,Initial condition parameters>>:: Users specify initial conditions using ''initial conditions''
-<<anchor-4,Stopper parameters>>:: Optional
-<<anchor-5,GPU kernel configuration parameters>>:: Optional
-<<anchor-6,Output parameters>>:: Optional
->>>>>>> acboley
 
 [[anchor-1]]
 REQUIRED PARAMETERS
@@ -61,7 +47,6 @@ Additional parameters may be required by specific programs.
 INTEGRATOR-SPECIFIC PARAMETERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<<<<<<< HEAD
 Constant time step algorithms (e.g., hermite, rk4) must specify:
 ''time step''::
   For the fixed time stepping, ''time step'' is the constant time step.
@@ -92,73 +77,12 @@ Certain integrators have additional parameters:
 ''steps per kernel run'' (optional)::
   Specifies the maximum number of steps per kernel call.  Currently,
   defaults to 100.  Not currently supported by hermite integrators.
-=======
-And either ''h'' or ''time step factor'':
-
-''h''::
-   Specify the timestep for fixed time-step algorithms.
-
-''time step factor''::
-   Specifies the time step parameter for the integrator ''gpu_hermite_adap''.  
-
-''min time step''::
-   Specifies the minimum time step for the integrator ''gpu_hermite_adap''.  
-
-''precision''::
-   Must specify the precision for the integrations.  0 results in single precision, 1 results in double precision.  Some integrators support additional values that result in mixed-precision calculations.  For example, gpu_hermite allows a value of 2, which results in positions and velocities being calculated in double precision, but accelerations and jerks being computed in single precision.
-
-
->>>>>>> acboley
 
 [[anchor-3]]
 PARAMETERS TO SPECIFY INITIAL CONDITIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-<<<<<<< HEAD
 These parameters varry from one program to the next.  Please see the
 documentation for the specific program you are interested in.
-=======
-In the case of swarm_tutorial_montecarlo, users specify initial conditions in terms of the mass of a central body and Keplerian orbital elements for each of 2-9 additional bodies.  
-
-''use_jacobi''::
-   A non-zero value specifies that all orbital elements are to be interpreted in a Jacobi frame.  Default value is 0 (false).  
-
-''mass_star''::
-   The mass of body zero, the central object.  For planetary systems, this is typically the host star.  Default value is 1.
-
-''mass_[1-9]''::
-   The mass of the specified body.  Valid range is [0,mass_star).  (Body #0 is the central body.)
-
-''a_[1-9]''::
-   The initial semi-major axis of the specified body.  Valid range is [0.001,10000.].
-
-''ecc_[1-9]''::
-   The initial eccentricicty of the specified body.  Valid range is [0,1).
-
-''inc_[1-9]''::
-   The initial inclination of the specified body in degrees.  Valid range is [-180,180].    
-
-''node_[1-9]''::
-   The initial ascending node of the specified body in degrees.  Valid range is [-720,720].    
-
-''omega_[1-9]''::
-   The initial arguement of periastron of the specified body in degrees.  Valid range is [-720,720].    
-
-''meananom_[1-9]''::
-   The initial mean anomaly of the specified body in degrees.  Valid range is [-720,720].    
-
-Using only the above keywords would result in all systems being assigned the same initial conditions.  While this may be useful for some tests, most real calculations will want to assign different initial conditions to each system.  To generate initial conditions via a pseudo-random number generator, replace at least one of the above key names for the mass and orbital elements of one or more bodies with a similar keyword, but with one or more of the following suffixes:  ''_min'', ''_max'', and ''_sigma''.  
-
-If only key_N_min and key_N_max are specified, then key for the Nth body will be generated from a uniform distribution between the minimum and maximum values.  
-
-If key_N and key_N_sigma are specified, then key for the Nth body will be generated from a Gaussian distribution with mean key_N and standard deviation key_N_sigma.  If key_N_min and/or key_N_max are also specified, then the distribution will be truncated at these values.
-
-If only key_N is specified, then key for the Nth body will be exactly the specified value. 
-
-Other combinations of key suffixes are not allowed.
-
-''time_init''::
-   Initial time for all simulations.  Default value is 0.  
->>>>>>> acboley
 
 
 [[anchor-4]]
@@ -173,34 +97,18 @@ OUTPUT PARAMETERS
 ''output''::
    Specifies files to be used for output.  If not specified, defaults to ''null'' which results in no output files being written.
 
-<<<<<<< HEAD
 ''output interval''::
    Specifies how often data should be logged.  
 
 
 GPU CONTROL PARAMETERS
 ~~~~~~~~~~~~~~~~~~~~~~
-=======
->>>>>>> acboley
 
 ''threads per block''::
    Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
 
 
 
-<<<<<<< HEAD
-=======
-[[anchor-6]]
-OUTPUT PARAMETERS
-~~~~~~~~~~~~~~~~~
-
-''output''::
-   Specifies files to be used for output using the built-in logging.  In current demo, set this value to ''null''.  See *eventlog* for more information.
-
-''output interval'':
-   Specifies how often data should be logged for built-in logging.  _Only some integrators support this parameter at this time._ See *eventlog* for more information.
-
->>>>>>> acboley
 EXAMPLE
 -------
 
