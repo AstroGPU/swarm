@@ -51,9 +51,8 @@ Google Group: <http://groups.google.com/group/swarm-ng>
 
 COPYING
 -------
-Copyright \(C) 2010 Eric B. Ford + 
+Copyright \(C) 2010 Eric B. Ford and the Swarm-NG Development Team + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
 link:gpl-3.0.txt[] and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].
-

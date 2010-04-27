@@ -98,3 +98,19 @@ Advanced Features
     * Dependency generation/tracking is automatic. The implementation is
       based on the advice from the GNU make manual (google 'Generating
       Dependencies Automatically').
+
+
+Making a local copy of documentation in HTML format
+---------------------------------------------------
+* To make a pretty html version of the documentation in the docs
+   subdirectory, run 'make doc-asciidoc' (requires asciidoc).  Even
+   without asciidoc you can read the text files in the *docs*
+   subdirectory or browse the documentation
+   http://www.astro.ufl.edu/~eford/code/swarm/docs/[online].
+
+* To generate reference information via doxygen in the reference
+   subdirectory, run 'make doc-doxygen' (requires doxygen).  This
+   information for the most recent version is also avaliable
+   http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[online]
+
+

@@ -400,7 +400,7 @@ class gpu_ensemble : public ensemble
 
 	public:
 		void reset(int nsys, int nbod, bool reinitIndices = true);	//!< Allocate GPU memory for nsys systems of nbod planets each
-		void free();							//!< Deallocate CPU memory
+		void free();							//!< Deallocate GPU memory
 
 	public:
 		void copy_from(const cpu_ensemble &source);	//!< Copy the data from the CPU

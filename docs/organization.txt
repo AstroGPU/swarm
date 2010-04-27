@@ -89,12 +89,14 @@ other formats) with 'make doc-asciidoc'.  An online version of the
 most recent documentation for the current version is
 avaliable http://www.astro.ufl.edu/~eford/code/swarm/docs/[online]. + 
 
+[[anchor-reference]]
 While documenting source code is an ongoing projet, there is
 significant inline documentation.  If you have doxygen installed, then
-you can generate pretty html by running 'make doc-doxygen'. It places
-output in the *reference* subdirectory.  An online version for the 
-current version of swarm is avaliable
+you can generate a pretty html reference manual by running 'make doc-doxygen'. 
+It places output in the *reference* subdirectory with an html subdirectory.  
+An online version for the current version of swarm is avaliable
 http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[here].+  
+
 
 
 Organization of executables (bin and run)
@@ -108,10 +110,11 @@ the *bin* directory. +
 The *run* directory contains configuration files and is where swarm is
 intended to be run from.
 
+
+[[anchor-src]]
 Organization of source code (src and integrators)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-[[anchor-src]]
 The main source code is in the *src* directory. +
 
 [[anchor-integrators]]
@@ -126,10 +129,9 @@ directory. +
 Source code for the GPU logging system is in the *src/gpulog* directory. +
 Various utilities are in *src/cux* and *src/astro*. +
 
+[[anchor-test]]
 Organization of test directories (test, test-outputs)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-[[anchor-test]]
 
 The *test* directory contains several subdirectoires.  ''make test''
 results in running the file named .test in that subdirectory to
@@ -145,21 +147,21 @@ your results and the results of a referene run (provided or can be
 recreated by ''make test-create'').  The full output is stored in a
 sub-subdirecory.
 
-Other directories (scripts, etc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [[anchor-scripts]]
+Other directories (scripts)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The *scripts* directory has scripts needed for the build system, as
 well as for generating initial conditions for some demo programs.  +
-
-[[anchor-reference]]
-For more information on the organization of directories and files, see
-link:organization.html[] and/or the
-link:../reference/html/files.html[doxygen files page].
 
 
 RESOURCES
 ---------
+
+For more information on the organization of directories and files, see
+link:organization.html[] and/or the
+link:../reference/html/files.html[doxygen files page].
 
 Main web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
 
