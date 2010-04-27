@@ -21,6 +21,7 @@ minPlanets=2 # keeps these the same
 maxPlanets=2
 minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
+SET_OUTER_ORBIT=0 # set to 1 to force one planet to always be at maxAU
 pert=0.01 # perturbations for other velocities
 HILLS=3. # make sure the planets are separated by this many Hill radii
 timeStart=0.
@@ -72,6 +73,8 @@ def main():
 		for j in xrange(nPlanets):
                         mass=getUniformLog(massMin,massMax)
                         x=getUniformLog(minAU,maxAU)
+			if SET_OUTER_ORBIT==1: 
+				if j==0: x=maxAU
 			listx.append(x)
 			OK=0
 			if j==0: OK=1

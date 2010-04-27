@@ -49,6 +49,7 @@ minPlanets=4 # keeps these the same for now.
 maxPlanets=4
 minAU=2. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting.
 maxAU=100. # outer planet
+SET_OUTER_ORBIT=1 # set one planet to always be initially at maxAU.
 minBinarySep=100. # binary separations
 maxBinarySep=100.
 pert=0.01 # perturbations for other velocities.
@@ -163,7 +164,8 @@ def main():
 		for j in xrange(nPlanets):
 			mass=getUniformLog(massMin,massMax)
 			x=getUniformLog(minAU,maxAU)
-			if j==0: x=maxAU
+			if SET_OUTER_ORBIT: 
+				if j==0: x=maxAU
 			#if j==1: x=3.
 			#if j==2: x=10. # set these if you want to constrain planet locations
 			#if j==3: x=30.
