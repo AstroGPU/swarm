@@ -53,14 +53,11 @@ namespace gpu_hermite_adap_aux
 #define SQRT(x)   sqrt(x)
 
 /**
-<<<<<<< HEAD:integrators/hermite_adap_gpu/hermite_adap_gpu.cu
-// Adaptive time step algorithm. 
-=======
  * \brief Calculate adaptive time step for hermite_adap
  *
+ * Adaptive time step algorithm. Placed directly in the kernel for now
  * \todo Make hermite_adap efficient on GPU, probably by moving the functionality of
  * this function into correct and/or using a different time step criterion
->>>>>>> eford:integrators/hermite_adap_gpu/hermite_adap_gpu.cu
  */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 

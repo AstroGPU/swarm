@@ -33,12 +33,6 @@ Overview
   (location of nvcc) or DEVEMU (that you'd set to --device-emulation to
   compile in device emulation mode).
 
-<<<<<<< HEAD:docs/build_system.txt
-* To disable the 'pretty printing' during the build process, define
-  VERBOSE=1 in your Makefile.user (or the environment).
-
-=======
->>>>>>> eford:docs/build_system.txt
 
 Advanced Features
 -----------------
