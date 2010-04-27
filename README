@@ -29,6 +29,8 @@ demonstrate functionality and how to program with Swarm-NG.
 
 .Quick Start Tips
 
+* Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html
+
 * Build the library and example programs.  See <<Building>> for an
   overview of key points or read
   link:build_system.html[] for more info.
@@ -240,7 +242,8 @@ other formats) with 'make doc-asciidoc'. +
 While documenting source code is an ongoing projet, there is
 significant inline documentation.  If you have doxygen installed, then
 you can generate pretty html by running 'make doc-doxygen'. It places
-output in the *reference* subdirectory.+
+output in the *reference* subdirectory.  An online version is avaliable
+http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[here].+  
 
 .Organization of executables
 
@@ -265,8 +268,8 @@ The *scripts* directory has scripts needed for the build system, as
 well as for generating initial conditions for some demo programs.  +
 
 For more information on the organization of directories and files, see
-link:organization.txt[] and/or the
-link:reference/html/files.html[doxygen files page].
+link:organization.html[] and/or the
+link:../reference/html/files.html[doxygen files page].
 
 
 Digging Deeper
