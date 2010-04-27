@@ -20,7 +20,6 @@
 #include <cux/cux.h>
 
 #include "stopwatch.h"
-#include "mainpage.h"
 
 #ifdef THROW_IS_ABORT
 	#include <cassert>

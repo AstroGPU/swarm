@@ -14,8 +14,19 @@ can be analyzed by programs like swarmquery.
 
 DESCRIPTION
 -----------
-This program reads integrator parameters from a configuration file.
-Initial conditions are read from a directory of 
+This program reads integrator parameters from a configuration file. + 
+
+The program then reads the initial conditions from disk, looking for
+a sequence of files with a common prefix (specified by the ''initial
+conditions'' parameter) followed by a dot and a number (starting from
+zero).
+
+The program then integrates each system for the specified time (or
+until an event trigger the integrator to stop for that system),
+optionally saving data to a binary output file.
+
+The swarmquery program can be used to extract information from 
+the binary output file.
 
 
 CONFIGURATION FILE
@@ -24,7 +35,7 @@ An example configuration file is provided in run/integrator.cfg
 Details about configuration files can be found in link:configuration_file.html[].  In addition to the standard configuration file parameters, swarm requires:
 
 ''initial conditions''::
-  Prefix for files containing the initial conditions.  Setting a value of ''data'' results in swarm looking for files with the names ''data.1'', ''data.2'', etc.
+  Prefix for files containing the initial conditions.  Setting a value of ''data'' results in swarm looking for files with the names ''data.0'', ''data.1'', ''data.2'', etc. in the current directory.
 
 
 REQUIRED PARAMETERS
@@ -77,7 +88,11 @@ OUTPUT PARAMETERS
 ~~~~~~~~~~~~~~~~~
 
 ''output''::
-   Specifies files to be used for output.  If not specified, defaults to ''null'' which results in no output files being written.
+   Specifies file to be used for output.  If not specified, defaults
+   to ''null'' which results in no output files being written.
+   Alternatively, specify the value ''binary output_file.bin'' for the
+   swarm logging system to write binary data into a file named
+   output_file.bin.
 
 ''output interval'':
    Specifies how often data should be logged.  
@@ -95,12 +110,44 @@ OTHER OPTIONAL PARAMETERS
    Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
 
 
+INITIAL CONDITIONS FILES
+------------------------
+Each initial conditions file corresponds to a single system.
+The first line contains the number of bodies.
+Each subsequent line contains the initial conditions for one body.
+For example, +
+[literal]
+---------
+nbodies
+mass x y z vx vy vz
+mass x y z vx vy vz
+...
+---------
 
 EXAMPLE
 -------
+The script scripts/easyGen.py generates a small ensemble of sample
+data for demonstration purposes.  Thus, you can try *swarm* like +
+''cd run; ../scripts/easyGen.py ; swarm integrator.cfg ''
+
+Then, *swarm_test_energy* and/or *swarmquery* can be used to analyze
+the output stored in log.bin.
 
 OUTPUT
 ------
+[literal]
+---------
+Configuration                   : integrator.cfg
+Ensemble                        : data (1024 systems, 3 bodies each).
+Integrator                      : gpu_hermite, executing on the GPU
+
+# Integrating... # Done.
+
+# Time per system (integration)   : 80.0205 us.
+# Time per system (setup+integr.) : 1392.97 us.
+# GPU/CPU memcpy time             : 0.41 ms.
+# Internal state initialization   : 0.015 ms.
+---------
 
 LIMITATIONS & BUGS
 ------------------

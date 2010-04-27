@@ -42,6 +42,11 @@ demonstrate functionality and how to program with Swarm-NG.
   so it can take a long time.  Please be patient.)  Report your
   results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 
+* Read some documentation.
+
+** To make a pretty html version of the documentation in the docs subdirectory, run 'make doc-asciidoc' (requires asciidoc).  Even without asciidoc you can read the text files in the *docs* subdirectory or browse the documentation http://www.astro.ufl.edu/~eford/code/swarm/docs/[online].  
+** To generate reference information via doxygen in the reference subdirectory, run 'make doc-doxygen' (requires doxygen).  This information for the most recent version is also avaliable http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[online] 
+
 * To see how an end user can use 'swarm' as is:
 
 ** Take a look at the test 'test/swarm/swarm-run.test'.  If you ran
@@ -174,8 +179,7 @@ the following demos from the tutorial.
 - swarm_tutorial_montecarlo: change into the run sub-directory and run
 `../bin/swarm_tutorial_montecarlo integrator-tutorial_montecarlo.cfg`
 The behavior of this tutorial can be easily adjusted by changing the
-configuration file.  See
-docs/swarm_tutorial_montecarlo.html[swarm_tutorial_montecarlo.html]
+configuration file.  See link:swarm_tutorial_montecarlo.html[] 
 for details.
 
 - swarm_scatter_demo: This requires multiple input files.  See
@@ -238,12 +242,15 @@ several text files (ending in .txt or .man) in the *docs*
 subdirectory. +
 
 If you have asciidoc installed, then you can generate pretty html (or
-other formats) with 'make doc-asciidoc'. +
+other formats) with 'make doc-asciidoc'.  An online version of the
+most rececnt documentation for the current version is
+avaliable http://www.astro.ufl.edu/~eford/code/swarm/docs/[online]. + 
 
 While documenting source code is an ongoing projet, there is
 significant inline documentation.  If you have doxygen installed, then
 you can generate pretty html by running 'make doc-doxygen'. It places
-output in the *reference* subdirectory.  An online version is avaliable
+output in the *reference* subdirectory.  An online version for the 
+current version of swarm is avaliable
 http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[here].+  
 
 .Organization of executables

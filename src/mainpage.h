@@ -19,7 +19,11 @@ planetary systems.  In the long term, we hope Swarm-NG will allow for
 the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
- @section intro Introduction
- For more information see http://www.astro.ufl.edu/~eford/code/swarm/
+ @section moreinfo Further Information
+ Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
+
+ For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
  
+ For more information see http://www.astro.ufl.edu/~eford/code/swarm/
+
 */

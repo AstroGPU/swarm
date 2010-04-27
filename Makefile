@@ -132,11 +132,11 @@ all: $(APPS)
 #
 
 src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
-	@ echo "/*! \file autogen_dont_edit.cu"
-	@ echo " *  \brief merged cu files for nvcc"
-	@ echo " * " > $@
-	@ echo " * AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" > $@
-	@ echo " */"
+	@ echo "/*! \file autogen_dont_edit.cu" > $@
+	@ echo " *  \brief merged cu files for nvcc" >> $@
+	@ echo " * " >> $@
+	@ echo " * AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" >> $@
+	@ echo " */" >> $@
 	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
 src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o
@@ -197,7 +197,7 @@ clean: clean-test
 	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
 
 tidy: clean
-	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/*.bin run/*.idx feedback.* run/benchmark.out
+	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ docs/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/*.bin run/*.idx feedback.* run/benchmark.out
 	$(TIDYUI) rmdir bin
 
 info:
