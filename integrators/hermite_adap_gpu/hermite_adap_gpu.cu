@@ -52,16 +52,16 @@ namespace gpu_hermite_adap_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
+/**
 <<<<<<< HEAD:integrators/hermite_adap_gpu/hermite_adap_gpu.cu
 // Adaptive time step algorithm. 
 =======
-/**
  * \brief Calculate adaptive time step for hermite_adap
  *
  * \todo Make hermite_adap efficient on GPU, probably by moving the functionality of
  * this function into correct and/or using a different time step criterion
- */
 >>>>>>> eford:integrators/hermite_adap_gpu/hermite_adap_gpu.cu
+ */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
  {
@@ -687,7 +687,7 @@ template<unsigned int pre, unsigned int nbod>
 }
 
 /**
- * \brief Hermite integrator kernel function
+ * Hermite integrator kernel function
  *
  * @tparam pre precision decision: 1 for double, 2 for single, and 3 for mixed
  * @tparam nbod number of bodies per system 
@@ -810,8 +810,6 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
 
-        typename pos_type<pre>::type hh=h;
-        typename pos_type<pre>::type sstepfac=stepfac;
 	while(T<Tend)
 	{
 
@@ -820,7 +818,9 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
 		copyArray<nData>(mAccOld,mAcc);
 		copyArray<nData>(mJerkOld,mJerk);
 
-		// get adaptive time step
+                typename pos_type<pre>::type hh=h;
+                typename pos_type<pre>::type sstepfac=stepfac;
+
                 dt=getAdaptiveTimeStep<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], hh, sstepfac);
                 if(dt+T>Tend)dt=Tend-T;
  
