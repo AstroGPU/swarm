@@ -283,9 +283,11 @@ link:../reference/html/files.html[doxygen files page].
 Digging Deeper
 ~~~~~~~~~~~~~~
 .Where can I find additional documentation?
+
 There is additional documentation for various componets of Swarm-NG in
 the docs subdirectory.  Most are written in asciidoc format.  To
 generate html versions, run 'make doc-asciidoc'.+
+
 After running 'make doc-doxygen', you can also browse the
 link:../reference/html/index.html[doxygen reference]. +
 
@@ -294,6 +296,7 @@ additional documention in future releases and/or at the
 http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website]
 
 .How can I learn more about and/or contribute to the the Swarm-NG project?
+
 - Visit the http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website].
 
 - Complete the http://astro.ufl.edu/~eford/code/swarm/[Swarm-NG User
@@ -339,27 +342,41 @@ the Swarm-NG codebase include: Eric Ford, Ameya Gancchha, Jianwei Gao,
 Mario Juric and Young In Yeo.  +
 
 The Swarm-NG library includes code reused or adapted from:
-- the http://www.nvidia.com/object/cuda_home_new.html[nVidia CUDA SDK], 
-- the http://www.gnu.org/software/gsl/[GNU Science Library], 
-- Sverre Aarseth's http://www.ast.cam.ac.uk/~sverre/web/pages/nbody.htm[hermit2
-code], and 
-- John Chamber's http://www.arm.ac.uk/~jec/home.html[Mercury
-code], which builds on a long history of n-body integrators, including
-Hal Levison and Martin Duncan's
+
+* the http://www.nvidia.com/object/cuda_home_new.html[nVidia CUDA SDK], 
+
+* the http://www.gnu.org/software/gsl/[GNU Science Library], 
+
+* Sverre Aarseth's
+http://www.ast.cam.ac.uk/~sverre/web/pages/nbody.htm[hermit2 code],
+and
+
+* John Chamber's http://www.arm.ac.uk/~jec/home.html[Mercury code],
+which builds on a long history of n-body integrators, including Hal
+Levison and Martin Duncan's
 http://www.boulder.swri.edu/~hal/swift.html[Swift code]. +
 
 We greatfully acknowledge financial support from:
-- the University of Florida's Research Opportunity Seed Fund, 
-- the http://www.nsf.gov[National Science Foundation] (grant CCF-0728797), 
-- NASA's http://www.stsci.edu/institute/org/spd/hubble-fellowship/hubble-fellow-overview[Hubble Fellowship program], and
-- especially NASA's http://aisrp.nasa.gov/[Applied Information Systems
+
+* the University of Florida's Research Opportunity Seed Fund, 
+
+* the http://www.nsf.gov[National Science Foundation] (grant CCF-0728797), 
+
+* NASA's http://www.stsci.edu/institute/org/spd/hubble-fellowship/hubble-fellow-overview[Hubble Fellowship program], and
+
+* especially NASA's http://aisrp.nasa.gov/[Applied Information Systems
   Research Program] (grant NNX09AM41G).
 
 We also acknowledge additional support from:
-- the http://astro.ufl.edu/[University of Florida Astronomy Department], 
-- UF's http://www.hpc.ufl.edu/[High Performance Computing Center], 
-- the http://www.cfa.harvard.edu/[Harvard-Smithsonian Center for
+
+* the http://astro.ufl.edu/[University of Florida Astronomy Department], 
+
+* UF's http://www.hpc.ufl.edu/[High Performance Computing Center], 
+
+* the http://www.cfa.harvard.edu/[Harvard-Smithsonian Center for
   Astrophysics] and the http://www.cfa.harvard.edu/itc/[Institute for
   Theory and Computation],
-- the http://sns.ias.edu/[Institute for Advanced Study], and
-- http:://www.nvidia.com[nVidia Corporation].
+
+* the http://sns.ias.edu/[Institute for Advanced Study], and
+
+* http:://www.nvidia.com[nVidia Corporation].
