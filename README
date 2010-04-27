@@ -31,7 +31,7 @@ demonstrate functionality and how to program with Swarm-NG.
 
 * Build the library and example programs.  See <<Building>> for an
   overview of key points or read
-  link:build_system.html[build_system.html] for more info.
+  link:build_system.html[] for more info.
 
 * Do a few quick tests with 'make test'.  See <<Testing>> for more info.
 
@@ -45,7 +45,7 @@ demonstrate functionality and how to program with Swarm-NG.
    'make test', the output will be stored in
    'test-outputs/swarm/swarm-run.test/output.log'
 
-** Read link:configuration_file.html[configuration_file.html]
+** Read link:configuration_file.html[]
    for a desription of the configuration file format and valid
    parameters for the 'bin/swarm' program.  (Some of the demos use a
    configuration file with the same format, but they may not accept
@@ -68,23 +68,22 @@ using GPU & CPU
 . 'src/tutorials/swarm_tutorial_montecarlo.cpp': performs many n-body
 integrations in Monte Carlo fashion in user-specified region of
 parameter space.  This program uses a configuration file.  The format
-is desribed in
-link:swarm_tutorial_montecarlo.html[swarm_tutorial_montecarlo.html].
+is desribed in link:swarm_tutorial_montecarlo.html[].
 
 * To learn more from examplse of non-trivial codes, take a look at the following applications:
 - 'src/scatter_demo/swarm_scatter_demo.cpp':  example that considers
-  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html
+  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]
 - ''src/swarm.cpp': this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html. The output can be easily accessed via the swarmquery program (see link:doc/swarmquery.html).
+  writes output to binary files.  More information at link:swarm.html[]. The output can be easily accessed via the swarmquery program (see link:swarmquery.html[]).
 
 * To learn more about how developers an use the swarm library:
 
-** Read link:for_developers.html[for_developers.html] for an
+** Read link:for_developers.html[] for an
    overview of how to write your own programs which build on Swarm-NG
    functionality.
 
-** Read link:eventlog.txt[eventlog.txt] and
-   link:snapshotting.txt[do/snapshotting.txt] for info on using the
+** Read link:eventlog.html[] and
+   link:snapshotting.html[] for info on using the
    swarm output system.
 
 
@@ -177,7 +176,7 @@ docs/swarm_tutorial_montecarlo.html[swarm_tutorial_montecarlo.html]
 for details.
 
 - swarm_scatter_demo: This requires multiple input files.  See
-  link:swarm_scatter_demo.html[swarm_scatter_demo.html] for
+  link:swarm_scatter_demo.html[] for
   details.
 
 
@@ -266,7 +265,7 @@ The *scripts* directory has scripts needed for the build system, as
 well as for generating initial conditions for some demo programs.  +
 
 For more information on the organization of directories and files, see
-link:organization.txt[organization.txt] and/or the
+link:organization.txt[] and/or the
 link:reference/html/files.html[doxygen files page].
 
 

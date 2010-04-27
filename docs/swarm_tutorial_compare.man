@@ -34,7 +34,7 @@ EXAMPLE
 OUTPUT
 ------
 This demo does not use the swarm logging system and simply writes to
-stdout and stderr.  See link:test/tutorial_compare/output.ref for expected
+stdout and stderr.  See link:../test/tutorial_compare/output.ref[test/tutorial_compare/output.ref] for expected
 output.
 
 LIMITATIONS & BUGS
@@ -54,6 +54,6 @@ COPYING
 Copyright \(C) 2010 Eric B. Ford + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
-link:gpl-3.0.txt and also avaliable
+link:gpl-3.0.txt[] and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].
 

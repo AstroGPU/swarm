@@ -22,7 +22,7 @@ CONFIGURATION FILE
 The configuration file specifieds several parameters.
 Each parameter appears on its own line with the format: +
 ''key = value''
-The common configuration parameters are described in link:configuration_file.html.  Here we list parameters that are specific to swarm_tutorial_montecarlo.
+The common configuration parameters are described in link:configuration_file.html[].  Here we list parameters that are specific to swarm_tutorial_montecarlo.
 
 REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
@@ -79,7 +79,7 @@ Other combinations of key suffixes are not allowed.
 
 OPTIONAL PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
-In addition to common optional parameters described in link:configuration_file.html, swarm_tutorial_montecarlo supports:
+In addition to common optional parameters described in link:configuration_file.html[], swarm_tutorial_montecarlo supports:
 
 ''time_init''::
 Initial time for all simulations. Default value is 0.
@@ -167,5 +167,5 @@ COPYING
 Copyright \(C) 2010 Eric B. Ford + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
-link:gpl-3.0.txt and also avaliable
+link:gpl-3.0.txt[] and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].

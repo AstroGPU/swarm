@@ -1,7 +1,6 @@
-Title:  The event/data logging system for swarm
-Author: mjuric
-
-=========================
+The event/data logging system for swarm
+=======================================
+Mario Juric
 
 Despite the horrendously complicated implementation in swarmlog.h, the ideas
 behind it are quite simple:

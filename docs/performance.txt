@@ -2,7 +2,7 @@ Performance of Swarm-NG
 =======================
 Eric Ford
 
-The executable swarm_tutorial_benchmark can be used to evaluate the performance of swarm for your CPU and GPU.  For details about what benchmark is used and options, see link:swarm_tutorial_benchmark.html.  
+The executable swarm_tutorial_benchmark can be used to evaluate the performance of swarm for your CPU and GPU.  For details about what benchmark is used and options, see link:swarm_tutorial_benchmark.html[].  
 
 Note that the default values are choosen so that it doesn't take too long.
 To get good performance on a GPU requires a large number of systems.
@@ -19,6 +19,6 @@ COPYING
 Copyright \(C) 2010 Eric B. Ford + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
-link:doc/gpl-3.0.txt and also avaliable
+link:gpl-3.0.txt[] and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].
 
