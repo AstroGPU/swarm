@@ -72,8 +72,11 @@ is written to stderr. +
 
 There is no test, since the timing results will differ from one computer to another.
 
+PERFORMANCE
+-----------
 
-
+We encourage users to report their performance results via http://www.astro.ufl.edu/~eford/code/swarm/[this form], after which it is automatically entered in a public spreadsheet (link to spreadsheet from form).
+  
 LIMITATIONS & BUGS
 ------------------
 See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated
@@ -91,6 +94,6 @@ COPYING
 Copyright \(C) 2010 Eric B. Ford + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
-link:doc/gpl-3.0.txt and also avaliable
+link:gpl-3.0.txt and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].
 

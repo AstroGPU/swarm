@@ -1,35 +1,32 @@
-Format/rules for configuration file
-===================================
+swarm(1)
+========
 
-Description
+NAME
+---- 
+swarm - Program for integrating an ensemble of many N-body systems on a GPU
+
+SYMPOSIS
+--------
+*swarm*  CONFIGFILE [Options]
+swarm is a useful tool for performing many n-body integrations on a GPU. + 
+swarm uses the swarm GPU logging subsystem to write output files which
+can be analyzed by programs like swarmquery.
+
+DESCRIPTION
 -----------
-.What is a configuration file?
-The configuration file specifies several parameters, including:  
-- <<anchor-1,choice of integrator and other required parameters>>
-- <<anchor-2,optional parameters to integrator>>
-- <<anchor-3,parameters specifying initial conditions>>
-- <<anchor-4,parameters specifying conditions to halt integrations>> (optional)
-- <<anchor-5,parameters to output logging system>> (optional)
-- <<anchor-6,GPU control parameters>> (optional)
-
-For some programs, the configuration file also controls the initial conditions. +
-Examples are located in `run/integrator*.cfg`
-
-.Format for the configuration file
-Each parameter appears on its own line in a format: + 
-''key = value''
-
-[horizontal]
-<<anchor-1,Required parameters>>:: Currently the following parameters are required (for all programs that accept a configuration file): ''integrator'', ''runon'', ''integration end''
-<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''time step'' (fixed timestep algorithms), ''time step factor'' and ''min time step'' (adaptive timestep algorithms), ''precision'' (hermite_gpu and hermite_cpu only)
-<<anchor-3,Initial condition parameters>>:: User-specified initial conditions (e.g., ''initial conditions'', ''num_systems'', ''num_bodies'')
-
-<<anchor-4,Stopper parameters>>:: Optional (e.g., ''rmax'')
-<<anchor-5,GPU kernel configuration parameters>>:: Optional ''threads per block''
-<<anchor-6,Output parameters>>:: Optional ''output'', ''output interval''
+This program reads integrator parameters from a configuration file.
+Initial conditions are read from a directory of 
 
 
-[[anchor-1]]
+CONFIGURATION FILE
+------------------
+An example configuration file is provided in run/integrator.cfg
+Details about configuration files can be found in link:configuration_file.html[].  In addition to the standard configuration file parameters, swarm requires:
+
+''initial conditions''::
+  Prefix for files containing the initial conditions.  Setting a value of ''data'' results in swarm looking for files with the names ''data.1'', ''data.2'', etc.
+
+
 REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 ''integrator''::
@@ -41,9 +38,7 @@ REQUIRED PARAMETERS
 ''integration end''::
    Must specify the time at which each integration will be stopped.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches T*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
 
-Additional parameters may be required by specific programs.
 
-[[anchor-2]]
 INTEGRATOR-SPECIFIC PARAMETERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -78,31 +73,23 @@ Certain integrators have additional parameters:
   Specifies the maximum number of steps per kernel call.  Currently,
   defaults to 100.  Not currently supported by hermite integrators.
 
-[[anchor-3]]
-PARAMETERS TO SPECIFY INITIAL CONDITIONS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These parameters varry from one program to the next.  Please see the
-documentation for the specific program you are interested in.
-
-
-[[anchor-4]]
-STOPPER PRAMETERS
-~~~~~~~~~~~~~~~~~
-''rmax''::
-   Integrations are halted once a body reaches a distance greater than ''rmax'' from the origin.  Currently this is only supported by euler (which you shouldn't use anyway), but is important for demonstratin how to write a basic stopper class.
-
-[[anchor-5]]
 OUTPUT PARAMETERS
 ~~~~~~~~~~~~~~~~~
+
 ''output''::
    Specifies files to be used for output.  If not specified, defaults to ''null'' which results in no output files being written.
 
-''output interval''::
+''output interval'':
    Specifies how often data should be logged.  
 
+OTHER OPTIONAL PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-GPU CONTROL PARAMETERS
-~~~~~~~~~~~~~~~~~~~~~~
+''rmax''::
+   Integrations are halted once a body reaches a distance greater than ''rmax'' from the origin.  Currently this is only supported by euler (which you shouldn't use anyway), but is important for demonstratin how to write a basic stopper class.
+
+''output interval'':
+   Specifies how often data should be logged.  
 
 ''threads per block''::
    Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
@@ -112,41 +99,28 @@ GPU CONTROL PARAMETERS
 EXAMPLE
 -------
 
-The exmample configuration file in `run/integrator.cfg` (shown below)
-also contains an additional parameter ''initial conditions'' specific
-to *swarm*.
-
-[literal]
------------------------------------------
-initial conditions = data
-integrator = gpu_hermite
-runon = gpu
-integration end = 1
-
-# Integrator-specific parameters
-time step = 0.001
-precision = 1
-
-# Output parameters
-output = binary log.bin
-output interval = 0.1
------------------------------------------
-
+OUTPUT
+------
 
 LIMITATIONS & BUGS
 ------------------
+Swarm assumes that N is small (3-10) and systems evolve Newtonian Gravity 
+
 See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated information on bugs.
 
 RESOURCES
 ---------
 
-Main web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
 
 Google Group: <http://groups.google.com/group/swarm-ng>
 
-
 COPYING
 -------
-Copyright \(C) 2008-2010 Eric B. Ford. + 
-Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+Copyright \(C) 2010 Mario Juric + 
+Free use of this software is granted under the terms of the GNU
+General Public License (GPL) v3, which should be included as
+link:gpl-3.0.txt and also avaliable
+http://www.gnu.org/licenses/gpl-3.0.html[online].
+
 

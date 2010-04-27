@@ -54,7 +54,7 @@ COPYING
 Copyright \(C) 2010 Mario Juric + 
 Free use of this software is granted under the terms of the GNU
 General Public License (GPL) v3, which should be included as
-link:doc/gpl-3.0.txt and also avaliable
+link:gpl-3.0.txt and also avaliable
 http://www.gnu.org/licenses/gpl-3.0.html[online].
 
 

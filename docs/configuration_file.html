@@ -389,14 +389,16 @@ div#toc a:visited { color: blue; }
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph"><div class="title">What is a configuration file?</div><p>The configuration file specifies several parameters, including:
-- choice of integrator
-- parameters to integrator
-- parameters to output logging system
-For some programs, the configuration file also controls the initial conditions.<br />
-Examples are located at <tt>run/integrator.cfg</tt></p></div>
+- <a href="#anchor-1">choice of integrator and other required parameters</a>
+- <a href="#anchor-2">optional parameters to integrator</a>
+- <a href="#anchor-3">parameters specifying initial conditions</a>
+- <a href="#anchor-4">parameters specifying conditions to halt integrations</a> (optional)
+- <a href="#anchor-5">parameters to output logging system</a> (optional)
+- <a href="#anchor-6">GPU control parameters</a> (optional)</p></div>
+<div class="paragraph"><p>For some programs, the configuration file also controls the initial conditions.<br />
+Examples are located in <tt>run/integrator*.cfg</tt></p></div>
 <div class="paragraph"><div class="title">Format for the configuration file</div><p>Each parameter appears on its own line in a format:<br />
 <em>'key = value</em>'</p></div>
-<div class="paragraph"><div class="title">Rules for the configuration file</div><p>It is recommended to specify parameters as follows.</p></div>
 <div class="hdlist"><table>
 <tr>
 <td class="hdlist1">
@@ -492,125 +494,53 @@ Optional <em>'output</em>', <em>'output interval</em>'
 </p>
 </dd>
 </dl></div>
+<div class="paragraph"><p>Additional parameters may be required by specific programs.</p></div>
 <h3 id="anchor-2">INTEGRATOR-SPECIFIC PARAMETERS</h3><div style="clear:left"></div>
-<div class="paragraph"><p>And either <em>'h</em>' or <em>'stepfac</em>':</p></div>
+<div class="paragraph"><p>Constant time step algorithms (e.g., hermite, rk4) must specify:
+<em>'time step</em>'::
+  For the fixed time stepping, <em>'time step</em>' is the constant time step.</p></div>
+<div class="paragraph"><p>Variable time step algorithms (e.g., verlet, hermite_adap) must
+specify both of the following:
+<em>'time step factor</em>'::
+   For adaptive time stepping, <em>'time step factor</em>' is the fraction of
+   the timescale used in determining the time step.</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-<em>'h</em>'
+<em>'min time step</em>'
 </dt>
 <dd>
 <p>
-   Specify the timestep for fixed time-step algorithms.
+   For adaptive time stepping algoritms, <em>'min time step</em>' is the
+   minimum time step allowed.  Currently only supported by the highly
+   beta hermite_adap_gpu.
 </p>
 </dd>
+</dl></div>
+<div class="paragraph"><p>Certain integrators have additional parameters:
+<em>'precision</em>' (currently hermite integrators only)::
+   If you are using hermite_gpu (or the currently super-beta
+   hermite_adap_gpu), then you must specify the precission for
+   integrations.  A value of 1 results in double precission, 2 results
+   in single precission, and 3 results mutli-precission calculations.
+   (E.g., gpu_hermite allows a value of 3 which results in positions
+   and velocities being calculated to double precission, but
+   accelerations and jerks being computed in single precission.)  This
+   parameter is ignored by other integrators (which are currently
+   implemented using only double precision.)</p></div>
+<div class="dlist"><dl>
 <dt class="hdlist1">
-<em>'stepfac</em>'
+<em>'steps per kernel run</em>' (optional)
 </dt>
 <dd>
 <p>
-   Specifies the time step parameter for the integrator <em>'gpu_hermite_adap</em>'.   <strong>*</strong> <em>WARNING: Name will likely change</em>.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'precision</em>' (hermite only)
-</dt>
-<dd>
-<p>
-   Must specify the precission for the integrations.  1 results in double precission and is the default.  2 results in single precission (currently supported by hermite).  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 3 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
+  Specifies the maximum number of steps per kernel call.  Currently,
+  defaults to 100.  Not currently supported by hermite integrators.
 </p>
 </dd>
 </dl></div>
 <h3 id="anchor-3">PARAMETERS TO SPECIFY INITIAL CONDITIONS</h3><div style="clear:left"></div>
-<div class="paragraph"><p>In the case of swarm_tutorial_montecarlo, users specify initial conditions in terms of the mass of a central body and Keplerian orbital elements for each of 2-9 additional bodies.</p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<em>'use_jacobi</em>'
-</dt>
-<dd>
-<p>
-   A non-zero value specifies that all orbital elements are to be interpretted in a Jacobi frame.  Default value is 0 (false).
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'mass_star</em>'
-</dt>
-<dd>
-<p>
-   The mass of body zero, the central object.  For planetary systems, this is typically the host star.  Default value is 1.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'mass_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The mass of the specified body.  Valid range is [0,mass_star).  (Body #0 is the central body.)
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'a_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial semi-major axis of the specified body.  Valid range is [0.001,10000.].
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'ecc_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial eccentricicty of the specified body.  Valid range is [0,1).
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'inc_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial inclination of the specified body in degrees.  Valid range is [-180,180].
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'node_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial ascending node of the specified body in degrees.  Valid range is [-720,720].
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'omega_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial arguement of periastron of the specified body in degrees.  Valid range is [-720,720].
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'meananom_[1-9]</em>'
-</dt>
-<dd>
-<p>
-   The initial mean anomaly of the specified body in degrees.  Valid range is [-720,720].
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p>Using only the above keywords would result in all systems being assigned the same initial conditions.  While this may be useful for some tests, most real calculations will want to assign different initial conditions to each system.  To generate initial conditions via a pseudo-random number generator, replace at least one of the above key names for the mass and orbital elements of one or more bodies with a similar keyword, but with one or more of the following suffixes:  <em>'_min</em>', <em>'_max</em>', and <em>'_sigma</em>'.</p></div>
-<div class="paragraph"><p>If only key_N_min and key_N_max are specified, then key for the Nth body will be generated from a uniform distribution between the minimum and maximum values.</p></div>
-<div class="paragraph"><p>If key_N and key_N_sigma are specified, then key for the Nth body will be generated from a Gaussian distribution with mean key_N and standard deviation key_N_sigma.  If key_N_min and/or key_N_max are also specified, then the distribution will be truncated at these values.</p></div>
-<div class="paragraph"><p>If only key_N is specified, then key for the Nth body will be exactly the specified value.</p></div>
-<div class="paragraph"><p>Other combinations of key suffixes are not allowed.</p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<em>'time_init</em>'
-</dt>
-<dd>
-<p>
-   Initial time for all simulations.  Default value is 0.
-</p>
-</dd>
-</dl></div>
+<div class="paragraph"><p>These parameters varry from one program to the next.  Please see the
+documentation for the specific program you are interested in.</p></div>
 <h3 id="anchor-4">STOPPER PRAMETERS</h3><div style="clear:left"></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
@@ -618,19 +548,30 @@ Optional <em>'output</em>', <em>'output interval</em>'
 </dt>
 <dd>
 <p>
-   Integrations are halted once a body reaches a distance greater than <em>'rmax</em>' from the origin?  (or is it central body?).  <em>Only some integrators support this parameter at this time.</em>
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'Toutstep</em>'
-</dt>
-<dd>
-<p>
-   Specifies how often data should be logged.  <em>Only some integrators support this parameter at this time.</em>
+   Integrations are halted once a body reaches a distance greater than <em>'rmax</em>' from the origin.  Currently this is only supported by euler (which you shouldn&#8217;t use anyway), but is important for demonstratin how to write a basic stopper class.
 </p>
 </dd>
 </dl></div>
-<h3 id="anchor-5">GPU KERNEL CONFIGURATION PARAMETERS</h3><div style="clear:left"></div>
+<h3 id="anchor-5">OUTPUT PARAMETERS</h3><div style="clear:left"></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>'output</em>'
+</dt>
+<dd>
+<p>
+   Specifies files to be used for output.  If not specified, defaults to <em>'null</em>' which results in no output files being written.
+</p>
+</dd>
+<dt class="hdlist1">
+<em>'output interval</em>'
+</dt>
+<dd>
+<p>
+   Specifies how often data should be logged.
+</p>
+</dd>
+</dl></div>
+<h3 id="_gpu_control_parameters">GPU CONTROL PARAMETERS</h3><div style="clear:left"></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 <em>'threads per block</em>'
@@ -641,76 +582,25 @@ Optional <em>'output</em>', <em>'output interval</em>'
 </p>
 </dd>
 </dl></div>
-<h3 id="anchor-6">OUTPUT PARAMETERS</h3><div style="clear:left"></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<em>'output</em>'
-</dt>
-<dd>
-<p>
-   Specifies files to be used for output.  In current demo set this value to <em>'null</em>'.  <strong>* <em>Is this functional?  Required?</em> </strong>*
-</p>
-</dd>
-</dl></div>
-<div class="paragraph"><p><em>'output interval</em>':
-   Specifies how often data should be logged.  <em>Only some integrators support this parameter at this time.</em>  <strong>* <em>What is difference between Toutstep?</em> </strong>*</p></div>
 </div>
 <h2 id="_example">EXAMPLE</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><tt>integrator-tutorial_montecarlo.cfg</tt></p></div>
+<div class="paragraph"><p>The exmample configuration file in &#8216;run/integrator.cfg` (shown below)
+also contains an additional parameter <em>'initial conditions</em>&#8217; specific
+to <strong>swarm</strong>.</p></div>
 <div class="listingblock">
 <div class="content">
-<pre><tt># Demo2 parameters
-num_systems = 15360
+<pre><tt>initial conditions = data
 integrator = gpu_hermite
 runon = gpu
-dT = 10
+integration end = 1
 
 # Integrator-specific parameters
-h = 0.0005
-stepfac = 0.0025
+time step = 0.001
 precision = 1
 
-# Initial Conditions
-time_init = 0.
-use_jacobi = 1
-mass_star = 1.
-mass_1 = 0.001
-mass_1_sigma = 0.
-mass_1_min = 0.
-mass_1_max = 0.01
-a_1 = 1.
-ecc_1 = 0.
-inc_1 = 90.
-node_1 = 0.
-omega_1 = 0.
-meananom_1_min = 0.
-meananom_1_max = 360.
-
-mass_2 = 0.001
-mass_2_sigma = 0.
-mass_2_min = 0.
-mass_2_max = 0.01
-a_2 = 1.31
-a_2_sigma = 0.01
-a_2_min = 1.29
-a_2_max = 1.33
-ecc_2 = 0.
-inc_2 = 90.
-node_2 = 0.
-omega_2 = 0.
-meananom_2_min = 0.
-meananom_2_max = 360.
-
-# Stopper parameters
-rmax = 1000
-Toutstep = 0.1
-
-# GPU kernel configuration
-threads per block = 64
-
 # Output parameters
-output = null
+output = binary log.bin
 output interval = 0.1</tt></pre>
 </div></div>
 </div>
@@ -727,28 +617,10 @@ output interval = 0.1</tt></pre>
 <div class="sectionbody">
 <div class="paragraph"><p>Copyright (C) 2008-2010 Eric B. Ford.<br />
 Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.</p></div>
-<div class="dlist"><dl>
-<dt class="hdlist1">
-<em>'num_systems</em>'
-</dt>
-<dd>
-<p>
-   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.
-</p>
-</dd>
-<dt class="hdlist1">
-<em>'num_bodies</em>'
-</dt>
-<dd>
-<p>
-   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.
-</p>
-</dd>
-</dl></div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-04-26 04:12:53 EDT
+Last updated 2010-04-26 21:57:49 EDT
 </div>
 </div>
 </body>
