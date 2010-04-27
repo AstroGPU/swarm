@@ -1,3 +1,10 @@
+/*! \file swarmlib.cpp
+ *  \brief provides several functions for public interface for swarm libaray
+ *
+ *  If you want to use the swarm library and have questions about what the 
+ *  functions do, this is a great plae to start looking.
+*/
+
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include <vector>

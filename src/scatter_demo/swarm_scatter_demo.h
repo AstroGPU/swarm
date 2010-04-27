@@ -1,5 +1,6 @@
-/*
-    Header file for the program swarm_adap.
+/*! \file swarm_scatter_demo.h
+    \brief Header file for the program swarm_scatter_demo.
+
     "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
     small N systems using the hermite_adap_gpu integrator.
     Copyright (C) 2010  Swarm-NG Development Group

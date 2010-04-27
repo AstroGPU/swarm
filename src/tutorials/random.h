@@ -1,3 +1,9 @@
+/*! \file random.h
+ *  \brief simple interface to CPU random number generators
+ *
+ * \todo use better random nubmer generators (e.g., from boost++)
+*/
+
 #ifndef H_SWARM_RANDOM
 
 namespace swarm {

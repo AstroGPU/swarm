@@ -1,7 +1,13 @@
+/*! \file swarm_tutorial_cpu.cpp
+ *  \brief simplest demo of using Swarm library and CPU integrator
+*/
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>
 #include <memory>
+
+#define PARANOID_ENERGY_CHECK 1
+
 
 // Declare functions to demonstrate setting/accessing system state
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
@@ -11,92 +17,63 @@ int main(int argc, const char **argv)
 {
   using namespace swarm;
 
-  srand(42u);    // Seed random number generator, so output is reproducible
+  srand(42u);   // Seed random number generator, so output is reproducible
 
-  std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
+  std::cerr << "# Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
-  cfg["integrator"] = "gpu_hermite"; // integrator name
-  cfg["runon"] = "gpu";             // whether to run on cpu or gpu (must match integrator)
+  cfg["integrator"] = "cpu_hermite"; // integrator name
+  cfg["runon"] = "cpu";             // whether to run on cpu or gpu (must match integrator)
   cfg["time step"] = "0.0005";       // time step
   cfg["precision"] = "1";            // use double precision
 
-  std:: cerr << "Initialize the library\n";
+  std:: cerr << "# Initialize the library\n";
   swarm::init(cfg);
 
-  std:: cerr << "Initialize the GPU integrator\n";
-  std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
+  std:: cerr << "# Initialize the integrator\n";
+  std::auto_ptr<integrator> integ(integrator::create(cfg));
   
-  std::cerr << "Initialize ensemble on host to be used with GPU integration.\n";
+  std::cerr << "# Initialize ensemble on host to be used with CPU integration.\n";
   unsigned int nsystems = 128, nbodyspersystem = 3;
   cpu_ensemble ens(nsystems, nbodyspersystem);
   
-  std::cerr << "Set initial conditions.\n";
+  std::cerr << "# Set initial conditions.\n";
   set_initial_conditions_for_demo(ens);
   
-#if 1 // TO REMOVE ONCE WORKS AGAIN
+#if PARANOID_ENERGY_CHECK
   // Calculate energy at beginning of integration
   std::vector<double> energy_init(ens.nsys());
   ens.calc_total_energy(&energy_init[0]);
 #endif
 
-  // Print initial conditions on CPU for use w/ GPU
-  std::cerr << "Print selected initial conditions for GPU.\n";
+  std::cerr << "# Print selected initial conditions for CPU.\n";
   print_selected_systems_for_demo(ens);
   
-  std::cerr << "Create identical ensemble on host to check w/ CPU.\n";
-  cpu_ensemble ens_check(ens);
-  
-  // Print initial conditions for checking w/ CPU 
-  std::cerr << "Print selected initial conditions for CPU.\n";
-  print_selected_systems_for_demo(ens_check);	
-  
-  std::cerr << "Set integration duration for all systems.\n";
+  std::cerr << "# Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
   ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
 
-  // Perform the integration on gpu
-  std::cerr << "Upload data to GPU.\n";
-  gpu_ensemble gpu_ens(ens);
-  std::cerr << "Integrate ensemble on GPU.\n";
-  integ_gpu->integrate(gpu_ens, dT);				
-  std::cerr << "GPU integration complete.\n";
+  std::cerr << "# Integrate ensemble on CPU.\n";
+  integ->integrate(ens, dT);				
+  std::cerr << "# Integration complete.\n";
 
-  std::cerr << "Download data to host.\n";
-  ens.copy_from(gpu_ens);					
-  std::cerr << "Download complete.\n";
-  
-  // Perform the integration on the cpu
-  std:: cerr << "Initialize the CPU integrator\n";
-  cfg["integrator"] = "cpu_hermite";
-  std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
-  std::cerr << "Integrate a copy of ensemble on CPU to check.\n";
-  integ_cpu->integrate(ens_check, dT);				
-  std::cerr << "CPU integration complete.\n";
-  
-  // Print results
-  std::cerr << "Print selected results from GPU's calculation.\n";
+  std::cerr << "# Print selected results from GPU's calculation.\n";
   print_selected_systems_for_demo(ens);
-  std::cerr << "Print selected results from CPU's calculation.\n";
-  print_selected_systems_for_demo(ens_check);
   
-#if 1 // TO REMOVE ONCE WORKS AGAIN
+#if PARANOID_ENERGY_CHECK
   // Check Energy conservation
-  std::vector<double> energy_gpu_final(ens.nsys()), energy_cpu_final(ens.nsys());;
-  ens.calc_total_energy(&energy_gpu_final[0]);
-  ens_check.calc_total_energy(&energy_cpu_final[0]);
+  std::vector<double> energy_final(ens.nsys());
+  ens.calc_total_energy(&energy_final[0]);
   double max_deltaE = 0;
   for(int sysid=0;sysid<ens.nsys();++sysid)
     {
-      double deltaE_gpu = (energy_gpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
-      double deltaE_cpu = (energy_cpu_final[sysid]-energy_init[sysid])/energy_init[sysid];
-      double deltaE = std::max(fabs(deltaE_gpu),fabs(deltaE_cpu));
-      if(deltaE>max_deltaE)
-	{ max_deltaE = deltaE; }
+      double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
+      if(fabs(deltaE)>max_deltaE)
+	{ max_deltaE = fabs(deltaE); }
       if(fabs(deltaE)>0.00001)
-	std::cout << "# Warning: " << sysid << " dE/E (gpu)= " << deltaE_gpu << " dE/E (cpu)= " << deltaE_cpu << '\n';
-'\n';
+	std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
     }
+  std::cout.flush();
   std::cerr << "# Max dE/E= " << max_deltaE << "\n";
 #endif  
 
@@ -104,9 +81,6 @@ int main(int argc, const char **argv)
   // so there's nothing special we have to do here.
   return 0;
 }
-
-
-
 
 
 // Demonstrates how to assign initial conditions to a swarm::ensemble object
@@ -145,7 +119,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
   using namespace swarm;
   std::streamsize cout_precision_old = std::cout.precision();    // Restore prcission of cout before calling this function
   std::cout.precision(10);  // Print at higher precission
-  unsigned int nprint = 1;  // Limit output to first nprint system(s)
+  unsigned int nprint = 4;  // Limit output to first nprint system(s)
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
       std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << " nsteps= " << ens.nstep(systemid) << "\n";
@@ -155,5 +129,6 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	}
     }
   std::cout.precision(cout_precision_old);  // Restore old precission to cout
+  std::cout.flush();
 }
 

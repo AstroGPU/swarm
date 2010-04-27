@@ -1,3 +1,7 @@
+/*! \file verlet.cu
+ * \brief declares prop_verlet for use with gpu_generic_integrator
+*/
+
 #include "swarm.h"
 #include "verlet.h"
 #include "swarmlog.h"
@@ -155,6 +159,7 @@
 
 */
 
+/// namespace for Swarm-NG library
 namespace swarm {
 
 
@@ -335,8 +340,8 @@ struct prop_verlet
 	 */
 	prop_verlet(const config &cfg)
 	{
-		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet needs a timestep ('time step' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("time step").c_str());
+		if(!cfg.count("time step factor")) ERROR("Integrator gpu_verlet needs a timestep ('time step factor' keyword in the config file).");
+		gpu_obj.h = atof(cfg.at("time step factor").c_str());
 	}
 
 	/*!
@@ -353,7 +358,14 @@ struct prop_verlet
 };
 
 
-// factory
+/*!
+ * \brief factory function to create an integrator 
+ * 	  
+ * This factory uses the gpu_generic_integrator class
+ * with the propagator prop_verlet and the stopper stop_on_ejection
+ * 
+ * @param[in] cfg contains configuration data for gpu_generic_integrator
+ */
 extern "C" integrator *create_gpu_verlet(const config &cfg)
 {
 	return new gpu_generic_integrator<stop_on_ejection, prop_verlet>(cfg);

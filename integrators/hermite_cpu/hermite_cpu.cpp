@@ -1,3 +1,8 @@
+/*! \file hermite_cpu.cpp
+ * \brief member functions for cpu_hermite_integrator & factory
+ * 
+*/
+
 #include "swarm.h"
 #include "hermite_cpu.h"
 #include "ThreeVector.hpp"

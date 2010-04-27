@@ -1,9 +1,17 @@
+/*! \file hermite_gpu.cu
+ * \brief GPU kernels for hermite_gpu_integrator
+ * 
+ * also contains associated template metaprogramming in gpu_hermite_aux namespace 
+*/
 #include "swarm.h"
 #include "hermite_gpu.h"
 
 namespace swarm {
+
+/// namespace for device functions used by hermite_gpu_integrator
 namespace hermite_gpu {
 
+// template metaprogramming for hermite_gpu_integrator (internal use only)
 namespace gpu_hermite_aux
 {
 	//

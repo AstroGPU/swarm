@@ -1,3 +1,9 @@
+/*! \file hermite_gpu.h
+ *  \brief declares gpu_hermite_integrator
+ *
+ *  Note that while this clas derivers from integrator, it does not use gpu_generic_integrator
+*/
+
 #ifndef integ_hermite_h__
 #define integ_hermite_h__
 

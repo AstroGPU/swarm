@@ -1,4 +1,10 @@
-#include "swarm.h"
+/*! \file swarm.cpp
+    Main program for integrating an ensemble of many N-body systems on a GPU
+
+    Swarm assumes that N is small (3-10) and systems evolve Newtonian Gravity 
+*/
+
+#include "swarm.h" 
 #include "swarmlog.h"
 #include <memory>
 #include <iostream>
@@ -58,7 +64,7 @@ int main(int argc, const char **argv)
 	swarm::log::output_systems_needing_output(hlog, ens);
 
 	// perform the integration
-	std::cerr << "\nIntegrating... ";
+	std::cerr << "\n# Integrating... ";
 	if(ongpu)
 	{
 		SWATCH_START(swatch_mem);
@@ -88,15 +94,15 @@ int main(int argc, const char **argv)
 		SWATCH_STOP(swatch_kernel);
 	}
 	SWATCH_STOP(swatch_all);
-	std::cerr << "Done.\n\n";
+	std::cerr << "# Done.\n\n";
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
 	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000;
-	std::cerr << "Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
-	std::cerr << "Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
-	std::cerr << "GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
-	std::cerr << "Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
+	std::cerr << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
+	std::cerr << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
+	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
+	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
 
 	return 0;
 }

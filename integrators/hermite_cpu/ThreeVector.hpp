@@ -1,3 +1,9 @@
+/*! \file ThreeVector.hpp
+ *  \brief ThreeVector template for hermite_cpu
+ *
+ *  \todo merge various ThreeVector files into just one (or two if need separate for g++ and nvcc)
+*/ 
+
 #ifndef H_THREEVECTOR
 #define H_THREEVECTOR
 #include<cassert>

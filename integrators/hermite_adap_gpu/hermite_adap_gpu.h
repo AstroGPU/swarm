@@ -1,3 +1,9 @@
+/*! \file hermite_adap_gpu.h
+ * \brief declares gpu_hermite_adap_integrator
+ * 
+ *  Note that while this clas derivers from integrator, it does not use gpu_generic_integrator
+*/
+
 #ifndef integ_hermite_adap_h__
 #define integ_hermite_adap_h__
 
@@ -8,9 +14,12 @@ namespace hermite_adap_gpu {
 
 /**
  * gpu_hermite_adap_integrator class
+ * \brief gpu_hermite_adap_integrator class
  *
  * @tparam real_hi double
  * @tparam real_lo float for single and mixed, double for double
+ *
+ * \todo Impplement hermite_adap correctl and efficiently
  */
 template< typename real_hi, typename real_lo>
 class gpu_hermite_adap_integrator : public integrator

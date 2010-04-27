@@ -1,3 +1,8 @@
+/*! \file swarmlib.cu
+ *  \brief kernel code for gpu_generic_integrator
+ *
+*/
+
 #include "swarm.h"
 #include <cux/cux.h>
 #include <astro/util.h>
@@ -28,9 +33,10 @@ inline __device__ uint32_t threadId()
 }
 
 /*!
-  \brief Computes the global linear ID of the thread. Used from kernels.
+  \brief Computes the number of threads per block for 1D or 3D grid. Used from kernels.
 
   NOTE: Supports 3D grids with 1D blocks of threads
+  @return threadsPerBlock
 */
 inline __device__ uint32_t threadsPerBlock()
 {
@@ -253,9 +259,156 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 
 
 /*!
- \brief gpu generic integrate class
- 
- ...
+	\brief gpu_generic_integrator - Versatile GPU integrator template
+
+	gpu_generic_integrator is a template class designed to make it easy to implement
+	powerful GPU-based integrators by supplying a 'propagator' class (that provides
+	a function to advance the ensemble by one timestep), and a 'stopper' class (that
+	tests whether the integration should stop for a particular system in the
+	ensemble). Given the two classes, gpu_generic_integrator acts as a driver
+	routine repeatedly calling the GPU kernel until all systems in the ensemble have
+	finished the integration. It does this in an optimized manner, taking care to
+	compactify() the ensemble when needed to efficiently utilize GPU resources
+	(NOTE: compactification not yet implemented).
+
+	For a canonical example of how to build an integrator using
+	gpu_generic_integrator, look at the gpu_euler integrator.
+
+	Integration loop outline (I == gpu_generic_integrator object, H == propagator
+	object, stop == stopper object):
+
+	I.integrate(ens):
+		if(ens.last_integrator() != this):
+			H.initialize(ens);
+			stop.initialize(ens);
+		do:
+			gpu_integrate<<<>>>(max_step, ens, (gpu_t)H, (gpu_t)stop)	[m'threaded execution on the GPU]
+				while step < max_step:
+					if(T < Tend || stop()):
+						ens(sys).flags |= INACTIVE
+						break;
+					H.advance():			[ implementation supplied by the developer ]
+						foreach(bod in sys):
+							advance bod
+							call stop.test_body
+						return new time T
+			if(beneficial):
+				ens.compactify();
+		while(active_systems > 0)
+
+	To build an integrator using gpu_generic_integrator, the developer must supply a
+	propagator and a stopper class that conform to the following interfaces:
+
+	// propagator class: advance the system by one time step
+	//
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that need
+	// to reside on the CPU here.
+	struct propagator
+	{
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
+		{
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend);
+			};
+
+			// Advance the system - this function must advance the system
+			// sys by one timestep, making sure that T does not exceed Tend.
+			// Must return the new time of the system.
+			//
+			// This function MUST also call stop.test_body() for every body
+			// in the system, after that body has been advanced by a timestep.
+			template<typename stop_t>
+			__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		};
+
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		propagator(const config &cfg);
+
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
+
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
+
+	// stopper class: mark a system inactive if conditions are met
+	//
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that need
+	// to reside on the CPU here.
+	struct stopper
+	{
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
+		{
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend);
+			};
+
+			// test any per-body stopping criteria for body (sys,bod). If 
+			// your stopping criterion only depends on (x,v), test for it 
+			// here. This will save you the unnecessary memory accesses 
+			// that would otherwise be made if the test was made from 
+			// operator().
+			//
+			// Called _after_ the body 'bod' has advanced a timestep.
+			//
+			// Note: you must internally store the result of your test,
+			// and use/return it in subsequent call to operator().
+			//
+			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz);
+
+			// Called after a system sys has been advanced by a timestep.
+			// Must return true if the system sys is to be flagged as
+			// INACTIVE (thus stopping further integration)
+			__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T);
+		};
+
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		stopper(const config &cfg);
+
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
+
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
 */
 template<typename stopper_t, typename propagator_t>
 class gpu_generic_integrator : public integrator
@@ -348,7 +501,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	log::flush(log::memory);
 }
 
-/// check a parameter is power of two
+/// return true if input parameter is a power of two
 inline bool is_power_of_two(int x) { return !(x & (x-1)); }
 
 /*!
@@ -372,6 +525,10 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 }
 
 } // end namespace swarm
+
+
+
+
 
 ///////////////
 //// Some generically useful force/jerk computation functions
@@ -409,7 +566,7 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 			V3 dv(ens.vx(sys,j),ens.vy(sys,j),ens.vz(sys,j)); dv -= vi;
 			real r2 = dx.MagnitudeSquared();
 			real rv = dot ( dx,dv );
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rv *= 3./r2;
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
@@ -457,7 +614,7 @@ __device__ void compute_acc(ensemble &ens, const int sys, const cuxDevicePtr<rea
 
 			V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
 			real r2 = dx.MagnitudeSquared();
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
 

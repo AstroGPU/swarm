@@ -4,7 +4,7 @@ How to write your own program
 
 Description
 -----------
-...
+The file needs major work!
 
 Overview of namespaces
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -116,13 +116,32 @@ CPU integrator doesn't need <1> and <2>.
 
 Overview of private interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-...
-
+We're likely to change the private interfaces in subsequent releases.
+Thus, we strongly encourage people not to use the private interface, without coordinating with the swarm-NG development team.
 
 How to add your own integrator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-...
+To add a new integrator, follow the following simple steps:
 
+- create a subdirectory integrators/<integrator_name>
+- place any source files your integrator requires to that subdirectory
+- create a Makefile.mk file there, based on example Makefile.mk files found with
+  other integrators (e.g., look at integrators/euler/Makefile.mk)
+
+Your integrator must:
+
+- derive from 'integrator' class, and override one its virtual integrate()
+  methods.
+- provide an 'extern "C" integrator *create_XXXXX(const config &cfg)'
+  function (where XXXX is the name of the integrator) that will return
+  an instance of the integrator when called. Example:
+        // factory
+        extern "C" integrator *create_gpu_euler(const config &cfg)
+        {
+                return new gpu_euler_integrator(cfg);
+        }
+- there are additonial requirements for your integrator to work with the gpulogging systems.
+- we're trying to shift all integrators to use the generic integrator framework (see verlet or rk4).  In this framework you define a "propagator" for your new integrator.
 
 
 LIMITATIONS & BUGS

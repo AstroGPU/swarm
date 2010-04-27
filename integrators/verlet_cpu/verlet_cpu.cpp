@@ -1,3 +1,7 @@
+/*! \file verlet_cpu.cpp
+ *  \brief contains member functions of cpu_verlet_integrator and factory to create_cpu_verlet
+*/
+
 #include "swarm.h"
 #include "verlet_cpu.h"
 #include <cassert>
@@ -19,8 +23,8 @@ extern "C" integrator *create_cpu_verlet(const config &cfg)
 cpu_verlet_integrator::cpu_verlet_integrator(const config &cfg) : 
   m_nbod(0), m_nsys(0), m_is_old_good(0)
 {
-	if(!cfg.count("time step")) ERROR("Integrator cpu_verlet needs a timestep ('time step' keyword in the config file).");
-	h = atof(cfg.at("time step").c_str());
+	if(!cfg.count("time step factor")) ERROR("Integrator cpu_verlet needs a timestep ('time step factor' keyword in the config file).");
+	h = atof(cfg.at("time step factor").c_str());
 }
 
 /*!

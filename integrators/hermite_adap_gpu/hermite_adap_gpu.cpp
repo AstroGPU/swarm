@@ -1,3 +1,7 @@
+/*! \file hermite_adap_gpu.cpp
+ * \brief Constructor & factory for gpu_hermite_adap_integrator
+ * 
+*/
 #include <cassert>
 #include "swarm.h"
 #include "hermite_adap_gpu.h"

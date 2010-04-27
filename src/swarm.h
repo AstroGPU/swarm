@@ -1,3 +1,9 @@
+/*! \file swarm.h
+ *   \brief Main header file for swarm library
+ *
+ *   Declares swarm_error, ensemble, cpu_ensemble, gpu_ensemble, writer (abstract), 
+ *   Also contains some memory management funcctions
+*/
 #ifndef __swarm_h
 #define __swarm_h
 
@@ -25,6 +31,7 @@
 #include <sstream>
 #endif
 
+/// The main namespace for the Swarm-NG library
 namespace swarm {
 
 	typedef std::map<std::string, std::string> config;
@@ -580,3 +587,6 @@ namespace swarm {
 #endif
 
 #endif
+
+
+

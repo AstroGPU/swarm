@@ -1,3 +1,8 @@
+/*! \file swarmlog.h
+ *  \brief declares hlog & dlog
+ *
+*/
+
 #ifndef swarmlog_h__
 #define swarmlog_h__
 
@@ -82,6 +87,7 @@ namespace swarm
 		return br;
 	}
 
+        /// swarm logging system.  See docs/eventlog.html
 	namespace log
 	{
 		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
@@ -238,11 +244,12 @@ namespace swarm
 	}
 }
 
+/// For use by gpu logging subsystem.  See docs/eventlog.html
 namespace gpulog
 {
 	namespace internal
 	{
-		// body_set_cls is a proxy for an array of bodies, so make sure it reports
+	 	// body_set_cls is a proxy for an array of bodies, so make sure it reports
 		// the same alignment as body[N], as well as sizeof()
 		template<int N> struct alignment<swarm::body_set<N> > : public alignment<swarm::body[N]> { };	// return alignment of body[N]
 		template<int N> struct    ttrait<swarm::body_set<N> > : public    ttrait<swarm::body[N]> { };	// return traits of body[N]

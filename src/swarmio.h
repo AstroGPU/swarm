@@ -1,3 +1,8 @@
+/*! \file swarmio.h
+ *  \brief declares swarmdb and range
+ *
+*/
+
 #ifndef swarmio_h__
 #define swarmio_h__
 

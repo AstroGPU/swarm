@@ -1,7 +1,12 @@
+/*! \file swarm_tutorial_gpu.cpp
+ *  \brief simplest demo of using Swarm library and GPU integrator
+*/
 #include "swarm.h"
 #include "swarmlog.h"
 #include <iostream>
 #include <memory>
+
+#define PARANOID_ENERGY_CHECK 1
 
 // Declare functions to demonstrate setting/accessing system state
 void set_initial_conditions_for_demo(swarm::ensemble& ens);
@@ -13,56 +18,56 @@ int main(int argc, const char **argv)
 
   srand(42u);   // Seed random number generator, so output is reproducible
 
-  std::cerr << "Set integrator parameters (hardcoded in this demo).\n";
+  std::cerr << "# Set integrator parameters (hardcoded in this demo).\n";
   config cfg;
   cfg["integrator"] = "gpu_hermite"; // integrator name
   cfg["runon"] = "gpu";             // whether to run on cpu or gpu (must match integrator)
   cfg["time step"] = "0.0005";       // time step
   cfg["precision"] = "1";            // use double precision
 
-  std:: cerr << "Initialize the library\n";
+  std:: cerr << "# Initialize the library\n";
   swarm::init(cfg);
 
-  std:: cerr << "Initialize the integrator\n";
+  std:: cerr << "# Initialize the integrator\n";
   std::auto_ptr<integrator> integ(integrator::create(cfg));
   
-  std::cerr << "Initialize ensemble on host to be used with GPU integration.\n";
+  std::cerr << "# Initialize ensemble on host to be used with GPU integration.\n";
   unsigned int nsystems = 128, nbodyspersystem = 3;
   cpu_ensemble ens(nsystems, nbodyspersystem);
   
-  std::cerr << "Set initial conditions.\n";
+  std::cerr << "# Set initial conditions.\n";
   set_initial_conditions_for_demo(ens);
   
-#if 1 // TO REMOVE ONCE WORKS AGAIN
+#if PARANOID_ENERGY_CHECK 
   // Calculate energy at beginning of integration
   std::vector<double> energy_init(ens.nsys());
   ens.calc_total_energy(&energy_init[0]);
 #endif
 
-  std::cerr << "Print selected initial conditions for GPU.\n";
+  std::cerr << "# Print selected initial conditions for GPU.\n";
   print_selected_systems_for_demo(ens);
   
-  std::cerr << "Set integration duration for all systems.\n";
+  std::cerr << "# Set integration duration for all systems.\n";
   double dT = 1.*2.*M_PI;
   ens.set_time_end_all(dT);
   ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
   
-  std::cerr << "Upload data to GPU.\n";
+  std::cerr << "# Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
-  std::cerr << "Upload complete.\n";
+  std::cerr << "# Upload complete.\n";
 
-  std::cerr << "Integrate ensemble on GPU.\n";
+  std::cerr << "# Integrate ensemble on GPU.\n";
   integ->integrate(gpu_ens, dT);				
-  std::cerr << "Integration complete.\n";
+  std::cerr << "# Integration complete.\n";
 
-  std::cerr << "Download data to host.\n";
+  std::cerr << "# Download data to host.\n";
   ens.copy_from(gpu_ens);					
-  std::cerr << "Download complete.\n";
+  std::cerr << "# Download complete.\n";
   
-  std::cerr << "Print selected results from GPU's calculation.\n";
+  std::cerr << "# Print selected results from GPU's calculation.\n";
   print_selected_systems_for_demo(ens);
   
-#if 1 // TO REMOVE ONCE WORKS AGAIN
+#if PARANOID_ENERGY_CHECK 
   // Check Energy conservation
   std::vector<double> energy_final(ens.nsys());
   ens.calc_total_energy(&energy_final[0]);
@@ -75,6 +80,7 @@ int main(int argc, const char **argv)
       if(fabs(deltaE)>0.00001)
 	std::cout << "# Warning: " << sysid << " dE/E= " << deltaE << '\n';
     }
+  std::cout.flush();
   std::cerr << "# Max dE/E= " << max_deltaE << "\n";
 #endif  
 
@@ -131,5 +137,6 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	}
     }
   std::cout.precision(cout_precision_old);  // Restore old precission to cout
+  std::cout.flush();
 }
 

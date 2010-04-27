@@ -1,3 +1,7 @@
+/*! \file kepler.h
+ *  \brief converts between Cartesian & Keplerian coordinates
+*/
+
 #ifndef H_SWARM_KEPLER
 
 double improve_mean_to_eccentric_annomaly_guess(const double e, const double M, const double x);
