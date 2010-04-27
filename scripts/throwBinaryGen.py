@@ -94,11 +94,11 @@ def createObservingFile():
                 obsTimes.sort()
         else:
                 dt=(timeEnd-timeStart)/float(numObs)
-                for i in xrange(1,numObs):
+                for i in xrange(1,numObs+1):
                         obsTimes.append(timeStart+i*dt)
 
         f=open(ObserveFile,"w")
-        for i in xrange(numObs):
+        for i in xrange(numObs+1):
                 f.write(repr(obsTimes[i])+"\n")
         f.close()
         return 0

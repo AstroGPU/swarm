@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
         //
         // Set timing and disable logging -- will do it by hand below
         //
-
         unsigned int observation=0;
         ens.set_time_all(ObsTimes[observation]); // initial time
         ens.set_time_end_all(ObsTimes[nObs-1]);  // max integration time
@@ -105,7 +104,6 @@ int main(int argc, char *argv[])
         //Now integrate, but stop at each observation time to check progress and log data.
         //
 
- 
         real startTime=ObsTimes[observation];
         while(observation++<nObs-1)
          {

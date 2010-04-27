@@ -12,19 +12,19 @@ import random as R
 # Hill radius criterion
 #
 # 
-nSystems=1024
+nSystems=1000
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
 massMax=0.01 # 10 Jupiter mass max
-minPlanets=2 # keeps these the same
-maxPlanets=2
+minPlanets=3 # keeps these the same
+maxPlanets=3
 minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
 pert=0.01 # perturbations for other velocities.
 HILLS=3. # make sure the planets are separated by this many Hill radii
 timeStart=0.
 timeEnd=100. # time should be given in yr.
-numObs=1000 # number of system observations. File is unnecessary for most demos.
+numObs=2 # number of system observations. File is unnecessary for most demos.
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
 thisSeed = 314159 # Seed for generator
@@ -45,8 +45,8 @@ def createObservingFile():
 		obsTimes.sort()
         else:
 		dt=(timeEnd-timeStart)/float(numObs)
-		for i in xrange(1,numObs+1):
-			obsTimes.append(timeStart+i*dt)
+		for i in xrange(0,numObs+1):
+			obsTimes.append(timeStart+(i+1)*dt)
 
         f=open(ObserveFile,"w")
 	for i in xrange(numObs+1):
