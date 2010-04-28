@@ -19,7 +19,7 @@ REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 
 ''integrator''::
-   Specifies one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+   Specifies one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_rkck'', ''gpu_verlet'', ''cpu_hermite''
 
 ''min time step''::
    For adaptive time stepping, ''min time step'' is the minimum time step allowed.

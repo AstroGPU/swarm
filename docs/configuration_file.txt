@@ -33,7 +33,7 @@ Each parameter appears on its own line in a format: +
 REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 ''integrator''::
-   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', 'gpu_rkck'', ''gpu_verlet'', ''cpu_hermite''
 
 ''runon''::
    Must specify either ''gpu'' or ''cpu''.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged

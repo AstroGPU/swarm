@@ -41,7 +41,7 @@ Details about configuration files can be found in link:configuration_file.html[]
 REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
 ''integrator''::
-   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_rkck'', ''gpu_verlet'', ''cpu_hermite''
 
 ''runon''::
    Must specify either ''gpu'' or ''cpu''.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged
@@ -53,7 +53,7 @@ REQUIRED PARAMETERS
 INTEGRATOR-SPECIFIC PARAMETERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Constant time step algorithms (e.g., hermite, rk4) must specify:
+Constant time step algorithms (e.g., hermite, rk4, rkck) must specify:
 ''time step''::
   For the fixed time stepping, ''time step'' is the constant time step.
 

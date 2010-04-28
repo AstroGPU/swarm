@@ -19,6 +19,7 @@ integrators        <2>
    hermite_gpu  
    mvs  
    rk4  
+   rkck  
    verlet  
    verlet_cpu
 run                <3>
@@ -38,7 +39,7 @@ test               <6>
 -----------------------
 
 <1> <<anchor-docs,docs>> contains documentation for library and demo progarms (''make doc-asciidoc'' generates html version of this documentation)
-<2> <<anchor-integrators,integrators>> each subdirectory contains the code for a single integrator (e.g., hermite_gpu, hermite_cpu, ...).  The first release contains a few working integrators, (e.g., hermite_gpu and hermite_cpu) and a few that are still in development (e.g., hermite_adap_gpu, rk4, euler).
+<2> <<anchor-integrators,integrators>> each subdirectory contains the code for a single integrator (e.g., hermite_gpu, hermite_cpu, ...).  The first release contains a few working integrators, (e.g., hermite_gpu and hermite_cpu) and a few that are still in development (e.g., hermite_adap_gpu, rk4, rkck, euler).
 <3> <<anchor-run,run>> is where swarm is intended to be run from. It also contains example configuration files.
 <4> <<anchor-scripts,scripts>> contains scripts used by the build process.  
 <5> <<anchor-src,src>> contains the source code for teh swarm library, as well as demonstration programs (e.g., 'tutorials/*.cpp', 'scatter_demo/swarm_scatter_demo.cpp')

@@ -317,7 +317,7 @@ Your integrator must:
   the gpulogging systems.
 
 Note that we're trying to shift all integrators to use the generic
-integrator framework (see verlet or rk4).  In this framework you
+integrator framework (see verlet, rk4 or rkck).  In this framework you
 merely define a "propagator" for your new integrator.  See the euler
 or rk4 integrators for simple examples.  
 
@@ -346,8 +346,9 @@ As noted in the README.txt:
 
 - swarm only integrates forward in time.
 
-- While there are euler and rk4 integrators, they are in a preliminary
-  form and should not be used.
+- While there are euler, rk4 and rkck integrators, they are in a preliminary
+  form and should not be used.  While there are files for mvs, it is 
+  merely a template at this point
 
 - E.g., rk4 requires exactly 3 bodies and does not include a cpu version
 
