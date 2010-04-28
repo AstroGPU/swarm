@@ -8,12 +8,12 @@ Introduction
 ------------
 
 .What is Swarm-NG?  
-Swarm-NG is a collection of code which to help
-scientists and engineers harness the power of GPUs.  In the early
-releases, Swarm-NG will focus on the integration of an ensemble of
-N-body systems evolving under Newtonian gravity.  There are existing
-libraries to perform the force calculation for large-N systems on
-GPUs.  Swarm-NG does not replicate these, but rather focuses on
+
+The Swarm-NG package helps scientists and engineers harness the power
+of GPUs.  In the early releases, Swarm-NG will focus on the
+integration of an ensemble of N-body systems evolving under Newtonian
+gravity.  Swarm-NG does not replicate existing libraries that
+calculate forces for large-N systems on GPUs, but rather focuses on
 integrating an ensemble of many systems where N is small.  This is of
 particular interest for astronomers who study the chaotic evolution of
 planetary systems.  In the long term, we hope Swarm-NG will allow for
@@ -22,7 +22,8 @@ differential equations.
 
 .What is included in {revdate} release of Swarm-NG {revnumber}?
 This initial release contains GPU-based integrators for few-body
-systems, along with a draft of the public interface for setting
+systems (hermite_gpu, hermite_cpu, verlet_gpu, verlet_cpu).
+It comes with a basic, easy-to-use public interface for setting
 initial conditions, calling the GPU-based integration algorithms and
 accessing the output data.  Small example programs are provided to
 demonstrate functionality and how to program with Swarm-NG.
@@ -37,7 +38,7 @@ demonstrate functionality and how to program with Swarm-NG.
 
 * Do a few quick tests with 'make test'.  See <<Testing>> for more info.
 
-* See how much of a speedup you get with 'make benchmark'.  (Warning:
+* To check the speedup on your system , run 'make benchmark'.  (Warning:
   This requires performing the integrations on both the CPU and GPU,
   so it can take a long time.  Please be patient.)  Report your
   results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html[]
@@ -326,7 +327,7 @@ http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website].
 
 Swarm-NG is the product of a collaboration between astrophysicists (UF
 Astronomy department and Harvard-Smithsonian Center for Astrophysics)
-and UF computer scientists at Prof. Jorg Peter's
+and UF computer scientists at Prof. Jorg Peters'
 http://www.cise.ufl.edu/research/SurfLab/[SurfLab].  Contributors to
 the Swarm-NG codebase include: Eric Ford, Ameya Gancchha, Jianwei Gao,
 Mario Juric and Young In Yeo.  +
