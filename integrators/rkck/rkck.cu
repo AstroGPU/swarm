@@ -249,7 +249,8 @@ struct prop_rkck
 			di = c1*k1(sys, bod, 5) + c3*k3(sys, bod, 5) + c4*k4(sys, bod, 5) + c6*k6(sys, bod, 5);
 			ens.vz(sys,bod) += h * di;
 			//  yerr(sys, bod, 5) = h* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5)  ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
-			}
+
+			stop.test_body(stop_ts, ens, sys, bod, T+h, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));			}
 
 			return T + h;
 		}
