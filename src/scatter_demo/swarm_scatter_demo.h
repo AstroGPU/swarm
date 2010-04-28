@@ -3,7 +3,7 @@
 
     "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
     small N systems using the hermite_adap_gpu integrator.
-    Copyright (C) 2010  Swarm-NG Development Group
+    Copyright (C) 2010  Aaron Boley & the Swarm-NG Development Group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

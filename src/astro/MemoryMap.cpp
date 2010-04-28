@@ -1,3 +1,9 @@
+//
+// Author: Mario Juric <mjuric@cfa.harvard.edu>, (C) 2010
+//
+// Copyright: See COPYING file that comes with this distribution
+//
+
 #include <astro/memorymap.h>
 #include <astro/util.h>
 
