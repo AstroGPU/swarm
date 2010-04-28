@@ -60,7 +60,7 @@ struct prop_rk4
                  * pos = old_pos + vel*dt + a1*0.5*dt*dt
                  * a2 = acc(ba)
                  * pos = old_pos + vel*dt + (a0+a1*2)*(1/6.)*dt*dt
-                 * vel += (a0_a1*4+a2)*(1/6.)*dt
+                 * vel += (a0+a1*4+a2)*(1/6.)*dt
 		 * end 
                  *
 		 * @tparam stop_t ...
@@ -81,6 +81,7 @@ struct prop_rk4
 			//double h = T + this->h <= Tend ? this->h : Tend - T;
 			double h_half= h*0.5;
 
+			/// limited to 3 bodies due to cacheing old positions and velocicties in registers (could fit 4 or 5 in 16k, more requires not cacheing v?_olds)
 			double  x_old[3] = {ens.x(sys, 0), ens.x(sys, 1), ens.x(sys, 2)};
 			double  y_old[3] = {ens.y(sys, 0), ens.y(sys, 1), ens.y(sys, 2)};
 			double  z_old[3] = {ens.z(sys, 0), ens.z(sys, 1), ens.z(sys, 2)};
@@ -93,9 +94,9 @@ struct prop_rk4
 
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h_half + aa0(sys, bod, 0) * h_half * h_half * 0.5;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h_half + aa0(sys, bod, 1) * h_half * h_half * 0.5;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h_half + aa0(sys, bod, 2) * h_half * h_half * 0.5;
+				ens.x(sys,bod) = x_old[bod]+ h_half*( vx_old[bod] + aa0(sys, bod, 0) * h_half * 0.5);
+				ens.y(sys,bod) = y_old[bod]+ h_half*( vy_old[bod] + aa0(sys, bod, 1) * h_half * 0.5);
+				ens.z(sys,bod) = z_old[bod]+ h_half*( vz_old[bod] + aa0(sys, bod, 2) * h_half * 0.5);
 			}
 
 			// compute accelerations
@@ -103,22 +104,23 @@ struct prop_rk4
 
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + aa1(sys, bod, 0) * h_half * h;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + aa1(sys, bod, 1) * h_half * h;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + aa1(sys, bod, 2) * h_half * h;
+				ens.x(sys,bod) = x_old[bod]+ h* (vx_old[bod] + aa1(sys, bod, 0) * h_half);
+				ens.y(sys,bod) = y_old[bod]+ h* (vy_old[bod] + aa1(sys, bod, 1) * h_half);
+				ens.z(sys,bod) = z_old[bod]+ h* (vz_old[bod] + aa1(sys, bod, 2) * h_half);
 			}
 
 			// compute accelerations
 			compute_acc(ens, sys, aa2);
 
+			double hby6 = h / 6.0;
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * h * h / 6.0;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * h * h / 6.0;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * h * h / 6.0;
-				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* h/6.0;
-				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* h/6.0;
-				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* h/6.0;
+				ens.x(sys,bod) = x_old[bod]+ h * (vx_old[bod] + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * hby6);
+				ens.y(sys,bod) = y_old[bod]+ h * (vy_old[bod] + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * hby6);
+				ens.z(sys,bod) = z_old[bod]+ h * (vz_old[bod] + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * hby6);
+				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* hby6;
+				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* hby6;
+				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* hby6;
 			}
 		        
 
