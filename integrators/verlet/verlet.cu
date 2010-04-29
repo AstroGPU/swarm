@@ -233,8 +233,8 @@ struct prop_verlet
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			//double h = T + this->h <= Tend ? this->h : Tend - T;
-			double h_half= h*0.5;
+			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= hh*0.5;
 
 			//Step(pos);
 			//CalcDerivForDrift(); -> returns velocity
@@ -302,7 +302,7 @@ struct prop_verlet
 
 			double h_new= 1./(1.+sqrt(rinv3)); 
 			// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
-			h_new = 1./(2./(h_new*h)-1./h_half);
+			h_new = 1./(2./(h_new*hh)-1./h_half);
 			h_half = h_new;
 
 			//Step(vel)

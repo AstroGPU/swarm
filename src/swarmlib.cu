@@ -81,7 +81,7 @@ namespace swarm {
 static const int MAXTHREADSPERBLOCK = 256;
 __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 {
-#if 0
+#if 0   // If you don't want to use shared memory for this
 	// Direct counting (via atomicAdd) of the number of running threads. Slower
 	// but requires no shared memory.
 	// TODO: Test if this implementation is fast enough to be activated
@@ -90,6 +90,7 @@ __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 	if(running) { atomicAdd(nrunning, 1); }
 	return;
 #else
+	// We think it's ok to make this extern ?
 	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
 
 	int sys = threadId();
@@ -532,7 +533,7 @@ template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
 {
-	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 100;
+	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 1000;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 	gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
 	

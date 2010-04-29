@@ -29,6 +29,8 @@
 /// namespace for Swarm-NG library
 namespace swarm {
 
+// If want to declare __shared__ do it here (just like const variables for ensembles)
+
 /*!  
  *  \brief propagator class for RKCK integrator on GPU: Advance the system by one time step.
  *
@@ -186,11 +188,11 @@ struct prop_rkck
 
 
 			if(T >= Tend) { return T; }
-//			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double hh = T + this->h <= Tend ? this->h : Tend - T;
 
 			// k1 step
 			compute_acc(ens,sys,k1);       // at T
-			double htmp = b21*h;
+			double htmp = b21*hh;
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
 			ytmp(sys, bod, 0) = ens.x (sys, bod) + htmp* k1(sys, bod, 0);
@@ -201,76 +203,76 @@ struct prop_rkck
 			ytmp(sys, bod, 5) = ens.vz(sys, bod) + htmp* k1(sys, bod, 5);
 			}
 			// k2 step
-			compute_acc(ens,ytmp,sys,k2);  // at T + ah[0]*h
+			compute_acc(ens,ytmp,sys,k2);  // at T + ah[0]*hh
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + h* (b3[0]*k1(sys, bod, 0) + b3[1]*k2(sys, bod, 0));
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + h* (b3[0]*k1(sys, bod, 1) + b3[1]*k2(sys, bod, 1));
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + h* (b3[0]*k1(sys, bod, 2) + b3[1]*k2(sys, bod, 2));
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + h* (b3[0]*k1(sys, bod, 3) + b3[1]*k2(sys, bod, 3));
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + h* (b3[0]*k1(sys, bod, 4) + b3[1]*k2(sys, bod, 4));
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + h* (b3[0]*k1(sys, bod, 5) + b3[1]*k2(sys, bod, 5));
+			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b3[0]*k1(sys, bod, 0) + b3[1]*k2(sys, bod, 0));
+			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b3[0]*k1(sys, bod, 1) + b3[1]*k2(sys, bod, 1));
+			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b3[0]*k1(sys, bod, 2) + b3[1]*k2(sys, bod, 2));
+			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b3[0]*k1(sys, bod, 3) + b3[1]*k2(sys, bod, 3));
+			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b3[0]*k1(sys, bod, 4) + b3[1]*k2(sys, bod, 4));
+			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b3[0]*k1(sys, bod, 5) + b3[1]*k2(sys, bod, 5));
 			}
 			// k3 step
-			compute_acc(ens,ytmp,sys,k3);  // at T + ah[1]*h
+			compute_acc(ens,ytmp,sys,k3);  // at T + ah[1]*hh
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + h* (b4[0]*k1(sys, bod, 0) + b4[1]*k2(sys, bod, 0) + b4[2]*k3(sys, bod, 0) );
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + h* (b4[0]*k1(sys, bod, 1) + b4[1]*k2(sys, bod, 1) + b4[2]*k3(sys, bod, 1) );
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + h* (b4[0]*k1(sys, bod, 2) + b4[1]*k2(sys, bod, 2) + b4[2]*k3(sys, bod, 2) );
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + h* (b4[0]*k1(sys, bod, 3) + b4[1]*k2(sys, bod, 3) + b4[2]*k3(sys, bod, 3) );
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + h* (b4[0]*k1(sys, bod, 4) + b4[1]*k2(sys, bod, 4) + b4[2]*k3(sys, bod, 4) );
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + h* (b4[0]*k1(sys, bod, 5) + b4[1]*k2(sys, bod, 5) + b4[2]*k3(sys, bod, 5) );
+			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b4[0]*k1(sys, bod, 0) + b4[1]*k2(sys, bod, 0) + b4[2]*k3(sys, bod, 0) );
+			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b4[0]*k1(sys, bod, 1) + b4[1]*k2(sys, bod, 1) + b4[2]*k3(sys, bod, 1) );
+			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b4[0]*k1(sys, bod, 2) + b4[1]*k2(sys, bod, 2) + b4[2]*k3(sys, bod, 2) );
+			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b4[0]*k1(sys, bod, 3) + b4[1]*k2(sys, bod, 3) + b4[2]*k3(sys, bod, 3) );
+			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b4[0]*k1(sys, bod, 4) + b4[1]*k2(sys, bod, 4) + b4[2]*k3(sys, bod, 4) );
+			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b4[0]*k1(sys, bod, 5) + b4[1]*k2(sys, bod, 5) + b4[2]*k3(sys, bod, 5) );
 			}
 			// k4 step
-			compute_acc(ens,ytmp,sys,k4);// at T + ah[2]*h
+			compute_acc(ens,ytmp,sys,k4);// at T + ah[2]*hh
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + h* (b5[0]*k1(sys, bod, 0) + b5[1]*k2(sys, bod, 0) + b5[2]*k3(sys, bod, 0) + b5[3]*k4(sys, bod, 0) );
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + h* (b5[0]*k1(sys, bod, 1) + b5[1]*k2(sys, bod, 1) + b5[2]*k3(sys, bod, 1) + b5[3]*k4(sys, bod, 1) );
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + h* (b5[0]*k1(sys, bod, 2) + b5[1]*k2(sys, bod, 2) + b5[2]*k3(sys, bod, 2) + b5[3]*k4(sys, bod, 2) );
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + h* (b5[0]*k1(sys, bod, 3) + b5[1]*k2(sys, bod, 3) + b5[2]*k3(sys, bod, 3) + b5[3]*k4(sys, bod, 3) );
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + h* (b5[0]*k1(sys, bod, 4) + b5[1]*k2(sys, bod, 4) + b5[2]*k3(sys, bod, 4) + b5[3]*k4(sys, bod, 4) );
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + h* (b5[0]*k1(sys, bod, 5) + b5[1]*k2(sys, bod, 5) + b5[2]*k3(sys, bod, 5) + b5[3]*k4(sys, bod, 5) );
+			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b5[0]*k1(sys, bod, 0) + b5[1]*k2(sys, bod, 0) + b5[2]*k3(sys, bod, 0) + b5[3]*k4(sys, bod, 0) );
+			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b5[0]*k1(sys, bod, 1) + b5[1]*k2(sys, bod, 1) + b5[2]*k3(sys, bod, 1) + b5[3]*k4(sys, bod, 1) );
+			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b5[0]*k1(sys, bod, 2) + b5[1]*k2(sys, bod, 2) + b5[2]*k3(sys, bod, 2) + b5[3]*k4(sys, bod, 2) );
+			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b5[0]*k1(sys, bod, 3) + b5[1]*k2(sys, bod, 3) + b5[2]*k3(sys, bod, 3) + b5[3]*k4(sys, bod, 3) );
+			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b5[0]*k1(sys, bod, 4) + b5[1]*k2(sys, bod, 4) + b5[2]*k3(sys, bod, 4) + b5[3]*k4(sys, bod, 4) );
+			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b5[0]*k1(sys, bod, 5) + b5[1]*k2(sys, bod, 5) + b5[2]*k3(sys, bod, 5) + b5[3]*k4(sys, bod, 5) );
 			}
 			// k5 step
-			compute_acc(ens,ytmp,sys,k5);// at T + ah[3]*h
+			compute_acc(ens,ytmp,sys,k5);// at T + ah[3]*hh
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + h* (b6[0]*k1(sys, bod, 0) + b6[1]*k2(sys, bod, 0) + b6[2]*k3(sys, bod, 0) + b6[3]*k4(sys, bod, 0) + b6[4]*k5(sys, bod, 0));
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + h* (b6[0]*k1(sys, bod, 1) + b6[1]*k2(sys, bod, 1) + b6[2]*k3(sys, bod, 1) + b6[3]*k4(sys, bod, 1) + b6[4]*k5(sys, bod, 1));
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + h* (b6[0]*k1(sys, bod, 2) + b6[1]*k2(sys, bod, 2) + b6[2]*k3(sys, bod, 2) + b6[3]*k4(sys, bod, 2) + b6[4]*k5(sys, bod, 2));
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + h* (b6[0]*k1(sys, bod, 3) + b6[1]*k2(sys, bod, 3) + b6[2]*k3(sys, bod, 3) + b6[3]*k4(sys, bod, 3) + b6[4]*k5(sys, bod, 3));
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + h* (b6[0]*k1(sys, bod, 4) + b6[1]*k2(sys, bod, 4) + b6[2]*k3(sys, bod, 4) + b6[3]*k4(sys, bod, 4) + b6[4]*k5(sys, bod, 4));
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + h* (b6[0]*k1(sys, bod, 5) + b6[1]*k2(sys, bod, 5) + b6[2]*k3(sys, bod, 5) + b6[3]*k4(sys, bod, 5) + b6[4]*k5(sys, bod, 5));
+			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b6[0]*k1(sys, bod, 0) + b6[1]*k2(sys, bod, 0) + b6[2]*k3(sys, bod, 0) + b6[3]*k4(sys, bod, 0) + b6[4]*k5(sys, bod, 0));
+			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b6[0]*k1(sys, bod, 1) + b6[1]*k2(sys, bod, 1) + b6[2]*k3(sys, bod, 1) + b6[3]*k4(sys, bod, 1) + b6[4]*k5(sys, bod, 1));
+			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b6[0]*k1(sys, bod, 2) + b6[1]*k2(sys, bod, 2) + b6[2]*k3(sys, bod, 2) + b6[3]*k4(sys, bod, 2) + b6[4]*k5(sys, bod, 2));
+			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b6[0]*k1(sys, bod, 3) + b6[1]*k2(sys, bod, 3) + b6[2]*k3(sys, bod, 3) + b6[3]*k4(sys, bod, 3) + b6[4]*k5(sys, bod, 3));
+			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b6[0]*k1(sys, bod, 4) + b6[1]*k2(sys, bod, 4) + b6[2]*k3(sys, bod, 4) + b6[3]*k4(sys, bod, 4) + b6[4]*k5(sys, bod, 4));
+			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b6[0]*k1(sys, bod, 5) + b6[1]*k2(sys, bod, 5) + b6[2]*k3(sys, bod, 5) + b6[3]*k4(sys, bod, 5) + b6[4]*k5(sys, bod, 5));
 			}
 			// k6 step & final sum
-			compute_acc(ens,ytmp,sys,k6);// at T + ah[4]*h
+			compute_acc(ens,ytmp,sys,k6);// at T + ah[4]*hh
 			for(int bod = 0; bod != ens.nbod(); bod++)
 			{
 			double di;
 			di = c1*k1(sys, bod, 0) + c3*k3(sys, bod, 0) + c4*k4(sys, bod, 0) + c6*k6(sys, bod, 0);
-			ens.x(sys,bod) += h * di;
-			//  yerr(sys, bod, 0) = h* ( ec[1]*k1(sys, bod, 0) + ec[3]*k3(sys, bod, 0)  ec[4] * k4(sys, bod, 0) + ec[5] * k5(sys, bod, 0) + ec[6] * k6(sys, bod, 0) );
+			ens.x(sys,bod) += hh * di;
+			//  yerr(sys, bod, 0) = hh* ( ec[1]*k1(sys, bod, 0) + ec[3]*k3(sys, bod, 0)  ec[4] * k4(sys, bod, 0) + ec[5] * k5(sys, bod, 0) + ec[6] * k6(sys, bod, 0) );
 			di = c1*k1(sys, bod, 1) + c3*k3(sys, bod, 1) + c4*k4(sys, bod, 1) + c6*k6(sys, bod, 1);
-			ens.y(sys,bod) += h * di;
-			//  yerr(sys, bod, 1) = h* ( ec[1]*k1(sys, bod, 1) + ec[3]*k3(sys, bod, 1)  ec[4] * k4(sys, bod, 1) + ec[5] * k5(sys, bod, 1) + ec[6] * k6(sys, bod, 1) );
+			ens.y(sys,bod) += hh * di;
+			//  yerr(sys, bod, 1) = hh* ( ec[1]*k1(sys, bod, 1) + ec[3]*k3(sys, bod, 1)  ec[4] * k4(sys, bod, 1) + ec[5] * k5(sys, bod, 1) + ec[6] * k6(sys, bod, 1) );
 			di = c1*k1(sys, bod, 2) + c3*k3(sys, bod, 2) + c4*k4(sys, bod, 2) + c6*k6(sys, bod, 2);
-			ens.z(sys,bod) += h * di;
-			//  yerr(sys, bod, 2) = h* ( ec[1]*k1(sys, bod, 2) + ec[3]*k3(sys, bod, 2)  ec[4] * k4(sys, bod, 2) + ec[5] * k5(sys, bod, 2) + ec[6] * k6(sys, bod, 2) );
+			ens.z(sys,bod) += hh * di;
+			//  yerr(sys, bod, 2) = hh* ( ec[1]*k1(sys, bod, 2) + ec[3]*k3(sys, bod, 2)  ec[4] * k4(sys, bod, 2) + ec[5] * k5(sys, bod, 2) + ec[6] * k6(sys, bod, 2) );
 			di = c1*k1(sys, bod, 3) + c3*k3(sys, bod, 3) + c4*k4(sys, bod, 3) + c6*k6(sys, bod, 3);
-			ens.vx(sys,bod) += h * di;
-			//  yerr(sys, bod, 3) = h* ( ec[1]*k1(sys, bod, 3) + ec[3]*k3(sys, bod, 3)  ec[4] * k4(sys, bod, 3) + ec[5] * k5(sys, bod, 3) + ec[6] * k6(sys, bod, 3) );
+			ens.vx(sys,bod) += hh * di;
+			//  yerr(sys, bod, 3) = hh* ( ec[1]*k1(sys, bod, 3) + ec[3]*k3(sys, bod, 3)  ec[4] * k4(sys, bod, 3) + ec[5] * k5(sys, bod, 3) + ec[6] * k6(sys, bod, 3) );
 			di = c1*k1(sys, bod, 4) + c3*k3(sys, bod, 4) + c4*k4(sys, bod, 4) + c6*k6(sys, bod, 4);
-			ens.vy(sys,bod) += h * di;
-			//  yerr(sys, bod, 4) = h* ( ec[1]*k1(sys, bod, 4) + ec[3]*k3(sys, bod, 4)  ec[4] * k4(sys, bod, 4) + ec[5] * k5(sys, bod, 4) + ec[6] * k6(sys, bod, 4) );
+			ens.vy(sys,bod) += hh * di;
+			//  yerr(sys, bod, 4) = hh* ( ec[1]*k1(sys, bod, 4) + ec[3]*k3(sys, bod, 4)  ec[4] * k4(sys, bod, 4) + ec[5] * k5(sys, bod, 4) + ec[6] * k6(sys, bod, 4) );
 			di = c1*k1(sys, bod, 5) + c3*k3(sys, bod, 5) + c4*k4(sys, bod, 5) + c6*k6(sys, bod, 5);
-			ens.vz(sys,bod) += h * di;
-			//  yerr(sys, bod, 5) = h* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5)  ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
+			ens.vz(sys,bod) += hh * di;
+			//  yerr(sys, bod, 5) = hh* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5)  ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
 
-			stop.test_body(stop_ts, ens, sys, bod, T+h, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));			}
+			stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));			}
 
-			return T + h;
+			return T + hh;
 		}
 
 	};

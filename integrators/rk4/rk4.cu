@@ -96,8 +96,8 @@ struct prop_rk4
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			//double h = T + this->h <= Tend ? this->h : Tend - T;
-			double h_half= h*0.5;
+			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= hh*0.5;
 
 			/// limited to 3 bodies due to cacheing old positions and velocicties in registers (could fit 4 or 5 in 16k, more requires not cacheing v?_olds)
 			double  x_old[3] = {ens.x(sys, 0), ens.x(sys, 1), ens.x(sys, 2)};
@@ -122,28 +122,28 @@ struct prop_rk4
 
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ h* (vx_old[bod] + aa1(sys, bod, 0) * h_half);
-				ens.y(sys,bod) = y_old[bod]+ h* (vy_old[bod] + aa1(sys, bod, 1) * h_half);
-				ens.z(sys,bod) = z_old[bod]+ h* (vz_old[bod] + aa1(sys, bod, 2) * h_half);
+				ens.x(sys,bod) = x_old[bod]+ hh* (vx_old[bod] + aa1(sys, bod, 0) * h_half);
+				ens.y(sys,bod) = y_old[bod]+ hh* (vy_old[bod] + aa1(sys, bod, 1) * h_half);
+				ens.z(sys,bod) = z_old[bod]+ hh* (vz_old[bod] + aa1(sys, bod, 2) * h_half);
 			}
 
 			// compute accelerations
 			compute_acc(ens, sys, aa2);
 
-			double hby6 = h / 6.0;
+			double hby6 = hh / 6.0;
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ h * (vx_old[bod] + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * hby6);
-				ens.y(sys,bod) = y_old[bod]+ h * (vy_old[bod] + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * hby6);
-				ens.z(sys,bod) = z_old[bod]+ h * (vz_old[bod] + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * hby6);
+				ens.x(sys,bod) = x_old[bod]+ hh * (vx_old[bod] + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * hby6);
+				ens.y(sys,bod) = y_old[bod]+ hh * (vy_old[bod] + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * hby6);
+				ens.z(sys,bod) = z_old[bod]+ hh * (vz_old[bod] + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * hby6);
 				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* hby6;
 				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* hby6;
 				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* hby6;
-				stop.test_body(stop_ts, ens, sys, bod, T+h, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));
+				stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));
 			}
 		        
 
-			return T + h;
+			return T + hh;
 		}
 
 	};
