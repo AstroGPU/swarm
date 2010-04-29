@@ -31,8 +31,8 @@ LIBSWARM_CUDA=src/swarmlib.cu
 ###
 ### documentation in asciidoc format
 ###
-DOC_INPUT=docs/README.txt docs/build_system.txt docs/configuration_file.txt docs/for_developers.txt docs/performance.txt docs/eventlog.txt docs/snapshotting.txt # asciidoc general documentation
-MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tutorial_compare.man docs/swarm_tutorial_benchmark.man docs/swarm_tutorial_montecarlo.man docs/swarm_scatter_demo.man  docs/swarm.man docs/swarmquery.man docs/swarm_test_energy.man # asciidoc man page documentation
+DOC_INPUT=docs/README.txt docs/build_system.txt docs/configuration_file.txt docs/for_developers.txt docs/organization.txt docs/performance.txt docs/eventlog.txt docs/snapshotting.txt # asciidoc general documentation
+MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tutorial_compare.man docs/swarm_tutorial_benchmark.man docs/swarm_tutorial_montecarlo.man docs/swarm_scatter_demo.man  docs/swarm.man docs/swarmquery.man docs/swarm_test_energy.man docs/ic_generators.man # asciidoc man page documentation
 
 ####
 #### Integrator pieces of libswarm
