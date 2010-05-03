@@ -95,9 +95,9 @@ namespace boost
 namespace peyton {
 namespace io {
 
-	namespace binary	///< auxiliary/debug variables/methods are found here
+        namespace binary	// auxiliary/debug variables/methods are found here
 	{
-		/// Type information structure for @c manifest
+		// Type information structure for @c manifest
 		struct datatype_info
 		{
 			std::string name;

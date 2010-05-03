@@ -1,3 +1,28 @@
+/*************************************************************************
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarmlib.cpp
+ *  \brief provides several functions for public interface for swarm libaray
+ *
+ *  If you want to use the swarm library and have questions about what the 
+ *  functions do, this is a great plae to start looking.
+*/
+
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include <vector>

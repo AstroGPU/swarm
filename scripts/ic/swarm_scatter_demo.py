@@ -1,8 +1,9 @@
 #!/usr/bin/python
+''' Simple python script for generating an ensemble of planetary systems with an intruding star.'''
 #
-#    "swarm_adap.py" is a python script that creates initial conditions and the observation
-#    file for use in swarm_adap.
-#    "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
+#    "swarm_scatter_demo.py" is a python script that creates initial conditions and the observation
+#    file for use in swarm_scatter_demo.
+#    "swarm_scatter_demo" is a program that uses the Swarm-NG tools for modeling an ensemble of
 #    small N systems using the hermite_adap_gpu integrator.
 #    Copyright (C) 2010  Swarm-NG Development Group
 #
@@ -36,7 +37,7 @@ import scipy.special as SS
 # perturbers are drawn from a Maxwellian velocity distribution
 #
 # 
-nSystems=2048 # systems in ensemble
+nSystems=1000 # systems in ensemble
 mPrimary=1. # mass of the primary
 nOther=2 # primary plus perturbers. E.g., 3 = primary plus two perturbers
 massMin=.001/32. # 10 Earth-mass minimum
@@ -45,16 +46,23 @@ minPlanets=4 # keeps these the same for now.
 maxPlanets=4
 minAU=2. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=100. # outer planet
+SET_OUTER_ORBIT=1 # force one planet to start at maxAU.
 pert=0.01 # perturbations for other velocities.
 HILLS=3. # make sure the planets are separated by HILLS many Hill radii
 timeStart=0.
 timeEnd=1e3 # time should be given in yr.
 incomingR=20626.5 # AU
 maxUnperturbedImpact=1000. # AU
-numObs=1000 # number of observations allowed
+numObs=100 # number of observations allowed
 ObserveFile="observeTimes.dat"
+MAXWELL=1 # use max
 VelSig=1./29.8 #(1km/s in code units) This is mean of Maxwellian velocity dispersion
-RANDOM_TIMES=0
+ObserveFile="observeTimes.dat" # list of times file used by swarm_scattering_demo
+MAXWELL=1 # use Maxwellian velocity.  Anything else gives the same initial speed 
+#         # between the binary and the planetary system for each ensemble constituent.
+RANDOM_TIMES=0 # set to 1 if you want the list of times file to have random intervals
+thisSeed=314159 # random number generator seed
+
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)
@@ -89,11 +97,11 @@ def createObservingFile():
                 obsTimes.sort()
         else:
                 dt=(timeEnd-timeStart)/float(numObs)
-                for i in xrange(1,numObs):
+                for i in xrange(1,numObs+1):
                         obsTimes.append(timeStart+i*dt)
 
         f=open(ObserveFile,"w")
-        for i in xrange(numObs):
+        for i in xrange(numObs+1):
                 f.write(repr(obsTimes[i])+"\n")
         f.close()
         return 0
@@ -103,11 +111,12 @@ def getCollision():
 	R.seed()
 	phi=2.*M.pi*R.random()
 	theta=M.pi*(2.*R.random()-1.)
-        VelSigPert=Maxwell(VelSig) 
+        if MAXWELL==1: VelSigPert=Maxwell(VelSig) 
+	else: VelSigPert=VelSig
 	x=incomingR*M.cos(theta)*M.cos(phi)
 	y=incomingR*M.cos(theta)*M.sin(phi)
 	z=incomingR*M.sin(theta)
-        impact=M.sqrt(maxUnperturbedImpact**2+2.*mPrimary*maxUnperturbedImpact/VelSigPert**2) # assuming reduced mass is mPmP/(mP+mP)
+        impact=M.sqrt(maxUnperturbedImpact**2+4.*mPrimary*maxUnperturbedImpact/VelSigPert**2)  # assumes perturber is the same mass as the primary
 	impact*=M.sqrt(R.random())
 	alpha0=impact/incomingR
 	alpha=1e-3*alpha0 # take advantage of large separation
@@ -117,7 +126,6 @@ def getCollision():
        		phiPrime=phi+ppf
                	thetaPrime=theta+tpf
 		ppf*=1.01;tpf*=1.01
-
 		alpha=M.cos(theta)*M.cos(phi)*M.cos(thetaPrime)*M.cos(phiPrime)
 		alpha+=M.cos(theta)*M.sin(phi)*M.cos(thetaPrime)*M.sin(phiPrime)
 		alpha+=M.sin(thetaPrime)*M.sin(theta)
@@ -142,7 +150,8 @@ def main():
 		for j in xrange(nPlanets):
 			mass=getUniformLog(massMin,massMax)
 			x=getUniformLog(minAU,maxAU)
-			if j==0: x=maxAU
+			if SET_OUTER_ORBIT==1: 
+				if j==0: x=maxAU
 			#if j==1: x=2.
 			#if j==2: x=8. # set these if you want to constrain planet locations
 			#if j==3: x=32.

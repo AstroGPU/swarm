@@ -1,3 +1,31 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Young In Yeo and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file hermite_adap_gpu_integrator_body.cu
+ *  \brief inluded multiple times to acheive template specialization for various precisions
+ *
+ *  This is included from hermite_adap_gpu.cu like
+ *  template<>
+ *  void gpu_hermite_adap_integrator<double,double>::integrate(gpu_ensemble &ens, double dT)
+ *  #include"hermite_adap_gpu_integrator_body.cu"
+ *
+*/
+
 //template<>
 //void gpu_hermite_adap_integrator<real_hi,real_lo>::integrate(gpu_ensemble &ens, double dT)
 { 
@@ -171,7 +199,6 @@
 		}
 	}
 	else {
-		// How do we get an error message out of here?
 		ERROR("Invalid number of bodies using definition N_BODY. Ensemble should equal N_BODY");
 		return;
 	}

@@ -1,3 +1,8 @@
+/*! \file user.h
+ *  \brief #defines that advanced users might want to change
+ *
+*/ 
+
 // currently setup for swarm_adap.cpp
 #define OUTPUT_DIRECTORY "adap_output"
 #define LARGE_NUMBER 1e32

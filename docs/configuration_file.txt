@@ -1,124 +1,110 @@
 Format/rules for configuration file
 ===================================
 
-
 Description
 -----------
-.What is configuration file?
-The configuration file specifies several parameters. Examples are located at `run/integrator.cfg`
+.What is a configuration file?
+The configuration file specifies several parameters, including:  
+- <<anchor-1,choice of integrator and other required parameters>>
+- <<anchor-2,optional parameters to integrator>>
+- <<anchor-3,parameters specifying initial conditions>>
+- <<anchor-4,parameters specifying conditions to halt integrations>> (optional)
+- <<anchor-5,parameters to output logging system>> (optional)
+- <<anchor-6,GPU control parameters>> (optional)
+
+For some programs, the configuration file also controls the initial conditions. +
+Examples are located in `run/integrator*.cfg`
 
 .Format for the configuration file
 Each parameter appears on its own line in a format: + 
 ''key = value''
 
-.Rules for the configuration file
-It is recommended to specify parameters as follows.
-
 [horizontal]
-<<anchor-1,Required parameters>>:: Commonly required parameters ''integrator'', ''runon'', ''num_systems'', ''num_bodies'', ''dT''
-<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''h'', ''stepfac'', ''precision''
-<<anchor-3,Initial condition parameters>>:: Users specify initial conditions
-<<anchor-4,Stopper parameters>>:: Optional
-<<anchor-5,GPU kernel configuration parameters>>:: Optional
-<<anchor-6,Output parameters>>:: Optional
+<<anchor-1,Required parameters>>:: Currently the following parameters are required (for all programs that accept a configuration file): ''integrator'', ''runon'', ''integration end''
+<<anchor-2,Integrator-specific parameters>>:: Integrator specific parameters ''time step'' (fixed timestep algorithms), ''time step factor'' and ''min time step'' (adaptive timestep algorithms), ''precision'' (hermite_gpu and hermite_cpu only)
+<<anchor-3,Initial condition parameters>>:: User-specified initial conditions (e.g., ''initial conditions'', ''num_systems'', ''num_bodies'')
+
+<<anchor-4,Stopper parameters>>:: Optional (e.g., ''rmax'')
+<<anchor-5,GPU kernel configuration parameters>>:: Optional ''threads per block''
+<<anchor-6,Output parameters>>:: Optional ''output'', ''output interval''
+
 
 [[anchor-1]]
 REQUIRED PARAMETERS
 ~~~~~~~~~~~~~~~~~~~
-
 ''integrator''::
-   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_verlet'', ''cpu_hermite''
+   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', 'gpu_rkck'', ''gpu_verlet'', ''cpu_hermite''
 
 ''runon''::
    Must specify either ''gpu'' or ''cpu''.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged
 
-''num_systems''::
-   Must specify a positive integer number of systems to be integrated. All systems are integrated at once, so the number of systems may be limited by avaliable memory and/or the maximum number of threads.  
+''integration end''::
+   Must specify the time at which each integration will be stopped.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches T*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
 
-''num_bodies''::
-   Must specify a positive integer number of bodies in each system.  In the current release, the verlet and hermite integrators support 3-10 bodies, while the Runge Kutta integrator is limited to 3 bodies.  
-
-''dT''::
-   Must specify the duration of each integration.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches dT*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
-
+Additional parameters may be required by specific programs.
 
 [[anchor-2]]
 INTEGRATOR-SPECIFIC PARAMETERS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-And either ''h'' or ''stepfac'':
+Constant time step algorithms (e.g., hermite, rk4) must specify:
+''time step''::
+  For the fixed time stepping, ''time step'' is the constant time step.
 
-''h''::
-   Specify the timestep for fixed time-step algorithms.
+Variable time step algorithms (e.g., verlet, hermite_adap) must
+specify both of the following:
+''time step factor''::
+   For adaptive time stepping, ''time step factor'' is the fraction of
+   the timescale used in determining the time step.
 
-''stepfac''::
-   Specifies the time step parameter for the integrator ''gpu_hermite_adap''.   *** _WARNING: Name will likely change_.
+''min time step''::
+   For adaptive time stepping algoritms, ''min time step'' is the
+   minimum time step allowed.  Currently only supported by the highly
+   beta hermite_adap_gpu.
 
-''precision''::
-   Must specify the precission for the integrations.  0 results in single precission, 1 results in double precission.  Some integrators support additional values which results in mixed-precission calculations.  (E.g., gpu_hermite allows a value of 2 which results in positions and velocities being calculated to double precission, but accelerations and jerks being computed in single precission.)
+Certain integrators have additional parameters:
+''precision'' (currently hermite integrators only)::
+   If you are using hermite_gpu (or the currently super-beta
+   hermite_adap_gpu), then you must specify the precission for
+   integrations.  A value of 1 results in double precission, 2 results
+   in single precission, and 3 results mutli-precission calculations.
+   (E.g., gpu_hermite allows a value of 3 which results in positions
+   and velocities being calculated to double precission, but
+   accelerations and jerks being computed in single precission.)  This
+   parameter is ignored by other integrators (which are currently
+   implemented using only double precision.)
 
-
+''steps per kernel run'' (optional)::
+  Specifies the maximum number of steps per kernel call.  Currently,
+  defaults to 100.  Not currently supported by hermite integrators.
 
 [[anchor-3]]
 PARAMETERS TO SPECIFY INITIAL CONDITIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In the case of swarm_tutorial_montecarlo, users specify initial conditions in terms of the mass of a central body and Keplerian orbital elements for each of 2-9 additional bodies.  
 
-''use_jacobi''::
-   A non-zero value specifies that all orbital elements are to be interpretted in a Jacobi frame.  Default value is 0 (false).  
-
-''mass_star''::
-   The mass of body zero, the central object.  For planetary systems, this is typically the host star.  Default value is 1.
-
-''mass_[1-9]''::
-   The mass of the specified body.  Valid range is [0,mass_star).  (Body #0 is the central body.)
-
-''a_[1-9]''::
-   The initial semi-major axis of the specified body.  Valid range is [0.001,10000.].
-
-''ecc_[1-9]''::
-   The initial eccentricicty of the specified body.  Valid range is [0,1).
-
-''inc_[1-9]''::
-   The initial inclination of the specified body in degrees.  Valid range is [-180,180].    
-
-''node_[1-9]''::
-   The initial ascending node of the specified body in degrees.  Valid range is [-720,720].    
-
-''omega_[1-9]''::
-   The initial arguement of periastron of the specified body in degrees.  Valid range is [-720,720].    
-
-''meananom_[1-9]''::
-   The initial mean anomaly of the specified body in degrees.  Valid range is [-720,720].    
-
-Using only the above keywords would result in all systems being assigned the same initial conditions.  While this may be useful for some tests, most real calculations will want to assign different initial conditions to each system.  To generate initial conditions via a pseudo-random number generator, replace at least one of the above key names for the mass and orbital elements of one or more bodies with a similar keyword, but with one or more of the following suffixes:  ''_min'', ''_max'', and ''_sigma''.  
-
-If only key_N_min and key_N_max are specified, then key for the Nth body will be generated from a uniform distribution between the minimum and maximum values.  
-
-If key_N and key_N_sigma are specified, then key for the Nth body will be generated from a Gaussian distribution with mean key_N and standard deviation key_N_sigma.  If key_N_min and/or key_N_max are also specified, then the distribution will be truncated at these values.
-
-If only key_N is specified, then key for the Nth body will be exactly the specified value. 
-
-Other combinations of key suffixes are not allowed.
-
-''time_init''::
-   Initial time for all simulations.  Default value is 0.  
+These parameters varry from one program to the next.  Please see the
+documentation for the specific program you are interested in.
 
 
 [[anchor-4]]
 STOPPER PRAMETERS
 ~~~~~~~~~~~~~~~~~
 ''rmax''::
-   Integrations are halted once a body reaches a distance greater than ''rmax'' from the origin?  (or is it central body?).  _Only some integrators support this parameter at this time._
-
-''Toutstep''::
-   Specifies how often data should be logged.  _Only some integrators support this parameter at this time._
-
-
+   Integrations are halted once a body reaches a distance greater than ''rmax'' from the origin.  Currently this is only supported by euler (which you shouldn't use anyway), but is important for demonstratin how to write a basic stopper class.
 
 [[anchor-5]]
-GPU KERNEL CONFIGURATION PARAMETERS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OUTPUT PARAMETERS
+~~~~~~~~~~~~~~~~~
+''output''::
+   Specifies files to be used for output.  If not specified, defaults to ''null'' which results in no output files being written.
+
+''output interval''::
+   Specifies how often data should be logged.  
+
+
+GPU CONTROL PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~
+
 ''threads per block''::
    Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
 
@@ -129,69 +115,31 @@ OUTPUT PARAMETERS
 ~~~~~~~~~~~~~~~~~
 
 ''output''::
-   Specifies files to be used for output.  In current demo set this value to ''null''.  *** _Is this functional?  Required?_ ***
+   Specifies files to be used for output using the built-in logging.  In current demo, set this value to ''null''.  See *eventlog* for more information.
 
 ''output interval'':
-   Specifies how often data should be logged.  _Only some integrators support this parameter at this time._  *** _What is difference between Toutstep?_ ***
+   Specifies how often data should be logged for built-in logging.  _Only some integrators support this parameter at this time._ See *eventlog* for more information.
 
 EXAMPLE
 -------
 
-`integrator-tutorial_montecarlo.cfg`
+The exmample configuration file in `run/integrator.cfg` (shown below)
+also contains an additional parameter ''initial conditions'' specific
+to *swarm*.
 
 [literal]
 -----------------------------------------
-# Demo2 parameters
-num_systems = 15360
+initial conditions = data
 integrator = gpu_hermite
 runon = gpu
-dT = 10
+integration end = 1
 
 # Integrator-specific parameters
-h = 0.0005
-stepfac = 0.0025
+time step = 0.001
 precision = 1
 
-# Initial Conditions
-time_init = 0.
-use_jacobi = 1
-mass_star = 1.
-mass_1 = 0.001
-mass_1_sigma = 0.
-mass_1_min = 0.
-mass_1_max = 0.01
-a_1 = 1.
-ecc_1 = 0.
-inc_1 = 90.
-node_1 = 0.
-omega_1 = 0.
-meananom_1_min = 0.
-meananom_1_max = 360.
-
-mass_2 = 0.001
-mass_2_sigma = 0.
-mass_2_min = 0.
-mass_2_max = 0.01
-a_2 = 1.31
-a_2_sigma = 0.01
-a_2_min = 1.29
-a_2_max = 1.33
-ecc_2 = 0.
-inc_2 = 90.
-node_2 = 0.
-omega_2 = 0.
-meananom_2_min = 0.
-meananom_2_max = 360.
-
-# Stopper parameters
-rmax = 1000
-Toutstep = 0.1
-
-# GPU kernel configuration
-threads per block = 64
-
 # Output parameters
-output = null
+output = binary log.bin
 output interval = 0.1
 -----------------------------------------
 
@@ -212,3 +160,4 @@ COPYING
 -------
 Copyright \(C) 2008-2010 Eric B. Ford. + 
 Free use of this software is granted under the terms of the GNU General Public License (GPL) v3.
+

@@ -11,8 +11,9 @@ import random as R
 # this does not consider stability execpt for simple
 # Hill radius criterion
 #
-# 
-nSystems=1000
+# Example parameters 
+#
+nSystems=1024
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
 massMax=0.01 # 10 Jupiter mass max
@@ -20,14 +21,15 @@ minPlanets=2 # keeps these the same
 maxPlanets=2
 minAU=1.0 # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting
 maxAU=10.
-pert=0.01 # perturbations for other velocities.
+SET_OUTER_ORBIT=0 # set to 1 to force one planet to always be at maxAU
+pert=0.01 # perturbations for other velocities
 HILLS=3. # make sure the planets are separated by this many Hill radii
 timeStart=0.
-timeEnd=100. # time should be given in yr.
-numObs=1000 # number of system observations. File is unnecessary for most demos.
+timeEnd=100. # time should be given in yr
+numObs=100 # number of system observations. File is unnecessary for most demos. Used as the list of times file in swarm_scatter_demo
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
-thisSeed = 314159 # Seed for generator
+thisSeed = 314159 # Seed for random generator
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)
@@ -45,11 +47,11 @@ def createObservingFile():
 		obsTimes.sort()
         else:
 		dt=(timeEnd-timeStart)/float(numObs)
-		for i in xrange(1,numObs):
+		for i in xrange(1,numObs+1):
 			obsTimes.append(timeStart+i*dt)
 
         f=open(ObserveFile,"w")
-	for i in xrange(numObs):
+	for i in xrange(numObs+1):
 		f.write(repr(obsTimes[i])+"\n")
 	f.close()
 	return 0
@@ -61,16 +63,18 @@ def main():
 		nPlanets=R.randint(minPlanets,maxPlanets)
 		buffer="data."+repr(i)
 		f=open(buffer,"w")
+		buffer=""
 
 		# write primary first
 
 		f.write(repr(nPlanets+1)+"\n")
-        	buffer=repr(mPrimary)+" 0. 0. 0. 0. 0. 0.\n"
-		f.write(buffer)
 		listx=[]
+		pvx=0.;pvy=0.;pvz=0.
 		for j in xrange(nPlanets):
                         mass=getUniformLog(massMin,massMax)
                         x=getUniformLog(minAU,maxAU)
+			if SET_OUTER_ORBIT==1: 
+				if j==0: x=maxAU
 			listx.append(x)
 			OK=0
 			if j==0: OK=1
@@ -83,13 +87,17 @@ def main():
                                                 x=getUniformLog(minAU,maxAU)
 						listx[j]=x
 					
-
 			y=0.;z=0.
-			vz=x/abs(x)*M.sqrt(mPrimary/abs(x))
-			vx=vz*pert*(R.random()*2.-1.)
-			vy=vz*pert*(R.random()*2.-1.)
-			buffer=repr(mass)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
-			f.write(buffer)
+			vy=x/abs(x)*M.sqrt(mPrimary/abs(x))
+			vx=vy*pert*(R.random()*2.-1.)
+			vz=vy*pert*(R.random()*2.-1.)
+                        pvy-=vy*mass
+			pvx-=vx*mass
+			pvz-=vz*mass
+			buffer+=repr(mass)+" "+repr(x)+" "+repr(y)+" "+repr(z)+" "+repr(vx)+" "+repr(vy)+" "+repr(vz)+"\n"
+		buffer0=repr(mPrimary)+" "+repr(0.)+" "+repr(0.)+" "+repr(0.)+" "+repr(pvx/mPrimary)+" "+repr(pvy/mPrimary)+" "+repr(pvz/mPrimary)+"\n"
+		f.write(buffer0)
+		f.write(buffer)
 		f.close()		
 
 	print "Generated",i+1,"systems."

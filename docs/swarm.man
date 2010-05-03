@@ -1,0 +1,173 @@
+swarm(1)
+========
+
+NAME
+---- 
+swarm - Program for integrating an ensemble of many N-body systems on a GPU
+
+SYMPOSIS
+--------
+*swarm*  CONFIGFILE [Options]
+swarm is a useful tool for performing many n-body integrations on a GPU. + 
+swarm uses the swarm GPU logging subsystem to write output files which
+can be analyzed by programs like swarmquery.
+
+DESCRIPTION
+-----------
+This program reads integrator parameters from a configuration file. + 
+
+The program then reads the initial conditions from disk, looking for
+a sequence of files with a common prefix (specified by the ''initial
+conditions'' parameter) followed by a dot and a number (starting from
+zero).
+
+The program then integrates each system for the specified time (or
+until an event trigger the integrator to stop for that system),
+optionally saving data to a binary output file.
+
+The swarmquery program can be used to extract information from 
+the binary output file.
+
+
+CONFIGURATION FILE
+------------------
+An example configuration file is provided in run/integrator.cfg
+Details about configuration files can be found in link:configuration_file.html[].  In addition to the standard configuration file parameters, swarm requires:
+
+''initial conditions''::
+  Prefix for files containing the initial conditions.  Setting a value of ''data'' results in swarm looking for files with the names ''data.0'', ''data.1'', ''data.2'', etc. in the current directory.
+
+
+REQUIRED PARAMETERS
+~~~~~~~~~~~~~~~~~~~
+''integrator''::
+   Must specify one of the following integrators: ''gpu_hermite'', ''gpu_hermite_adap'', ''gpu_rk4'', ''gpu_rkck'', ''gpu_verlet'', ''cpu_hermite''
+
+''runon''::
+   Must specify either ''gpu'' or ''cpu''.  In initial release, the values of runon and integrator must match.  In future releases, the CPU and GPU integrators may be merged
+
+''integration end''::
+   Must specify the time at which each integration will be stopped.  Swarm-NG uses unit systems where G=1.  Integrations are halted once the integration time reaches T*2pi.  Thus, the input value of dT corresponds to years, if masses are specified in solar masses and distances in AU.
+
+
+INTEGRATOR-SPECIFIC PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Constant time step algorithms (e.g., hermite, rk4, rkck) must specify:
+''time step''::
+  For the fixed time stepping, ''time step'' is the constant time step.
+
+Variable time step algorithms (e.g., verlet, hermite_adap) must
+specify both of the following:
+''time step factor''::
+   For adaptive time stepping, ''time step factor'' is the fraction of
+   the timescale used in determining the time step.
+
+''min time step''::
+   For adaptive time stepping algoritms, ''min time step'' is the
+   minimum time step allowed.  Currently only supported by the highly
+   beta hermite_adap_gpu.
+
+Certain integrators have additional parameters:
+''precision'' (currently hermite integrators only)::
+   If you are using hermite_gpu (or the currently super-beta
+   hermite_adap_gpu), then you must specify the precission for
+   integrations.  A value of 1 results in double precission, 2 results
+   in single precission, and 3 results mutli-precission calculations.
+   (E.g., gpu_hermite allows a value of 3 which results in positions
+   and velocities being calculated to double precission, but
+   accelerations and jerks being computed in single precission.)  This
+   parameter is ignored by other integrators (which are currently
+   implemented using only double precision.)
+
+''steps per kernel run'' (optional)::
+  Specifies the maximum number of steps per kernel call.  Currently,
+  defaults to 100.  Not currently supported by hermite integrators.
+
+OUTPUT PARAMETERS
+~~~~~~~~~~~~~~~~~
+
+''output''::
+   Specifies file to be used for output.  If not specified, defaults
+   to ''null'' which results in no output files being written.
+   Alternatively, specify the value ''binary output_file.bin'' for the
+   swarm logging system to write binary data into a file named
+   output_file.bin.
+
+''output interval'':
+   Specifies how often data should be logged.  
+
+OTHER OPTIONAL PARAMETERS
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+''rmax''::
+   Integrations are halted once a body reaches a distance greater than ''rmax'' from the origin.  Currently this is only supported by euler (which you shouldn't use anyway), but is important for demonstratin how to write a basic stopper class.
+
+''output interval'':
+   Specifies how often data should be logged.  
+
+''threads per block''::
+   Specifies how many threads the GPU uses per block.  _We recommend most users not set this explicitly, except when performing performance benchmarks._  Default value is 64 in the current release, but future releases will likely choose a good value of this parameter automatically.
+
+
+INITIAL CONDITIONS FILES
+------------------------
+Each initial conditions file corresponds to a single system.
+The first line contains the number of bodies.
+Each subsequent line contains the initial conditions for one body.
+For example, +
+[literal]
+---------
+nbodies
+mass x y z vx vy vz
+mass x y z vx vy vz
+...
+---------
+
+EXAMPLE
+-------
+The script scripts/easyGen.py generates a small ensemble of sample
+data for demonstration purposes.  Thus, you can try *swarm* like +
+''cd run; ../scripts/easyGen.py ; swarm integrator.cfg ''
+
+Then, *swarm_test_energy* and/or *swarmquery* can be used to analyze
+the output stored in log.bin.
+
+OUTPUT
+------
+[literal]
+---------
+Configuration                   : integrator.cfg
+Ensemble                        : data (1024 systems, 3 bodies each).
+Integrator                      : gpu_hermite, executing on the GPU
+
+# Integrating... # Done.
+
+# Time per system (integration)   : 80.0205 us.
+# Time per system (setup+integr.) : 1392.97 us.
+# GPU/CPU memcpy time             : 0.41 ms.
+# Internal state initialization   : 0.015 ms.
+---------
+
+LIMITATIONS & BUGS
+------------------
+Swarm assumes that N is small (3-10) and systems evolve Newtonian Gravity 
+
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated information on bugs.
+
+RESOURCES
+---------
+
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+COPYING
+-------
+Copyright \(C) 2010 Mario Juric + 
+Free use of this software is granted under the terms of the GNU
+General Public License (GPL) v3, which should be included as
+link:gpl-3.0.txt[] and also avaliable
+http://www.gnu.org/licenses/gpl-3.0.html[online].
+
+

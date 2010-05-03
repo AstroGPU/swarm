@@ -10,6 +10,12 @@
 //
 //
 
+/*! \file swarmio.cpp
+ *  \brief declares swarm_header, null_writer, binary_writer
+ *
+*/
+
+
 #include "swarmlog.h"
 #include "swarmio.h"
 

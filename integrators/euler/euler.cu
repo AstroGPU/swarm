@@ -1,3 +1,7 @@
+/*! \file euler.cu
+ * \brief declares prop_euler & factory 
+ */
+
 #include "swarm.h"
 #include "euler.h"
 #include "swarmlog.h"
@@ -157,26 +161,27 @@
 
 */
 
+/// namespace for Swarm-NG library
 namespace swarm {
 
-
+/// propagator for Euler integration (do NOT use)
 struct prop_euler
 {
-	// GPU state and interface (per-grid)
+	/// GPU state and interface (per-grid) for prop_euler
 	struct gpu_t
 	{
-		// any per-block variables
+		// any per-block variables 
 		double h;
 		cuxDevicePtr<double, 3> aa;
 
-		// GPU per-thread state and interface
+		/// GPU per-thread state and interface for prop_euler
 		struct thread_state_t
 		{
 			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
 			{ }
 		};
 
-		// advance the system
+		/// advances the system using euler propagator
 		template<typename stop_t>
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
@@ -215,6 +220,7 @@ struct prop_euler
 	cuxDeviceAutoPtr<double, 3> aa;
 	gpu_t gpu_obj;
 
+	/// initialize the euler propagator
 	void initialize(ensemble &ens)
 	{
 		// Here you'd initialize the object to be passed to the kernel, or
@@ -223,26 +229,29 @@ struct prop_euler
 		gpu_obj.aa = aa;
 	}
 
+	/// read in integrator parameters for the euler propagator
 	prop_euler(const config &cfg)
 	{
 		if(!cfg.count("time step")) ERROR("Integrator gpu_euler requires a timestep ('time step' keyword in the config file).");
 		gpu_obj.h = atof(cfg.at("time step").c_str());
 	}
 
+	/// return the gpu data for the euler propagator
 	operator gpu_t()
 	{
 		return gpu_obj;
 	}
 };
 
+/// a simple stopper that checks if the distance from origin exceeds a threshold (for demonstration purposes only)
 struct stop_on_ejection
 {
-	// GPU state and interface (per-grid)
+	/// GPU state and interface (per-grid) for stop_on_ejection
 	struct gpu_t
 	{
 		float rmax;
 
-		// GPU per-thread state and interface
+		/// GPU per-thread state and interface for stop_on_ejection
 		struct thread_state_t
 		{
 			bool eject;
@@ -253,7 +262,7 @@ struct stop_on_ejection
 			}
 		};
 
-		// called _after_ the body 'bod' has advanced a timestep.
+		/// this is called _after_ the body 'bod' has advanced a timestep.
 		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
 		{
 			float r = sqrtf(x*x + y*y + z*z);
@@ -264,7 +273,7 @@ struct stop_on_ejection
 			log::event(dlog, swarm::log::EVT_EJECTION, T, sys, make_body_set(ens, sys, bod));
 		}
 
-		// called after the entire system has completed a single timestep advance.
+		/// this is called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
 		{
 			if(ts.eject)
@@ -276,7 +285,7 @@ struct stop_on_ejection
 		}
 	};
 
-	// CPU state and interface
+	/// CPU state and interface for stop_on_ejection
 	gpu_t gpu_obj;
 
 	stop_on_ejection(const config &cfg)
@@ -291,18 +300,20 @@ struct stop_on_ejection
 		}
 	}
 
+ 	// currently empty for stop_on_ejection
 	void initialize(ensemble &ens)
 	{
 		// Here you'd upload any temporary data you need to constant/texture/global memory
 	}
 
+ 	// return gpu data for stop_on_ejection
 	operator gpu_t()
 	{
 		return gpu_obj;
 	}
 };
 
-// factory
+/// factory to return a pointer to a gpu_generic_integrator using the Euler propagator and the stop_on_ejection stopper
 extern "C" integrator *create_gpu_euler(const config &cfg)
 {
 	return new gpu_generic_integrator<stop_on_ejection, prop_euler>(cfg);

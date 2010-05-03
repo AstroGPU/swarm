@@ -1,8 +1,9 @@
-/*
-    Header file for the program swarm_adap.
+/*! \file swarm_scatter_demo.h
+    \brief Header file for the program swarm_scatter_demo.
+
     "swarm_adap" is a program that uses the Swarm-NG tools for modeling an ensemble of
     small N systems using the hermite_adap_gpu integrator.
-    Copyright (C) 2010  Swarm-NG Development Group
+    Copyright (C) 2010  Aaron Boley & the Swarm-NG Development Group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,9 +101,9 @@ bool readCommandLine(int argc,char *argv[], string& cfgFileName, string& obsFile
 // let's check the configuration file
 void check_cfg_input(config &cfg, string& obsFileName, string& icsFilePrefix, string& outFilePrefix)
 {
-	obsFileName = cfg.count("obs file name") ? cfg["obs file name"] : obsFileName;
-	icsFilePrefix = cfg.count("ics file prefix") ? cfg["ics file prefix"] : icsFilePrefix;
-	outFilePrefix = cfg.count("out file prefix") ? cfg["out file prefix"] : outFilePrefix; 
+	obsFileName = cfg.count("list of times") ? cfg["list of times"] : obsFileName;
+	icsFilePrefix = cfg.count("initial conditions") ? cfg["initial conditions"] : icsFilePrefix;
+	outFilePrefix = cfg.count("out files") ? cfg["out files"] : outFilePrefix; 
 	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
         bool ongpu;
         if     (runon == "gpu") { ongpu = true; }

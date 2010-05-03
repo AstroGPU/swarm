@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Young In Yeo and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file hermite_gpu.cpp
+ * \brief Constructor and factory for gpu_hermite_integrator
+ * 
+*/
+
 #include <cassert>
 #include "swarm.h"
 #include "hermite_gpu.h"
@@ -14,7 +37,7 @@ namespace hermite_gpu {
  * Timestep, precision, and blocksize are set from configuration class.
  * @tparam real_hi double
  * @tparam real_lo float for single and mixed, double for double
- * @param[in] cfg configuration class, read in from a file, needs a timestep, precision, and block size.
+ * @param[in] cfg configuration class
  */
 template<typename real_hi, typename real_lo>
 gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cfg)
@@ -29,10 +52,12 @@ gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cf
 }
 
 /*!
- * \brief Create double/single/mixed hermite gpu integrator based on precision
+ * \brief Factory to create double/single/mixed hermite gpu integrator based on precision
  *
- * @param[in] cfg configuration class, read in from a file, needs precision for hermite integrator    
- */
+ * @param[in] cfg configuration class
+ *
+ * @return        pointer to integrator cast to integrator*
+*/
 extern "C" integrator *create_gpu_hermite(const config &cfg)
 {
 	if(!cfg.count("precision")) ERROR("Integrator gpu_hermite needs precision ('precision' keyword in the config file).");

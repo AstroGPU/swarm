@@ -1,4 +1,27 @@
-#include "swarm.h"
+/*************************************************************************
+ * Copyright (C) 2010 by Mario Juric      the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+/*! \file swarm.cpp
+    Main program for integrating an ensemble of many N-body systems on a GPU
+
+    Swarm assumes that N is small (3-10) and systems evolve Newtonian Gravity 
+*/
+
+#include "swarm.h" 
 #include "swarmlog.h"
 #include <memory>
 #include <iostream>
@@ -58,7 +81,7 @@ int main(int argc, const char **argv)
 	swarm::log::output_systems_needing_output(hlog, ens);
 
 	// perform the integration
-	std::cerr << "\nIntegrating... ";
+	std::cerr << "\n# Integrating... ";
 	if(ongpu)
 	{
 		SWATCH_START(swatch_mem);
@@ -88,15 +111,15 @@ int main(int argc, const char **argv)
 		SWATCH_STOP(swatch_kernel);
 	}
 	SWATCH_STOP(swatch_all);
-	std::cerr << "Done.\n\n";
+	std::cerr << "# Done.\n\n";
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
 	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000;
-	std::cerr << "Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
-	std::cerr << "Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
-	std::cerr << "GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
-	std::cerr << "Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
+	std::cerr << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
+	std::cerr << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
+	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
+	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
 
 	return 0;
 }
