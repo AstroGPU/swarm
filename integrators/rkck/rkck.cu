@@ -163,7 +163,7 @@ struct prop_rkck
 		template<typename stop_t>
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
-		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
+//		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
 		const double b21 = 1.0 / 5.0;
 		const double b3[] = { 3.0 / 40.0, 9.0 / 40.0 };
 		const double b4[] = { 0.3, -0.9, 1.2 };
@@ -173,19 +173,20 @@ struct prop_rkck
 		const double c3 = 250.0 / 621.0;
 		const double c4 = 125.0 / 594.0;
 		const double c6 = 512.0 / 1771.0;
+/*
 		const double ec[] = 
 		     { 0.0,
-		       /* the first value is the same as c1, above */
+		       // the first value is the same as c1, above 
 		       37.0 / 378.0 - 2825.0 / 27648.0,
 		       0.0,
-		       /* the first value is the same as c3, above */
+		       // the first value is the same as c3, above 
 		       250.0 / 621.0 - 18575.0 / 48384.0,
-		       /* the first value is the same as c4, above */
+		       // the first value is the same as c4, above 
 		       125.0 / 594.0 - 13525.0 / 55296.0,
 		       -277.00 / 14336.0,
-		       /* the first value is the same as c6, above */
+		       // the first value is the same as c6, above 
 		       512.0 / 1771.0 - 0.25 };
-
+*/
 
 			if(T >= Tend) { return T; }
 			double hh = T + this->h <= Tend ? this->h : Tend - T;

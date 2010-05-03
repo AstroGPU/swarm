@@ -51,24 +51,60 @@ namespace swarm
 	{
 		// NOTE: put all doubles first, to avoid interstitial padding
 		// and alignment nvcc vs. gcc issues
-		double	x, y, z;
-		double	vx, vy, vz;
+		double	m_x, m_y, m_z;
+		double	m_vx, m_vy, m_vz;
 
-		float	m;
-		int bod;
+		float	m_mass;
+		int m_bod;
 
 		// load body information from ensemble to body structure
 		__device__ __host__ void set(const ensemble &ens, int sys, int bod_)
 		{
-			bod = bod_;
-			m = ens.mass(sys, bod);
-			x = ens.x(sys, bod);
-			y = ens.y(sys, bod);
-			z = ens.z(sys, bod);
-			vx = ens.vx(sys, bod);
-			vy = ens.vy(sys, bod);
-			vz = ens.vz(sys, bod);
+			m_bod = bod_;
+			m_mass = ens.mass(sys, bod_);
+			m_x = ens.x(sys, bod_);
+			m_y = ens.y(sys, bod_);
+			m_z = ens.z(sys, bod_);
+			m_vx = ens.vx(sys, bod_);
+			m_vy = ens.vy(sys, bod_);
+			m_vz = ens.vz(sys, bod_);
 		}
+		//		/*
+		/// return reference to the current position x of the body  
+		__host__ __device__ double&  x() { return m_x; };
+		/// return reference to the current position y of the bm_ody  
+		__host__ __device__ double&  y() { return m_y; };
+		/// return reference to the current position z of the body  
+		__host__ __device__ double&  z() { return m_z; };
+		/// return reference to the current velocity x of the body  
+		__host__ __device__ double& vx() { return m_vx; };
+		/// return reference to the current velocity y of the body  
+		__host__ __device__ double& vy() { return m_vy; };
+		/// return reference to the current velocity z of the body  
+		__host__ __device__ double& vz() { return m_vz; };
+		/// return reference to the mass of the body  
+		__host__ __device__ float& mass()   { return m_mass; };
+		/// return reference to the id of the body  
+		__host__ __device__ int& bod()   { return m_bod; };
+
+		/// return the current position x of the body  
+		__host__ __device__ double x() const { return m_x; };
+		/// return the current position y of the body  
+		__host__ __device__ double  y() const { return m_y; };
+		/// return the current position z of the body  
+		__host__ __device__ double  z() const { return m_z; };
+		/// return the current velocity x of the body  
+		__host__ __device__ double vx() const { return m_vx; };
+		/// return the current velocity y of the body  
+		__host__ __device__ double vy() const { return m_vy; };
+		/// return the current velocity z of the body  
+		__host__ __device__ double vz() const  { return m_vz; };
+       		/// return the mass of thebody  
+		__host__ __device__ float mass() const { return m_mass; };
+		/// return  the id of the body  
+		__host__ __device__ int bod() const  { return m_bod; };
+		//		*/
+		
 	};
 
 	// body_set class: hold a set of indices to bodies in a given system in

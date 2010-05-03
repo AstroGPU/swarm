@@ -400,7 +400,7 @@ namespace swarm
 			for(int bod = 0; bod != nbod; bod++)
 			{
 				const body &b = si.bodies[bod];
-				ens.set_body(si.sys, bod,  b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+				ens.set_body(si.sys, bod,  b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
 				ens.time(si.sys) = Tsnapend;
 			}
 		}

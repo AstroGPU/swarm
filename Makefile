@@ -48,6 +48,9 @@ swarm_SOURCES=src/swarm.cpp
 APPS+=swarmquery
 swarmquery_SOURCES=src/swarmquery.cpp
 
+APPS+=swarmquerykeplerian
+swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
+
 APPS+=swarm_test_energy
 swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
 
