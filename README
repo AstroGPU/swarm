@@ -128,7 +128,10 @@ Building the Swarm-NG Libraries and Demo Programs
 
 Run `make`.  Users can specify the paths to compiler, libraries, and
 include files, as well as compiler flags in the file
-''Makefile.user''.
+''Makefile.user''.  This file does not exist, but can be easily added.
+For example, to change the path to your CUDA installation, add the line like
+''CUDAPATH?=/usr/local/cuda'' to Makefile.user.  For other variables that 
+can be overridden, see the file ''Makefile''.
 
 .How do I build Swarm-NG for Windows? 
 
