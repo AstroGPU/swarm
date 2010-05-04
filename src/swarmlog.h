@@ -242,9 +242,12 @@ namespace swarm
 		__device__ __host__ inline void system(L &l, const ensemble &ens, const int sys, const double T)
 		{
 			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
-			for(int bod=0; bod != ens.nbod(); bod++)
+			if(bodies != NULL) // buffer overflow hasn't happened
 			{
-				bodies[bod].set(ens, sys, bod);
+				for(int bod=0; bod != ens.nbod(); bod++)
+				{
+					bodies[bod].set(ens, sys, bod);
+				}
 			}
 		}
 
