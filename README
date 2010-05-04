@@ -1,8 +1,8 @@
 README for Swarm-NG
 ===================
 Swarm-NG Development Team
-v0.1.01, April 28, 2010: Initial release + 
-Swarm-NG v0.1.01 (c) Swarm-NG Development Team 2010
+v0.1.02, May 2, 2010: Initial release + 
+Swarm-NG v0.1.02 (c) Swarm-NG Development Team 2010
 
 Introduction
 ------------
@@ -106,16 +106,19 @@ Building the Swarm-NG Libraries and Demo Programs
 
 ** Linux-based workstation (certain kernel versions?)
 
-** nVidia GPU with G80 or G92 chip (we intend to support Fermi in near
-   future)
+** nVidia GPU with GT200 chip (we intend to support Fermi in near
+   future)  (there are some issues with swarmlog and G80's that may be resolved
+   in the future)
 
 * Software
 
 ** CUDA v2.3 and/or v3.0 
 
-** g++ v?.? (later versions likely to work as well)
+** g++ v4.3 (CUDA does not yet work with 4.4+)
 
-** Boost++ v?.? (later versions likely to work as well)
+** Boost++ (known to work with v1.33 and 1.39, but later versions likely to work as well, some header file names changing reported)
+
+** http://www.gnu.org/software/gsl/[GNU Science Library (GSL)]
 
 ** Asciidoc & Doxygen (if you want to generate html documentation)
 
@@ -125,7 +128,10 @@ Building the Swarm-NG Libraries and Demo Programs
 
 Run `make`.  Users can specify the paths to compiler, libraries, and
 include files, as well as compiler flags in the file
-''Makefile.user''.
+''Makefile.user''.  This file does not exist, but can be easily added.
+For example, to change the path to your CUDA installation, add the line like
+''CUDAPATH?=/usr/local/cuda'' to Makefile.user.  For other variables that 
+can be overridden, see the file ''Makefile''.
 
 .How do I build Swarm-NG for Windows? 
 

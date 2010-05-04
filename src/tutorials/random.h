@@ -24,6 +24,9 @@
 
 #ifndef H_SWARM_RANDOM
 
+#include <cstdlib>
+#include <cmath>
+
 namespace swarm {
 
 double draw_uniform01();
@@ -38,7 +41,7 @@ double draw_std_normal()
   // Box–Muller algorithm
   double rn1 = draw_uniform01();
   double rn2 = draw_uniform01();
-  return sqrt(-2.*log(rn1))*cos(2.*M_PI*(rn2));
+  return sqrt(-2.*std::log(rn1))*cos(2.*M_PI*(rn2));
 }
 
 double draw_value_from_config(const swarm::config& cfg, const std::string& name, const int bod, double min, double max)

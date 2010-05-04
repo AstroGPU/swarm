@@ -48,6 +48,9 @@ swarm_SOURCES=src/swarm.cpp
 APPS+=swarmquery
 swarmquery_SOURCES=src/swarmquery.cpp
 
+APPS+=swarmquerykeplerian
+swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
+
 APPS+=swarm_test_energy
 swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
 
@@ -81,13 +84,14 @@ swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 #
 # Defaults: you should override these in Makefile.user
 #
-CCUDA?=/opt/cuda/bin/nvcc -arch=sm_13
+CUDAPATH?=/opt/cuda
+CCUDA?=$(CUDAPATH)/bin/nvcc -arch=sm_13
 CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?=-g -O0 -I /opt/cuda/include -I ./src
-LDFLAGS?=-L /opt/cuda/lib64  -L /usr/lib64
+CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src
+LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
 
