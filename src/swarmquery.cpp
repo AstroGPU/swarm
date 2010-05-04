@@ -150,7 +150,11 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 		const swarm::body &b = bodies[bod];
 
 		if(bod != 0) { out << "\n"; }
-		sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
+#if NEW
+			sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
+#else
+               sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
+#endif
 		out << buf;
 	}
 	return out;
@@ -165,7 +169,11 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 	lr >> T >> sys >> b;
 
 	char buf[1000];
-	sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+#if NEW
+     sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+#else
+     sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+#endif
 	out << buf;
 
 	return out;

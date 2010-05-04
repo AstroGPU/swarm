@@ -29,6 +29,8 @@
 
 #include "swarm.h"
 
+#define NEW 1
+
 #if __CUDACC__
 // The assumption is all CUDA code will be concatenated/included and compiled
 // as a single source file (thus avoiding the creation of duplicate copies of 
@@ -51,15 +53,23 @@ namespace swarm
 	{
 		// NOTE: put all doubles first, to avoid interstitial padding
 		// and alignment nvcc vs. gcc issues
+#if NEW
 		double	m_x, m_y, m_z;
 		double	m_vx, m_vy, m_vz;
-
 		float	m_mass;
 		int m_bod;
+#else
+	        double  x, y, z;
+	        double  vx, vy, vz;
+                float   m;
+                int bod;
+#endif
+
 
 		// load body information from ensemble to body structure
 		__device__ __host__ void set(const ensemble &ens, int sys, int bod_)
 		{
+#if NEW
 			m_bod = bod_;
 			m_mass = ens.mass(sys, bod_);
 			m_x = ens.x(sys, bod_);
@@ -68,7 +78,18 @@ namespace swarm
 			m_vx = ens.vx(sys, bod_);
 			m_vy = ens.vy(sys, bod_);
 			m_vz = ens.vz(sys, bod_);
+#else
+                        bod = bod_;
+                        m = ens.mass(sys, bod);
+                        x = ens.x(sys, bod);
+                        y = ens.y(sys, bod);
+                        z = ens.z(sys, bod);
+                        vx = ens.vx(sys, bod);
+                        vy = ens.vy(sys, bod);
+                        vz = ens.vz(sys, bod);
+#endif
 		}
+#if NEW
 		//		/*
 		/// return reference to the current position x of the body  
 		__host__ __device__ double&  x() { return m_x; };
@@ -104,7 +125,7 @@ namespace swarm
 		/// return  the id of the body  
 		__host__ __device__ int bod() const  { return m_bod; };
 		//		*/
-		
+#endif		
 	};
 
 	// body_set class: hold a set of indices to bodies in a given system in

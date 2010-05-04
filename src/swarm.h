@@ -469,7 +469,7 @@ inline void memcpyToGPU(T *dest, const T *src, int nelem = 1)
 }
 
 /*!
-  \brief copy memory from device(GPU) to host(CPI)
+  \brief copy memory from device(GPU) to host(CPU)
 
   @param[out] dest destination to host momory 
   @param[in] src source from device memory
