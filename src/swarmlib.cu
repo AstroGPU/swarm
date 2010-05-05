@@ -87,23 +87,23 @@ __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 	// TODO: Test if this implementation is fast enough to be activated
 	int sys = threadId();
 	int running = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
-	if(running) { atomicAdd(nrunning, 1); }
+	if(running) { atomicAdd(nrunning, 1); /*printf("sys=%d running.\n", sys);*/ }
 	return;
 #else
 	// We think it's ok to make this extern ?
 	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
 
+	int tpb = threadsPerBlock();
 	int sys = threadId();
-	const int widx = sys % MAXTHREADSPERBLOCK;
+	const int widx = sys % tpb;
 	running[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
 
 	// Prefix sum algorithm (assumes block size <= MAXTHREADSPERBLOCK).
 	// 1) sum up the number of running threads in this block
-	int tpb = threadsPerBlock();
 	for(int i = 2; i <= tpb; i *= 2)
 	{
 		 __syncthreads();
-		if(widx % i) { running[widx] += running[widx + i/2]; }
+		if(widx % i == 0) { running[widx] += running[widx + i/2]; }
 	}
 
 	// 2) add the sum to the total number of running threads
@@ -229,8 +229,6 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 template<typename stopper_t, typename propagator_t>
 __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id, real_time *Tstop, double dT)
 {
-	debug_hook();
-
 	// Need to test that don't get bogus gpu_ensemble_id
  	if((gpu_ensemble_id<0)||(gpu_ensemble_id>=MAX_GPU_ENSEMBLES))
 		// Is this proper way to bail from GPU?
@@ -241,9 +239,10 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	int sys = threadId();
 
 #if __DEVICE_EMULATION__
-	if(sys == 2)
+	if(sys == ens.nsys()-1)
 	{
-		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+		double pct = 100. * (double)dlog.size() / dlog.capacity();
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d max_steps=%d logpct=%.2g%% [%d/%d]\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys), max_steps, pct, dlog.size(), dlog.capacity());
 	}
 #endif
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
@@ -260,18 +259,19 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	}
 
 #if __DEVICE_EMULATION__
-	if(sys == 2)
+	if(sys == ens.nsys()-1)
 	{
-		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+		double pct = 100. * (double)dlog.size() / dlog.capacity();
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d max_steps=%d logpct=%8.4g%% [%d/%d]\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys), max_steps, pct, dlog.size(), dlog.capacity());
 	}
 #endif
 
 	count_running(&retval->nrunning, Tstop, ens);
 	
 #if __DEVICE_EMULATION__
-	if(sys == 0)
+	if(sys == ens.nsys()-1)
 	{
-		printf("nrunning=%d\n", retval->nrunning);
+		printf("sys=%d nrunning=%d\n", sys, retval->nrunning);
 	}
 #endif
 }
@@ -469,7 +469,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 
 		// upload ensemble
 		assert((gpu_ensemble_id>=0)&&(gpu_ensemble_id<MAX_GPU_ENSEMBLES));
-		cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id]));
+		cuxErrCheck( cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id])) );
 
 		// initialize propagator, stopping condition
 		H.initialize(ens);
