@@ -90,12 +90,12 @@ namespace swarm
 				v = boost::any(rangeT(arg_parse<T>(match[1]), arg_parse<T>(match[2])));
 			}
 		} else {
-#if 0 || (BOOST_VERSION  < 104200)
-			throw validation_error("invalid value");
+#if BOOST_VERSION  < 104200
+                       throw validation_error("invalid value");
 #else
-			invalid_option_value iov("invalid value");
-                        throw validation_error(iov);
+                       throw validation_error(validation_error::invalid_option_value);
 #endif
+
 		}
 	}
 
@@ -144,16 +144,17 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	const swarm::body *bodies;
 	lr >> T >> sys >> flags >> nbod >> bodies;
 
-	char buf[1000];
+        size_t bufsize = 1000;
+	char buf[bufsize];
 	for(int bod = 0; bod != nbod; bod++)
 	{
 		const swarm::body &b = bodies[bod];
 
 		if(bod != 0) { out << "\n"; }
 #if NEW
-			sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
+			snprintf(buf, bufsize,"%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
 #else
-               sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
+               snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
 #endif
 		out << buf;
 	}
@@ -168,11 +169,12 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 	swarm::body b;
 	lr >> T >> sys >> b;
 
-	char buf[1000];
+        size_t bufsize = 1000;
+        char buf[bufsize];
 #if NEW
-     sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+     snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
 #else
-     sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+     snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 #endif
 	out << buf;
 
