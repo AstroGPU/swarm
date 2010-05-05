@@ -13,7 +13,7 @@ import random as R
 #
 # Example parameters 
 #
-nSystems=960*4
+nSystems=960
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
 massMax=0.01 # 10 Jupiter mass max

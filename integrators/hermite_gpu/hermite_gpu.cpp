@@ -48,6 +48,9 @@ gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cf
 	if(!cfg.count("precision")) ERROR("Integrator gpu_hermite needs precision ('precision' keyword in the config file).");
 	prec = atoi(cfg.at("precision").c_str());
 
+	rmax = cfg.count("rmax") ? atoi(cfg.at("rmax").c_str()) : std::numeric_limits<double>::infinity();
+	dmin = cfg.count("close approach") ? atoi(cfg.at("close approach").c_str()) : std::numeric_limits<double>::infinity();
+
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }
 

@@ -892,6 +892,43 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 		T += hh;
 		ens.nstep(sys)++;
 
+                bool stop = false;
+                {
+                // Check for close encounters
+                for(int i=2;i<ens.nbod();++i)
+                   {
+                   float mass_i = ens.mass(sys,i);
+                   float r_i = sqrtf(ens.x(sys,i)*ens.x(sys,i)+ens.y(sys,i)*ens.y(sys,i)+ens.z(sys,i)*ens.z(sys,i));
+                   if(r_i>rmax) { stop = true; break; }
+                     for(int j=1;j<i;++j)
+                        {
+                        float r_j = sqrtf(ens.x(sys,j)*ens.x(sys,j)+ens.y(sys,j)*ens.y(sys,j)+ens.z(sys,j)*ens.z(sys,j));
+                        // Stop if lower number planet is farther from origin than higher numbered planet
+                        if(r_j<r_i) { stop = true; }
+
+                        if(dmin==std::numeric_limits<double>::infinity())
+                           continue;
+                        float mass_j = ens.mass(sys,j);
+                        double dx = ens.x(sys,i)-ens.x(sys,j);
+                        double dy = ens.y(sys,i)-ens.y(sys,j);
+                        double dz = ens.z(sys,i)-ens.z(sys,j);
+                        float d = sqrtf(dx*dx+dy*dy+dz*dz);
+                        double rH = pow((mass_i+mass_j)/(3.*ts.GM),1./3.);
+                        if(d<dmin*rH)
+                          {
+                          stop =true; 
+                          }
+                        }
+                  }
+
+                }
+
+                if(stop)
+                {
+			store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
+			log::output_system(dlog, ens, T, sys);
+                }
+
 		debug_hook();
 
 		if(log::needs_output(ens, T, sys))

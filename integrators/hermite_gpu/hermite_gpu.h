@@ -49,6 +49,11 @@ protected:
 	//! blocksize
 	int threadsPerBlock;
 
+	//! rmax
+        float rmax; 
+	//! dmin
+        float dmin; 
+
 public:
 	/*!
 	 * \brief Constructor for hermite gpu integrator
