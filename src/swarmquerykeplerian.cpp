@@ -149,10 +149,10 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	const swarm::body *bodies;
 	lr >> T >> sys >> flags >> nbod >> bodies;
 
+	char buf[1000];
+
 	// arrays with Keplerian orbital elements of body's >=1
 	std::vector<double> a(nbod), e(nbod), i(nbod), w(nbod), O(nbod), M(nbod);
-
-	char buf[1000];
 
 	// coordinates of center for each orbit (changes per body in Jacobi)
 #if ASTROCENTRIC

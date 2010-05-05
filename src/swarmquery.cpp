@@ -90,7 +90,7 @@ namespace swarm
 				v = boost::any(rangeT(arg_parse<T>(match[1]), arg_parse<T>(match[2])));
 			}
 		} else {
-#if BOOST_VERSION  < 104200
+#if 0 || (BOOST_VERSION  < 104200)
 			throw validation_error("invalid value");
 #else
 			invalid_option_value iov("invalid value");

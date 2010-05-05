@@ -49,6 +49,8 @@
 #include <sstream>
 #endif
 
+#define CUDADEVICETOUSE 1
+
 /// The main namespace for the Swarm-NG library
 namespace swarm {
 

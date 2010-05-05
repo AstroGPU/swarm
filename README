@@ -1,8 +1,8 @@
 README for Swarm-NG
 ===================
 Swarm-NG Development Team
-v0.1.02, May 2, 2010: Initial release + 
-Swarm-NG v0.1.02 (c) Swarm-NG Development Team 2010
+v0.1.3, May 5, 2010: Initial release + 
+Swarm-NG v0.1.5 (c) Swarm-NG Development Team 2010
 
 Introduction
 ------------
@@ -104,7 +104,7 @@ Building the Swarm-NG Libraries and Demo Programs
 .What hardware & software is required to build & run Swarm-NG?
 * Hardware
 
-** Linux-based workstation (certain kernel versions?)
+** Linux-based workstation with 64-bit kernel (32-bit kernels might work but have not been tested; certain kernel versions?)
 
 ** nVidia GPU with GT200 chip (we intend to support Fermi in near
    future)  (there are some issues with swarmlog and G80's that may be resolved
@@ -112,7 +112,7 @@ Building the Swarm-NG Libraries and Demo Programs
 
 * Software
 
-** CUDA v2.3 and/or v3.0 
+** CUDA v2.3 and/or v3.0 (must compile with -arch=sm_13)
 
 ** g++ v4.3 (CUDA does not yet work with 4.4+)
 
@@ -201,6 +201,9 @@ Known Limitations and/or Bugs
 - While there are euler, rk4 and rkck integrators, they are in a preliminary
   form and should not be used.
 - E.g., rk4 requires exactly 3 bodies and does not include a cpu version
+- We have not tested Swarm-NG with a 32-bit OS
+- If you've previously run a v0.1.1 or v0.1.2 of swarm-NG on a machine, 
+  please reboot it before proceeding.
 - For an updated list, visit the
   http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website]
 
