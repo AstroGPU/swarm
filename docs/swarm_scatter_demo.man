@@ -127,13 +127,13 @@ The current output for swarm_scatter_demo writes a single line per system observ
 
 [literal]
 --------------------------------------------------------------------------
-time_1 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} total_energy
-time_2 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} total_energy
-time_3 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} total_energy
+time_1 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} change in total_energy
+time_2 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} change in total_energy
+time_3 {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} change in total_energy
 .
 .
 .
-time_N {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} total_energy
+time_N {for(i=0; i<N-1;++i){m_i x_i y_i z_i vx_i vy_i vz_i }} change in total_energy
 --------------------------------------------------------------------------
 
 
