@@ -3,7 +3,7 @@ Generated 1024 systems.
 === Integrating =========================================================================================
 
 Ensemble                        : data (1024 systems, 3 bodies each).
-Integrator                      : gpu_rk4, executing on the GPU
+GPU accelerator: Using Device 1: "GeForce GTX 295"Device memory (free, total): 860M, 895MIntegrator                      : gpu_rk4, executing on the GPU
 
 # Integrating... # Done.
 

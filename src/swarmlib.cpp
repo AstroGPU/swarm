@@ -34,7 +34,7 @@
 #include <fstream>
 #include <valarray>
 #include "swarmio.h"
-
+#include "cux/cux.h"
 //
 // Utilities
 //
@@ -49,6 +49,9 @@ static bool swarm_initialized = false;
 void swarm::init(const config &cfg)
 {
 	if(swarm_initialized) { return; }
+
+        // Initialize appropriate GPU
+        cux_init();
 
 	// initialize the output log (default: null)
 	std::string wcfg = cfg.count("output") ? cfg.at("output") : "null";

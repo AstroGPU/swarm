@@ -13,8 +13,8 @@ swarmquery is a useful tool for extracting information about selected systems at
 
 DESCRIPTION
 -----------
-This program demonstrates how to initialize the swarm library and an
-integrator from a configuration file.
+This program provides orbital elements (currently in astrocentric frame)
+and demonstrates how to access data stored in binary file written by swarm.
 
 OPTIONS
 -------

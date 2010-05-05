@@ -2,7 +2,7 @@
 === Integrating =========================================================================================
 
 Initialize the library
-Initialize the GPU integrator
+GPU accelerator: Using Device 1: "GeForce GTX 295"Device memory (free, total): 860M, 895MInitialize the GPU integrator
 # Initialize ensemble on host to be used with GPU integration.
 Set initial conditions on CPU.
 Set initial time for all systems = 0.
@@ -38,8 +38,42 @@ sys= 9 time= 0
 body= 1:  a= 0.9999999534 e= 0 i= 90 Omega= 0 omega= 0 M= 77.5910135
 body= 2:  a= 1.314550859 e= 0.0003662765183 i= 90 Omega= 0 omega= 100.3847219 M= 85.7191924
 Set integration duration for all systems.
-terminate called after throwing an instance of 'swarm::swarm_error'
-  what():  Configuration key 'output interval' missing.
+Upload data to GPU.
+Integrate ensemble on GPU.
+Download data to host.
+GPU integration complete.
+# Max dE/E= 2.6454e-11
+Print selected results from GPU's calculation.
+sys= 0 time= 1
+body= 1:  a= 0.9993278945 e= 0.0006830838631 i= 90 Omega= 6.354986742e-30 omega= -123.6204131 M= 193.0012459
+body= 2:  a= 1.304067644 e= 0.0002933450016 i= 90 Omega= 360 omega= 111.8167529 M= 78.70563588
+sys= 1 time= 1
+body= 1:  a= 1.000664124 e= 0.0006799348303 i= 90 Omega= 3.528190149e-31 omega= 85.48865104 M= 46.03876705
+body= 2:  a= 1.295761414 e= 0.001977973478 i= 90 Omega= 2.247876164e-30 omega= 149.71062 M= 200.0283317
+sys= 2 time= 1
+body= 1:  a= 0.9996350794 e= 0.0005120109179 i= 90 Omega= 5.295007986e-31 omega= 3.142311122 M= 162.7506084
+body= 2:  a= 1.289526633 e= 0.001141447514 i= 90 Omega= 4.972801856e-30 omega= 124.8948831 M= 189.7006425
+sys= 3 time= 1
+body= 1:  a= 0.9995449108 e= 0.000540909332 i= 90 Omega= 4.059689283e-30 omega= -2.314806696 M= 174.0524344
+body= 2:  a= 1.32365921 e= 0.0008176597631 i= 90 Omega= 360 omega= 130.4224982 M= 180.9754482
+sys= 4 time= 1
+body= 1:  a= 1.000675179 e= 0.0006866271452 i= 90 Omega= 5.027643214e-30 omega= 41.94062374 M= 44.73441552
+body= 2:  a= 1.29668406 e= 0.001943809902 i= 90 Omega= 360 omega= 106.2016847 M= 200.1721418
+sys= 5 time= 1
+body= 1:  a= 1.000070289 e= 0.000418530926 i= 90 Omega= 360 omega= -58.49333389 M= 109.1998494
+body= 2:  a= 1.289582152 e= 0.001971127729 i= 90 Omega= 6.526670368e-30 omega= 29.78188833 M= 195.9917283
+sys= 6 time= 1
+body= 1:  a= 1.007353851 e= 0.00957579969 i= 90 Omega= 360 omega= -159.9654661 M= 62.91246355
+body= 2:  a= 1.306630176 e= 0.007887925024 i= 90 Omega= 1.428055065e-30 omega= -2.468799816 M= 268.0543339
+sys= 7 time= 1
+body= 1:  a= 1.002348745 e= 0.009831318868 i= 90 Omega= 360 omega= -119.5517106 M= 102.3067701
+body= 2:  a= 1.312239434 e= 0.01093999725 i= 90 Omega= 2.156818181e-30 omega= 39.43089945 M= 298.681858
+sys= 8 time= 1
+body= 1:  a= 1.000149531 e= 0.0005297863463 i= 90 Omega= 2.823277894e-30 omega= 73.25817979 M= 313.0437393
+body= 2:  a= 1.313971377 e= 0.002574045701 i= 90 Omega= 360 omega= 61.84395734 M= 19.45020196
+sys= 9 time= 1
+body= 1:  a= 0.9993357202 e= 0.0006680519756 i= 90 Omega= 5.295801496e-30 omega= -85.43055703 M= 220.3903373
+body= 2:  a= 1.316977162 e= 0.001707780168 i= 90 Omega= 360 omega= -162.6727948 M= 26.77264638
 
 === Done ================================================================================================
 
