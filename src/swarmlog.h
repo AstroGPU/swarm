@@ -170,7 +170,7 @@ namespace swarm
 
 		enum { memory = 0x01, if_full = 0x02 };
 
-		void init(const std::string &writer_cfg, int host_buffer_size = 10*1024*1024, int device_buffer_size = 10*1024*1024);
+		void init(const std::string &writer_cfg, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
 		void flush(int flags = memory);
 		void shutdown();
 
@@ -278,12 +278,20 @@ namespace swarm
 			// set next stopping time -- find the next multiple
 			// of dT closest to the current time, unless it's greater than
 			// Tend, in which case set Tout = Tend.
+			//
 			// If the current time is within 0.01% of a multiple of dT, 
 			// set the _next_ multiple as the output time (otherwise
 			// we'd have two outputs with practically equal times).
+			//
+			// Furthermore, set the output time _back_ by 10^{-10} dT
+			// to better handle cases where when the timestep is a multiple
+			// of h, and dT is a multiple of h, because of accumulation of 
+			// numerical error (imagine T+h+h+h...+h), T may become _slightly_ 
+			// larger than Tout and is defered by needs_output() to the next 
+			// timestep.
 			const real_time &dT = ens.time_output(sys, 1);
 			real_time &Tout = ens.time_output(sys, 0);
-			Tout += ceil((T - Tout) / dT + 1e-4) * dT;
+			Tout += (ceil((T - Tout) / dT + 1e-4) - 1e-10) * dT;
 			if(Tout > ens.time_end(sys)) { Tout = ens.time_end(sys); }
 		}
 		
