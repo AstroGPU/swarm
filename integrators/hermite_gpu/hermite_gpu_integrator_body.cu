@@ -185,7 +185,8 @@
 	ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
 	return;
 	}
-	//printf("%s\n", cudaGetErrorString(cudaGetLastError())); 
+                cuxErrCheck( cudaThreadSynchronize() );
+	printf("%s\n", cudaGetErrorString(cudaGetLastError())); 
 
 	// flush CPU/GPU output logs
 	log::flush(log::memory);

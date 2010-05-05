@@ -116,7 +116,7 @@ Building the Swarm-NG Libraries and Demo Programs
 
 ** g++ v4.3 (CUDA does not yet work with 4.4+)
 
-** Boost++ (known to work with v1.33 and 1.39, but later versions likely to work as well, some header file names changing reported)
+** Boost++ v 1.33-1.41 (headers, regex library, and program_options libraries; e.g., pacakges libboost1.40-dev liboost-regex1.40-dev libboost-program-options1.40-dev) (something changed in 1.42 which will require minor modifications to swarm)
 
 ** http://www.gnu.org/software/gsl/[GNU Science Library (GSL)]
 
