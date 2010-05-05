@@ -75,12 +75,16 @@ int main(int argc, char *argv[])
         //get Observing Times
         vector<real>   ObsTimes=getObsTimes(obsFileName);
         unsigned int nObs=ObsTimes.size();
+	//initial energy
+        vector<real>   Einit;
 
         //open and clear files
         for (unsigned int i=0;i<nSystems;++i)
          {
           ofstream thisFile;
           stringstream buff;
+	  //set initial energy while we are at it.
+          Einit.push_back(calc_system_energy(ens,i));
 
           buff.str("");
           buff<<outFilePrefix<<'.'<<setfill('0')<<setw(5)<<i;
@@ -135,7 +139,7 @@ int main(int argc, char *argv[])
                 thisFile<<scientific<<setprecision(12)<<m<<' '<<x[0]<<' '<<x[1]<<' '<<x[2]<<' '<<v[0]/kmpsToCodeVel<<' '<<v[1]/kmpsToCodeVel<<' '<<v[2]/kmpsToCodeVel<<' ';
 
               }
-              thisFile<<scientific<<setprecision(12)<<Enew<<"\n";
+              thisFile<<scientific<<setprecision(12)<<(Einit[i]-Enew)/Einit[i]<<"\n";
               thisFile.close();
 
             }

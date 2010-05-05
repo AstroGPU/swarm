@@ -116,7 +116,7 @@ def getCollision():
 	x=incomingR*M.cos(theta)*M.cos(phi)
 	y=incomingR*M.cos(theta)*M.sin(phi)
 	z=incomingR*M.sin(theta)
-        impact=M.sqrt(maxUnperturbedImpact**2+2.*(2.*mBinary+mPrimary)*maxUnperturbedImpact/VelSigPert**2) # assuming equal mass binaries
+        impact=M.sqrt(maxUnperturbedImpact**2+4.*mBinary*maxUnperturbedImpact/VelSigPert**2) # assuming equal mass binaries
 	impact*=M.sqrt(R.random())
 	alpha0=impact/incomingR
 	alpha=1e-3*alpha0 # take advantage of large separation
