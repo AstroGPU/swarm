@@ -923,13 +923,14 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h)
 
                 }
 
+		debug_hook();
+
                 if(stop)
                 {
-			store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
-			log::output_system(dlog, ens, T, sys);
+//			store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
+//			log::output_system(dlog, ens, T, sys);
+                        break;
                 }
-
-		debug_hook();
 
 		if(log::needs_output(ens, T, sys))
 		{
