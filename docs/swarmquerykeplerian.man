@@ -10,6 +10,9 @@ SYMPOSIS
 --------
 *swarmquerykeplerian*  DATAFILE [Options]
 swarmquery is a useful tool for extracting information about selected systems at all or selected times.  
+DATAFILE should be the file specified via "output = binary DATAFILE", and not the files with
+the suffixes .raw or .sys.idx or .time.idx.
+
 
 DESCRIPTION
 -----------

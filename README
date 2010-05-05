@@ -61,8 +61,8 @@ demonstrate functionality and how to program with Swarm-NG.
    accept all the parameters.)
 
 ** To see how end users can access data written by the swarm logging
-   system, use 'swarmquery output_file'.  For info on options, run
-   'swarmquery --help'
+   system, use 'swarmquery output_file' or 'swarmquerykeplerian output_file'.  
+   For info on options, run 'swarmquery --help' or 'swarmquerykeplerian --help'.
 
 * To learn how to access the Swarm-NG library from you own code, work
   through the series of introductory tutorials in src/tutorials (in
@@ -83,7 +83,9 @@ is described in link:swarm_tutorial_montecarlo.html[].
 - 'src/scatter_demo/swarm_scatter_demo.cpp':  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]
 - ''src/swarm.cpp': this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html[]. The output can be easily accessed via the swarmquery program (see link:swarmquery.html[]).
+  writes output to binary files.  More information at link:swarm.html[]. 
+- The binary output files can be easily accessed via the swarmquery program 
+  (see link:swarmquery.html[] or link:swarmquerykeplerian.html[]).
 
 * To learn more about how developers an use the swarm library:
 
