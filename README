@@ -199,6 +199,8 @@ for details.
 Known Limitations and/or Bugs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - swarm is limited to N-body systems with 3-10 bodies.
+- Integrations that result in an output file size comparable to half the 
+  system memory or more will likely crash.  
 - swarm only integrates forward in time.
 - While there are euler, rk4 and rkck integrators, they are in a preliminary
   form and should not be used.
