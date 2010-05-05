@@ -116,7 +116,9 @@ Building the Swarm-NG Libraries and Demo Programs
 
 ** g++ v4.3 (CUDA does not yet work with 4.4+)
 
-** Boost++ v 1.33-1.41 (headers, regex library, and program_options libraries; e.g., pacakges libboost1.40-dev liboost-regex1.40-dev libboost-program-options1.40-dev) (something changed in 1.42 which will require minor modifications to swarm)
+** Boost++ v 1.33-1.41 (headers, regex library, and program_options libraries; 
+   e.g., pacakges libboost1.40-dev liboost-regex1.40-dev libboost-program-options1.40-dev) 
+   (something changed in 1.42 which will require minor modifications to swarm)
 
 ** http://www.gnu.org/software/gsl/[GNU Science Library (GSL)]
 
@@ -197,6 +199,8 @@ for details.
 Known Limitations and/or Bugs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - swarm is limited to N-body systems with 3-10 bodies.
+- Integrations that result in an output file size comparable to half the 
+  system memory or more will likely crash.  
 - swarm only integrates forward in time.
 - While there are euler, rk4 and rkck integrators, they are in a preliminary
   form and should not be used.
