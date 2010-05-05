@@ -98,8 +98,9 @@ namespace swarm
 #if BOOST_VERSION  < 104200
                         throw validation_error("invalid value");
 #else
-                        invalid_option_value iov("invalid value");
-                        throw validation_error(iov);
+                        throw validation_error(validation_error::invalid_option_value);
+                        //invalid_option_value iov("invalid value");
+                        //throw validation_error(iov);
 #endif
 		}
 	}
@@ -225,7 +226,10 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	  calc_keplerian_for_cartesian(a[bod], e[bod], i[bod], O[bod], w[bod], M[bod], x, y, z, vx, vy, vz, cmass);
 
           const double rad2deg = 180./M_PI;
-	  sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), a[bod], e[bod], i[bod]*rad2deg, O[bod]*rad2deg, w[bod]*rad2deg, M[bod]*rad2deg, flags);
+
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	  snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), a[bod], e[bod], i[bod]*rad2deg, O[bod]*rad2deg, w[bod]*rad2deg, M[bod]*rad2deg, flags);
 	  out << buf;
 	  // don't write new line after last line
 	  if(bod<nbod-1)     out << "\n";
@@ -241,8 +245,9 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 	swarm::body b;
 	lr >> T >> sys >> b;
 
-	char buf[1000];
-	sprintf(buf, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
 	out << buf;
 
 	return out;
