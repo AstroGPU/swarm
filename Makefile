@@ -159,13 +159,26 @@ clean-doc:
 	rm -rf reference; rm -f README.html docs/*.html
 
 clean-test:
-	$(CLEANUI) rm -rf test-outputs
+	$(CLEANUI) rm -rf test-outputs test-outputs.tar.gz
 
 test: all
-	@ ./scripts/run_tests.sh test
+	@ ./scripts/run_tests.sh test || $(MAKE) --no-print-directory test-feedback
 
 test-create: all
 	@ ./scripts/run_tests.sh create
+
+test-feedback:
+	@ $(CCUDA) --version  > test-outputs/nvcc.info 2>&1
+	@ $(CXX)   -v         > test-outputs/gcc.info 2>&1
+	@ uname -a            > test-outputs/kernel.info 2>&1
+	@ dmesg | grep NVIDIA > test-outputs/driver.info 2>&1
+	@ rm -f test-outputs.tar.gz && tar czf test-outputs.tar.gz test-outputs
+	@ echo
+	@ echo Some tests have failed. We\'ve packed the outputs of these tests
+	@ echo to test-outputs.tar.gz. Please e-mail it to astrogpu@gmail.com
+	@ echo to help us diagnose the problems you\'ve encountered, and 
+	@ echo improve the future releases.
+	@ echo "                                     Swarm-NG Developers"
 
 .PHONY: test test-ref
 
