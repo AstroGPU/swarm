@@ -211,8 +211,8 @@ struct prop_rk4
  */
 extern "C" integrator *create_gpu_rk4(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
-//	return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rk4>(cfg);
+//	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
+	return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rk4>(cfg);
 }
 
 } // end namespace swarm

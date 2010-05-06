@@ -353,8 +353,8 @@ struct prop_rkck
  */
 extern "C" integrator *create_gpu_rkck(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_rkck>(cfg);
-       // return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkck>(cfg);
+//	return new gpu_generic_integrator<stop_on_ejection, prop_rkck>(cfg);
+        return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkck>(cfg);
 }
 
 } // end namespace swarm
