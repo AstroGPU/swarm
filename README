@@ -1,8 +1,8 @@
 README for Swarm-NG
 ===================
 Swarm-NG Development Team
-v0.1.02, May 2, 2010: Initial release + 
-Swarm-NG v0.1.02 (c) Swarm-NG Development Team 2010
+v0.1.3, May 5, 2010: Initial release + 
+Swarm-NG v0.1.5 (c) Swarm-NG Development Team 2010
 
 Introduction
 ------------
@@ -61,8 +61,8 @@ demonstrate functionality and how to program with Swarm-NG.
    accept all the parameters.)
 
 ** To see how end users can access data written by the swarm logging
-   system, use 'swarmquery output_file'.  For info on options, run
-   'swarmquery --help'
+   system, use 'swarmquery output_file' or 'swarmquerykeplerian output_file'.  
+   For info on options, run 'swarmquery --help' or 'swarmquerykeplerian --help'.
 
 * To learn how to access the Swarm-NG library from you own code, work
   through the series of introductory tutorials in src/tutorials (in
@@ -83,7 +83,9 @@ is described in link:swarm_tutorial_montecarlo.html[].
 - 'src/scatter_demo/swarm_scatter_demo.cpp':  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]
 - ''src/swarm.cpp': this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html[]. The output can be easily accessed via the swarmquery program (see link:swarmquery.html[]).
+  writes output to binary files.  More information at link:swarm.html[]. 
+- The binary output files can be easily accessed via the swarmquery program 
+  (see link:swarmquery.html[] or link:swarmquerykeplerian.html[]).
 
 * To learn more about how developers an use the swarm library:
 
@@ -104,7 +106,7 @@ Building the Swarm-NG Libraries and Demo Programs
 .What hardware & software is required to build & run Swarm-NG?
 * Hardware
 
-** Linux-based workstation (certain kernel versions?)
+** Linux-based workstation with 64-bit kernel (32-bit kernels might work but have not been tested; certain kernel versions?)
 
 ** nVidia GPU with GT200 chip (we intend to support Fermi in near
    future)  (there are some issues with swarmlog and G80's that may be resolved
@@ -112,11 +114,13 @@ Building the Swarm-NG Libraries and Demo Programs
 
 * Software
 
-** CUDA v2.3 and/or v3.0 
+** CUDA v2.3 and/or v3.0 (must compile with -arch=sm_13)
 
 ** g++ v4.3 (CUDA does not yet work with 4.4+)
 
-** Boost++ (known to work with v1.33 and 1.39, but later versions likely to work as well, some header file names changing reported)
+** Boost++ v 1.33-1.41 (headers, regex library, and program_options libraries; 
+   e.g., pacakges libboost1.40-dev liboost-regex1.40-dev libboost-program-options1.40-dev) 
+   (something changed in 1.42 which will require minor modifications to swarm)
 
 ** http://www.gnu.org/software/gsl/[GNU Science Library (GSL)]
 
@@ -197,10 +201,15 @@ for details.
 Known Limitations and/or Bugs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - swarm is limited to N-body systems with 3-10 bodies.
+- Integrations that result in an output file size comparable to half the 
+  system memory or more will likely crash.  
 - swarm only integrates forward in time.
 - While there are euler, rk4 and rkck integrators, they are in a preliminary
   form and should not be used.
 - E.g., rk4 requires exactly 3 bodies and does not include a cpu version
+- We have not tested Swarm-NG with a 32-bit OS
+- If you've previously run a v0.1.1 or v0.1.2 of swarm-NG on a machine, 
+  please reboot it before proceeding.
 - For an updated list, visit the
   http://www.astro.ufl.edu/~eford/code/swarm/[Swarm-NG Website]
 

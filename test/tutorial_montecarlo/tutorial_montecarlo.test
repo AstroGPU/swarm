@@ -60,7 +60,7 @@ echo
 echo === Integrating =========================================================================================
 echo
 
-$BIN/swarm_tutorial_montecarlo $TEST/integrator-tutorial_montecarlo.cfg 2>&1 
+$BIN/swarm_tutorial_montecarlo $TEST/integrator-tutorial_montecarlo.cfg 2>&1 | $TEST/filter
 
 echo
 echo === Done ================================================================================================
