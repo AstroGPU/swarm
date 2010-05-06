@@ -3,10 +3,470 @@ Generated 960 systems.
 === Integrating =========================================================================================
 
 Ensemble                        : data (960 systems, 3 bodies each).
-GPU accelerator: Using Device 0: "GeForce GTX 295" (autoselected)Device memory (free, total): 859M, 895M
 Integrator                      : gpu_rk4, executing on the GPU
 
-# Integrating... # Done.
+# Integrating... Crossing orbits detected: sys=576, T=0.001000 i=0 i+1=1  a_i=6.703821 e_i=0.007318 a_i+1=1.108151 e_i+1=0.007926.
+Crossing orbits detected: sys=577, T=0.001000 i=0 i+1=1  a_i=4.381901 e_i=0.008606 a_i+1=3.193727 e_i+1=0.008486.
+Crossing orbits detected: sys=578, T=0.001000 i=0 i+1=1  a_i=8.146157 e_i=0.007763 a_i+1=5.999937 e_i+1=0.006875.
+Crossing orbits detected: sys=580, T=0.001000 i=0 i+1=1  a_i=7.718691 e_i=0.000681 a_i+1=1.619361 e_i+1=0.008160.
+Crossing orbits detected: sys=582, T=0.001000 i=0 i+1=1  a_i=2.464367 e_i=0.007052 a_i+1=1.341356 e_i+1=0.002267.
+Crossing orbits detected: sys=583, T=0.001000 i=0 i+1=1  a_i=6.086073 e_i=0.004529 a_i+1=3.563763 e_i+1=0.002888.
+Crossing orbits detected: sys=584, T=0.001000 i=0 i+1=1  a_i=5.306993 e_i=0.005827 a_i+1=2.578719 e_i+1=0.008192.
+Crossing orbits detected: sys=585, T=0.001000 i=0 i+1=1  a_i=3.529415 e_i=0.003213 a_i+1=1.810896 e_i+1=0.006214.
+Crossing orbits detected: sys=586, T=0.001000 i=0 i+1=1  a_i=7.964027 e_i=0.001185 a_i+1=4.067634 e_i+1=0.004483.
+Crossing orbits detected: sys=588, T=0.001000 i=0 i+1=1  a_i=6.805965 e_i=0.001748 a_i+1=3.100767 e_i+1=0.002104.
+Crossing orbits detected: sys=590, T=0.001000 i=0 i+1=1  a_i=4.629445 e_i=0.001706 a_i+1=3.076240 e_i+1=0.001262.
+Crossing orbits detected: sys=592, T=0.001000 i=0 i+1=1  a_i=3.880176 e_i=0.000138 a_i+1=3.021619 e_i+1=0.000000.
+Crossing orbits detected: sys=593, T=0.001000 i=0 i+1=1  a_i=5.112090 e_i=0.002789 a_i+1=2.485315 e_i+1=0.002607.
+Crossing orbits detected: sys=595, T=0.001000 i=0 i+1=1  a_i=7.363484 e_i=0.009721 a_i+1=1.180892 e_i+1=0.005401.
+Crossing orbits detected: sys=598, T=0.001000 i=0 i+1=1  a_i=4.307039 e_i=0.005121 a_i+1=2.581148 e_i+1=0.004909.
+Crossing orbits detected: sys=600, T=0.001000 i=0 i+1=1  a_i=7.085036 e_i=0.006799 a_i+1=1.382484 e_i+1=0.007848.
+Crossing orbits detected: sys=601, T=0.001000 i=0 i+1=1  a_i=1.853058 e_i=0.004366 a_i+1=1.216373 e_i+1=0.000741.
+Crossing orbits detected: sys=602, T=0.001000 i=0 i+1=1  a_i=4.054065 e_i=0.002250 a_i+1=1.599320 e_i+1=0.006834.
+Crossing orbits detected: sys=603, T=0.001000 i=0 i+1=1  a_i=2.016295 e_i=0.006277 a_i+1=1.137235 e_i+1=0.008536.
+Crossing orbits detected: sys=604, T=0.001000 i=0 i+1=1  a_i=2.531098 e_i=0.002562 a_i+1=1.807453 e_i+1=0.001986.
+Crossing orbits detected: sys=605, T=0.001000 i=0 i+1=1  a_i=7.785981 e_i=0.001822 a_i+1=2.965575 e_i+1=0.005636.
+Crossing orbits detected: sys=606, T=0.001000 i=0 i+1=1  a_i=9.451561 e_i=0.001500 a_i+1=2.329774 e_i+1=0.004699.
+Crossing orbits detected: sys=607, T=0.001000 i=0 i+1=1  a_i=2.550320 e_i=0.003709 a_i+1=1.515005 e_i+1=0.006039.
+Crossing orbits detected: sys=609, T=0.001000 i=0 i+1=1  a_i=5.913820 e_i=0.000800 a_i+1=3.641266 e_i+1=0.002227.
+Crossing orbits detected: sys=613, T=0.001000 i=0 i+1=1  a_i=5.176475 e_i=0.004960 a_i+1=3.487858 e_i+1=0.000808.
+Crossing orbits detected: sys=615, T=0.001000 i=0 i+1=1  a_i=3.231159 e_i=0.003116 a_i+1=1.336965 e_i+1=0.002711.
+Crossing orbits detected: sys=618, T=0.001000 i=0 i+1=1  a_i=3.489409 e_i=0.006469 a_i+1=1.523764 e_i+1=0.009928.
+Crossing orbits detected: sys=620, T=0.001000 i=0 i+1=1  a_i=8.788128 e_i=0.009929 a_i+1=2.067023 e_i+1=0.001865.
+Crossing orbits detected: sys=626, T=0.001000 i=0 i+1=1  a_i=4.057457 e_i=0.009228 a_i+1=1.026467 e_i+1=0.007209.
+Crossing orbits detected: sys=627, T=0.001000 i=0 i+1=1  a_i=3.434095 e_i=0.001218 a_i+1=1.944612 e_i+1=0.003052.
+Crossing orbits detected: sys=629, T=0.001000 i=0 i+1=1  a_i=9.270032 e_i=0.005997 a_i+1=6.117486 e_i+1=0.009246.
+Crossing orbits detected: sys=634, T=0.001000 i=0 i+1=1  a_i=6.694085 e_i=0.003654 a_i+1=1.895366 e_i+1=0.007144.
+Crossing orbits detected: sys=636, T=0.001000 i=0 i+1=1  a_i=8.903028 e_i=0.008203 a_i+1=1.035548 e_i+1=0.008548.
+Crossing orbits detected: sys=387, T=0.001000 i=0 i+1=1  a_i=7.275232 e_i=0.006931 a_i+1=3.015901 e_i+1=0.008874.
+Crossing orbits detected: sys=391, T=0.001000 i=0 i+1=1  a_i=7.741956 e_i=0.004550 a_i+1=3.016403 e_i+1=0.002209.
+Crossing orbits detected: sys=392, T=0.001000 i=0 i+1=1  a_i=4.979854 e_i=0.008975 a_i+1=3.291081 e_i+1=0.009711.
+Crossing orbits detected: sys=393, T=0.001000 i=0 i+1=1  a_i=4.320110 e_i=0.004320 a_i+1=3.702666 e_i+1=0.005151.
+Crossing orbits detected: sys=395, T=0.001000 i=0 i+1=1  a_i=9.209048 e_i=0.003920 a_i+1=2.368072 e_i+1=0.004546.
+Crossing orbits detected: sys=397, T=0.001000 i=0 i+1=1  a_i=4.270472 e_i=0.006837 a_i+1=2.211416 e_i+1=0.000686.
+Crossing orbits detected: sys=398, T=0.001000 i=0 i+1=1  a_i=8.349984 e_i=0.006499 a_i+1=2.692447 e_i+1=0.002389.
+Crossing orbits detected: sys=400, T=0.001000 i=0 i+1=1  a_i=1.657260 e_i=0.005821 a_i+1=1.538018 e_i+1=0.008987.
+Crossing orbits detected: sys=401, T=0.001000 i=0 i+1=1  a_i=4.497660 e_i=0.007135 a_i+1=1.694439 e_i+1=0.000448.
+Crossing orbits detected: sys=403, T=0.001000 i=0 i+1=1  a_i=9.433913 e_i=0.003915 a_i+1=7.522989 e_i+1=0.001077.
+Crossing orbits detected: sys=405, T=0.001000 i=0 i+1=1  a_i=9.127026 e_i=0.001317 a_i+1=4.973044 e_i+1=0.004147.
+Crossing orbits detected: sys=408, T=0.001000 i=0 i+1=1  a_i=3.244019 e_i=0.005784 a_i+1=2.341062 e_i+1=0.008108.
+Crossing orbits detected: sys=411, T=0.001000 i=0 i+1=1  a_i=4.947892 e_i=0.006527 a_i+1=3.978705 e_i+1=0.008295.
+Crossing orbits detected: sys=412, T=0.001000 i=0 i+1=1  a_i=7.585640 e_i=0.008889 a_i+1=1.848969 e_i+1=0.000571.
+Crossing orbits detected: sys=414, T=0.001000 i=0 i+1=1  a_i=9.255062 e_i=0.002648 a_i+1=4.409189 e_i+1=0.006947.
+Crossing orbits detected: sys=415, T=0.001000 i=0 i+1=1  a_i=9.292118 e_i=0.004103 a_i+1=2.281763 e_i+1=0.007440.
+Crossing orbits detected: sys=417, T=0.001000 i=0 i+1=1  a_i=5.547497 e_i=0.000308 a_i+1=2.277246 e_i+1=0.009743.
+Crossing orbits detected: sys=421, T=0.001000 i=0 i+1=1  a_i=9.964268 e_i=0.007469 a_i+1=3.323711 e_i+1=0.009221.
+Crossing orbits detected: sys=422, T=0.001000 i=0 i+1=1  a_i=5.525212 e_i=0.007022 a_i+1=1.155729 e_i+1=0.006647.
+Crossing orbits detected: sys=423, T=0.001000 i=0 i+1=1  a_i=2.794410 e_i=0.005844 a_i+1=2.025939 e_i+1=0.001941.
+Crossing orbits detected: sys=424, T=0.001000 i=0 i+1=1  a_i=4.548247 e_i=0.004155 a_i+1=1.612106 e_i+1=0.007060.
+Crossing orbits detected: sys=425, T=0.001000 i=0 i+1=1  a_i=2.648085 e_i=0.000906 a_i+1=1.542762 e_i+1=0.001334.
+Crossing orbits detected: sys=426, T=0.001000 i=0 i+1=1  a_i=9.681249 e_i=0.003269 a_i+1=1.505330 e_i+1=0.005688.
+Crossing orbits detected: sys=427, T=0.001000 i=0 i+1=1  a_i=8.225882 e_i=0.006815 a_i+1=1.520675 e_i+1=0.006992.
+Crossing orbits detected: sys=429, T=0.001000 i=0 i+1=1  a_i=5.133543 e_i=0.006562 a_i+1=1.302039 e_i+1=0.000410.
+Crossing orbits detected: sys=432, T=0.001000 i=0 i+1=1  a_i=8.725149 e_i=0.004850 a_i+1=1.531696 e_i+1=0.009738.
+Crossing orbits detected: sys=434, T=0.001000 i=0 i+1=1  a_i=4.840079 e_i=0.000810 a_i+1=2.662835 e_i+1=0.009624.
+Crossing orbits detected: sys=437, T=0.001000 i=0 i+1=1  a_i=7.116056 e_i=0.003978 a_i+1=5.649772 e_i+1=0.009422.
+Crossing orbits detected: sys=704, T=0.001000 i=0 i+1=1  a_i=2.785250 e_i=0.000354 a_i+1=1.495158 e_i+1=0.007613.
+Crossing orbits detected: sys=438, T=0.001000 i=0 i+1=1  a_i=6.358266 e_i=0.003200 a_i+1=2.500584 e_i+1=0.000504.
+Crossing orbits detected: sys=707, T=0.001000 i=0 i+1=1  a_i=3.307601 e_i=0.005801 a_i+1=1.004132 e_i+1=0.002177.
+Crossing orbits detected: sys=440, T=0.001000 i=0 i+1=1  a_i=7.728583 e_i=0.005028 a_i+1=5.141305 e_i+1=0.008233.
+Crossing orbits detected: sys=712, T=0.001000 i=0 i+1=1  a_i=9.927458 e_i=0.005488 a_i+1=4.940294 e_i+1=0.008198.
+Crossing orbits detected: sys=442, T=0.001000 i=0 i+1=1  a_i=2.208404 e_i=0.006142 a_i+1=1.049262 e_i+1=0.002111.
+Crossing orbits detected: sys=713, T=0.001000 i=0 i+1=1  a_i=4.388780 e_i=0.003327 a_i+1=1.364228 e_i+1=0.006922.
+Crossing orbits detected: sys=444, T=0.001000 i=0 i+1=1  a_i=4.339582 e_i=0.007384 a_i+1=3.177708 e_i+1=0.003851.
+Crossing orbits detected: sys=715, T=0.001000 i=0 i+1=1  a_i=7.876157 e_i=0.000971 a_i+1=1.906330 e_i+1=0.005308.
+Crossing orbits detected: sys=447, T=0.001000 i=0 i+1=1  a_i=3.249100 e_i=0.004785 a_i+1=1.274442 e_i+1=0.005898.
+Crossing orbits detected: sys=716, T=0.001000 i=0 i+1=1  a_i=3.573486 e_i=0.005892 a_i+1=1.161236 e_i+1=0.004182.
+Crossing orbits detected: sys=719, T=0.001000 i=0 i+1=1  a_i=9.777946 e_i=0.004321 a_i+1=1.629795 e_i+1=0.001465.
+Crossing orbits detected: sys=721, T=0.001000 i=0 i+1=1  a_i=4.735196 e_i=0.003463 a_i+1=2.119130 e_i+1=0.004149.
+Crossing orbits detected: sys=722, T=0.001000 i=0 i+1=1  a_i=6.426331 e_i=0.006542 a_i+1=2.385273 e_i+1=0.008254.
+Crossing orbits detected: sys=727, T=0.001000 i=0 i+1=1  a_i=5.062343 e_i=0.006656 a_i+1=1.982409 e_i+1=0.003135.
+Crossing orbits detected: sys=729, T=0.001000 i=0 i+1=1  a_i=6.847597 e_i=0.003328 a_i+1=1.258105 e_i+1=0.000624.
+Crossing orbits detected: sys=735, T=0.001000 i=0 i+1=1  a_i=8.692036 e_i=0.004355 a_i+1=2.992263 e_i+1=0.001590.
+Crossing orbits detected: sys=736, T=0.001000 i=0 i+1=1  a_i=5.082794 e_i=0.009888 a_i+1=1.531924 e_i+1=0.002646.
+Crossing orbits detected: sys=737, T=0.001000 i=0 i+1=1  a_i=3.134938 e_i=0.000000 a_i+1=1.934973 e_i+1=0.008420.
+Crossing orbits detected: sys=739, T=0.001000 i=0 i+1=1  a_i=7.045167 e_i=0.009736 a_i+1=2.960403 e_i+1=0.003652.
+Crossing orbits detected: sys=740, T=0.001000 i=0 i+1=1  a_i=1.347879 e_i=0.006785 a_i+1=1.131106 e_i+1=0.005416.
+Crossing orbits detected: sys=748, T=0.001000 i=0 i+1=1  a_i=4.835963 e_i=0.007882 a_i+1=2.706075 e_i+1=0.003469.
+Crossing orbits detected: sys=754, T=0.001000 i=0 i+1=1  a_i=4.206143 e_i=0.003784 a_i+1=1.071144 e_i+1=0.001786.
+Crossing orbits detected: sys=756, T=0.001000 i=0 i+1=1  a_i=2.273593 e_i=0.002299 a_i+1=1.031347 e_i+1=0.004331.
+Crossing orbits detected: sys=757, T=0.001000 i=0 i+1=1  a_i=5.964258 e_i=0.000410 a_i+1=1.098000 e_i+1=0.009327.
+Crossing orbits detected: sys=759, T=0.001000 i=0 i+1=1  a_i=2.797163 e_i=0.000802 a_i+1=1.183874 e_i+1=0.008642.
+Crossing orbits detected: sys=760, T=0.001000 i=0 i+1=1  a_i=8.654796 e_i=0.000631 a_i+1=3.362220 e_i+1=0.007560.
+Crossing orbits detected: sys=764, T=0.001000 i=0 i+1=1  a_i=4.937553 e_i=0.003526 a_i+1=2.621836 e_i+1=0.009142.
+Crossing orbits detected: sys=767, T=0.001000 i=0 i+1=1  a_i=3.910255 e_i=0.008798 a_i+1=1.270860 e_i+1=0.004193.
+Crossing orbits detected: sys=64, T=0.001000 i=0 i+1=1  a_i=3.265455 e_i=0.004226 a_i+1=1.868852 e_i+1=0.005031.
+Crossing orbits detected: sys=65, T=0.001000 i=0 i+1=1  a_i=2.662952 e_i=0.008483 a_i+1=1.963753 e_i+1=0.007550.
+Crossing orbits detected: sys=66, T=0.001000 i=0 i+1=1  a_i=5.478901 e_i=0.003805 a_i+1=1.538702 e_i+1=0.005798.
+Crossing orbits detected: sys=67, T=0.001000 i=0 i+1=1  a_i=2.570813 e_i=0.007015 a_i+1=1.630161 e_i+1=0.007053.
+Crossing orbits detected: sys=68, T=0.001000 i=0 i+1=1  a_i=8.233984 e_i=0.004723 a_i+1=3.445895 e_i+1=0.000540.
+Crossing orbits detected: sys=76, T=0.001000 i=0 i+1=1  a_i=4.237741 e_i=0.003618 a_i+1=1.994937 e_i+1=0.005145.
+Crossing orbits detected: sys=80, T=0.001000 i=0 i+1=1  a_i=5.116011 e_i=0.001747 a_i+1=2.348596 e_i+1=0.000921.
+Crossing orbits detected: sys=81, T=0.001000 i=0 i+1=1  a_i=5.900299 e_i=0.004384 a_i+1=1.071315 e_i+1=0.002376.
+Crossing orbits detected: sys=83, T=0.001000 i=0 i+1=1  a_i=6.146725 e_i=0.003290 a_i+1=1.927113 e_i+1=0.009545.
+Crossing orbits detected: sys=84, T=0.001000 i=0 i+1=1  a_i=9.723368 e_i=0.007804 a_i+1=5.598676 e_i+1=0.001361.
+Crossing orbits detected: sys=451, T=0.001000 i=0 i+1=1  a_i=7.378077 e_i=0.005737 a_i+1=2.344562 e_i+1=0.003597.
+Crossing orbits detected: sys=85, T=0.001000 i=0 i+1=1  a_i=3.636939 e_i=0.008348 a_i+1=1.294647 e_i+1=0.008041.
+Crossing orbits detected: sys=458, T=0.001000 i=0 i+1=1  a_i=8.733293 e_i=0.005848 a_i+1=7.491549 e_i+1=0.006717.
+Crossing orbits detected: sys=86, T=0.001000 i=0 i+1=1  a_i=7.546429 e_i=0.008172 a_i+1=1.632333 e_i+1=0.005266.
+Crossing orbits detected: sys=459, T=0.001000 i=0 i+1=1  a_i=6.061312 e_i=0.000992 a_i+1=1.959509 e_i+1=0.005448.
+Crossing orbits detected: sys=88, T=0.001000 i=0 i+1=1  a_i=2.174232 e_i=0.006371 a_i+1=1.405290 e_i+1=0.003455.
+Crossing orbits detected: sys=461, T=0.001000 i=0 i+1=1  a_i=3.728745 e_i=0.008913 a_i+1=1.119868 e_i+1=0.000000.
+Crossing orbits detected: sys=91, T=0.001000 i=0 i+1=1  a_i=4.639042 e_i=0.004418 a_i+1=1.046254 e_i+1=0.001033.
+Crossing orbits detected: sys=463, T=0.001000 i=0 i+1=1  a_i=2.627752 e_i=0.002247 a_i+1=1.565955 e_i+1=0.008958.
+Crossing orbits detected: sys=93, T=0.001000 i=0 i+1=1  a_i=4.909018 e_i=0.004774 a_i+1=3.676372 e_i+1=0.004676.
+Crossing orbits detected: sys=464, T=0.001000 i=0 i+1=1  a_i=7.379904 e_i=0.003683 a_i+1=1.833051 e_i+1=0.005440.
+Crossing orbits detected: sys=95, T=0.001000 i=0 i+1=1  a_i=7.042272 e_i=0.006712 a_i+1=1.026153 e_i+1=0.008758.
+Crossing orbits detected: sys=473, T=0.001000 i=0 i+1=1  a_i=4.719221 e_i=0.009945 a_i+1=2.721565 e_i+1=0.007979.
+Crossing orbits detected: sys=100, T=0.001000 i=0 i+1=1  a_i=6.437476 e_i=0.007250 a_i+1=2.909957 e_i+1=0.006965.
+Crossing orbits detected: sys=474, T=0.001000 i=0 i+1=1  a_i=4.740211 e_i=0.006089 a_i+1=1.214371 e_i+1=0.006583.
+Crossing orbits detected: sys=104, T=0.001000 i=0 i+1=1  a_i=4.252892 e_i=0.001774 a_i+1=1.377417 e_i+1=0.001887.
+Crossing orbits detected: sys=479, T=0.001000 i=0 i+1=1  a_i=3.037552 e_i=0.004134 a_i+1=1.035034 e_i+1=0.007397.
+Crossing orbits detected: sys=106, T=0.001000 i=0 i+1=1  a_i=5.059833 e_i=0.009865 a_i+1=1.240424 e_i+1=0.002426.
+Crossing orbits detected: sys=481, T=0.001000 i=0 i+1=1  a_i=3.089430 e_i=0.006676 a_i+1=1.103746 e_i+1=0.000639.
+Crossing orbits detected: sys=546, T=0.001000 i=0 i+1=1  a_i=4.579821 e_i=0.000486 a_i+1=2.772815 e_i+1=0.003482.
+Crossing orbits detected: sys=484, T=0.001000 i=0 i+1=1  a_i=7.819592 e_i=0.005872 a_i+1=6.138702 e_i+1=0.002566.
+Crossing orbits detected: sys=549, T=0.001000 i=0 i+1=1  a_i=2.227544 e_i=0.009646 a_i+1=1.253532 e_i+1=0.001865.
+Crossing orbits detected: sys=107, T=0.001000 i=0 i+1=1  a_i=3.512403 e_i=0.007032 a_i+1=1.026898 e_i+1=0.008875.
+Crossing orbits detected: sys=109, T=0.001000 i=0 i+1=1  a_i=3.429207 e_i=0.006095 a_i+1=2.640191 e_i+1=0.002249.
+Crossing orbits detected: sys=111, T=0.001000 i=0 i+1=1  a_i=7.291112 e_i=0.003556 a_i+1=3.518820 e_i+1=0.005248.
+Crossing orbits detected: sys=112, T=0.001000 i=0 i+1=1  a_i=3.235763 e_i=0.007504 a_i+1=1.629544 e_i+1=0.005059.
+Crossing orbits detected: sys=488, T=0.001000 i=0 i+1=1  a_i=2.648562 e_i=0.000473 a_i+1=1.725096 e_i+1=0.000640.
+Crossing orbits detected: sys=493, T=0.001000 i=0 i+1=1  a_i=6.030766 e_i=0.007743 a_i+1=3.889266 e_i+1=0.002234.
+Crossing orbits detected: sys=550, T=0.001000 i=0 i+1=1  a_i=1.778801 e_i=0.004168 a_i+1=1.350578 e_i+1=0.001787.
+Crossing orbits detected: sys=641, T=0.001000 i=0 i+1=1  a_i=7.306999 e_i=0.003866 a_i+1=1.232245 e_i+1=0.003096.
+Crossing orbits detected: sys=115, T=0.001000 i=0 i+1=1  a_i=7.202695 e_i=0.000000 a_i+1=4.234636 e_i+1=0.004356.
+Crossing orbits detected: sys=160, T=0.001000 i=0 i+1=1  a_i=7.397242 e_i=0.000812 a_i+1=4.520101 e_i+1=0.007919.
+Crossing orbits detected: sys=193, T=0.001000 i=0 i+1=1  a_i=9.835842 e_i=0.007118 a_i+1=2.366406 e_i+1=0.008494.
+Crossing orbits detected: sys=258, T=0.001000 i=0 i+1=1  a_i=2.335674 e_i=0.004505 a_i+1=1.486615 e_i+1=0.002796.
+Crossing orbits detected: sys=354, T=0.001000 i=0 i+1=1  a_i=7.331105 e_i=0.005652 a_i+1=6.256591 e_i+1=0.000108.
+Crossing orbits detected: sys=496, T=0.001000 i=0 i+1=1  a_i=4.842571 e_i=0.009329 a_i+1=2.107666 e_i+1=0.000954.
+Crossing orbits detected: sys=553, T=0.001000 i=0 i+1=1  a_i=3.413109 e_i=0.001034 a_i+1=2.532555 e_i+1=0.009331.
+Crossing orbits detected: sys=644, T=0.001000 i=0 i+1=1  a_i=5.608524 e_i=0.009869 a_i+1=1.528731 e_i+1=0.004126.
+Crossing orbits detected: sys=117, T=0.001000 i=0 i+1=1  a_i=2.896067 e_i=0.001890 a_i+1=1.006831 e_i+1=0.000997.
+Crossing orbits detected: sys=162, T=0.001000 i=0 i+1=1  a_i=9.413662 e_i=0.007465 a_i+1=7.138821 e_i+1=0.008324.
+Crossing orbits detected: sys=196, T=0.001000 i=0 i+1=1  a_i=8.569268 e_i=0.004264 a_i+1=6.221248 e_i+1=0.009160.
+Crossing orbits detected: sys=262, T=0.001000 i=0 i+1=1  a_i=7.676414 e_i=0.002309 a_i+1=1.870427 e_i+1=0.005342.
+Crossing orbits detected: sys=358, T=0.001000 i=0 i+1=1  a_i=2.933434 e_i=0.006571 a_i+1=1.303943 e_i+1=0.003669.
+Crossing orbits detected: sys=497, T=0.001000 i=0 i+1=1  a_i=4.835067 e_i=0.004968 a_i+1=1.020397 e_i+1=0.004618.
+Crossing orbits detected: sys=554, T=0.001000 i=0 i+1=1  a_i=5.317792 e_i=0.008946 a_i+1=1.723004 e_i+1=0.001651.
+Crossing orbits detected: sys=645, T=0.001000 i=0 i+1=1  a_i=9.135659 e_i=0.001232 a_i+1=2.936372 e_i+1=0.002774.
+Crossing orbits detected: sys=118, T=0.001000 i=0 i+1=1  a_i=1.884259 e_i=0.004934 a_i+1=1.721910 e_i+1=0.004694.
+Crossing orbits detected: sys=163, T=0.001000 i=0 i+1=1  a_i=2.285438 e_i=0.007991 a_i+1=1.132104 e_i+1=0.009835.
+Crossing orbits detected: sys=197, T=0.001000 i=0 i+1=1  a_i=5.708187 e_i=0.000764 a_i+1=3.913182 e_i+1=0.008071.
+Crossing orbits detected: sys=263, T=0.001000 i=0 i+1=1  a_i=3.259101 e_i=0.000454 a_i+1=1.585036 e_i+1=0.009347.
+Crossing orbits detected: sys=361, T=0.001000 i=0 i+1=1  a_i=3.362536 e_i=0.009374 a_i+1=1.748086 e_i+1=0.000958.
+Crossing orbits detected: sys=498, T=0.001000 i=0 i+1=1  a_i=8.466426 e_i=0.009298 a_i+1=5.089949 e_i+1=0.003424.
+Crossing orbits detected: sys=555, T=0.001000 i=0 i+1=1  a_i=8.899833 e_i=0.000369 a_i+1=1.351914 e_i+1=0.008481.
+Crossing orbits detected: sys=646, T=0.001000 i=0 i+1=1  a_i=1.780076 e_i=0.008487 a_i+1=1.146486 e_i+1=0.009068.
+Crossing orbits detected: sys=119, T=0.001000 i=0 i+1=1  a_i=5.340300 e_i=0.001126 a_i+1=1.036564 e_i+1=0.002657.
+Crossing orbits detected: sys=164, T=0.001000 i=0 i+1=1  a_i=2.694404 e_i=0.001354 a_i+1=1.594459 e_i+1=0.006616.
+Crossing orbits detected: sys=200, T=0.001000 i=0 i+1=1  a_i=2.745968 e_i=0.005382 a_i+1=1.909361 e_i+1=0.005804.
+Crossing orbits detected: sys=265, T=0.001000 i=0 i+1=1  a_i=6.186117 e_i=0.009509 a_i+1=2.234999 e_i+1=0.002068.
+Crossing orbits detected: sys=362, T=0.001000 i=0 i+1=1  a_i=9.667376 e_i=0.001440 a_i+1=7.726191 e_i+1=0.001226.
+Crossing orbits detected: sys=499, T=0.001000 i=0 i+1=1  a_i=9.760909 e_i=0.004861 a_i+1=1.307059 e_i+1=0.000861.
+Crossing orbits detected: sys=556, T=0.001000 i=0 i+1=1  a_i=8.216137 e_i=0.004049 a_i+1=2.958861 e_i+1=0.003784.
+Crossing orbits detected: sys=648, T=0.001000 i=0 i+1=1  a_i=7.769601 e_i=0.006203 a_i+1=4.351022 e_i+1=0.004237.
+Crossing orbits detected: sys=120, T=0.001000 i=0 i+1=1  a_i=5.107207 e_i=0.002555 a_i+1=2.814196 e_i+1=0.009415.
+Crossing orbits detected: sys=167, T=0.001000 i=0 i+1=1  a_i=7.288007 e_i=0.009885 a_i+1=5.913752 e_i+1=0.007260.
+Crossing orbits detected: sys=202, T=0.001000 i=0 i+1=1  a_i=3.519212 e_i=0.001035 a_i+1=2.512841 e_i+1=0.005074.
+Crossing orbits detected: sys=266, T=0.001000 i=0 i+1=1  a_i=5.488719 e_i=0.005842 a_i+1=3.865545 e_i+1=0.000547.
+Crossing orbits detected: sys=366, T=0.001000 i=0 i+1=1  a_i=3.549787 e_i=0.002885 a_i+1=1.342477 e_i+1=0.002725.
+Crossing orbits detected: sys=501, T=0.001000 i=0 i+1=1  a_i=9.315737 e_i=0.006154 a_i+1=3.038790 e_i+1=0.005086.
+Crossing orbits detected: sys=558, T=0.001000 i=0 i+1=1  a_i=8.231932 e_i=0.000230 a_i+1=4.343518 e_i+1=0.009025.
+Crossing orbits detected: sys=650, T=0.001000 i=0 i+1=1  a_i=8.058873 e_i=0.006383 a_i+1=1.229073 e_i+1=0.003040.
+Crossing orbits detected: sys=123, T=0.001000 i=0 i+1=1  a_i=2.137919 e_i=0.006258 a_i+1=1.068206 e_i+1=0.005506.
+Crossing orbits detected: sys=169, T=0.001000 i=0 i+1=1  a_i=7.481152 e_i=0.003055 a_i+1=1.477649 e_i+1=0.002304.
+Crossing orbits detected: sys=207, T=0.001000 i=0 i+1=1  a_i=5.225598 e_i=0.000822 a_i+1=1.675396 e_i+1=0.004215.
+Crossing orbits detected: sys=272, T=0.001000 i=0 i+1=1  a_i=4.025576 e_i=0.006176 a_i+1=1.572057 e_i+1=0.007989.
+Crossing orbits detected: sys=367, T=0.001000 i=0 i+1=1  a_i=9.485252 e_i=0.006492 a_i+1=1.662878 e_i+1=0.006680.
+Crossing orbits detected: sys=502, T=0.001000 i=0 i+1=1  a_i=3.603829 e_i=0.001692 a_i+1=2.015791 e_i+1=0.001179.
+Crossing orbits detected: sys=561, T=0.001000 i=0 i+1=1  a_i=8.910887 e_i=0.007524 a_i+1=6.206830 e_i+1=0.004964.
+Crossing orbits detected: sys=652, T=0.001000 i=0 i+1=1  a_i=4.141008 e_i=0.003027 a_i+1=3.313696 e_i+1=0.009425.
+Crossing orbits detected: sys=124, T=0.001000 i=0 i+1=1  a_i=5.384138 e_i=0.003687 a_i+1=3.172316 e_i+1=0.003478.
+Crossing orbits detected: sys=171, T=0.001000 i=0 i+1=1  a_i=1.821247 e_i=0.006984 a_i+1=1.596410 e_i+1=0.001242.
+Crossing orbits detected: sys=213, T=0.001000 i=0 i+1=1  a_i=9.264860 e_i=0.007759 a_i+1=4.373915 e_i+1=0.005968.
+Crossing orbits detected: sys=276, T=0.001000 i=0 i+1=1  a_i=4.464873 e_i=0.008101 a_i+1=3.031069 e_i+1=0.000000.
+Crossing orbits detected: sys=370, T=0.001000 i=0 i+1=1  a_i=5.749586 e_i=0.005388 a_i+1=2.320992 e_i+1=0.002210.
+Crossing orbits detected: sys=503, T=0.001000 i=0 i+1=1  a_i=4.675743 e_i=0.009303 a_i+1=3.474966 e_i+1=0.005569.
+Crossing orbits detected: sys=562, T=0.001000 i=0 i+1=1  a_i=2.441457 e_i=0.009424 a_i+1=2.044434 e_i+1=0.004077.
+Crossing orbits detected: sys=653, T=0.001000 i=0 i+1=1  a_i=2.760253 e_i=0.008565 a_i+1=1.174496 e_i+1=0.007000.
+Crossing orbits detected: sys=125, T=0.001000 i=0 i+1=1  a_i=7.742361 e_i=0.008544 a_i+1=1.085222 e_i+1=0.008416.
+Crossing orbits detected: sys=172, T=0.001000 i=0 i+1=1  a_i=6.211135 e_i=0.003770 a_i+1=1.392226 e_i+1=0.009867.
+Crossing orbits detected: sys=214, T=0.001000 i=0 i+1=1  a_i=2.793609 e_i=0.006775 a_i+1=1.109740 e_i+1=0.004030.
+Crossing orbits detected: sys=277, T=0.001000 i=0 i+1=1  a_i=8.298916 e_i=0.007960 a_i+1=1.396486 e_i+1=0.008259.
+Crossing orbits detected: sys=375, T=0.001000 i=0 i+1=1  a_i=2.020902 e_i=0.005927 a_i+1=1.219795 e_i+1=0.000106.
+Crossing orbits detected: sys=505, T=0.001000 i=0 i+1=1  a_i=3.721756 e_i=0.006397 a_i+1=1.978985 e_i+1=0.000863.
+Crossing orbits detected: sys=563, T=0.001000 i=0 i+1=1  a_i=3.844614 e_i=0.006187 a_i+1=2.228122 e_i+1=0.006076.
+Crossing orbits detected: sys=655, T=0.001000 i=0 i+1=1  a_i=4.742919 e_i=0.005311 a_i+1=4.033048 e_i+1=0.007393.
+Crossing orbits detected: sys=126, T=0.001000 i=0 i+1=1  a_i=7.922209 e_i=0.000273 a_i+1=1.158862 e_i+1=0.009329.
+Crossing orbits detected: sys=175, T=0.001000 i=0 i+1=1  a_i=2.726112 e_i=0.005383 a_i+1=1.319739 e_i+1=0.001546.
+Crossing orbits detected: sys=216, T=0.001000 i=0 i+1=1  a_i=8.389696 e_i=0.009731 a_i+1=1.121801 e_i+1=0.001054.
+Crossing orbits detected: sys=282, T=0.001000 i=0 i+1=1  a_i=4.354801 e_i=0.004007 a_i+1=1.072212 e_i+1=0.004195.
+Crossing orbits detected: sys=379, T=0.001000 i=0 i+1=1  a_i=6.637956 e_i=0.007404 a_i+1=1.131866 e_i+1=0.001531.
+Crossing orbits detected: sys=506, T=0.001000 i=0 i+1=1  a_i=8.206513 e_i=0.001623 a_i+1=5.746333 e_i+1=0.004148.
+Crossing orbits detected: sys=564, T=0.001000 i=0 i+1=1  a_i=5.213041 e_i=0.008097 a_i+1=2.286685 e_i+1=0.009678.
+Crossing orbits detected: sys=656, T=0.001000 i=0 i+1=1  a_i=9.692900 e_i=0.004981 a_i+1=1.837589 e_i+1=0.001373.
+Crossing orbits detected: sys=177, T=0.001000 i=0 i+1=1  a_i=4.911472 e_i=0.007552 a_i+1=1.501837 e_i+1=0.009504.
+Crossing orbits detected: sys=217, T=0.001000 i=0 i+1=1  a_i=5.750659 e_i=0.005196 a_i+1=2.379381 e_i+1=0.009773.
+Crossing orbits detected: sys=288, T=0.001000 i=0 i+1=1  a_i=3.494203 e_i=0.005520 a_i+1=2.096127 e_i+1=0.005139.
+Crossing orbits detected: sys=383, T=0.001000 i=0 i+1=1  a_i=2.402013 e_i=0.008385 a_i+1=1.085741 e_i+1=0.008528.
+Crossing orbits detected: sys=507, T=0.001000 i=0 i+1=1  a_i=4.552260 e_i=0.008050 a_i+1=1.428498 e_i+1=0.006454.
+Crossing orbits detected: sys=572, T=0.001000 i=0 i+1=1  a_i=5.766320 e_i=0.008032 a_i+1=2.228498 e_i+1=0.003275.
+Crossing orbits detected: sys=658, T=0.001000 i=0 i+1=1  a_i=7.258890 e_i=0.003481 a_i+1=1.275080 e_i+1=0.003979.
+Crossing orbits detected: sys=178, T=0.001000 i=0 i+1=1  a_i=7.046749 e_i=0.002178 a_i+1=1.147303 e_i+1=0.005229.
+Crossing orbits detected: sys=219, T=0.001000 i=0 i+1=1  a_i=8.306053 e_i=0.007816 a_i+1=7.374009 e_i+1=0.006443.
+Crossing orbits detected: sys=289, T=0.001000 i=0 i+1=1  a_i=9.853133 e_i=0.001931 a_i+1=7.285590 e_i+1=0.000580.
+Crossing orbits detected: sys=322, T=0.001000 i=0 i+1=1  a_i=2.366215 e_i=0.000548 a_i+1=1.217513 e_i+1=0.002300.
+Crossing orbits detected: sys=508, T=0.001000 i=0 i+1=1  a_i=4.276784 e_i=0.006310 a_i+1=3.287782 e_i+1=0.008221.
+Crossing orbits detected: sys=573, T=0.001000 i=0 i+1=1  a_i=5.123442 e_i=0.001549 a_i+1=4.040012 e_i+1=0.007727.
+Crossing orbits detected: sys=659, T=0.001000 i=0 i+1=1  a_i=5.987894 e_i=0.003696 a_i+1=1.047522 e_i+1=0.002717.
+Crossing orbits detected: sys=179, T=0.001000 i=0 i+1=1  a_i=5.995183 e_i=0.000995 a_i+1=1.878064 e_i+1=0.000783.
+Crossing orbits detected: sys=222, T=0.001000 i=0 i+1=1  a_i=8.270908 e_i=0.005233 a_i+1=4.686780 e_i+1=0.001086.
+Crossing orbits detected: sys=291, T=0.001000 i=0 i+1=1  a_i=4.984994 e_i=0.006501 a_i+1=2.842915 e_i+1=0.004876.
+Crossing orbits detected: sys=325, T=0.001000 i=0 i+1=1  a_i=3.482659 e_i=0.009872 a_i+1=1.618380 e_i+1=0.002678.
+Crossing orbits detected: sys=509, T=0.001000 i=0 i+1=1  a_i=3.251968 e_i=0.007035 a_i+1=2.979124 e_i+1=0.008337.
+Crossing orbits detected: sys=574, T=0.001000 i=0 i+1=1  a_i=6.256593 e_i=0.000338 a_i+1=2.883022 e_i+1=0.003294.
+Crossing orbits detected: sys=664, T=0.001000 i=0 i+1=1  a_i=8.062861 e_i=0.002395 a_i+1=1.197114 e_i+1=0.005201.
+Crossing orbits detected: sys=181, T=0.001000 i=0 i+1=1  a_i=9.916411 e_i=0.001798 a_i+1=1.242989 e_i+1=0.004030.
+Crossing orbits detected: sys=225, T=0.001000 i=0 i+1=1  a_i=6.864739 e_i=0.005681 a_i+1=2.102135 e_i+1=0.006318.
+Crossing orbits detected: sys=296, T=0.001000 i=0 i+1=1  a_i=5.647648 e_i=0.000969 a_i+1=3.134323 e_i+1=0.004711.
+Crossing orbits detected: sys=326, T=0.001000 i=0 i+1=1  a_i=5.709736 e_i=0.005136 a_i+1=2.853301 e_i+1=0.005978.
+Crossing orbits detected: sys=575, T=0.001000 i=0 i+1=1  a_i=2.114085 e_i=0.008609 a_i+1=1.306259 e_i+1=0.004800.
+Crossing orbits detected: sys=665, T=0.001000 i=0 i+1=1  a_i=7.281814 e_i=0.008456 a_i+1=5.252907 e_i+1=0.004223.
+Crossing orbits detected: sys=184, T=0.001000 i=0 i+1=1  a_i=1.988402 e_i=0.004970 a_i+1=1.520688 e_i+1=0.002875.
+Crossing orbits detected: sys=226, T=0.001000 i=0 i+1=1  a_i=4.619759 e_i=0.004263 a_i+1=1.100882 e_i+1=0.000603.
+Crossing orbits detected: sys=297, T=0.001000 i=0 i+1=1  a_i=9.489012 e_i=0.009047 a_i+1=1.074624 e_i+1=0.000657.
+Crossing orbits detected: sys=328, T=0.001000 i=0 i+1=1  a_i=8.276175 e_i=0.001521 a_i+1=2.658483 e_i+1=0.001991.
+Crossing orbits detected: sys=512, T=0.001000 i=0 i+1=1  a_i=4.229020 e_i=0.004141 a_i+1=3.265849 e_i+1=0.004375.
+Crossing orbits detected: sys=666, T=0.001000 i=0 i+1=1  a_i=6.117249 e_i=0.008182 a_i+1=1.401286 e_i+1=0.001405.
+Crossing orbits detected: sys=185, T=0.001000 i=0 i+1=1  a_i=7.596336 e_i=0.000408 a_i+1=1.560544 e_i+1=0.004449.
+Crossing orbits detected: sys=227, T=0.001000 i=0 i+1=1  a_i=2.833552 e_i=0.000646 a_i+1=1.392374 e_i+1=0.009654.
+Crossing orbits detected: sys=299, T=0.001000 i=0 i+1=1  a_i=9.200147 e_i=0.004721 a_i+1=1.168913 e_i+1=0.007279.
+Crossing orbits detected: sys=333, T=0.001000 i=0 i+1=1  a_i=3.275633 e_i=0.008131 a_i+1=2.079960 e_i+1=0.006246.
+Crossing orbits detected: sys=514, T=0.001000 i=0 i+1=1  a_i=4.027631 e_i=0.005477 a_i+1=1.965175 e_i+1=0.001894.
+Crossing orbits detected: sys=667, T=0.001000 i=0 i+1=1  a_i=6.576816 e_i=0.001092 a_i+1=4.701262 e_i+1=0.006553.
+Crossing orbits detected: sys=187, T=0.001000 i=0 i+1=1  a_i=6.509343 e_i=0.000601 a_i+1=1.695144 e_i+1=0.000191.
+Crossing orbits detected: sys=228, T=0.001000 i=0 i+1=1  a_i=9.946504 e_i=0.006739 a_i+1=6.139419 e_i+1=0.005004.
+Crossing orbits detected: sys=300, T=0.001000 i=0 i+1=1  a_i=8.523337 e_i=0.000832 a_i+1=1.905044 e_i+1=0.001352.
+Crossing orbits detected: sys=334, T=0.001000 i=0 i+1=1  a_i=2.120954 e_i=0.004184 a_i+1=1.587208 e_i+1=0.000442.
+Crossing orbits detected: sys=519, T=0.001000 i=0 i+1=1  a_i=8.312092 e_i=0.007345 a_i+1=2.532910 e_i+1=0.001166.
+Crossing orbits detected: sys=670, T=0.001000 i=0 i+1=1  a_i=4.405419 e_i=0.007205 a_i+1=2.048258 e_i+1=0.001756.
+Crossing orbits detected: sys=188, T=0.001000 i=0 i+1=1  a_i=1.590438 e_i=0.007479 a_i+1=1.262405 e_i+1=0.001438.
+Crossing orbits detected: sys=230, T=0.001000 i=0 i+1=1  a_i=3.364568 e_i=0.006484 a_i+1=1.186945 e_i+1=0.004069.
+Crossing orbits detected: sys=301, T=0.001000 i=0 i+1=1  a_i=4.130501 e_i=0.008542 a_i+1=2.263754 e_i+1=0.009912.
+Crossing orbits detected: sys=335, T=0.001000 i=0 i+1=1  a_i=4.892814 e_i=0.000942 a_i+1=2.210569 e_i+1=0.006127.
+Crossing orbits detected: sys=520, T=0.001000 i=0 i+1=1  a_i=8.436729 e_i=0.007251 a_i+1=1.733157 e_i+1=0.008820.
+Crossing orbits detected: sys=671, T=0.001000 i=0 i+1=1  a_i=4.902689 e_i=0.007656 a_i+1=1.381546 e_i+1=0.009297.
+Crossing orbits detected: sys=190, T=0.001000 i=0 i+1=1  a_i=7.902676 e_i=0.006049 a_i+1=6.759417 e_i+1=0.005250.
+Crossing orbits detected: sys=231, T=0.001000 i=0 i+1=1  a_i=9.755659 e_i=0.007256 a_i+1=5.516949 e_i+1=0.003773.
+Crossing orbits detected: sys=304, T=0.001000 i=0 i+1=1  a_i=3.798332 e_i=0.005939 a_i+1=1.765049 e_i+1=0.000354.
+Crossing orbits detected: sys=336, T=0.001000 i=0 i+1=1  a_i=8.969460 e_i=0.002859 a_i+1=1.192526 e_i+1=0.001071.
+Crossing orbits detected: sys=521, T=0.001000 i=0 i+1=1  a_i=3.840691 e_i=0.005534 a_i+1=3.136992 e_i+1=0.007160.
+Crossing orbits detected: sys=672, T=0.001000 i=0 i+1=1  a_i=3.205035 e_i=0.003005 a_i+1=1.655661 e_i+1=0.007396.
+Crossing orbits detected: sys=191, T=0.001000 i=0 i+1=1  a_i=3.998719 e_i=0.008683 a_i+1=1.809361 e_i+1=0.002049.
+Crossing orbits detected: sys=235, T=0.001000 i=0 i+1=1  a_i=9.766627 e_i=0.001136 a_i+1=2.171704 e_i+1=0.003325.
+Crossing orbits detected: sys=309, T=0.001000 i=0 i+1=1  a_i=9.843101 e_i=0.005227 a_i+1=1.360142 e_i+1=0.004738.
+Crossing orbits detected: sys=339, T=0.001000 i=0 i+1=1  a_i=2.476940 e_i=0.006014 a_i+1=1.218103 e_i+1=0.007398.
+Crossing orbits detected: sys=522, T=0.001000 i=0 i+1=1  a_i=2.318274 e_i=0.007165 a_i+1=1.868477 e_i+1=0.000549.
+Crossing orbits detected: sys=678, T=0.001000 i=0 i+1=1  a_i=2.314224 e_i=0.006202 a_i+1=2.163937 e_i+1=0.009226.
+Crossing orbits detected: sys=128, T=0.001000 i=0 i+1=1  a_i=6.464744 e_i=0.005299 a_i+1=1.532337 e_i+1=0.004225.
+Crossing orbits detected: sys=245, T=0.001000 i=0 i+1=1  a_i=2.453882 e_i=0.004027 a_i+1=2.336945 e_i+1=0.007953.
+Crossing orbits detected: sys=311, T=0.001000 i=0 i+1=1  a_i=5.354572 e_i=0.004041 a_i+1=4.357664 e_i+1=0.003503.
+Crossing orbits detected: sys=340, T=0.001000 i=0 i+1=1  a_i=3.427919 e_i=0.008928 a_i+1=1.923370 e_i+1=0.004090.
+Crossing orbits detected: sys=523, T=0.001000 i=0 i+1=1  a_i=1.424986 e_i=0.000708 a_i+1=1.240621 e_i+1=0.006220.
+Crossing orbits detected: sys=679, T=0.001000 i=0 i+1=1  a_i=7.028960 e_i=0.000857 a_i+1=1.703628 e_i+1=0.007067.
+Crossing orbits detected: sys=129, T=0.001000 i=0 i+1=1  a_i=5.748639 e_i=0.004073 a_i+1=1.076188 e_i+1=0.000888.
+Crossing orbits detected: sys=250, T=0.001000 i=0 i+1=1  a_i=3.665198 e_i=0.004793 a_i+1=1.003096 e_i+1=0.002899.
+Crossing orbits detected: sys=312, T=0.001000 i=0 i+1=1  a_i=2.761747 e_i=0.005503 a_i+1=2.049480 e_i+1=0.005178.
+Crossing orbits detected: sys=341, T=0.001000 i=0 i+1=1  a_i=8.878051 e_i=0.003958 a_i+1=1.544435 e_i+1=0.006579.
+Crossing orbits detected: sys=524, T=0.001000 i=0 i+1=1  a_i=6.504350 e_i=0.009286 a_i+1=1.717160 e_i+1=0.007992.
+Crossing orbits detected: sys=681, T=0.001000 i=0 i+1=1  a_i=6.179074 e_i=0.003614 a_i+1=3.571043 e_i+1=0.000877.
+Crossing orbits detected: sys=130, T=0.001000 i=0 i+1=1  a_i=7.517462 e_i=0.003793 a_i+1=3.901287 e_i+1=0.006801.
+Crossing orbits detected: sys=255, T=0.001000 i=0 i+1=1  a_i=2.535092 e_i=0.000723 a_i+1=1.071881 e_i+1=0.001478.
+Crossing orbits detected: sys=313, T=0.001000 i=0 i+1=1  a_i=3.215003 e_i=0.004696 a_i+1=1.977380 e_i+1=0.007980.
+Crossing orbits detected: sys=342, T=0.001000 i=0 i+1=1  a_i=3.784759 e_i=0.001768 a_i+1=1.959752 e_i+1=0.008104.
+Crossing orbits detected: sys=525, T=0.001000 i=0 i+1=1  a_i=1.881816 e_i=0.007040 a_i+1=1.244983 e_i+1=0.008869.
+Crossing orbits detected: sys=683, T=0.001000 i=0 i+1=1  a_i=8.710246 e_i=0.004137 a_i+1=3.876136 e_i+1=0.009572.
+Crossing orbits detected: sys=131, T=0.001000 i=0 i+1=1  a_i=3.419875 e_i=0.003022 a_i+1=2.791589 e_i+1=0.005832.
+Crossing orbits detected: sys=867, T=0.001000 i=0 i+1=1  a_i=3.848226 e_i=0.007688 a_i+1=1.712236 e_i+1=0.003053.
+Crossing orbits detected: sys=314, T=0.001000 i=0 i+1=1  a_i=7.049335 e_i=0.003493 a_i+1=4.378465 e_i+1=0.000422.
+Crossing orbits detected: sys=343, T=0.001000 i=0 i+1=1  a_i=9.115733 e_i=0.004657 a_i+1=3.118785 e_i+1=0.005226.
+Crossing orbits detected: sys=528, T=0.001000 i=0 i+1=1  a_i=2.122748 e_i=0.003780 a_i+1=1.348355 e_i+1=0.008565.
+Crossing orbits detected: sys=684, T=0.001000 i=0 i+1=1  a_i=6.553935 e_i=0.002008 a_i+1=1.100486 e_i+1=0.007214.
+Crossing orbits detected: sys=134, T=0.001000 i=0 i+1=1  a_i=5.832149 e_i=0.002901 a_i+1=1.207506 e_i+1=0.007281.
+Crossing orbits detected: sys=868, T=0.001000 i=0 i+1=1  a_i=5.638495 e_i=0.003551 a_i+1=2.650772 e_i+1=0.006016.
+Crossing orbits detected: sys=315, T=0.001000 i=0 i+1=1  a_i=7.289743 e_i=0.003750 a_i+1=1.899181 e_i+1=0.006042.
+Crossing orbits detected: sys=346, T=0.001000 i=0 i+1=1  a_i=6.221376 e_i=0.003642 a_i+1=2.161409 e_i+1=0.005241.
+Crossing orbits detected: sys=530, T=0.001000 i=0 i+1=1  a_i=6.327213 e_i=0.002667 a_i+1=1.063104 e_i+1=0.009782.
+Crossing orbits detected: sys=687, T=0.001000 i=0 i+1=1  a_i=4.988815 e_i=0.002179 a_i+1=1.036106 e_i+1=0.004186.
+Crossing orbits detected: sys=136, T=0.001000 i=0 i+1=1  a_i=2.905849 e_i=0.004300 a_i+1=1.617405 e_i+1=0.008852.
+Crossing orbits detected: sys=869, T=0.001000 i=0 i+1=1  a_i=2.536685 e_i=0.003744 a_i+1=1.657730 e_i+1=0.001229.
+Crossing orbits detected: sys=317, T=0.001000 i=0 i+1=1  a_i=2.355934 e_i=0.008946 a_i+1=2.161057 e_i+1=0.000114.
+Crossing orbits detected: sys=347, T=0.001000 i=0 i+1=1  a_i=1.792642 e_i=0.005057 a_i+1=1.084684 e_i+1=0.002373.
+Crossing orbits detected: sys=534, T=0.001000 i=0 i+1=1  a_i=5.087893 e_i=0.007721 a_i+1=3.167758 e_i+1=0.009034.
+Crossing orbits detected: sys=688, T=0.001000 i=0 i+1=1  a_i=2.297635 e_i=0.003383 a_i+1=1.023942 e_i+1=0.000960.
+Crossing orbits detected: sys=138, T=0.001000 i=0 i+1=1  a_i=7.761559 e_i=0.003424 a_i+1=4.929551 e_i+1=0.009054.
+Crossing orbits detected: sys=871, T=0.001000 i=0 i+1=1  a_i=2.321692 e_i=0.005581 a_i+1=1.534993 e_i+1=0.009612.
+Crossing orbits detected: sys=318, T=0.001000 i=0 i+1=1  a_i=4.714689 e_i=0.000492 a_i+1=1.174339 e_i+1=0.009176.
+Crossing orbits detected: sys=348, T=0.001000 i=0 i+1=1  a_i=4.219985 e_i=0.006222 a_i+1=1.869857 e_i+1=0.007728.
+Crossing orbits detected: sys=535, T=0.001000 i=0 i+1=1  a_i=7.720323 e_i=0.002431 a_i+1=2.404179 e_i+1=0.009477.
+Crossing orbits detected: sys=690, T=0.001000 i=0 i+1=1  a_i=5.851905 e_i=0.001714 a_i+1=2.239362 e_i+1=0.007932.
+Crossing orbits detected: sys=140, T=0.001000 i=0 i+1=1  a_i=5.151952 e_i=0.005819 a_i+1=3.836940 e_i+1=0.008350.
+Crossing orbits detected: sys=873, T=0.001000 i=0 i+1=1  a_i=7.238809 e_i=0.006156 a_i+1=3.004653 e_i+1=0.003402.
+Crossing orbits detected: sys=897, T=0.001000 i=0 i+1=1  a_i=8.767627 e_i=0.008931 a_i+1=1.285562 e_i+1=0.002570.
+Crossing orbits detected: sys=539, T=0.001000 i=0 i+1=1  a_i=5.173297 e_i=0.005609 a_i+1=2.164930 e_i+1=0.000525.
+Crossing orbits detected: sys=691, T=0.001000 i=0 i+1=1  a_i=7.756842 e_i=0.009363 a_i+1=3.271345 e_i+1=0.002999.
+Crossing orbits detected: sys=141, T=0.001000 i=0 i+1=1  a_i=6.832959 e_i=0.009793 a_i+1=1.327366 e_i+1=0.001886.
+Crossing orbits detected: sys=874, T=0.001000 i=0 i+1=1  a_i=2.617714 e_i=0.008866 a_i+1=1.272875 e_i+1=0.002199.
+Crossing orbits detected: sys=900, T=0.001000 i=0 i+1=1  a_i=4.775214 e_i=0.007144 a_i+1=1.042524 e_i+1=0.008486.
+Crossing orbits detected: sys=541, T=0.001000 i=0 i+1=1  a_i=7.630378 e_i=0.001835 a_i+1=5.034502 e_i+1=0.001083.
+Crossing orbits detected: sys=692, T=0.001000 i=0 i+1=1  a_i=8.044763 e_i=0.002083 a_i+1=3.542815 e_i+1=0.004721.
+Crossing orbits detected: sys=142, T=0.001000 i=0 i+1=1  a_i=3.072209 e_i=0.008799 a_i+1=1.057557 e_i+1=0.009710.
+Crossing orbits detected: sys=877, T=0.001000 i=0 i+1=1  a_i=5.715192 e_i=0.004935 a_i+1=1.519527 e_i+1=0.009974.
+Crossing orbits detected: sys=906, T=0.001000 i=0 i+1=1  a_i=2.369078 e_i=0.003204 a_i+1=1.154901 e_i+1=0.009053.
+Crossing orbits detected: sys=543, T=0.001000 i=0 i+1=1  a_i=6.977918 e_i=0.007629 a_i+1=2.538580 e_i+1=0.001862.
+Crossing orbits detected: sys=694, T=0.001000 i=0 i+1=1  a_i=6.436562 e_i=0.002238 a_i+1=3.000667 e_i+1=0.003035.
+Crossing orbits detected: sys=145, T=0.001000 i=0 i+1=1  a_i=7.473630 e_i=0.000174 a_i+1=4.358341 e_i+1=0.002540.
+Crossing orbits detected: sys=878, T=0.001000 i=0 i+1=1  a_i=7.878541 e_i=0.009965 a_i+1=1.253410 e_i+1=0.006849.
+Crossing orbits detected: sys=909, T=0.001000 i=0 i+1=1  a_i=7.177602 e_i=0.006362 a_i+1=5.411537 e_i+1=0.009811.
+Crossing orbits detected: sys=697, T=0.001000 i=0 i+1=1  a_i=4.544435 e_i=0.006688 a_i+1=1.217658 e_i+1=0.002280.
+Crossing orbits detected: sys=147, T=0.001000 i=0 i+1=1  a_i=7.485038 e_i=0.007783 a_i+1=1.079329 e_i+1=0.008579.
+Crossing orbits detected: sys=880, T=0.001000 i=0 i+1=1  a_i=2.560724 e_i=0.008528 a_i+1=1.587899 e_i+1=0.006105.
+Crossing orbits detected: sys=912, T=0.001000 i=0 i+1=1  a_i=5.373630 e_i=0.000533 a_i+1=4.408889 e_i+1=0.003828.
+Crossing orbits detected: sys=699, T=0.001000 i=0 i+1=1  a_i=3.000003 e_i=0.001753 a_i+1=1.408299 e_i+1=0.009223.
+Crossing orbits detected: sys=149, T=0.001000 i=0 i+1=1  a_i=4.115218 e_i=0.004892 a_i+1=1.133380 e_i+1=0.001820.
+Crossing orbits detected: sys=883, T=0.001000 i=0 i+1=1  a_i=5.115157 e_i=0.009553 a_i+1=3.274332 e_i+1=0.005287.
+Crossing orbits detected: sys=913, T=0.001000 i=0 i+1=1  a_i=8.044056 e_i=0.000564 a_i+1=2.135520 e_i+1=0.000740.
+Crossing orbits detected: sys=702, T=0.001000 i=0 i+1=1  a_i=8.312602 e_i=0.008934 a_i+1=1.013790 e_i+1=0.002217.
+Crossing orbits detected: sys=150, T=0.001000 i=0 i+1=1  a_i=6.484200 e_i=0.009549 a_i+1=4.379260 e_i+1=0.004754.
+Crossing orbits detected: sys=885, T=0.001000 i=0 i+1=1  a_i=8.596696 e_i=0.008553 a_i+1=2.071518 e_i+1=0.006244.
+Crossing orbits detected: sys=918, T=0.001000 i=0 i+1=1  a_i=6.854953 e_i=0.002842 a_i+1=1.207229 e_i+1=0.001788.
+Crossing orbits detected: sys=703, T=0.001000 i=0 i+1=1  a_i=6.086353 e_i=0.009128 a_i+1=2.895567 e_i+1=0.000893.
+Crossing orbits detected: sys=151, T=0.001000 i=0 i+1=1  a_i=2.790828 e_i=0.002118 a_i+1=1.393103 e_i+1=0.006151.
+Crossing orbits detected: sys=886, T=0.001000 i=0 i+1=1  a_i=3.682723 e_i=0.005750 a_i+1=1.279714 e_i+1=0.004222.
+Crossing orbits detected: sys=919, T=0.001000 i=0 i+1=1  a_i=9.655985 e_i=0.001063 a_i+1=8.351362 e_i+1=0.008713.
+Crossing orbits detected: sys=32, T=0.001000 i=0 i+1=1  a_i=8.369873 e_i=0.001127 a_i+1=2.865258 e_i+1=0.004616.
+Crossing orbits detected: sys=154, T=0.001000 i=0 i+1=1  a_i=6.423286 e_i=0.004413 a_i+1=2.090619 e_i+1=0.009511.
+Crossing orbits detected: sys=888, T=0.001000 i=0 i+1=1  a_i=3.653924 e_i=0.001320 a_i+1=1.859714 e_i+1=0.008153.
+Crossing orbits detected: sys=920, T=0.001000 i=0 i+1=1  a_i=4.094084 e_i=0.007482 a_i+1=1.485135 e_i+1=0.006703.
+Crossing orbits detected: sys=33, T=0.001000 i=0 i+1=1  a_i=5.266196 e_i=0.006805 a_i+1=3.502797 e_i+1=0.008171.
+Crossing orbits detected: sys=155, T=0.001000 i=0 i+1=1  a_i=7.105315 e_i=0.009708 a_i+1=1.796747 e_i+1=0.009659.
+Crossing orbits detected: sys=890, T=0.001000 i=0 i+1=1  a_i=2.355789 e_i=0.003959 a_i+1=1.732463 e_i+1=0.008158.
+Crossing orbits detected: sys=922, T=0.001000 i=0 i+1=1  a_i=8.500483 e_i=0.003467 a_i+1=7.578875 e_i+1=0.006057.
+Crossing orbits detected: sys=35, T=0.001000 i=0 i+1=1  a_i=4.101296 e_i=0.007719 a_i+1=1.500134 e_i+1=0.002211.
+Crossing orbits detected: sys=156, T=0.001000 i=0 i+1=1  a_i=1.568839 e_i=0.005319 a_i+1=1.349897 e_i+1=0.005141.
+Crossing orbits detected: sys=892, T=0.001000 i=0 i+1=1  a_i=5.502035 e_i=0.002223 a_i+1=2.288048 e_i+1=0.000730.
+Crossing orbits detected: sys=923, T=0.001000 i=0 i+1=1  a_i=6.567976 e_i=0.004897 a_i+1=1.184854 e_i+1=0.001247.
+Crossing orbits detected: sys=36, T=0.001000 i=0 i+1=1  a_i=2.392219 e_i=0.007894 a_i+1=1.089309 e_i+1=0.000577.
+Crossing orbits detected: sys=157, T=0.001000 i=0 i+1=1  a_i=5.023804 e_i=0.004686 a_i+1=2.239787 e_i+1=0.001865.
+Crossing orbits detected: sys=894, T=0.001000 i=0 i+1=1  a_i=5.403921 e_i=0.004049 a_i+1=1.768906 e_i+1=0.008136.
+Crossing orbits detected: sys=925, T=0.001000 i=0 i+1=1  a_i=9.876209 e_i=0.006465 a_i+1=1.854719 e_i+1=0.001988.
+Crossing orbits detected: sys=37, T=0.001000 i=0 i+1=1  a_i=7.384242 e_i=0.009054 a_i+1=1.614860 e_i+1=0.001387.
+Crossing orbits detected: sys=158, T=0.001000 i=0 i+1=1  a_i=1.799008 e_i=0.007924 a_i+1=1.312451 e_i+1=0.002943.
+Crossing orbits detected: sys=834, T=0.001000 i=0 i+1=1  a_i=8.326683 e_i=0.001693 a_i+1=6.542215 e_i+1=0.008682.
+Crossing orbits detected: sys=926, T=0.001000 i=0 i+1=1  a_i=5.766499 e_i=0.004248 a_i+1=1.656231 e_i+1=0.003267.
+Crossing orbits detected: sys=38, T=0.001000 i=0 i+1=1  a_i=7.899486 e_i=0.003771 a_i+1=1.360665 e_i+1=0.006114.
+Crossing orbits detected: sys=803, T=0.001000 i=0 i+1=1  a_i=3.870316 e_i=0.002257 a_i+1=1.563279 e_i+1=0.003801.
+Crossing orbits detected: sys=836, T=0.001000 i=0 i+1=1  a_i=3.338313 e_i=0.009615 a_i+1=1.045684 e_i+1=0.009353.
+Crossing orbits detected: sys=927, T=0.001000 i=0 i+1=1  a_i=7.597623 e_i=0.004653 a_i+1=1.985817 e_i+1=0.002227.
+Crossing orbits detected: sys=39, T=0.001000 i=0 i+1=1  a_i=3.560331 e_i=0.000722 a_i+1=2.402803 e_i+1=0.009232.
+Crossing orbits detected: sys=808, T=0.001000 i=0 i+1=1  a_i=2.103990 e_i=0.008159 a_i+1=1.375714 e_i+1=0.009622.
+Crossing orbits detected: sys=837, T=0.001000 i=0 i+1=1  a_i=4.692573 e_i=0.004297 a_i+1=1.849430 e_i+1=0.009432.
+Crossing orbits detected: sys=929, T=0.001000 i=0 i+1=1  a_i=3.146041 e_i=0.005165 a_i+1=2.186107 e_i+1=0.006813.
+Crossing orbits detected: sys=41, T=0.001000 i=0 i+1=1  a_i=3.764029 e_i=0.007054 a_i+1=2.016657 e_i+1=0.002514.
+Crossing orbits detected: sys=809, T=0.001000 i=0 i+1=1  a_i=3.576497 e_i=0.009321 a_i+1=2.669085 e_i+1=0.000814.
+Crossing orbits detected: sys=844, T=0.001000 i=0 i+1=1  a_i=9.543585 e_i=0.007745 a_i+1=1.062853 e_i+1=0.007906.
+Crossing orbits detected: sys=930, T=0.001000 i=0 i+1=1  a_i=1.391473 e_i=0.009195 a_i+1=1.124531 e_i+1=0.005695.
+Crossing orbits detected: sys=42, T=0.001000 i=0 i+1=1  a_i=1.556647 e_i=0.007016 a_i+1=1.243616 e_i+1=0.006416.
+Crossing orbits detected: sys=812, T=0.001000 i=0 i+1=1  a_i=3.574100 e_i=0.008848 a_i+1=1.542598 e_i+1=0.000739.
+Crossing orbits detected: sys=847, T=0.001000 i=0 i+1=1  a_i=4.935424 e_i=0.005727 a_i+1=1.597083 e_i+1=0.002071.
+Crossing orbits detected: sys=932, T=0.001000 i=0 i+1=1  a_i=7.288788 e_i=0.003009 a_i+1=4.671792 e_i+1=0.005301.
+Crossing orbits detected: sys=48, T=0.001000 i=0 i+1=1  a_i=2.840379 e_i=0.005395 a_i+1=2.003849 e_i+1=0.002396.
+Crossing orbits detected: sys=813, T=0.001000 i=0 i+1=1  a_i=4.113659 e_i=0.005679 a_i+1=1.344287 e_i+1=0.000000.
+Crossing orbits detected: sys=848, T=0.001000 i=0 i+1=1  a_i=2.697788 e_i=0.000542 a_i+1=2.025542 e_i+1=0.003892.
+Crossing orbits detected: sys=933, T=0.001000 i=0 i+1=1  a_i=1.590247 e_i=0.009785 a_i+1=1.065913 e_i+1=0.001345.
+Crossing orbits detected: sys=51, T=0.001000 i=0 i+1=1  a_i=7.221281 e_i=0.001981 a_i+1=2.321062 e_i+1=0.009665.
+Crossing orbits detected: sys=815, T=0.001000 i=0 i+1=1  a_i=4.451925 e_i=0.004836 a_i+1=3.105043 e_i+1=0.000508.
+Crossing orbits detected: sys=849, T=0.001000 i=0 i+1=1  a_i=2.684491 e_i=0.005537 a_i+1=1.679296 e_i+1=0.008627.
+Crossing orbits detected: sys=934, T=0.001000 i=0 i+1=1  a_i=7.129969 e_i=0.007843 a_i+1=1.941415 e_i+1=0.009136.
+Crossing orbits detected: sys=52, T=0.001000 i=0 i+1=1  a_i=5.718879 e_i=0.003825 a_i+1=1.231365 e_i+1=0.004007.
+Crossing orbits detected: sys=816, T=0.001000 i=0 i+1=1  a_i=2.716040 e_i=0.009616 a_i+1=1.458319 e_i+1=0.001700.
+Crossing orbits detected: sys=850, T=0.001000 i=0 i+1=1  a_i=6.357855 e_i=0.007182 a_i+1=1.062781 e_i+1=0.005979.
+Crossing orbits detected: sys=935, T=0.001000 i=0 i+1=1  a_i=5.000429 e_i=0.009423 a_i+1=1.478706 e_i+1=0.003940.
+Crossing orbits detected: sys=53, T=0.001000 i=0 i+1=1  a_i=3.329305 e_i=0.000852 a_i+1=1.264213 e_i+1=0.001701.
+Crossing orbits detected: sys=819, T=0.001000 i=0 i+1=1  a_i=4.632797 e_i=0.008953 a_i+1=1.095191 e_i+1=0.008556.
+Crossing orbits detected: sys=851, T=0.001000 i=0 i+1=1  a_i=2.779532 e_i=0.004339 a_i+1=2.258042 e_i+1=0.001790.
+Crossing orbits detected: sys=936, T=0.001000 i=0 i+1=1  a_i=6.465626 e_i=0.004461 a_i+1=2.425074 e_i+1=0.009262.
+Crossing orbits detected: sys=54, T=0.001000 i=0 i+1=1  a_i=3.524175 e_i=0.002402 a_i+1=2.269151 e_i+1=0.002984.
+Crossing orbits detected: sys=820, T=0.001000 i=0 i+1=1  a_i=5.452727 e_i=0.007192 a_i+1=2.640834 e_i+1=0.002821.
+Crossing orbits detected: sys=852, T=0.001000 i=0 i+1=1  a_i=7.562732 e_i=0.001544 a_i+1=1.684891 e_i+1=0.002234.
+Crossing orbits detected: sys=937, T=0.001000 i=0 i+1=1  a_i=5.567726 e_i=0.006364 a_i+1=2.464054 e_i+1=0.000937.
+Crossing orbits detected: sys=55, T=0.001000 i=0 i+1=1  a_i=3.673190 e_i=0.003832 a_i+1=1.985326 e_i+1=0.000236.
+Crossing orbits detected: sys=821, T=0.001000 i=0 i+1=1  a_i=1.857089 e_i=0.005571 a_i+1=1.185333 e_i+1=0.004257.
+Crossing orbits detected: sys=853, T=0.001000 i=0 i+1=1  a_i=2.928252 e_i=0.007309 a_i+1=2.368306 e_i+1=0.008758.
+Crossing orbits detected: sys=938, T=0.001000 i=0 i+1=1  a_i=5.698578 e_i=0.005972 a_i+1=5.203719 e_i+1=0.008292.
+Crossing orbits detected: sys=56, T=0.001000 i=0 i+1=1  a_i=9.953090 e_i=0.003315 a_i+1=1.232083 e_i+1=0.004036.
+Crossing orbits detected: sys=823, T=0.001000 i=0 i+1=1  a_i=3.757986 e_i=0.009563 a_i+1=1.365595 e_i+1=0.004073.
+Crossing orbits detected: sys=854, T=0.001000 i=0 i+1=1  a_i=3.420531 e_i=0.002145 a_i+1=1.718817 e_i+1=0.009046.
+Crossing orbits detected: sys=939, T=0.001000 i=0 i+1=1  a_i=3.065851 e_i=0.005774 a_i+1=1.990063 e_i+1=0.005624.
+Crossing orbits detected: sys=57, T=0.001000 i=0 i+1=1  a_i=6.780533 e_i=0.005423 a_i+1=1.037922 e_i+1=0.008459.
+Crossing orbits detected: sys=824, T=0.001000 i=0 i+1=1  a_i=3.470243 e_i=0.002757 a_i+1=1.568814 e_i+1=0.008365.
+Crossing orbits detected: sys=857, T=0.001000 i=0 i+1=1  a_i=9.725122 e_i=0.007897 a_i+1=1.807349 e_i+1=0.008884.
+Crossing orbits detected: sys=942, T=0.001000 i=0 i+1=1  a_i=3.013300 e_i=0.005603 a_i+1=2.275997 e_i+1=0.005294.
+Crossing orbits detected: sys=59, T=0.001000 i=0 i+1=1  a_i=2.020939 e_i=0.001497 a_i+1=1.144496 e_i+1=0.005182.
+Crossing orbits detected: sys=825, T=0.001000 i=0 i+1=1  a_i=6.480897 e_i=0.001690 a_i+1=5.629346 e_i+1=0.009204.
+Crossing orbits detected: sys=859, T=0.001000 i=0 i+1=1  a_i=4.545432 e_i=0.005798 a_i+1=3.079939 e_i+1=0.007805.
+Crossing orbits detected: sys=946, T=0.001000 i=0 i+1=1  a_i=1.385712 e_i=0.003587 a_i+1=1.307611 e_i+1=0.001442.
+Crossing orbits detected: sys=60, T=0.001000 i=0 i+1=1  a_i=3.878136 e_i=0.004131 a_i+1=2.154685 e_i+1=0.001289.
+Crossing orbits detected: sys=826, T=0.001000 i=0 i+1=1  a_i=3.390225 e_i=0.000680 a_i+1=2.730231 e_i+1=0.005984.
+Crossing orbits detected: sys=861, T=0.001000 i=0 i+1=1  a_i=3.498625 e_i=0.008056 a_i+1=1.301630 e_i+1=0.003003.
+Crossing orbits detected: sys=952, T=0.001000 i=0 i+1=1  a_i=2.688440 e_i=0.006745 a_i+1=1.436232 e_i+1=0.000922.
+Crossing orbits detected: sys=62, T=0.001000 i=0 i+1=1  a_i=2.983091 e_i=0.004396 a_i+1=1.513219 e_i+1=0.006622.
+Crossing orbits detected: sys=828, T=0.001000 i=0 i+1=1  a_i=6.129789 e_i=0.004751 a_i+1=5.001150 e_i+1=0.006630.
+Crossing orbits detected: sys=953, T=0.001000 i=0 i+1=1  a_i=2.158103 e_i=0.008150 a_i+1=1.731777 e_i+1=0.006991.
+Crossing orbits detected: sys=1, T=0.001000 i=0 i+1=1  a_i=9.448962 e_i=0.003595 a_i+1=2.165681 e_i+1=0.000502.
+Crossing orbits detected: sys=829, T=0.001000 i=0 i+1=1  a_i=6.216110 e_i=0.000206 a_i+1=2.074192 e_i+1=0.003314.
+Crossing orbits detected: sys=955, T=0.001000 i=0 i+1=1  a_i=6.536643 e_i=0.003537 a_i+1=2.502173 e_i+1=0.009801.
+Crossing orbits detected: sys=2, T=0.001000 i=0 i+1=1  a_i=7.818013 e_i=0.004316 a_i+1=4.136354 e_i+1=0.004745.
+Crossing orbits detected: sys=831, T=0.001000 i=0 i+1=1  a_i=4.104874 e_i=0.008463 a_i+1=2.910446 e_i+1=0.001371.
+Crossing orbits detected: sys=957, T=0.001000 i=0 i+1=1  a_i=2.216192 e_i=0.003338 a_i+1=1.566060 e_i+1=0.008388.
+Crossing orbits detected: sys=8, T=0.001000 i=0 i+1=1  a_i=3.891614 e_i=0.007575 a_i+1=1.562928 e_i+1=0.006950.
+Crossing orbits detected: sys=769, T=0.001000 i=0 i+1=1  a_i=4.442009 e_i=0.001108 a_i+1=2.620883 e_i+1=0.007359.
+Crossing orbits detected: sys=10, T=0.001000 i=0 i+1=1  a_i=9.642806 e_i=0.005087 a_i+1=4.892561 e_i+1=0.002382.
+Crossing orbits detected: sys=770, T=0.001000 i=0 i+1=1  a_i=8.343465 e_i=0.002092 a_i+1=2.143771 e_i+1=0.006355.
+Crossing orbits detected: sys=11, T=0.001000 i=0 i+1=1  a_i=7.877798 e_i=0.001897 a_i+1=1.455646 e_i+1=0.007253.
+Crossing orbits detected: sys=771, T=0.001000 i=0 i+1=1  a_i=7.448356 e_i=0.005700 a_i+1=2.126670 e_i+1=0.002293.
+Crossing orbits detected: sys=13, T=0.001000 i=0 i+1=1  a_i=4.082043 e_i=0.001543 a_i+1=1.689653 e_i+1=0.007999.
+Crossing orbits detected: sys=773, T=0.001000 i=0 i+1=1  a_i=9.776057 e_i=0.008579 a_i+1=4.679633 e_i+1=0.001653.
+Crossing orbits detected: sys=14, T=0.001000 i=0 i+1=1  a_i=1.389677 e_i=0.005993 a_i+1=1.301216 e_i+1=0.008153.
+Crossing orbits detected: sys=774, T=0.001000 i=0 i+1=1  a_i=8.604810 e_i=0.004132 a_i+1=5.062153 e_i+1=0.005697.
+Crossing orbits detected: sys=15, T=0.001000 i=0 i+1=1  a_i=5.569444 e_i=0.004927 a_i+1=1.922039 e_i+1=0.005007.
+Crossing orbits detected: sys=775, T=0.001000 i=0 i+1=1  a_i=1.428527 e_i=0.009989 a_i+1=1.258169 e_i+1=0.009499.
+Crossing orbits detected: sys=19, T=0.001000 i=0 i+1=1  a_i=3.583869 e_i=0.005394 a_i+1=2.622240 e_i+1=0.003166.
+Crossing orbits detected: sys=776, T=0.001000 i=0 i+1=1  a_i=6.638053 e_i=0.002454 a_i+1=1.151840 e_i+1=0.009459.
+Crossing orbits detected: sys=20, T=0.001000 i=0 i+1=1  a_i=6.573014 e_i=0.005399 a_i+1=4.098006 e_i+1=0.002523.
+Crossing orbits detected: sys=781, T=0.001000 i=0 i+1=1  a_i=6.478688 e_i=0.009890 a_i+1=1.839995 e_i+1=0.006897.
+Crossing orbits detected: sys=21, T=0.001000 i=0 i+1=1  a_i=2.666104 e_i=0.005417 a_i+1=1.855099 e_i+1=0.000204.
+Crossing orbits detected: sys=782, T=0.001000 i=0 i+1=1  a_i=8.984770 e_i=0.006647 a_i+1=7.874189 e_i+1=0.003611.
+Crossing orbits detected: sys=23, T=0.001000 i=0 i+1=1  a_i=5.301301 e_i=0.002193 a_i+1=2.542624 e_i+1=0.006849.
+Crossing orbits detected: sys=783, T=0.001000 i=0 i+1=1  a_i=7.586292 e_i=0.004429 a_i+1=6.520310 e_i+1=0.009383.
+Crossing orbits detected: sys=24, T=0.001000 i=0 i+1=1  a_i=8.933997 e_i=0.009222 a_i+1=6.079649 e_i+1=0.003074.
+Crossing orbits detected: sys=786, T=0.001000 i=0 i+1=1  a_i=4.395935 e_i=0.004099 a_i+1=2.584248 e_i+1=0.005255.
+Crossing orbits detected: sys=27, T=0.001000 i=0 i+1=1  a_i=3.246084 e_i=0.009611 a_i+1=1.023353 e_i+1=0.002777.
+Crossing orbits detected: sys=787, T=0.001000 i=0 i+1=1  a_i=6.273181 e_i=0.001381 a_i+1=2.180688 e_i+1=0.006825.
+Crossing orbits detected: sys=28, T=0.001000 i=0 i+1=1  a_i=3.211700 e_i=0.003906 a_i+1=1.390122 e_i+1=0.005787.
+Crossing orbits detected: sys=788, T=0.001000 i=0 i+1=1  a_i=1.623100 e_i=0.002164 a_i+1=1.246670 e_i+1=0.004550.
+Crossing orbits detected: sys=29, T=0.001000 i=0 i+1=1  a_i=7.259822 e_i=0.009809 a_i+1=5.629308 e_i+1=0.003991.
+Crossing orbits detected: sys=789, T=0.001000 i=0 i+1=1  a_i=6.980213 e_i=0.003373 a_i+1=4.730436 e_i+1=0.008122.
+Crossing orbits detected: sys=30, T=0.001000 i=0 i+1=1  a_i=5.598387 e_i=0.005709 a_i+1=4.002134 e_i+1=0.005351.
+Crossing orbits detected: sys=791, T=0.001000 i=0 i+1=1  a_i=1.874616 e_i=0.008493 a_i+1=1.584255 e_i+1=0.000465.
+Crossing orbits detected: sys=31, T=0.001000 i=0 i+1=1  a_i=9.196741 e_i=0.007160 a_i+1=3.422442 e_i+1=0.003690.
+Crossing orbits detected: sys=795, T=0.001000 i=0 i+1=1  a_i=5.904069 e_i=0.007097 a_i+1=2.480665 e_i+1=0.002512.
+Crossing orbits detected: sys=798, T=0.001000 i=0 i+1=1  a_i=2.967460 e_i=0.002106 a_i+1=1.939033 e_i+1=0.002407.
+Crossing orbits detected: sys=799, T=0.001000 i=0 i+1=1  a_i=6.172979 e_i=0.003111 a_i+1=1.666605 e_i+1=0.001904.
+Crossing orbits detected: sys=192, T=0.198000 i=0 i+1=1  a_i=3.151588 e_i=0.000764 a_i+1=3.368434 e_i+1=0.063792.
+# Done.
 
 
 === Energy conservation test ============================================================================
@@ -19,39 +479,33 @@ Snapshot #0 (initial conditions):
     1     1  T=0.000000  m=0.000011  pos=(  9.44884   0.00000   0.00000)  vel=( -0.00117   0.32532   0.00003)  E=-0.00015983  dE/E=-0
     1     2  T=0.000000  m=0.000690  pos=(  2.16554   0.00000   0.00000)  vel=( -0.00034   0.67954   0.00546)  E=-0.00015983  dE/E=-0
 
-Snapshot #10 (end of simulation)
+Snapshot #12 (end of simulation)
     0     0  T=1.000000  m=1.000000  pos=(  0.00001  -0.00003   0.00000)  vel=(  0.00002  -0.00003   0.00000)  E=-1.39198e-05  dE/E=2.79914e-14
     0     1  T=1.000000  m=0.000032  pos=(  1.02923   0.80968  -0.00309)  vel=( -0.54303   0.68598  -0.00262)  E=-1.39198e-05  dE/E=2.79914e-14
     0     2  T=1.000000  m=0.000014  pos=(  3.67282   0.51771  -0.00305)  vel=( -0.07005   0.51432  -0.00303)  E=-1.39198e-05  dE/E=2.79914e-14
-    1     0  T=1.000000  m=1.000000  pos=(  0.00007  -0.00046  -0.00000)  vel=(  0.00015  -0.00045  -0.00000)  E=-0.00015983  dE/E=-6.61389e-15
-    1     1  T=1.000000  m=0.000011  pos=(  9.44206   0.32526   0.00003)  vel=( -0.01238   0.32513   0.00003)  E=-0.00015983  dE/E=-6.61389e-15
-    1     2  T=1.000000  m=0.000690  pos=(  2.05945   0.66844   0.00537)  vel=( -0.21012   0.64633   0.00519)  E=-0.00015983  dE/E=-6.61389e-15
+    1     0  T=0.001000  m=1.000000  pos=(  0.00000   0.00000   0.00000)  vel=(  0.00000  -0.00047   0.00000)  E=-8.20871e-05  dE/E=-0.48641
+    1     1  T=0.001000  m=0.000011  pos=(  9.44884   0.00000   0.00000)  vel=( -0.00117   0.32532   0.00130)  E=-8.20871e-05  dE/E=-0.48641
+    1     2  T=0.001000  m=0.000690  pos=(  2.16554   0.00083   0.00000)  vel=( -0.00034   0.82888   0.00546)  E=-8.20871e-05  dE/E=-0.48641
 
 Systems with worst energy conservation:
-  258     0  T=1.000000  m=1.000000  pos=(  0.00149  -0.00761   0.00001)  vel=(  0.00295  -0.00717   0.00001)  E=-0.00283998  dE/E=4.83224e-11
-  258     1  T=1.000000  m=0.006930  pos=(  2.24494   0.64586   0.00039)  vel=( -0.18283   0.62895   0.00037)  E=-0.00283998  dE/E=4.83224e-11
-  258     2  T=1.000000  m=0.004027  pos=(  1.27349   0.77882  -0.00296)  vel=( -0.41675   0.69787  -0.00264)  E=-0.00283998  dE/E=4.83224e-11
-  827     0  T=1.000000  m=1.000000  pos=(  0.00118  -0.00370  -0.00001)  vel=(  0.00224  -0.00313  -0.00001)  E=-0.00165945  dE/E=2.49395e-11
-  827     1  T=1.000000  m=0.002375  pos=(  0.72607   0.83824  -0.00070)  vel=( -0.71284   0.62168  -0.00052)  E=-0.00165945  dE/E=2.49395e-11
-  827     2  T=1.000000  m=0.002562  pos=(  2.06929   0.66638   0.00447)  vel=( -0.21464   0.64464   0.00432)  E=-0.00165945  dE/E=2.49395e-11
+  781     0  T=0.001000  m=1.000000  pos=(  0.00000  -0.00000   0.00000)  vel=(  0.00003  -0.00131  -0.00001)  E=-2.43917  dE/E=4137.99
+  781     1  T=0.001000  m=0.000926  pos=(  0.00000   0.00038   0.00000)  vel=(  0.00000   0.37851   0.00221)  E=-2.43917  dE/E=4137.99
+  781     2  T=0.001000  m=0.000008  pos=(  1.83979   0.00079   0.00000)  vel=(  0.00508   0.79451  -0.00590)  E=-2.43917  dE/E=4137.99
+  776     0  T=0.001000  m=1.000000  pos=( -0.00000  -0.00000  -0.00000)  vel=( -0.00003  -0.00002  -0.00000)  E=-1.78624  dE/E=1093.92
+  776     1  T=0.001000  m=0.000014  pos=( -0.00001   0.00000   0.00000)  vel=( -0.00008   0.38813   0.00049)  E=-1.78624  dE/E=1093.92
+  776     2  T=0.001000  m=0.003770  pos=(  1.15173   0.00062   0.00000)  vel=(  0.00881   0.62207   0.00205)  E=-1.78624  dE/E=1093.92
 
 Systems that ended earliest:
-  258     0  T=1.000000  m=1.000000  pos=(  0.00149  -0.00761   0.00001)  vel=(  0.00295  -0.00717   0.00001)  E=-0.00283998  dE/E=4.83224e-11
-  258     1  T=1.000000  m=0.006930  pos=(  2.24494   0.64586   0.00039)  vel=( -0.18283   0.62895   0.00037)  E=-0.00283998  dE/E=4.83224e-11
-  258     2  T=1.000000  m=0.004027  pos=(  1.27349   0.77882  -0.00296)  vel=( -0.41675   0.69787  -0.00264)  E=-0.00283998  dE/E=4.83224e-11
-  827     0  T=1.000000  m=1.000000  pos=(  0.00118  -0.00370  -0.00001)  vel=(  0.00224  -0.00313  -0.00001)  E=-0.00165945  dE/E=2.49395e-11
-  827     1  T=1.000000  m=0.002375  pos=(  0.72607   0.83824  -0.00070)  vel=( -0.71284   0.62168  -0.00052)  E=-0.00165945  dE/E=2.49395e-11
-  827     2  T=1.000000  m=0.002562  pos=(  2.06929   0.66638   0.00447)  vel=( -0.21464   0.64464   0.00432)  E=-0.00165945  dE/E=2.49395e-11
+  196     0  T=0.000000  m=1.000000  pos=(  0.00000  -0.00000   0.00000)  vel=(  0.00000  -0.00220  -0.00000)  E=-0.000978483  dE/E=18.1352
+  196     1  T=0.000000  m=0.000164  pos=(  8.56867   0.00000   0.00000)  vel=( -0.00146   0.34162   0.00245)  E=-0.000978483  dE/E=18.1352
+  196     2  T=0.000000  m=0.002191  pos=(  1.90916   0.00000   0.00000)  vel=( -0.00447   0.40095   0.00237)  E=-0.000978483  dE/E=18.1352
+  197     0  T=0.000000  m=1.000000  pos=(  0.00000   0.00000   0.00000)  vel=(  0.00000  -0.00049   0.00000)  E=-2.87482e-05  dE/E=-0.767094
+  197     1  T=0.000000  m=0.000008  pos=(  0.10826   0.00000   0.00000)  vel=(  0.54675   0.41856   0.00181)  E=-2.87482e-05  dE/E=-0.767094
+  197     2  T=0.000000  m=0.000962  pos=(  3.91288   0.00077  -0.00000)  vel=( -0.00408   0.77258  -0.00400)  E=-2.87482e-05  dE/E=-0.767094
 
 === Simple output datafile query ========================================================================
 
 Printing outputs satisfying T=0.1..0.2002 sys=42
-         1 0.100000     42     0  1.000000    0.00001  -0.00017   0.00000    0.00012  -0.00169   0.00001  0
-         1 0.100000     42     1  0.000659    1.55374   0.08012  -0.00075   -0.04821   0.80051  -0.00750  0
-         1 0.100000     42     2  0.001295    1.23976   0.08960  -0.00041   -0.06973   0.89440  -0.00411  0
-         1 0.200000     42     0  1.000000    0.00002  -0.00034   0.00000    0.00023  -0.00167   0.00001  0
-         1 0.200000     42     1  0.000659    1.54680   0.16003  -0.00150   -0.09071   0.79737  -0.00747  0
-         1 0.200000     42     2  0.001295    1.22960   0.17872  -0.00082   -0.13342   0.88736  -0.00408  0
 
 =========================================================================================================
 
