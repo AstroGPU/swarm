@@ -709,10 +709,16 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 	ensemble &ens = gpu_hermite_ens;
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
-        if(!ens.is_active(sys)) { return; } 
-        if(ens.flags(sys) & swarm::ensemble::INACTIVE) { return; }
 
 	double    T = ens.time(sys);
+
+        if(ens.flags(sys) & swarm::ensemble::INACTIVE) {
+ lprintf(dlog, "Inactive system: sys=%d T=%f.\n", sys,  T);
+          return; }
+        if(!ens.is_active(sys)) {
+ lprintf(dlog, "Inactive system2: sys=%d T=%f.\n", sys,  T);
+ return; } 
+
 	double Tend = T + dT;
 	if(Tend > ens.time_end(sys)) { Tend = ens.time_end(sys); }
 
@@ -942,7 +948,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 		if(stop)
                   { 
  		  //ens.set_inactive(sys);
- 		  ens.flags(sys) = 1;
+ 		  ens.flags(sys) = ensemble::INACTIVE;
                   }
 
 		if(stop||log::needs_output(ens, T, sys))
