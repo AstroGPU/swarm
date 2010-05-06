@@ -91,9 +91,9 @@ namespace swarm
 			}
 		} else {
 #if BOOST_VERSION  < 104200
-                       throw validation_error("invalid value");
+			throw validation_error("invalid value");
 #else
-                       throw validation_error(validation_error::invalid_option_value);
+			throw validation_error(validation_error::invalid_option_value);
 #endif
 
 		}
