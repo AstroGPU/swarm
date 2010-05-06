@@ -45,9 +45,8 @@ void MemoryMap::open(const std::string &fn, size_t length_, size_t offset, int m
 	else ERROR("Invalid mode parameter - mode needs to include ro, wo or rw");
 
 //	int fd = ::open(fn.c_str(), flags);
-	int fd = ::open(fn.c_str(), flags, S_IRUSR | S_IWUSR);
-
-	if(fd == -1)
+     	int fd = ::open(fn.c_str(), flags, S_IRUSR | S_IWUSR);
+ 	if(fd == -1)
 	{
 		fd = 0;
 		ERROR(string("Error opening file [") + fn + "]");
