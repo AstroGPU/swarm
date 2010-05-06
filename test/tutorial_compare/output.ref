@@ -3,7 +3,8 @@
 
 # Set integrator parameters (hardcoded in this demo).
 # Initialize the library
-GPU accelerator: Using Device 1: "GeForce GTX 295"Device memory (free, total): 860M, 895M# Initialize the GPU integrator
+GPU accelerator: Using Device 0: "GeForce GTX 295" (autoselected)Device memory (free, total): 859M, 895M
+# Initialize the GPU integrator
 # Initialize ensemble on host to be used with GPU integration.
 # Set initial conditions.
 # Print selected initial conditions for GPU.
@@ -20,6 +21,7 @@ body= 2: mass= 0.001000000047 position= (-0.674179225, 1.226980999, 0) velocity=
 # Set integration duration for all systems.
 # Upload data to GPU.
 # Integrate ensemble on GPU.
+no error
 # GPU integration complete.
 # Download data to host.
 # Download complete.
