@@ -709,6 +709,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 	ensemble &ens = gpu_hermite_ens;
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
+        if(!ens.is_active(sys)) { return; } 
 
 	double    T = ens.time(sys);
 	double Tend = T + dT;
@@ -923,7 +924,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
                         double dy = ens.y(sys,i)-ens.y(sys,j);
                         double dz = ens.z(sys,i)-ens.z(sys,j);
                         float d = sqrtf(dx*dx+dy*dy+dz*dz);
-                        double rH = pow((mass_i+mass_j)/(3.*Mstar),1./3.);
+                        float rH = pow((mass_i+mass_j)/(3.*Mstar),1./3.);
                         if(d<dmin*rH)
                           {
                       lprintf(dlog, "Close approach:  sys=%d, bod=(%d,%d) r=(%f,%f), d=%f rH=%f T=%f.\n", sys, i,j, r_i, r_j, d, rH, T);
@@ -936,6 +937,9 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
                 }
 
 		debug_hook();
+                
+		if(stop)
+ 		  ens.set_inactive(sys);
 
 		if(stop||log::needs_output(ens, T, sys))
 		{

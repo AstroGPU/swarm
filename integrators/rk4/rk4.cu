@@ -96,6 +96,7 @@ struct prop_rk4
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
+			if(!ens.is_active(sys)) { return T; }
 			double hh = T + this->h <= Tend ? this->h : Tend - T;
 			double h_half= hh*0.5;
 
@@ -210,7 +211,8 @@ struct prop_rk4
  */
 extern "C" integrator *create_gpu_rk4(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
+//	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);
+	return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rk4>(cfg);
 }
 
 } // end namespace swarm

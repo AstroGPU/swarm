@@ -238,7 +238,7 @@ class ensemble
 		/// set the system as active 
 		__host__ __device__ void set_active(int sys)	{ m_flags[sys] = m_flags[sys] & ~ensemble::INACTIVE; }
 		/// set the system as inactive 
-		__host__ __device__ void set_inactive(int sys)	{ m_flags[sys] = m_flags[sys] |  ensemble::INACTIVE; }
+		__host__ __device__ void set_inactive(int sys)	{  flags(sys) |= ensemble::INACTIVE; }
 
 		/// set the body with the mass, position, and velocity 
 		__host__ __device__ void set_body(int sys, int bod,  float m, real_pos x, real_pos y, real_pos z, real_vel vx, real_vel vy, real_vel vz)
