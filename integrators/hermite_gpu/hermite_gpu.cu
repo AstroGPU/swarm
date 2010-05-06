@@ -710,6 +710,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 	int sys = threadId();
 	if(sys >= ens.nsys()) { return; }
         if(!ens.is_active(sys)) { return; } 
+        if(ens.flags(sys) & swarm::ensemble::INACTIVE) { return; }
 
 	double    T = ens.time(sys);
 	double Tend = T + dT;
@@ -908,7 +909,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
                      for(int j=1;j<i;++j)
                         {
                         float r_j = sqrtf(ens.x(sys,j)*ens.x(sys,j)+ens.y(sys,j)*ens.y(sys,j)+ens.z(sys,j)*ens.z(sys,j));
-#if 0
+#if 1
                         // Stop if lower number planet is farther from origin than higher numbered planet
                         if(r_j>r_i) 
                           { 
@@ -939,7 +940,10 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 		debug_hook();
                 
 		if(stop)
- 		  ens.set_inactive(sys);
+                  { 
+ 		  //ens.set_inactive(sys);
+ 		  ens.flags(sys) = 1;
+                  }
 
 		if(stop||log::needs_output(ens, T, sys))
 		{

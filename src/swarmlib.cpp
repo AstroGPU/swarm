@@ -408,9 +408,14 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)
 		tmp2 = 0;
 		cudaMemcpy(m_flags, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);
 
+		// Set nsteps = 0
+		std::valarray<uint> tmp3(nsys);
+		tmp3 = 0;
+		cudaMemcpy(m_nstep, &tmp3[0], tmp3.size()*sizeof(tmp3[0]), cudaMemcpyHostToDevice);
+
 		// nactive
-//		int tmp3 = nsys;
-//		cudaMemcpy(m_nactive, &tmp3, sizeof(tmp3), cudaMemcpyHostToDevice);
+//		int tmp4 = nsys;
+//		cudaMemcpy(m_nactive, &tmp4, sizeof(tmp4), cudaMemcpyHostToDevice);
 	}
 
 	// clear the m_last_integrator field
