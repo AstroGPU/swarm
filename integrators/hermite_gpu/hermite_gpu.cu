@@ -24,6 +24,7 @@
 #include "swarm.h"
 #include "hermite_gpu.h"
 
+#define STABILITY_TESTS 0
 namespace swarm {
 
 /// namespace for device functions used by hermite_gpu_integrator
@@ -712,12 +713,14 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 
 	double    T = ens.time(sys);
 
+#if STABILITY_TESTS 
         if(ens.flags(sys) & swarm::ensemble::INACTIVE) {
  lprintf(dlog, "Inactive system: sys=%d T=%f.\n", sys,  T);
           return; }
         if(!ens.is_active(sys)) {
  lprintf(dlog, "Inactive system2: sys=%d T=%f.\n", sys,  T);
  return; } 
+#endif
 
 	double Tend = T + dT;
 	if(Tend > ens.time_end(sys)) { Tend = ens.time_end(sys); }
@@ -901,6 +904,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 		ens.nstep(sys)++;
 
                 bool stop = false;
+#if STABILITY_TESTS 
                 float Mstar = ens.mass(sys,0); 
                 {
                 // Check for close encounters
@@ -942,15 +946,20 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
                   }
 
                 }
+#endif
 
 		debug_hook();
                 
+#if STABILITY_TESTS 
 		if(stop)
                   { 
  		  //ens.set_inactive(sys);
  		  ens.flags(sys) = ensemble::INACTIVE;
  lprintf(dlog, "Setting system to be inactive: sys=%d T=%f.\n", sys,  T);
+if(!ens.is_active(sys))
+lprintf(dlog, "System was set to be inactive: sys=%d T=%f.\n", sys,  T);
                   }
+#endif
 
 		if(stop||log::needs_output(ens, T, sys))
 		{
