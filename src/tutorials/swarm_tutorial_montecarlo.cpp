@@ -273,5 +273,6 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	}
     }
   std::cout.precision(cout_precision_old);
+  std::cout << std::flush;
 }
 
