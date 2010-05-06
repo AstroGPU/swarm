@@ -6,4 +6,5 @@
 grep -v "Time per" | \
 grep -v "memcpy time" | \
 grep -v "Internal state initialization" | \
-grep -v "^Configuration    "
+grep -v "^Configuration    " | \
+grep -v "^GPU accelerator"

@@ -166,6 +166,9 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	//
 
 		// Set all systems to active
 		for(int sys = 0; sys != nsys; sys++) { flags(sys) = 0; }
+
+		// Set nstep=0
+		for(int sys = 0; sys != nsys; sys++) { nstep(sys) = 0; }
 	}
 
 	m_last_integrator = NULL;
