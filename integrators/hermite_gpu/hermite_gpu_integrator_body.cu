@@ -49,15 +49,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,3><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,3><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,3><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,3><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,3><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,3><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -66,15 +66,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,4><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,4><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,4><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,4><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,4><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,4><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -83,15 +83,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,5><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,5><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,5><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,5><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,5><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,5><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -100,15 +100,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,6><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,6><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,6><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,6><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -117,15 +117,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,7><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,7><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,7><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,7><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -134,15 +134,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,8><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,8><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,8><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,8><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -151,15 +151,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,9><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,9><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,9><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,9><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}
@@ -168,15 +168,15 @@
 		switch(prec){
 			// double precision
 			case 1:
-				gpu_hermite_integrator_kernel<1,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<1,10><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// signle precision
 			case 2:
-				gpu_hermite_integrator_kernel<2,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<2,10><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 				// mixed precision
 			case 3:
-				gpu_hermite_integrator_kernel<3,10><<<gridDim, threadsPerBlock>>>(dT, h);
+				gpu_hermite_integrator_kernel<3,10><<<gridDim, threadsPerBlock>>>(dT, h, rmax, dmin);
 				break;
 		}
 	}

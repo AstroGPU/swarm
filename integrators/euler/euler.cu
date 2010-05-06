@@ -2,10 +2,11 @@
  * \brief declares prop_euler & factory 
  */
 
+#include <limits>
 #include "swarm.h"
 #include "euler.h"
 #include "swarmlog.h"
-#include <limits>
+#include "../src/stopper.cu"
 
 /*
 
@@ -243,6 +244,7 @@ struct prop_euler
 	}
 };
 
+#if 0
 /// a simple stopper that checks if the distance from origin exceeds a threshold (for demonstration purposes only)
 struct stop_on_ejection
 {
@@ -312,6 +314,7 @@ struct stop_on_ejection
 		return gpu_obj;
 	}
 };
+#endif
 
 /// factory to return a pointer to a gpu_generic_integrator using the Euler propagator and the stop_on_ejection stopper
 extern "C" integrator *create_gpu_euler(const config &cfg)

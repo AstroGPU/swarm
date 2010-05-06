@@ -22,6 +22,7 @@
 */
 
 #include <cassert>
+#include <limits>
 #include "swarm.h"
 #include "hermite_gpu.h"
 #include <cuda.h>
@@ -50,7 +51,7 @@ gpu_hermite_integrator<real_hi,real_lo>::gpu_hermite_integrator(const config &cf
 
 	rmax = cfg.count("rmax") ? atoi(cfg.at("rmax").c_str()) : std::numeric_limits<double>::infinity();
 
-	dmin = cfg.count("close approach") ? atoi(cfg.at("close approach").c_str()) : std::numeric_limits<double>::infinity();
+	dmin = cfg.count("close approach") ? atoi(cfg.at("close approach").c_str()) : 0.;
 
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 }
