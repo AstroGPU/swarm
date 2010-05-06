@@ -949,6 +949,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
                   { 
  		  //ens.set_inactive(sys);
  		  ens.flags(sys) = ensemble::INACTIVE;
+ lprintf(dlog, "Setting system to be inactive: sys=%d T=%f.\n", sys,  T);
                   }
 
 		if(stop||log::needs_output(ens, T, sys))
