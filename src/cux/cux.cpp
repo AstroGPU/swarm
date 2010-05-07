@@ -415,7 +415,7 @@ bool cux_init()
 		}
 	}
 
-#if !CUDA_DEVEMU
+#if !__DEVICE_EMULATION__
 	// ensure a CUDA context is created and fetch the active
 	// device id
 	void *tmp;
@@ -424,7 +424,7 @@ bool cux_init()
 	cuxErrCheck( cudaGetDevice(&dev) );
 #endif
 
-#if !CUDA_DEVEMU
+#if !__DEVICE_EMULATION__
 	// get device properties
 	cudaDeviceProp deviceProp;
 	cuxErrCheck( cudaGetDeviceProperties(&deviceProp, dev) );
@@ -436,7 +436,7 @@ bool cux_init()
 	MLOG(verb1) << "GPU accelerator: Using Device Emulation";
 #endif
 
-#if !CUDA_DEVEMU
+#if !__DEVICE_EMULATION__
 	// Memory info
 	unsigned free = 0, total = 0;
 	cuxErrCheck( (cudaError)cuMemGetInfo(&free, &total) );

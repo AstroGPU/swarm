@@ -24,7 +24,7 @@
 #include "swarm.h"
 #include "hermite_gpu.h"
 
-#define STABILITY_TESTS 0
+#define STABILITY_TESTS 1
 namespace swarm {
 
 /// namespace for device functions used by hermite_gpu_integrator
