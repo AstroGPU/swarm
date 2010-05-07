@@ -152,9 +152,9 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 
 		if(bod != 0) { out << "\n"; }
 #if NEW
-			snprintf(buf, bufsize,"%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
+			snprintf(buf, bufsize,"%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
 #else
-               snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
+               snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
 #endif
 		out << buf;
 	}
@@ -172,9 +172,9 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
         size_t bufsize = 1000;
         char buf[bufsize];
 #if NEW
-     snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
 #else
-     snprintf(buf, bufsize, "%10d %f  %5d %5d  %f  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 #endif
 	out << buf;
 
