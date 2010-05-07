@@ -104,7 +104,7 @@ struct stop_on_crossing_orbit_or_close_approach
 		};
 
 		/// this is called _after_ the body 'bod' has advanced a timestep.
-		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
+		__device__ void test_body(thread_state_t &ts, const ensemble &ens, const int sys, const int bod, const double T, const double x, const double y, const double z, const double vx, const double vy, const double vz)
 		{
                         if(bod==0) return; // skip sun
                         // assumes origin is barycenter, star, or jacobi center
@@ -143,7 +143,7 @@ struct stop_on_crossing_orbit_or_close_approach
 		}
 
 		/// this is called after the entire system has completed a single timestep advance.
-		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
+		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, const int sys, const int step, const double T) /// should be overridden by the user
 		{
                         for(int i=0;i<ens.nbod()-2;++i)
                            {
@@ -209,7 +209,7 @@ struct stop_on_crossing_orbit_or_close_approach
 	}
 
  	// currently empty for stop_on_ejection
-	void initialize(ensemble &ens)
+	void initialize(const ensemble &ens)
 	{
 		// Here you'd upload any temporary data you need to constant/texture/global memory
 	}
@@ -244,7 +244,7 @@ struct stop_on_ejection
 		};
 
 		/// this is called _after_ the body 'bod' has advanced a timestep.
-		__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz)
+		__device__ void test_body(thread_state_t &ts, const ensemble &ens, const int sys, const int bod, const double T, const double x, const double y, const double z, const double vx, const double vy, const double vz)
 		{
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
@@ -255,7 +255,7 @@ struct stop_on_ejection
 		}
 
 		/// this is called after the entire system has completed a single timestep advance.
-		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T) /// should be overridden by the user
+		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, const int sys, const int step, const double T) /// should be overridden by the user
 		{
 			if(ts.eject)
 			{
@@ -282,7 +282,7 @@ struct stop_on_ejection
 	}
 
  	// currently empty for stop_on_ejection
-	void initialize(ensemble &ens)
+	void initialize(const ensemble &ens)
 	{
 		// Here you'd upload any temporary data you need to constant/texture/global memory
 	}
