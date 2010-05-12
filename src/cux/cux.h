@@ -183,6 +183,12 @@ template<typename T, int dim = 1>
 					// extent[2] == number of slices in a 3D data sub-cube of a 4D data cube (etc...)
 
 		// Access
+#if 0 // Oh, there are bigger problems about allocating memory, so this won't be such a trivial upgrade 
+		__host__ __device__ T &operator()(const uint32_t w,  const uint32_t x, const uint32_t y, const uint32_t z) const	// 4D accessor 
+		{
+			return *((T*)((char*)ptr + x * extent[0] + y * extent[0] * extent[1] + z * extent[0] * extent[1] * extent[2]) + w);
+		}
+#endif
 		__host__ __device__ T &operator()(const uint32_t x, const uint32_t y, const uint32_t z) const	// 3D accessor (valid only if dim >= 3)
 		{
 			return *((T*)((char*)ptr + y * extent[0] + z * extent[0] * extent[1]) + x);

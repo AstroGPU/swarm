@@ -58,12 +58,12 @@ struct prop_rkqs
 		cuxDevicePtr<double, 3> yerr;
 
 		// Cash-Karp constants From GSL
-		static const int order = 5;
-                static const float step_grow_power = -0.2;
-                static const float step_shrink_power = -0.25;
+		static const int   integrator_order = 5;
+                static const float step_grow_power = -1./(integrator_order+1.);
+                static const float step_shrink_power = -1./integrator_order;
                 static const float step_guess_safety_factor = 0.9;
 		static const float step_grow_max_factor = 5.0; 
-                static const float step_shrink_min_factor = 0.1; 
+                static const float step_shrink_min_factor = 0.2; 
  
 		/*!
 		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
@@ -267,6 +267,9 @@ struct prop_rkqs
 		return T + hh;
 		}
 
+		/// use error estimates for each coordinate to estimate the "scaled error" for the trial step
+ 		/// based on scaling in John Chamber's mercury
+		/// should we cache the scale factors (mercury does) or is recomputing better on GPU ?
 		__device__ double calculate_error(ensemble &ens, thread_state_t &pt, int sys, cuxDevicePtr<double, 3> y,  cuxDevicePtr<double, 3> yerr) const
 		{
 		   double errmax = 0.;
@@ -308,23 +311,31 @@ struct prop_rkqs
 
         	typename stop_t::thread_state_t stop_ts_tmp = stop_ts;
 
-
 			double Ttmp = substep(ens,pt,sys,T,Tend,stop,stop_ts_tmp,step); 
 
-                        double error = calculate_error(ens,pt,sys,ytmp,yerr);
+                        double error = calculate_error(ens,pt,sys,ytmp,yerr)/error_tolerance;
 
-			double step_guess_power = (error<error_tolerance) ? step_grow_power : step_shrink_power;
-			double step_change_factor = step_guess_safety_factor*pow(error/error_tolerance,0.5*step_guess_power);
-                        if(step_change_factor>step_grow_max_factor) { step_change_factor = step_grow_max_factor; } 
-                        if(step_change_factor<step_shrink_min_factor) { step_change_factor = step_shrink_min_factor; } 
+			double step_guess_power = (error<1.) ? step_grow_power : step_shrink_power;
+			/// factor of 0.5 below due to use of squares in calculate_error, should we change to match gsl?
+			double step_change_factor = 1.;
+			
+			/// gsl uses 1.1, but that seems dangerous, any reason we shouldn't use 1?
+			if((error<0.5)||(error>1.0))
+			   step_change_factor = step_guess_safety_factor*pow(error,0.5*step_guess_power);
  
-			if(error>error_tolerance) 
+			if(error>1.)
 			  {
+                          if(step_change_factor<step_shrink_min_factor) { step_change_factor = step_shrink_min_factor; } 
   			  pt.h_try *= step_change_factor;
 			  pt.substep_state++;
 			  stop_ts.set_step_incomplete();				
 			  return T;
 			  }
+
+			// else (effectively implies error<=1.)
+
+                          if(step_change_factor>step_grow_max_factor) { step_change_factor = step_grow_max_factor; } 
+			  if(step_change_factor<1) step_change_factor = 1.;
 
 			  /// TODO: Currently storing info in both thread state and stopper's thread state, but checking only stopper's thread state.  Decide where this should be.
 			  pt.h_prev = pt.h_try;
@@ -332,6 +343,7 @@ struct prop_rkqs
 			  pt.substep_state = 0;
                           stop_ts = stop_ts_tmp;
 			  stop_ts.set_step_complete();				
+
 //if((step%1000==0)||(step%1000==1)) lprintf(dlog, "sys = %d  time = %g  time step did = %g  time step try next = %g\n", sys, Ttmp, pt.h_prev, pt.h_try);
                         
 			for(int bod = 0; bod != ens.nbod(); bod++)

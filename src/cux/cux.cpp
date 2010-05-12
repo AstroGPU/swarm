@@ -221,7 +221,7 @@ cudaArray *cuxSmartPtr_impl_t::getCUDAArray(cudaChannelFormatDesc &channelDesc)
 {
 	ASSERT(channelDesc.x + channelDesc.y + channelDesc.z + channelDesc.w == m_elementSize*8);
 
-	// FIXME: This all seems to be majorly fu*ked up, as CUDA devemu
+	// FIXME: This all seems to be majorly messed up, as CUDA devemu
 	// has bugs with cudaMalloc3DArray that has any of the extent dimensions
 	// set to zero. Will have to be fixed by trial-and-error on the real GPU.
 	if(!cleanCudaArray)
