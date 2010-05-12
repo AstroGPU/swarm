@@ -91,8 +91,9 @@ struct stop_on_crossing_orbit_or_close_approach
                         double a[10], e[10];
  			float GM;
 			bool stop;
+                        bool m_is_step_complete;
 
-			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend) : stop(false)
+			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend) : stop(false), m_is_step_complete(true)
 			{
                                for(int i=0;i<ens.nbod(); ++i)
                                  {
@@ -101,11 +102,17 @@ struct stop_on_crossing_orbit_or_close_approach
                                  }
                                 GM = ens.mass(sys,0);
 			}
+
+                __device__ bool is_step_complete() const { return m_is_step_complete; }
+                __device__ void set_step_complete() { m_is_step_complete = true; }
+                __device__ void set_step_incomplete() { m_is_step_complete = false; }
+
 		};
 
 		/// this is called _after_ the body 'bod' has advanced a timestep.
 		__device__ void test_body(thread_state_t &ts, const ensemble &ens, const int sys, const int bod, const double T, const double x, const double y, const double z, const double vx, const double vy, const double vz)
 		{
+			if(!ts.is_step_complete()) return;
                         if(bod==0) return; // skip sun
                         // assumes origin is barycenter, star, or jacobi center
                         double hx = y*vz-z*vy;
@@ -145,6 +152,8 @@ struct stop_on_crossing_orbit_or_close_approach
 		/// this is called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, const int sys, const int step, const double T) /// should be overridden by the user
 		{
+			if(!ts.is_step_complete()) return false;
+
                         for(int i=0;i<ens.nbod()-2;++i)
                            {
                             if(ts.a[i]*(1.+ts.e[i])>ts.a[i+1]*(1.-ts.e[i+1]))
@@ -236,16 +245,23 @@ struct stop_on_ejection
 		struct thread_state_t
 		{
 			bool eject;
+			bool m_is_step_complete;
 
-			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend)
+			__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend) :
+				eject(false), m_is_step_complete(true)
 			{
-				eject = false;
 			}
+
+                __device__ bool is_step_complete() const { return m_is_step_complete; }
+                __device__ void set_step_complete() { m_is_step_complete = true; }
+                __device__ void set_step_incomplete() { m_is_step_complete = false; }
+
 		};
 
 		/// this is called _after_ the body 'bod' has advanced a timestep.
 		__device__ void test_body(thread_state_t &ts, const ensemble &ens, const int sys, const int bod, const double T, const double x, const double y, const double z, const double vx, const double vy, const double vz)
 		{
+			if(!ts.is_step_complete()) return;
 			float r = sqrtf(x*x + y*y + z*z);
 			if(r < rmax) { return; }
 //			::debug_hook();
@@ -257,6 +273,7 @@ struct stop_on_ejection
 		/// this is called after the entire system has completed a single timestep advance.
 		__device__ bool operator ()(thread_state_t &ts, ensemble &ens, const int sys, const int step, const double T) /// should be overridden by the user
 		{
+			if(!ts.is_step_complete()) return false;
 			if(ts.eject)
 			{
 				// store the last snapshot before going inactive

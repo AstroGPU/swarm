@@ -104,8 +104,17 @@ int main(int argc, const char **argv)
   // Perform the integration on gpu
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
+  
   std::cerr << "Integrate ensemble on GPU.\n";
-  integ_gpu->integrate(gpu_ens, Tend);				
+  //  HACK:  Loop so that buffer does not overflow for hermite
+  int MaxEntriesBeforeHermiteBufferOverFlows = 4; // static_cast<int>(std::floor(150000/(ens.nsys()*ens.nbod())));
+  int nSubSections = static_cast<int>(std::ceil((Tend-Tinit)/Toutputstep))/MaxEntriesBeforeHermiteBufferOverFlows+1;
+  for(int i=1;i<=nSubSections;++i)
+    {
+    double tmpTend = Tinit+(Tend-Tinit)*i/nSubSections;
+    integ_gpu->integrate(gpu_ens, tmpTend);				
+    }
+
   std::cerr << "Download data to host.\n";
   ens.copy_from(gpu_ens);					
   std::cerr << "GPU integration complete.\n";

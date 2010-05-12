@@ -24,7 +24,7 @@
 #include "swarm.h"
 #include "hermite_gpu.h"
 
-#define STABILITY_TESTS 1
+#define STABILITY_TESTS 0
 namespace swarm {
 
 /// namespace for device functions used by hermite_gpu_integrator
@@ -738,7 +738,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 
 	float s_mass[nbod];
 
-	typename acc_type<pre>::type dtby2=h/2.;
+	typename acc_type<pre>::type dtby2=h*0.5;
 	typename acc_type<pre>::type dtby3=h/3.;
 	typename acc_type<pre>::type dtby6=h/6.;
 	typename acc_type<pre>::type dt7by30=h*7./30.;
@@ -846,7 +846,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 	        if(T+h>Tend)
 	          {	
 			hh=Tend-T;
-			dtby2=hh/2.;
+			dtby2=hh*0.5;
 			dtby3=hh/3.;
 			dtby6=hh/6.;
 			dt7by30=hh*7./30.;

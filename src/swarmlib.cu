@@ -199,16 +199,20 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 	while(true)
 	{
 		// stopping conditions
-		if(T >= Tstop) 				{ if(T >= ens.time_end(sys)) { ens.flags(sys) |= ensemble::INACTIVE; } break; }
-		if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
-		if(step == max_steps) 			{ break; }
+		if(stop_ts.is_step_complete())
+  		   {
+		   if(T >= Tstop) 				{ if(T >= ens.time_end(sys)) { ens.flags(sys) |= ensemble::INACTIVE; } break; }
+		   if(stop(stop_ts, ens, sys, step, T)) 	{ ens.flags(sys) |= ensemble::INACTIVE; break; }
+		   if(step == max_steps) 			{ break; }
 
-		log::output_system_if_needed(dlog, ens, T, sys);
+  		   log::output_system_if_needed(dlog, ens, T, sys);
+ 	 	   }
 
 		// actual work
 		T = H.advance(ens, H_ts, sys, T, Tstop, stop, stop_ts, step);
 
-		step++;
+		if(stop_ts.is_step_complete())
+   		   step++;
 	}
 	ens.nstep(sys) += step;
 	log::output_system_if_needed(dlog, ens, T, sys);
@@ -442,7 +446,8 @@ protected:
 	dim3 gridDim;
 	int threadsPerBlock;
 
-	cuxDeviceAutoPtr<retval_t> retval_gpu;	// temp variable for return values (gpu pointer)
+	/// temp variable for return values (gpu pointer)
+	cuxDeviceAutoPtr<retval_t> retval_gpu;	
 
 public:
 	gpu_generic_integrator(const config &cfg);

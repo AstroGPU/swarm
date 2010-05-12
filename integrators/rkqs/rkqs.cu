@@ -16,14 +16,15 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file rkck.cu
- *  \brief declares prop_rkck for use with gpu_generic_integrator
+/*! \file rkqs.cu
+ *  \brief declares prop_rkqs for use with gpu_generic_integrator
  * 
- *  based on GSL's rkck.c and rkck_apply
+ *  based on GSL's 
 */
 
 #include "swarm.h"
-#include "rkck.h"
+#include "../../src/swarmlog.h"
+#include "rkqs.h"
 #include "swarmlog.h"
 
 /// namespace for Swarm-NG library
@@ -32,12 +33,12 @@ namespace swarm {
 // If want to declare __shared__ do it here (just like const variables for ensembles)
 
 /*!  
- *  \brief propagator class for RKCK integrator on GPU: Advance the system by one time step.
+ *  \brief propagator class for RKQS integrator on GPU: Advance the system by one time step.
  *
  *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
  *  Keep any data that need to reside on the CPU here.
  */
-struct prop_rkck
+struct prop_rkqs
 {
 	/*! 
 	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
@@ -47,16 +48,23 @@ struct prop_rkck
 	struct gpu_t
 	{
 		//! per-block variables, time step
-		double h;
+		double hinit;
+		double error_tolerance;
 		//! per-block variables, 
 		cuxDevicePtr<double, 3> k1, k2, k3, k4, k5, k6;
 		//! per-block variables, initial & temporary coordinates, error term
-//		cuxDevicePtr<double, 3> y0;
+		cuxDevicePtr<double, 3> y0;
 		cuxDevicePtr<double, 3> ytmp;
-//		cuxDevicePtr<double, 3> yerr;
+		cuxDevicePtr<double, 3> yerr;
 
 		// Cash-Karp constants From GSL
 		static const int order = 5;
+                static const float step_grow_power = -0.2;
+                static const float step_shrink_power = -0.25;
+                static const float step_guess_safety_factor = 0.9;
+		static const float step_grow_max_factor = 5.0; 
+                static const float step_shrink_min_factor = 0.1; 
+ 
 		/*!
 		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
                  *
@@ -64,7 +72,9 @@ struct prop_rkck
 		 */
 		struct thread_state_t
 		{
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+			float h_try, h_prev;
+	        	int substep_state;
+			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : h_try(H.hinit), h_prev(0.), substep_state(0)
 			{ }
 		};
 
@@ -74,7 +84,7 @@ struct prop_rkck
 		 * @param[in]  sys    system id
  		 * @param[out] dydx  derivatives (3d array)
 		 */
-		__device__ void compute_acc(ensemble &ens, cuxDevicePtr<double, 3> y, int sys, cuxDevicePtr<double, 3> dydx)
+		__device__ void compute_acc(const ensemble &ens, const cuxDevicePtr<double, 3> y, const int sys, cuxDevicePtr<double, 3> dydx)
 		{
 		typedef ThreeVector<double> V3;
 
@@ -140,28 +150,9 @@ struct prop_rkck
 		    } // end loop over bodies
 		}
 
-		/*!
-                 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
-		 *
-		 * This function MUST return the new time of the system.
-		 * This function MUST also call stop.test_body() for every body
-		 * in the system, after that body has been advanced by a timestep.
-                 *
-  		 * see RKCK implementation GSL 
-                 *
-		 * @tparam stop_t ...
-		 * @param[in,out] ens ensemble
-		 * @param[in,out] pt ...
-		 * @param[in] sys system ID
-		 * @param[in] T start time
-		 * @param[in] Tend destination time
-		 * @param[in] stop ...
-		 * @param[in] stop_ts ...
-		 * @param[in] step  ...
-		 * @return new time of the system
-		 */
+		/// Sub stepper based on rkck (just tries a step and stores into ytmp) 
 		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		__device__ double substep(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 //		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
 		const double b21 = 1.0 / 5.0;
@@ -173,7 +164,7 @@ struct prop_rkck
 		const double c3 = 250.0 / 621.0;
 		const double c4 = 125.0 / 594.0;
 		const double c6 = 512.0 / 1771.0;
-/*
+
 		const double ec[] = 
 		     { 0.0,
 		       // the first value is the same as c1, above 
@@ -186,10 +177,10 @@ struct prop_rkck
 		       -277.00 / 14336.0,
 		       // the first value is the same as c6, above 
 		       512.0 / 1771.0 - 0.25 };
-*/
+
 
 			if(T >= Tend) { return T; }
-			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double hh = T + pt.h_try <= Tend ? pt.h_try : Tend - T;
 
 			// k1 step
 			compute_acc(ens,sys,k1);       // at T
@@ -253,36 +244,120 @@ struct prop_rkck
 			{
 			double di;
 			di = c1*k1(sys, bod, 0) + c3*k3(sys, bod, 0) + c4*k4(sys, bod, 0) + c6*k6(sys, bod, 0);
-			ens.x(sys,bod) += hh * di;
-			//  yerr(sys, bod, 0) = hh* ( ec[1]*k1(sys, bod, 0) + ec[3]*k3(sys, bod, 0)  ec[4] * k4(sys, bod, 0) + ec[5] * k5(sys, bod, 0) + ec[6] * k6(sys, bod, 0) );
+			ytmp(sys, bod, 0) = ens.x(sys,bod) + hh * di;
+			yerr(sys, bod, 0) = hh* ( ec[1]*k1(sys, bod, 0) + ec[3]*k3(sys, bod, 0) + ec[4] * k4(sys, bod, 0) + ec[5] * k5(sys, bod, 0) + ec[6] * k6(sys, bod, 0) );
 			di = c1*k1(sys, bod, 1) + c3*k3(sys, bod, 1) + c4*k4(sys, bod, 1) + c6*k6(sys, bod, 1);
-			ens.y(sys,bod) += hh * di;
-			//  yerr(sys, bod, 1) = hh* ( ec[1]*k1(sys, bod, 1) + ec[3]*k3(sys, bod, 1)  ec[4] * k4(sys, bod, 1) + ec[5] * k5(sys, bod, 1) + ec[6] * k6(sys, bod, 1) );
+			ytmp(sys, bod, 1) = ens.y(sys,bod) + hh * di;
+			yerr(sys, bod, 1) = hh* ( ec[1]*k1(sys, bod, 1) + ec[3]*k3(sys, bod, 1) + ec[4] * k4(sys, bod, 1) + ec[5] * k5(sys, bod, 1) + ec[6] * k6(sys, bod, 1) );
 			di = c1*k1(sys, bod, 2) + c3*k3(sys, bod, 2) + c4*k4(sys, bod, 2) + c6*k6(sys, bod, 2);
-			ens.z(sys,bod) += hh * di;
-			//  yerr(sys, bod, 2) = hh* ( ec[1]*k1(sys, bod, 2) + ec[3]*k3(sys, bod, 2)  ec[4] * k4(sys, bod, 2) + ec[5] * k5(sys, bod, 2) + ec[6] * k6(sys, bod, 2) );
+			ytmp(sys, bod, 2) = ens.z(sys,bod) + hh * di;
+			yerr(sys, bod, 2) = hh* ( ec[1]*k1(sys, bod, 2) + ec[3]*k3(sys, bod, 2) + ec[4] * k4(sys, bod, 2) + ec[5] * k5(sys, bod, 2) + ec[6] * k6(sys, bod, 2) );
 			di = c1*k1(sys, bod, 3) + c3*k3(sys, bod, 3) + c4*k4(sys, bod, 3) + c6*k6(sys, bod, 3);
-			ens.vx(sys,bod) += hh * di;
-			//  yerr(sys, bod, 3) = hh* ( ec[1]*k1(sys, bod, 3) + ec[3]*k3(sys, bod, 3)  ec[4] * k4(sys, bod, 3) + ec[5] * k5(sys, bod, 3) + ec[6] * k6(sys, bod, 3) );
+			ytmp(sys, bod, 3) = ens.vx(sys,bod) + hh * di;
+			yerr(sys, bod, 3) = hh* ( ec[1]*k1(sys, bod, 3) + ec[3]*k3(sys, bod, 3) + ec[4] * k4(sys, bod, 3) + ec[5] * k5(sys, bod, 3) + ec[6] * k6(sys, bod, 3) );
 			di = c1*k1(sys, bod, 4) + c3*k3(sys, bod, 4) + c4*k4(sys, bod, 4) + c6*k6(sys, bod, 4);
-			ens.vy(sys,bod) += hh * di;
-			//  yerr(sys, bod, 4) = hh* ( ec[1]*k1(sys, bod, 4) + ec[3]*k3(sys, bod, 4)  ec[4] * k4(sys, bod, 4) + ec[5] * k5(sys, bod, 4) + ec[6] * k6(sys, bod, 4) );
+			ytmp(sys, bod, 4) = ens.vy(sys,bod) + hh * di;
+			yerr(sys, bod, 4) = hh* ( ec[1]*k1(sys, bod, 4) + ec[3]*k3(sys, bod, 4) + ec[4] * k4(sys, bod, 4) + ec[5] * k5(sys, bod, 4) + ec[6] * k6(sys, bod, 4) );
 			di = c1*k1(sys, bod, 5) + c3*k3(sys, bod, 5) + c4*k4(sys, bod, 5) + c6*k6(sys, bod, 5);
-			ens.vz(sys,bod) += hh * di;
-			//  yerr(sys, bod, 5) = hh* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5)  ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
+			ytmp(sys, bod, 5) = ens.vz(sys,bod) + hh * di;
+			yerr(sys, bod, 5) = hh* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5) + ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
 
-			stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));			}
+//			stop.test_body(stop_ts, ens, sys, bod, T+hh, ytmp(sys,bod,0), ytmp(sys,bod,1),ytmp(sys,bod,2),ytmp(sys,bod,3),ytmp(sys,bod,4),ytmp(sys,bod,5));
+			}
+		return T + hh;
+		}
 
-			return T + hh;
+		__device__ double calculate_error(ensemble &ens, thread_state_t &pt, int sys, cuxDevicePtr<double, 3> y,  cuxDevicePtr<double, 3> yerr) const
+		{
+		   double errmax = 0.;
+ 		   for(int bod=0;bod<ens.nbod();bod++)
+		      {
+			double rmag = y(sys,bod,0)*y(sys,bod,0)+ y(sys,bod,1)*y(sys,bod,1)+ y(sys,bod,2)*y(sys,bod,2);
+			double rerrmag = yerr(sys,bod,0)*yerr(sys,bod,0)+ yerr(sys,bod,1)*yerr(sys,bod,1)+ yerr(sys,bod,2)*yerr(sys,bod,2);
+                        if(rerrmag/rmag>errmax) errmax = rerrmag/rmag;
+			double vmag = y(sys,bod,3)*y(sys,bod,3)+ y(sys,bod,4)*y(sys,bod,4)+ y(sys,bod,5)*y(sys,bod,5);
+			double verrmag = yerr(sys,bod,3)*yerr(sys,bod,3)+ yerr(sys,bod,4)*yerr(sys,bod,4)+ yerr(sys,bod,5)*yerr(sys,bod,5);
+                        if(verrmag/vmag>errmax) errmax = verrmag/vmag;
+		      }
+		   return errmax;
+		}
+		/*!
+                 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
+		 *
+		 * This function MUST return the new time of the system.
+		 * This function MUST also call stop.test_body() for every body
+		 * in the system, after that body has been advanced by a timestep.
+                 *
+  		 * see RKCK implementation GSL 
+                 *
+		 * @tparam stop_t ...
+		 * @param[in,out] ens ensemble
+		 * @param[in,out] pt ...
+		 * @param[in] sys system ID
+		 * @param[in] T start time
+		 * @param[in] Tend destination time
+		 * @param[in] stop ...
+		 * @param[in] stop_ts ...
+		 * @param[in] step  ...
+		 * @return new time of the system
+		 */
+		template<typename stop_t>
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		{
+			if(T >= Tend) { return T; }
+
+        	typename stop_t::thread_state_t stop_ts_tmp = stop_ts;
+
+
+			double Ttmp = substep(ens,pt,sys,T,Tend,stop,stop_ts_tmp,step); 
+
+                        double error = calculate_error(ens,pt,sys,ytmp,yerr);
+
+			double step_guess_power = (error<error_tolerance) ? step_grow_power : step_shrink_power;
+			double step_change_factor = step_guess_safety_factor*pow(error/error_tolerance,0.5*step_guess_power);
+                        if(step_change_factor>step_grow_max_factor) { step_change_factor = step_grow_max_factor; } 
+                        if(step_change_factor<step_shrink_min_factor) { step_change_factor = step_shrink_min_factor; } 
+ 
+			if(error>error_tolerance) 
+			  {
+  			  pt.h_try *= step_change_factor;
+			  pt.substep_state++;
+			  stop_ts.set_step_incomplete();				
+			  return T;
+			  }
+
+			  /// TODO: Currently storing info in both thread state and stopper's thread state, but checking only stopper's thread state.  Decide where this should be.
+			  pt.h_prev = pt.h_try;
+			  pt.h_try *= step_change_factor;
+			  pt.substep_state = 0;
+                          stop_ts = stop_ts_tmp;
+			  stop_ts.set_step_complete();				
+//if((step%1000==0)||(step%1000==1)) lprintf(dlog, "sys = %d  time = %g  time step did = %g  time step try next = %g\n", sys, Ttmp, pt.h_prev, pt.h_try);
+                        
+			for(int bod = 0; bod != ens.nbod(); bod++)
+			{
+			ens.x(sys,bod)  = ytmp(sys,bod,0);
+			ens.y(sys,bod)  = ytmp(sys,bod,1);
+			ens.z(sys,bod)  = ytmp(sys,bod,2);
+			ens.vx(sys,bod) = ytmp(sys,bod,3);
+			ens.vy(sys,bod) = ytmp(sys,bod,4);
+			ens.vz(sys,bod) = ytmp(sys,bod,5);
+
+			stop.test_body(stop_ts, ens, sys, bod, Ttmp, ytmp(sys,bod,0), ytmp(sys,bod,1),ytmp(sys,bod,2),ytmp(sys,bod,3),ytmp(sys,bod,4),ytmp(sys,bod,5));
+//			stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));
+			}
+			++step;
+
+			return Ttmp;
 		}
 
 	};
 
 	//! CPU state and interface
 	cuxDeviceAutoPtr<double, 3> k1, k2, k3, k4, k5, k6;
-//	cuxDeviceAutoPtr<double, 3> y0;
+	cuxDeviceAutoPtr<double, 3> y0;
 	cuxDeviceAutoPtr<double, 3> ytmp;
-//	cuxDeviceAutoPtr<double, 3> yerr;
+	cuxDeviceAutoPtr<double, 3> yerr;
 	gpu_t gpu_obj;
 
 	/*!
@@ -302,18 +377,18 @@ struct prop_rkck
 		k4.realloc(ens.nsys(), ens.nbod(), 6);
 		k5.realloc(ens.nsys(), ens.nbod(), 6);
 		k6.realloc(ens.nsys(), ens.nbod(), 6);
-//		y0.realloc(ens.nsys(), ens.nbod(), 6);
+		y0.realloc(ens.nsys(), ens.nbod(), 6);
 		ytmp.realloc(ens.nsys(), ens.nbod(), 6);
-//		yerr.realloc(ens.nsys(), ens.nbod(), 6);
+		yerr.realloc(ens.nsys(), ens.nbod(), 6);
 		gpu_obj.k1= k1;
 		gpu_obj.k2= k2;
 		gpu_obj.k3= k3;
 		gpu_obj.k4= k4;
 		gpu_obj.k5= k5;
 		gpu_obj.k6= k6;
-//		gpu_obj.y0= y0;
+		gpu_obj.y0= y0;
 		gpu_obj.ytmp= ytmp;
-//		gpu_obj.yerr= yerr;
+		gpu_obj.yerr= yerr;
 	}
 
 	/*!
@@ -323,10 +398,12 @@ struct prop_rkck
          * It will be called during construction of gpu_generic_integrator. 
          * It should load any values necessary for initialization.
 	 */
-	prop_rkck(const config &cfg)
+	prop_rkqs(const config &cfg)
 	{
-		if(!cfg.count("time step")) ERROR("Integrator gpu_rkck requires a timestep ('time step' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("time step").c_str());
+		if(!cfg.count("initial time step factor")) ERROR("Integrator gpu_rkqs requires a timestep ('initial time step factor' keyword in the config file).");
+		gpu_obj.hinit = atof(cfg.at("initial time step factor").c_str());
+		if(!cfg.count("error tolerance")) ERROR("Integrator gpu_rkqs requires an error tolerance  ('error tolerance' keyword in the config file).");
+		gpu_obj.error_tolerance = atof(cfg.at("error tolerance").c_str());
 	}
 
 	/*!
@@ -347,14 +424,14 @@ struct prop_rkck
  * \brief factory function to create an integrator 
  * 	  
  * This factory uses the gpu_generic_integrator class
- * with the propagator rkck and the stopper stop_on_ejection
+ * with the propagator rkqs and the stopper stop_on_ejection
  * 
  * @param[in] cfg contains configuration data for gpu_generic_integrator
  */
-extern "C" integrator *create_gpu_rkck(const config &cfg)
+extern "C" integrator *create_gpu_rkqs(const config &cfg)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_rkck>(cfg);
-       // return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkck>(cfg);
+	return new gpu_generic_integrator<stop_on_ejection, prop_rkqs>(cfg);
+       //return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkqs>(cfg);
 }
 
 } // end namespace swarm
