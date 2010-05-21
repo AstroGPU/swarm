@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Mario Juric and the Swarm-NG Development Team   *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarmlog.h
+ *  \brief declares hlog & dlog
+ *
+*/
+
 #ifndef swarmlog_h__
 #define swarmlog_h__
 
@@ -5,6 +28,8 @@
 #include "gpulog/lprintf.h"
 
 #include "swarm.h"
+
+#define NEW 1
 
 #if __CUDACC__
 // The assumption is all CUDA code will be concatenated/included and compiled
@@ -28,24 +53,79 @@ namespace swarm
 	{
 		// NOTE: put all doubles first, to avoid interstitial padding
 		// and alignment nvcc vs. gcc issues
-		double	x, y, z;
-		double	vx, vy, vz;
+#if NEW
+		double	m_x, m_y, m_z;
+		double	m_vx, m_vy, m_vz;
+		float	m_mass;
+		int m_bod;
+#else
+	        double  x, y, z;
+	        double  vx, vy, vz;
+                float   m;
+                int bod;
+#endif
 
-		float	m;
-		int bod;
 
 		// load body information from ensemble to body structure
 		__device__ __host__ void set(const ensemble &ens, int sys, int bod_)
 		{
-			bod = bod_;
-			m = ens.mass(sys, bod);
-			x = ens.x(sys, bod);
-			y = ens.y(sys, bod);
-			z = ens.z(sys, bod);
-			vx = ens.vx(sys, bod);
-			vy = ens.vy(sys, bod);
-			vz = ens.vz(sys, bod);
+#if NEW
+			m_bod = bod_;
+			m_mass = ens.mass(sys, bod_);
+			m_x = ens.x(sys, bod_);
+			m_y = ens.y(sys, bod_);
+			m_z = ens.z(sys, bod_);
+			m_vx = ens.vx(sys, bod_);
+			m_vy = ens.vy(sys, bod_);
+			m_vz = ens.vz(sys, bod_);
+#else
+                        bod = bod_;
+                        m = ens.mass(sys, bod);
+                        x = ens.x(sys, bod);
+                        y = ens.y(sys, bod);
+                        z = ens.z(sys, bod);
+                        vx = ens.vx(sys, bod);
+                        vy = ens.vy(sys, bod);
+                        vz = ens.vz(sys, bod);
+#endif
 		}
+#if NEW
+		//		/*
+		/// return reference to the current position x of the body  
+		__host__ __device__ double&  x() { return m_x; };
+		/// return reference to the current position y of the bm_ody  
+		__host__ __device__ double&  y() { return m_y; };
+		/// return reference to the current position z of the body  
+		__host__ __device__ double&  z() { return m_z; };
+		/// return reference to the current velocity x of the body  
+		__host__ __device__ double& vx() { return m_vx; };
+		/// return reference to the current velocity y of the body  
+		__host__ __device__ double& vy() { return m_vy; };
+		/// return reference to the current velocity z of the body  
+		__host__ __device__ double& vz() { return m_vz; };
+		/// return reference to the mass of the body  
+		__host__ __device__ float& mass()   { return m_mass; };
+		/// return reference to the id of the body  
+		__host__ __device__ int& bod()   { return m_bod; };
+
+		/// return the current position x of the body  
+		__host__ __device__ double x() const { return m_x; };
+		/// return the current position y of the body  
+		__host__ __device__ double  y() const { return m_y; };
+		/// return the current position z of the body  
+		__host__ __device__ double  z() const { return m_z; };
+		/// return the current velocity x of the body  
+		__host__ __device__ double vx() const { return m_vx; };
+		/// return the current velocity y of the body  
+		__host__ __device__ double vy() const { return m_vy; };
+		/// return the current velocity z of the body  
+		__host__ __device__ double vz() const  { return m_vz; };
+       		/// return the mass of thebody  
+		__host__ __device__ float mass() const { return m_mass; };
+		/// return  the id of the body  
+		__host__ __device__ int bod() const  { return m_bod; };
+		//		*/
+#endif		
 	};
 
 	// body_set class: hold a set of indices to bodies in a given system in
@@ -82,6 +162,7 @@ namespace swarm
 		return br;
 	}
 
+        /// swarm logging system.  See docs/eventlog.html
 	namespace log
 	{
 		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
@@ -89,7 +170,7 @@ namespace swarm
 
 		enum { memory = 0x01, if_full = 0x02 };
 
-		void init(const std::string &writer_cfg, int host_buffer_size = 10*1024*1024, int device_buffer_size = 10*1024*1024);
+		void init(const std::string &writer_cfg, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
 		void flush(int flags = memory);
 		void shutdown();
 
@@ -161,9 +242,12 @@ namespace swarm
 		__device__ __host__ inline void system(L &l, const ensemble &ens, const int sys, const double T)
 		{
 			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
-			for(int bod=0; bod != ens.nbod(); bod++)
+			if(bodies != NULL) // buffer overflow hasn't happened
 			{
-				bodies[bod].set(ens, sys, bod);
+				for(int bod=0; bod != ens.nbod(); bod++)
+				{
+					bodies[bod].set(ens, sys, bod);
+				}
 			}
 		}
 
@@ -194,12 +278,20 @@ namespace swarm
 			// set next stopping time -- find the next multiple
 			// of dT closest to the current time, unless it's greater than
 			// Tend, in which case set Tout = Tend.
+			//
 			// If the current time is within 0.01% of a multiple of dT, 
 			// set the _next_ multiple as the output time (otherwise
 			// we'd have two outputs with practically equal times).
+			//
+			// Furthermore, set the output time _back_ by 10^{-10} dT
+			// to better handle cases where when the timestep is a multiple
+			// of h, and dT is a multiple of h, because of accumulation of 
+			// numerical error (imagine T+h+h+h...+h), T may become _slightly_ 
+			// larger than Tout and is defered by needs_output() to the next 
+			// timestep.
 			const real_time &dT = ens.time_output(sys, 1);
 			real_time &Tout = ens.time_output(sys, 0);
-			Tout += ceil((T - Tout) / dT + 1e-4) * dT;
+			Tout += (ceil((T - Tout) / dT + 1e-4) - 1e-10) * dT;
 			if(Tout > ens.time_end(sys)) { Tout = ens.time_end(sys); }
 		}
 		
@@ -238,11 +330,12 @@ namespace swarm
 	}
 }
 
+/// For use by gpu logging subsystem.  See docs/eventlog.html
 namespace gpulog
 {
 	namespace internal
 	{
-		// body_set_cls is a proxy for an array of bodies, so make sure it reports
+	 	// body_set_cls is a proxy for an array of bodies, so make sure it reports
 		// the same alignment as body[N], as well as sizeof()
 		template<int N> struct alignment<swarm::body_set<N> > : public alignment<swarm::body[N]> { };	// return alignment of body[N]
 		template<int N> struct    ttrait<swarm::body_set<N> > : public    ttrait<swarm::body[N]> { };	// return traits of body[N]

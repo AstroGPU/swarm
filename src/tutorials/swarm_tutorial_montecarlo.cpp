@@ -1,4 +1,32 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarm_tutorial_montecarlo.cpp
+ *  \brief program for Monte Carlo integrations based on user specified initial conditions
+*/
+
+#define ASTROCENTRIC 1
+#define BARRYCENTRIC 0 // Not implemented
+#define JACOBI 0       // Not implemented
+
 #include "swarm.h"
+#include "swarmlog.h"
+
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -60,17 +88,24 @@ int main(int argc, const char **argv)
 #endif
   
   std::cerr << "Set integration duration for all systems.\n";
-  double dT = 10.;
-  get_config(dT,cfg,"integration end");
-  dT *= 2.*M_PI;
-  ens.set_time_end_all(dT);
-  ens.set_time_output_all(1, 1.01*dT);	// time of next output is after integration ends
+  double Tinit = 0., Tend = 10.;
+  swarm::get_config(Tinit,cfg,"time_init");
+  swarm::get_config(Tend,cfg,"integration end");
+  double Toutputstep = Tend*1.01;
+  swarm::get_config(Toutputstep, cfg, "output interval");
+
+  ens.set_time_end_all(Tend);
+  ens.set_time_output_all(0,Tinit);  // Time of first output (immediate)
+  ens.set_time_output_all(1,Toutputstep);  // output interval
+
+  // Perform logging if needed
+  swarm::log::output_systems_needing_output(hlog, ens);
 
   // Perform the integration on gpu
   std::cerr << "Upload data to GPU.\n";
   gpu_ensemble gpu_ens(ens);
   std::cerr << "Integrate ensemble on GPU.\n";
-  integ_gpu->integrate(gpu_ens, dT);				
+  integ_gpu->integrate(gpu_ens, Tend);				
   std::cerr << "Download data to host.\n";
   ens.copy_from(gpu_ens);					
   std::cerr << "GPU integration complete.\n";
@@ -81,7 +116,7 @@ int main(int argc, const char **argv)
   cfg["integrator"] = "cpu_hermite";
   std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
   std::cerr << "Integrate a copy of ensemble on CPU to check.\n";
-  integ_cpu->integrate(ens_check, dT);				
+  integ_cpu->integrate(ens_check, Tend);				
   std::cerr << "CPU integration complete.\n";
 #endif
   
@@ -181,19 +216,44 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
   for(unsigned int systemid = 0; systemid< nprint; ++systemid)
     {
       std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << "\n";
-      double mass_enclosed = 0.;
-      for(unsigned int bod=0;bod<ens.nbod();++bod)
+      float star_mass = ens.mass(systemid,0);
+      double mass_effective = star_mass;
+      double bx, by, bz, bvx, bvy, bvz;
+#if JACOBI
+      ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz,bod-1);
+#else
+#if BARRYCENTRIC
+      ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz);
+#else
+#if ASTROCENTRIC
+      ens.get_body(systemid,0,star_mass,bx,by,bz,bvx,bvy,bvz);
+#else
+#error  "Must specify some reference frame!"
+#endif
+#endif
+#endif
+
+      for(unsigned int bod=1;bod<ens.nbod();++bod) // Skip star since printing orbits
 	{
-	  double mass = ens.mass(systemid,bod);
-	  mass_enclosed += mass;
-
-	  if(bod>0)
-	    {
-	      std::cout << "body= " << bod << ": ";
-	      //	  std::cout << "pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
-
-	      double bx, by, bz, bvx, bvy, bvz;
-	      ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	  std::cout << "body= " << bod << ": ";
+	  //	  std::cout << "pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
+	  float mass = ens.mass(systemid,bod);
+#if JACOBI
+	  ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	  mass_effective += mass;
+#else
+#if BARRYCENTRIC
+	  //	  ens.get_barycenter(systemid,bx,by,bz,bvx,bvy,bvz);
+	  mass_effective = star_mass + mass;
+#else
+#if ASTROCENTRIC
+	  //	  ens.get_body(systemid,0,star_mass,bx,by,bz,bvx,bvy,bvz);
+	  mass_effective = star_mass + mass;
+#else
+#error    "Must specify some reference frame!"
+#endif
+#endif
+#endif
 	      double x = ens.x(systemid,bod)-bx;
 	      double y = ens.y(systemid,bod)-by;
 	      double z = ens.z(systemid,bod)-bz;
@@ -202,16 +262,17 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	      double vz = ens.vz(systemid,bod)-bvz;
 
 	      double a, e, i, O, w, M;
-	      calc_keplerian_for_cartesian(a,e,i,O,w,M, x,y,z,vx,vy,vz, mass_enclosed);
+	      calc_keplerian_for_cartesian(a,e,i,O,w,M, x,y,z,vx,vy,vz, mass_effective);
 	      i *= 180/M_PI;
 	      O *= 180/M_PI;
 	      w *= 180/M_PI;
 	      M *= 180/M_PI;
 	      std::cout << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
-	    }
+
 
 	}
     }
   std::cout.precision(cout_precision_old);
+  std::cout << std::flush;
 }
 

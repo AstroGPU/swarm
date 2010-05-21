@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarmlib.cu
+ *  \brief kernel code for gpu_generic_integrator
+ *
+*/
+
 #include "swarm.h"
 #include <cux/cux.h>
 #include <astro/util.h>
@@ -28,9 +51,10 @@ inline __device__ uint32_t threadId()
 }
 
 /*!
-  \brief Computes the global linear ID of the thread. Used from kernels.
+  \brief Computes the number of threads per block for 1D or 3D grid. Used from kernels.
 
   NOTE: Supports 3D grids with 1D blocks of threads
+  @return threadsPerBlock
 */
 inline __device__ uint32_t threadsPerBlock()
 {
@@ -57,28 +81,29 @@ namespace swarm {
 static const int MAXTHREADSPERBLOCK = 256;
 __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 {
-#if 0
+#if 0   // If you don't want to use shared memory for this
 	// Direct counting (via atomicAdd) of the number of running threads. Slower
 	// but requires no shared memory.
 	// TODO: Test if this implementation is fast enough to be activated
 	int sys = threadId();
 	int running = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
-	if(running) { atomicAdd(nrunning, 1); }
+	if(running) { atomicAdd(nrunning, 1); /*printf("sys=%d running.\n", sys);*/ }
 	return;
 #else
+	// We think it's ok to make this extern ?
 	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
 
+	int tpb = threadsPerBlock();
 	int sys = threadId();
-	const int widx = sys % MAXTHREADSPERBLOCK;
+	const int widx = sys % tpb;
 	running[widx] = sys < ens.nsys() ? !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop[sys]) : 0;
 
 	// Prefix sum algorithm (assumes block size <= MAXTHREADSPERBLOCK).
 	// 1) sum up the number of running threads in this block
-	int tpb = threadsPerBlock();
 	for(int i = 2; i <= tpb; i *= 2)
 	{
 		 __syncthreads();
-		if(widx % i) { running[widx] += running[widx + i/2]; }
+		if(widx % i == 0) { running[widx] += running[widx + i/2]; }
 	}
 
 	// 2) add the sum to the total number of running threads
@@ -204,8 +229,6 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
 template<typename stopper_t, typename propagator_t>
 __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H, stopper_t stop, const int gpu_ensemble_id, real_time *Tstop, double dT)
 {
-	debug_hook();
-
 	// Need to test that don't get bogus gpu_ensemble_id
  	if((gpu_ensemble_id<0)||(gpu_ensemble_id>=MAX_GPU_ENSEMBLES))
 		// Is this proper way to bail from GPU?
@@ -216,9 +239,10 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	int sys = threadId();
 
 #if __DEVICE_EMULATION__
-	if(sys == 2)
+	if(sys == ens.nsys()-1)
 	{
-		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+		double pct = 100. * (double)dlog.size() / dlog.capacity();
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d max_steps=%d logpct=%.2g%% [%d/%d]\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys), max_steps, pct, dlog.size(), dlog.capacity());
 	}
 #endif
 	if(sys < ens.nsys() && !(ens.flags(sys) & ensemble::INACTIVE))
@@ -235,27 +259,175 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 	}
 
 #if __DEVICE_EMULATION__
-	if(sys == 2)
+	if(sys == ens.nsys()-1)
 	{
-		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys));
+		double pct = 100. * (double)dlog.size() / dlog.capacity();
+		printf("sys=%d T=%g Tend=%g Tstop=%g dT=%g flags=%d max_steps=%d logpct=%8.4g%% [%d/%d]\n", sys, ens.time(sys), ens.time_end(sys), Tstop[sys], dT, ens.flags(sys), max_steps, pct, dlog.size(), dlog.capacity());
 	}
 #endif
 
 	count_running(&retval->nrunning, Tstop, ens);
 	
 #if __DEVICE_EMULATION__
-	if(sys == 0)
+	if(sys == ens.nsys()-1)
 	{
-		printf("nrunning=%d\n", retval->nrunning);
+		printf("sys=%d nrunning=%d\n", sys, retval->nrunning);
 	}
 #endif
 }
 
 
 /*!
- \brief gpu generic integrate class
- 
- ...
+	\brief gpu_generic_integrator - Versatile GPU integrator template
+
+	gpu_generic_integrator is a template class designed to make it easy to implement
+	powerful GPU-based integrators by supplying a 'propagator' class (that provides
+	a function to advance the ensemble by one timestep), and a 'stopper' class (that
+	tests whether the integration should stop for a particular system in the
+	ensemble). Given the two classes, gpu_generic_integrator acts as a driver
+	routine repeatedly calling the GPU kernel until all systems in the ensemble have
+	finished the integration. It does this in an optimized manner, taking care to
+	compactify() the ensemble when needed to efficiently utilize GPU resources
+	(NOTE: compactification not yet implemented).
+
+	For a canonical example of how to build an integrator using
+	gpu_generic_integrator, look at the gpu_euler integrator.
+
+	Integration loop outline (I == gpu_generic_integrator object, H == propagator
+	object, stop == stopper object):
+
+	I.integrate(ens):
+		if(ens.last_integrator() != this):
+			H.initialize(ens);
+			stop.initialize(ens);
+		do:
+			gpu_integrate<<<>>>(max_step, ens, (gpu_t)H, (gpu_t)stop)	[m'threaded execution on the GPU]
+				while step < max_step:
+					if(T < Tend || stop()):
+						ens(sys).flags |= INACTIVE
+						break;
+					H.advance():			[ implementation supplied by the developer ]
+						foreach(bod in sys):
+							advance bod
+							call stop.test_body
+						return new time T
+			if(beneficial):
+				ens.compactify();
+		while(active_systems > 0)
+
+	To build an integrator using gpu_generic_integrator, the developer must supply a
+	propagator and a stopper class that conform to the following interfaces:
+
+	// propagator class: advance the system by one time step
+	//
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that need
+	// to reside on the CPU here.
+	struct propagator
+	{
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
+		{
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend);
+			};
+
+			// Advance the system - this function must advance the system
+			// sys by one timestep, making sure that T does not exceed Tend.
+			// Must return the new time of the system.
+			//
+			// This function MUST also call stop.test_body() for every body
+			// in the system, after that body has been advanced by a timestep.
+			template<typename stop_t>
+			__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		};
+
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		propagator(const config &cfg);
+
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
+
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
+
+	// stopper class: mark a system inactive if conditions are met
+	//
+	// CPU state and interface. Will be instantiated on construction
+	// of gpu_generic_integrator object. Keep any data that need
+	// to reside on the CPU here.
+	struct stopper
+	{
+		// GPU state and interface (per-grid). Will be passed 
+		// as an argument to integration kernel. Any per-block read-only
+		// variables should be members of this structure.
+		struct gpu_t
+		{
+			// GPU per-thread state and interface. Will be instantiated
+			// in the integration kernel. Any per-thread
+			// variables should be members of this structure.
+			struct thread_state_t
+			{
+				__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend);
+			};
+
+			// test any per-body stopping criteria for body (sys,bod). If 
+			// your stopping criterion only depends on (x,v), test for it 
+			// here. This will save you the unnecessary memory accesses 
+			// that would otherwise be made if the test was made from 
+			// operator().
+			//
+			// Called _after_ the body 'bod' has advanced a timestep.
+			//
+			// Note: you must internally store the result of your test,
+			// and use/return it in subsequent call to operator().
+			//
+			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz);
+
+			// Called after a system sys has been advanced by a timestep.
+			// Must return true if the system sys is to be flagged as
+			// INACTIVE (thus stopping further integration)
+			__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T);
+		};
+
+		// Constructor will be passed the cfg object with the contents of
+		// integrator configuration file. It will be called during construction
+		// of gpu_generic_integrator. It should load any values necessary
+		// for initialization.
+		stopper(const config &cfg);
+
+		// Initialize temporary variables for ensemble ens. This function
+		// should initialize any temporary state that is needed for integration
+		// of ens. It will be called from gpu_generic_integrator, but only
+		// if ens.last_integrator() != this. If any temporary state exists from
+		// previous invocation of this function, it should be deallocated and
+		// the new state (re)allocated.
+		void initialize(ensemble &ens);
+
+		// Cast operator for gpu_t. This operator must return the gpu_t object
+		// to be passed to integration kernel. It is called once per kernel
+		// invocation.
+		operator gpu_t();
+	};
+
 */
 template<typename stopper_t, typename propagator_t>
 class gpu_generic_integrator : public integrator
@@ -297,7 +469,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 
 		// upload ensemble
 		assert((gpu_ensemble_id>=0)&&(gpu_ensemble_id<MAX_GPU_ENSEMBLES));
-		cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id]));
+		cuxErrCheck( cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id])) );
 
 		// initialize propagator, stopping condition
 		H.initialize(ens);
@@ -348,7 +520,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	log::flush(log::memory);
 }
 
-/// check a parameter is power of two
+/// return true if input parameter is a power of two
 inline bool is_power_of_two(int x) { return !(x & (x-1)); }
 
 /*!
@@ -361,7 +533,7 @@ template<typename stopper_t, typename propagator_t>
 gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
 	: H(cfg), stop(cfg), retval_gpu(1)
 {
-	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 100;
+	steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 1000;
 	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
 	gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
 	
@@ -372,6 +544,10 @@ gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const co
 }
 
 } // end namespace swarm
+
+
+
+
 
 ///////////////
 //// Some generically useful force/jerk computation functions
@@ -409,7 +585,7 @@ __device__ void compute_acc_jerk(ensemble &ens, const int sys, const cuxDevicePt
 			V3 dv(ens.vx(sys,j),ens.vy(sys,j),ens.vz(sys,j)); dv -= vi;
 			real r2 = dx.MagnitudeSquared();
 			real rv = dot ( dx,dv );
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rv *= 3./r2;
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
@@ -457,7 +633,7 @@ __device__ void compute_acc(ensemble &ens, const int sys, const cuxDevicePtr<rea
 
 			V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
 			real r2 = dx.MagnitudeSquared();
-			real rinv = 1./sqrt ( r2 );
+			real rinv = rsqrt ( r2 );
 			rinv *= ens.mass ( sys,j );
 			real rinv3 = rinv/r2;
 

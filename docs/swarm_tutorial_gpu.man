@@ -1,0 +1,54 @@
+swarm_tutorial_gpu(1)
+=====================
+
+NAME
+---- 
+swarm_tutorial_gpu - Performs many n-body integrations using the swarm library and an attached GPU.  
+
+SYMPOSIS
+--------
+*swarm_tutorial_gpu*
+There are no command line arguements or configuration files.
+If library paths give you trouble, try running from *run* directory.
+
+Description
+-----------
+This is a very simple demonstration of using the swarm library. + 
+The integrator parameters and initial conditions are hard coded and
+are not configurable. +
+
+Since this code uses a GPU, it can be useful for testing whether any
+problems with another code are due to that code or the system (it is
+not uncommon for a GPU to get stuck in a funny state and need a
+reboot). +
+
+EXAMPLE
+-------
+''make; cd run; ../bin/swarm_tutorial_gpu''
+
+OUTPUT
+------
+This demo does not use the swarm logging system and simply writes to
+stdout and stderr.  See link:../test/tutorial_gpu/output.ref[test/tutorial_gpu/output.ref] for expected
+output.
+
+LIMITATIONS & BUGS
+------------------
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated
+information on bugs.
+
+RESOURCES
+---------
+
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+COPYING
+-------
+Copyright \(C) 2010 Eric B. Ford + 
+Free use of this software is granted under the terms of the GNU
+General Public License (GPL) v3, which should be included as
+link:gpl-3.0.txt[] and also avaliable
+http://www.gnu.org/licenses/gpl-3.0.html[online].
+

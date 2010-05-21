@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Aaron Boley  and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file hermite_adap_gpu.cu
+ * \brief GPU kernels for hermite_adap_gpu_integrator
+ * 
+ * also contains associated template metaprogramming in gpu_hermite_adap_aux namespace 
+*/
 #include "swarm.h"
 #include "user.h"
 #include "hermite_adap_gpu.h"
@@ -47,8 +70,13 @@ namespace gpu_hermite_adap_aux
 #define RSQRT(x) rsqrt(x)
 #define SQRT(x)   sqrt(x)
 
-// Adaptive time step algorithm. 
-
+/**
+ * \brief Calculate adaptive time step for hermite_adap
+ *
+ * Adaptive time step algorithm. Placed directly in the kernel for now
+ * \todo Make hermite_adap efficient on GPU, probably by moving the functionality of
+ * this function into correct and/or using a different time step criterion
+ */
 template<unsigned int nBodies, typename real_hi, typename real_lo>
 inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real_lo *mAcc, real_lo *mJerk, real_hi h, real_hi stepfac) 
  {
@@ -56,16 +84,16 @@ inline __device__ real_hi getAdaptiveTimeStep(real_hi *mPos, real_hi *mVel, real
          real_hi JoAR=0.,VoPR=0.;
          for(unsigned int i=0;i<nBodies;++i) 
           {
-                JoAR+=(pow(mJerk[i*3],2)+pow(mJerk[i*3+1],2)+pow(mJerk[i*3+2],2) ) /
-                      (pow(mAcc[i*3],2) +pow(mAcc[i*3+1],2) +pow(mAcc[i*3+2],2) ) ;
+                JoAR+=( mJerk[i*3]*mJerk[i*3]+mJerk[i*3+1]*mJerk[i*3+1]+mJerk[i*3+2]*mJerk[i*3+2] ) /
+                      (  mAcc[i*3]*mAcc[i*3] + mAcc[i*3+1]*mAcc[i*3+1] + mAcc[i*3+2]*mAcc[i*3+2] ) ;
                 for (unsigned int j=0;j<nBodies;++j)
                 {
-                        if(i==j)continue;
-                        VoPR+=(pow(mVel[i*3]-mVel[j*3],2)+pow(mVel[i*3+1]-mVel[j*3+1],2)+pow(mVel[i*3+2]-mVel[j*3+2],2) ) /
-                              (pow(mPos[i*3]-mPos[j*3],2)+pow(mPos[i*3+1]-mPos[j*3+1],2)+pow(mPos[i*3+2]-mPos[j*3+2],2) ) ;
+                        if(i==j)break;
+                        VoPR+=((mVel[i*3]-mVel[j*3])*(mVel[i*3]-mVel[j*3])+(mVel[i*3+1]-mVel[j*3+1])*(mVel[i*3+1]-mVel[j*3+1])+(mVel[i*3+2]-mVel[j*3+2])*(mVel[i*3+2]-mVel[j*3+2]) ) /
+                              ((mPos[i*3]-mPos[j*3])*(mPos[i*3]-mPos[j*3])+(mPos[i*3+1]-mPos[j*3+1])*(mPos[i*3+1]-mPos[j*3+1])+(mPos[i*3+2]-mPos[j*3+2])*(mPos[i*3+2]-mPos[j*3+2]) ) ;
                 }
           }
-         dt=(RSQRT(JoAR+VoPR)*stepfac+h);
+         dt=RSQRT(JoAR+VoPR)*stepfac+h;
          return dt;
  }
 

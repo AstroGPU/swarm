@@ -1,3 +1,28 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Young In Yeo and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file hermite_cpu.h
+ *  \brief declares cpu_hermite_integrator
+ *
+ *  Note that while this clas derivers from integrator, it does not use cpu_generic_integrator
+*/
+
+
 #ifndef integ_hermite_cpu_h__
 #define integ_hermite_cpu_h__
 
@@ -65,6 +90,7 @@ protected:
 
 	public:
 	// non-const versions
+	/// returns reference to x component of acceleration for system sys and body bod
 	double&  ax(int sys, int bod) { return m_acc[bod*m_nsys + sys]; }
 	double&  ay(int sys, int bod) { return m_acc[m_nbod*m_nsys + bod*m_nsys + sys]; }
 	double&  az(int sys, int bod) { return m_acc[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }

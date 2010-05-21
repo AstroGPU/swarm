@@ -1,6 +1,6 @@
 //
 // !!! MACHINE GENERATED FILE; DO NOT EDIT !!!
-// Generated using ./gen_gpulog_write.pl write
+// Generated using ../scripts/gen_gpulog_write.pl write
 //
 template<typename T1>
 	__host__ __device__ inline PTR_T(SCALAR(T1)) write(const int recid, const T1 &v1)
@@ -11,7 +11,11 @@ template<typename T1>
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v1);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -36,7 +40,11 @@ template<typename T1, typename T2>
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v2);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -49,7 +57,7 @@ template<typename T1, typename T2>
 		P::store_arginfo(ptr, v2);
 #endif
 
-		DBG( printf("Total packet len = %d\n", len) );
+		DHOST( std::cerr << "Total packet len = " << len << "\n"; )
 		return (SCALAR(T2)*)(ptr + P::begin2);
 	}
 
@@ -62,7 +70,11 @@ template<typename T1, typename T2, typename T3>
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v3);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -89,7 +101,11 @@ template<typename T1, typename T2, typename T3, typename T4>
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v4);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -117,7 +133,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5>
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v5);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -146,7 +166,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v6);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -176,7 +200,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v7);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -207,7 +235,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v8);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -239,7 +271,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v9);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write
@@ -272,7 +308,11 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 		// allocate and test for end-of-buffer
 		int len = P::len_with_padding(v10);
 		int at = A::atomicAdd(this->at, len);
-		if(has_overflowed(at + len)) { return NULL; }
+		if(has_overflowed(at + len)) 
+		{
+			A::atomicAdd(this->at, -len);
+			return NULL;
+		}
 		char *ptr = buffer + at;
 
 		// write

@@ -1,12 +1,12 @@
 
 === Integrating =========================================================================================
 
-Set integrator parameters (hardcoded in this demo).
-Initialize the library
-Initialize the integrator
-Initialize ensemble on host to be used with CPU integration.
-Set initial conditions.
-Print selected initial conditions for CPU.
+# Set integrator parameters (hardcoded in this demo).
+# Initialize the library
+# Initialize the integrator
+# Initialize ensemble on host to be used with CPU integration.
+# Set initial conditions.
+# Print selected initial conditions for CPU.
 sys= 0 time= 0 nsteps= 0
 body= 0: mass= 1 position= (0, 0, 0) velocity= (0, 0, 0).
 body= 1: mass= 0.001000000047 position= (0.9779687741, 0.2087512318, 0) velocity= (-0.2087512318, 0.9779687741, 0).
@@ -23,10 +23,10 @@ sys= 3 time= 0 nsteps= 0
 body= 0: mass= 1 position= (0, 0, 0) velocity= (0, 0, 0).
 body= 1: mass= 0.001000000047 position= (-0.6539348156, -0.7565508951, 0) velocity= (0.7565508951, -0.6539348156, 0).
 body= 2: mass= 0.001000000047 position= (0.9167120674, -1.058129947, 0) velocity= (0.6387735908, 0.5534022172, 0).
-Set integration duration for all systems.
-Integrate ensemble on CPU.
-Integration complete.
-Print selected results from GPU's calculation.
+# Set integration duration for all systems.
+# Integrate ensemble on CPU.
+# Integration complete.
+# Print selected results from GPU's calculation.
 sys= 0 time= 6.283185307 nsteps= 12567
 body= 0: mass= 1 position= (-0.007919412518, 0.005354869537, 0) velocity= (-0.001084202614, -0.001182660308, 0).
 body= 1: mass= 0.001000000047 position= (0.9898748349, 0.2017726404, 0) velocity= (-0.1914504965, 0.9634020484, 0).

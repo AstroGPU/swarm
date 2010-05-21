@@ -1,8 +1,10 @@
-Title:  Makefile-based swarm build system
-Author: mjuric
+Makefile-based swarm build system
+=================================
+Mario Juric
 
-=========================
 
+Overview
+--------
 * Usage:
 
        make all
@@ -31,12 +33,12 @@ Author: mjuric
   (location of nvcc) or DEVEMU (that you'd set to --device-emulation to
   compile in device emulation mode).
 
+
+Advanced Features
+-----------------
+
 * To disable the 'pretty printing' during the build process, define
   VERBOSE=1 in your Makefile.user (or the environment)
-
-
-=========================
-
 
 * Unless something is wrong, or you want to tinker with the Makefiles, or
   you're trying to diagnose a bug you suspect is caused by the build system,
@@ -47,17 +49,17 @@ Author: mjuric
     * To build the core swarm code into a shared library (bin/libswarm.so)
 
     * To build various applications using the swarm code (e.g., swarm -- the
-      integrator, swarmdump -- output file inspector, etc.).
+      integrator, swarmdump -- output file inspector, etc.)
 
     * To help the developer by tracking dependencies and rebuilding the code
-      as needed
+      as needed.
 
 * To build libswarm.so, the Makefile:
  
     * Includes Makefiles matching integrators/*/Makefile.mk pattern.
       These files should add any integrator-specific sources to
       LIBSWARM_CUDA (.cu files) or LIBSWARM_SOURCES (.cpp files).  See the
-      text on top of, e.g.  integrators/euler/Makefile.mk for more
+      text on top of, e.g., integrators/euler/Makefile.mk for more
       instructions
 
     * Concatenates all .cu files (the ones from LIBSWARM_CUDA) into a single
@@ -96,3 +98,19 @@ Author: mjuric
     * Dependency generation/tracking is automatic. The implementation is
       based on the advice from the GNU make manual (google 'Generating
       Dependencies Automatically').
+
+
+Making a local copy of documentation in HTML format
+---------------------------------------------------
+* To make a pretty html version of the documentation in the docs
+   subdirectory, run 'make doc-asciidoc' (requires asciidoc).  Even
+   without asciidoc you can read the text files in the *docs*
+   subdirectory or browse the documentation
+   http://www.astro.ufl.edu/~eford/code/swarm/docs/[online].
+
+* To generate reference information via doxygen in the reference
+   subdirectory, run 'make doc-doxygen' (requires doxygen).  This
+   information for the most recent version is also avaliable
+   http://www.astro.ufl.edu/~eford/code/swarm/doxygen/[online]
+
+

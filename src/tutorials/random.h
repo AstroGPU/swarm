@@ -1,4 +1,31 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file random.h
+ *  \brief simple interface to CPU random number generators
+ *
+ * \todo use better random nubmer generators (e.g., from boost++)
+*/
+
 #ifndef H_SWARM_RANDOM
+
+#include <cstdlib>
+#include <cmath>
 
 namespace swarm {
 
@@ -14,7 +41,7 @@ double draw_std_normal()
   // Box–Muller algorithm
   double rn1 = draw_uniform01();
   double rn2 = draw_uniform01();
-  return sqrt(-2.*log(rn1))*cos(2.*M_PI*(rn2));
+  return sqrt(-2.*std::log(rn1))*cos(2.*M_PI*(rn2));
 }
 
 double draw_value_from_config(const swarm::config& cfg, const std::string& name, const int bod, double min, double max)

@@ -19,3 +19,5 @@ swarm.kdevses
 src/*~
 *.d
 bin/*
+docs/*.html
+feedback.*

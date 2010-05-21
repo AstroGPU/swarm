@@ -1,4 +1,5 @@
 #!/usr/bin/python
+''' Simple python script for generating an ensemble of planetary systems with a binary encounter.'''
 #
 #    "throwBinaryGen.py" is a python script that creates initial conditions and the observation
 #    file for use in swarm_scatter_demo. Like, swarm_scatter_demo.py, except it throws binaries
@@ -30,12 +31,12 @@ import random as R
 import scipy.special as SS
 #
 #
-# define basic parameters for ensemble
-# keep the primary mass the same for now, and binary masses are assumedto be equal
-# planets can vary in mass, size, location, and number
-# this does not consider stability, except for the Hill radius check
-# the outer planet is always set to 128 AU, but that can be changed where indicated
-# perturbers are drawn from a Maxwellian velocity distribution
+# Define basic parameters for ensemble
+# Keep the primary mass the same for now, and binary masses are assumed to be equal.
+# Planets can vary in mass, size, location, and number.
+# This does not consider stability, except for the Hill radius check.
+# The outer planet is always set to 128 AU, but that can be changed where indicated.
+# Perturbers are drawn from a Maxwellian velocity distribution
 #
 # 
 nSystems=2048 # systems in ensemble
@@ -48,6 +49,7 @@ minPlanets=4 # keeps these the same for now.
 maxPlanets=4
 minAU=2. # minimum semi-major axis allowed.  If you are running with fixed time steps, be mindful of this setting.
 maxAU=100. # outer planet
+SET_OUTER_ORBIT=1 # set one planet to always be initially at maxAU.
 minBinarySep=100. # binary separations
 maxBinarySep=100.
 pert=0.01 # perturbations for other velocities.
@@ -56,11 +58,13 @@ timeStart=0.
 timeEnd=2e5 # time should be given in yr.
 incomingR=20626.5 # AU
 maxUnperturbedImpact=1000. # AU
-numObs=2000 # number of observations allowed
-ObserveFile="observeTimes.dat"
+numObs=2000 # number of observations allowed. 
+ObserveFile="observeTimes.dat" # list of times file used by swarm_scattering_demo
 VelSig=1./29.8 #(1km/s in code units) This is mean of Maxwellian velocity dispersion
-RANDOM_TIMES=0
-thisSeed=314159
+MAXWELL=1 # use Maxwellian velocity.  Anything else gives the same initial speed 
+#         # between the binary and the planetary system for each ensemble constituent.
+RANDOM_TIMES=0 # set to 1 if you want the list of times file to have random intervals
+thisSeed=314159 # random number generator seed
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)
@@ -94,11 +98,11 @@ def createObservingFile():
                 obsTimes.sort()
         else:
                 dt=(timeEnd-timeStart)/float(numObs)
-                for i in xrange(1,numObs):
+                for i in xrange(1,numObs+1):
                         obsTimes.append(timeStart+i*dt)
 
         f=open(ObserveFile,"w")
-        for i in xrange(numObs):
+        for i in xrange(numObs+1):
                 f.write(repr(obsTimes[i])+"\n")
         f.close()
         return 0
@@ -107,13 +111,14 @@ def getCollision():
 	# first use spherical coordinates to find position in sky as observed by planetary system
 	phi=2.*M.pi*R.random()
 	theta=M.pi*(2.*R.random()-1.)
-        #VelSigPert=Maxwell(VelSig) 
-	VelSigPert=VelSig
+        if MAXWELL==1: VelSigPert=Maxwell(VelSig) 
+	else: VelSigPert=VelSig
 	x=incomingR*M.cos(theta)*M.cos(phi)
 	y=incomingR*M.cos(theta)*M.sin(phi)
 	z=incomingR*M.sin(theta)
-        impact=M.sqrt(maxUnperturbedImpact**2+2.*mBinary*maxUnperturbedImpact/VelSigPert**2) # assuming reduced mass is mPmP/(mP+mP)
+        impact=M.sqrt(maxUnperturbedImpact**2+4.*mBinary*maxUnperturbedImpact/VelSigPert**2) # assuming equal mass binaries
 	impact*=M.sqrt(R.random())
+	if impact>incomingR:impact=incomingR 
 	alpha0=impact/incomingR
 	alpha=1e-3*alpha0 # take advantage of large separation
 	ppf=(2.*(R.random())-1.)*alpha
@@ -122,7 +127,6 @@ def getCollision():
        		phiPrime=phi+ppf
                	thetaPrime=theta+tpf
 		ppf*=1.01;tpf*=1.01
-
 		alpha=M.cos(theta)*M.cos(phi)*M.cos(thetaPrime)*M.cos(phiPrime)
 		alpha+=M.cos(theta)*M.sin(phi)*M.cos(thetaPrime)*M.sin(phiPrime)
 		alpha+=M.sin(thetaPrime)*M.sin(theta)
@@ -161,10 +165,11 @@ def main():
 		for j in xrange(nPlanets):
 			mass=getUniformLog(massMin,massMax)
 			x=getUniformLog(minAU,maxAU)
-			if j==0: x=maxAU
-			if j==1: x=3.
-			if j==2: x=10. # set these if you want to constrain planet locations
-			if j==3: x=30.
+			if SET_OUTER_ORBIT: 
+				if j==0: x=maxAU
+			#if j==1: x=3.
+			#if j==2: x=10. # set these if you want to constrain planet locations
+			#if j==3: x=30.
 			listx.append(x)
 			OK=0
 			if j==0: OK=1

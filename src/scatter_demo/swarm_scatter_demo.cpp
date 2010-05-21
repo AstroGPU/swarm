@@ -1,7 +1,7 @@
-/*
-    "swarm_scatter_demo" is a program that uses the Swarm-NG tools for modeling an ensemble of
-    small N systems using the hermite_adap_gpu integrator.
-    Copyright (C) 2010  Swarm-NG Development Group
+/*! \file swarm_scatter_demo.cpp
+    \brief a program that uses the Swarm-NG tools for modeling an ensemble of small N systems using the hermite_adap_gpu integrator.
+
+    Copyright (C) 2010  Aaron Boley & the Swarm-NG Development Group
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,12 +75,16 @@ int main(int argc, char *argv[])
         //get Observing Times
         vector<real>   ObsTimes=getObsTimes(obsFileName);
         unsigned int nObs=ObsTimes.size();
+	//initial energy
+        vector<real>   Einit;
 
         //open and clear files
         for (unsigned int i=0;i<nSystems;++i)
          {
           ofstream thisFile;
           stringstream buff;
+	  //set initial energy while we are at it.
+          Einit.push_back(calc_system_energy(ens,i));
 
           buff.str("");
           buff<<outFilePrefix<<'.'<<setfill('0')<<setw(5)<<i;
@@ -93,7 +97,6 @@ int main(int argc, char *argv[])
         //
         // Set timing and disable logging -- will do it by hand below
         //
-
         unsigned int observation=0;
         ens.set_time_all(ObsTimes[observation]); // initial time
         ens.set_time_end_all(ObsTimes[nObs-1]);  // max integration time
@@ -105,7 +108,6 @@ int main(int argc, char *argv[])
         //Now integrate, but stop at each observation time to check progress and log data.
         //
 
- 
         real startTime=ObsTimes[observation];
         while(observation++<nObs-1)
          {
@@ -137,7 +139,7 @@ int main(int argc, char *argv[])
                 thisFile<<scientific<<setprecision(12)<<m<<' '<<x[0]<<' '<<x[1]<<' '<<x[2]<<' '<<v[0]/kmpsToCodeVel<<' '<<v[1]/kmpsToCodeVel<<' '<<v[2]/kmpsToCodeVel<<' ';
 
               }
-              thisFile<<scientific<<setprecision(12)<<Enew<<"\n";
+              thisFile<<scientific<<setprecision(12)<<(Einit[i]-Enew)/Einit[i]<<"\n";
               thisFile.close();
 
             }

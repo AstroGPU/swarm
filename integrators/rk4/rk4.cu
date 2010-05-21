@@ -1,163 +1,31 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Young In Yeo and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file rk4.cu
+ *  \brief declares prop_rk4 for use with gpu_generic_integrator
+*/
+
 #include "swarm.h"
 #include "rk4.h"
 #include "swarmlog.h"
 
-/*!
-
-	\brief gpu_generic_integrator - Versatile GPU integrator template
-
-	gpu_generic_integrator is a template class designed to make it easy to implement
-	powerful GPU-based integrators by supplying a 'propagator' class (that provides
-	a function to advance the ensemble by one timestep), and a 'stopper' class (that
-	tests whether the integration should stop for a particular system in the
-	ensemble). Given the two classes, gpu_generic_integrator acts as a driver
-	routine repeatedly calling the GPU kernel until all systems in the ensemble have
-	finished the integration. It does this in an optimized manner, taking care to
-	compactify() the ensemble when needed to efficiently utilize GPU resources
-	(NOTE: compactification not yet implemented).
-
-	For a canonical example of how to build an integrator using
-	gpu_generic_integrator, look at the gpu_euler integrator.
-
-	Integration loop outline (I == gpu_generic_integrator object, H == propagator
-	object, stop == stopper object):
-
-	I.integrate(ens):
-		if(ens.last_integrator() != this):
-			H.initialize(ens);
-			stop.initialize(ens);
-		do:
-			gpu_integrate<<<>>>(max_step, ens, (gpu_t)H, (gpu_t)stop)	[m'threaded execution on the GPU]
-				while step < max_step:
-					if(T < Tend || stop()):
-						ens(sys).flags |= INACTIVE
-						break;
-					H.advance():			[ implementation supplied by the developer ]
-						foreach(bod in sys):
-							advance bod
-							call stop.test_body
-						return new time T
-			if(beneficial):
-				ens.compactify();
-		while(active_systems > 0)
-
-	To build an integrator using gpu_generic_integrator, the developer must supply a
-	propagator and a stopper class that conform to the following interfaces:
-
-	// propagator class: advance the system by one time step
-	//
-	// CPU state and interface. Will be instantiated on construction
-	// of gpu_generic_integrator object. Keep any data that need
-	// to reside on the CPU here.
-	struct propagator
-	{
-		// GPU state and interface (per-grid). Will be passed 
-		// as an argument to integration kernel. Any per-block read-only
-		// variables should be members of this structure.
-		struct gpu_t
-		{
-			// GPU per-thread state and interface. Will be instantiated
-			// in the integration kernel. Any per-thread
-			// variables should be members of this structure.
-			struct thread_state_t
-			{
-				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend);
-			};
-
-			// Advance the system - this function must advance the system
-			// sys by one timestep, making sure that T does not exceed Tend.
-			// Must return the new time of the system.
-			//
-			// This function MUST also call stop.test_body() for every body
-			// in the system, after that body has been advanced by a timestep.
-			template<typename stop_t>
-			__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
-		};
-
-		// Constructor will be passed the cfg object with the contents of
-		// integrator configuration file. It will be called during construction
-		// of gpu_generic_integrator. It should load any values necessary
-		// for initialization.
-		propagator(const config &cfg);
-
-		// Initialize temporary variables for ensemble ens. This function
-		// should initialize any temporary state that is needed for integration
-		// of ens. It will be called from gpu_generic_integrator, but only
-		// if ens.last_integrator() != this. If any temporary state exists from
-		// previous invocation of this function, it should be deallocated and
-		// the new state (re)allocated.
-		void initialize(ensemble &ens);
-
-		// Cast operator for gpu_t. This operator must return the gpu_t object
-		// to be passed to integration kernel. It is called once per kernel
-		// invocation.
-		operator gpu_t();
-	};
-
-
-	// stopper class: mark a system inactive if conditions are met
-	//
-	// CPU state and interface. Will be instantiated on construction
-	// of gpu_generic_integrator object. Keep any data that need
-	// to reside on the CPU here.
-	struct stopper
-	{
-		// GPU state and interface (per-grid). Will be passed 
-		// as an argument to integration kernel. Any per-block read-only
-		// variables should be members of this structure.
-		struct gpu_t
-		{
-			// GPU per-thread state and interface. Will be instantiated
-			// in the integration kernel. Any per-thread
-			// variables should be members of this structure.
-			struct thread_state_t
-			{
-				__device__ thread_state_t(gpu_t &stop, ensemble &ens, const int sys, double T, double Tend);
-			};
-
-			// test any per-body stopping criteria for body (sys,bod). If 
-			// your stopping criterion only depends on (x,v), test for it 
-			// here. This will save you the unnecessary memory accesses 
-			// that would otherwise be made if the test was made from 
-			// operator().
-			//
-			// Called _after_ the body 'bod' has advanced a timestep.
-			//
-			// Note: you must internally store the result of your test,
-			// and use/return it in subsequent call to operator().
-			//
-			__device__ void test_body(thread_state_t &ts, ensemble &ens, int sys, int bod, double T, double x, double y, double z, double vx, double vy, double vz);
-
-			// Called after a system sys has been advanced by a timestep.
-			// Must return true if the system sys is to be flagged as
-			// INACTIVE (thus stopping further integration)
-			__device__ bool operator ()(thread_state_t &ts, ensemble &ens, int sys, int step, double T);
-		};
-
-		// Constructor will be passed the cfg object with the contents of
-		// integrator configuration file. It will be called during construction
-		// of gpu_generic_integrator. It should load any values necessary
-		// for initialization.
-		stopper(const config &cfg);
-
-		// Initialize temporary variables for ensemble ens. This function
-		// should initialize any temporary state that is needed for integration
-		// of ens. It will be called from gpu_generic_integrator, but only
-		// if ens.last_integrator() != this. If any temporary state exists from
-		// previous invocation of this function, it should be deallocated and
-		// the new state (re)allocated.
-		void initialize(ensemble &ens);
-
-		// Cast operator for gpu_t. This operator must return the gpu_t object
-		// to be passed to integration kernel. It is called once per kernel
-		// invocation.
-		operator gpu_t();
-	};
-
-*/
-
+/// namespace for Swarm-NG library
 namespace swarm {
-
 
 /*!  
  *  \brief propagator class for RK4 integrator on GPU: Advance the system by one time step.
@@ -210,7 +78,7 @@ struct prop_rk4
                  * pos = old_pos + vel*dt + a1*0.5*dt*dt
                  * a2 = acc(ba)
                  * pos = old_pos + vel*dt + (a0+a1*2)*(1/6.)*dt*dt
-                 * vel += (a0_a1*4+a2)*(1/6.)*dt
+                 * vel += (a0+a1*4+a2)*(1/6.)*dt
 		 * end 
                  *
 		 * @tparam stop_t ...
@@ -228,9 +96,10 @@ struct prop_rk4
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			//double h = T + this->h <= Tend ? this->h : Tend - T;
-			double h_half= h*0.5;
+			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= hh*0.5;
 
+			/// limited to 3 bodies due to cacheing old positions and velocicties in registers (could fit 4 or 5 in 16k, more requires not cacheing v?_olds)
 			double  x_old[3] = {ens.x(sys, 0), ens.x(sys, 1), ens.x(sys, 2)};
 			double  y_old[3] = {ens.y(sys, 0), ens.y(sys, 1), ens.y(sys, 2)};
 			double  z_old[3] = {ens.z(sys, 0), ens.z(sys, 1), ens.z(sys, 2)};
@@ -243,9 +112,9 @@ struct prop_rk4
 
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h_half + aa0(sys, bod, 0) * h_half * h_half * 0.5;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h_half + aa0(sys, bod, 1) * h_half * h_half * 0.5;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h_half + aa0(sys, bod, 2) * h_half * h_half * 0.5;
+				ens.x(sys,bod) = x_old[bod]+ h_half*( vx_old[bod] + aa0(sys, bod, 0) * h_half * 0.5);
+				ens.y(sys,bod) = y_old[bod]+ h_half*( vy_old[bod] + aa0(sys, bod, 1) * h_half * 0.5);
+				ens.z(sys,bod) = z_old[bod]+ h_half*( vz_old[bod] + aa0(sys, bod, 2) * h_half * 0.5);
 			}
 
 			// compute accelerations
@@ -253,26 +122,28 @@ struct prop_rk4
 
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + aa1(sys, bod, 0) * h_half * h;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + aa1(sys, bod, 1) * h_half * h;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + aa1(sys, bod, 2) * h_half * h;
+				ens.x(sys,bod) = x_old[bod]+ hh* (vx_old[bod] + aa1(sys, bod, 0) * h_half);
+				ens.y(sys,bod) = y_old[bod]+ hh* (vy_old[bod] + aa1(sys, bod, 1) * h_half);
+				ens.z(sys,bod) = z_old[bod]+ hh* (vz_old[bod] + aa1(sys, bod, 2) * h_half);
 			}
 
 			// compute accelerations
 			compute_acc(ens, sys, aa2);
 
+			double hby6 = hh / 6.0;
 			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
 			{
-				ens.x(sys,bod) = x_old[bod]+ vx_old[bod] * h + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * h * h / 6.0;
-				ens.y(sys,bod) = y_old[bod]+ vy_old[bod] * h + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * h * h / 6.0;
-				ens.z(sys,bod) = z_old[bod]+ vz_old[bod] * h + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * h * h / 6.0;
-				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* h/6.0;
-				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* h/6.0;
-				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* h/6.0;
+				ens.x(sys,bod) = x_old[bod]+ hh * (vx_old[bod] + (aa0(sys, bod, 0) + aa1(sys, bod, 0)*2.0) * hby6);
+				ens.y(sys,bod) = y_old[bod]+ hh * (vy_old[bod] + (aa0(sys, bod, 1) + aa1(sys, bod, 1)*2.0) * hby6);
+				ens.z(sys,bod) = z_old[bod]+ hh * (vz_old[bod] + (aa0(sys, bod, 2) + aa1(sys, bod, 2)*2.0) * hby6);
+				ens.vx(sys,bod) = vx_old[bod]+ (aa0(sys, bod, 0) + 4.0* aa1(sys, bod, 0) + aa2(sys, bod, 0))* hby6;
+				ens.vy(sys,bod) = vy_old[bod]+ (aa0(sys, bod, 1) + 4.0* aa1(sys, bod, 1) + aa2(sys, bod, 1))* hby6;
+				ens.vz(sys,bod) = vz_old[bod]+ (aa0(sys, bod, 2) + 4.0* aa1(sys, bod, 2) + aa2(sys, bod, 2))* hby6;
+				stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));
 			}
 		        
 
-			return T + h;
+			return T + hh;
 		}
 
 	};
@@ -329,7 +200,14 @@ struct prop_rk4
 };
 
 
-// factory
+/*!
+ * \brief factory function to create an integrator 
+ * 	  
+ * This factory uses the gpu_generic_integrator class
+ * with the propagator rk4 and the stopper stop_on_ejection
+ * 
+ * @param[in] cfg contains configuration data for gpu_generic_integrator
+ */
 extern "C" integrator *create_gpu_rk4(const config &cfg)
 {
 	return new gpu_generic_integrator<stop_on_ejection, prop_rk4>(cfg);

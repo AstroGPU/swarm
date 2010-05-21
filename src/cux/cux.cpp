@@ -429,9 +429,9 @@ bool cux_init()
 	cudaDeviceProp deviceProp;
 	cuxErrCheck( cudaGetDeviceProperties(&deviceProp, dev) );
 
-	char buf[1000];
-	snprintf(buf, sizeof(buf), "GPU accelerator: Using Device %d: \"%s\"%s", dev, deviceProp.name, autoselect ? " (autoselected)" : "");
-	MLOG(verb1) << buf;
+//	char buf[1000];
+//	snprintf(buf, sizeof(buf), "GPU accelerator: Using Device %d: \"%s\"%s", dev, deviceProp.name, autoselect ? " (autoselected)" : "");
+//	MLOG(verb1) << buf;
 #else
 	MLOG(verb1) << "GPU accelerator: Using Device Emulation";
 #endif
@@ -440,7 +440,7 @@ bool cux_init()
 	// Memory info
 	unsigned free = 0, total = 0;
 	cuxErrCheck( (cudaError)cuMemGetInfo(&free, &total) );
-	MLOG(verb2) << "Device memory (free, total): " << free / (1<<20) << "M, " << total / (1<<20) << "M";
+//	MLOG(verb2) << "Device memory (free, total): " << free / (1<<20) << "M, " << total / (1<<20) << "M" << "\n";
 #endif
 
 	cuda_initialized = 1;

@@ -10,6 +10,12 @@
 //
 //
 
+/*! \file swarmio.cpp
+ *  \brief declares swarm_header, null_writer, binary_writer
+ *
+*/
+
+
 #include "swarmlog.h"
 #include "swarmio.h"
 
@@ -394,7 +400,11 @@ namespace swarm
 			for(int bod = 0; bod != nbod; bod++)
 			{
 				const body &b = si.bodies[bod];
-				ens.set_body(si.sys, bod,  b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+#if NEW
+				ens.set_body(si.sys, bod,  b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+#else
+                               ens.set_body(si.sys, bod,  b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+#endif
 				ens.time(si.sys) = Tsnapend;
 			}
 		}

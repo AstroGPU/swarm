@@ -1,3 +1,25 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Mario Juric  and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file verlet.cu
+ * \brief declares prop_verlet for use with gpu_generic_integrator
+*/
+
 #include "swarm.h"
 #include "verlet.h"
 #include "swarmlog.h"
@@ -155,6 +177,7 @@
 
 */
 
+/// namespace for Swarm-NG library
 namespace swarm {
 
 
@@ -210,8 +233,8 @@ struct prop_verlet
 		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
-			//double h = T + this->h <= Tend ? this->h : Tend - T;
-			double h_half= h*0.5;
+			double hh = T + this->h <= Tend ? this->h : Tend - T;
+			double h_half= hh*0.5;
 
 			//Step(pos);
 			//CalcDerivForDrift(); -> returns velocity
@@ -279,7 +302,7 @@ struct prop_verlet
 
 			double h_new= 1./(1.+sqrt(rinv3)); 
 			// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
-			h_new = 1./(2./(h_new*h)-1./h_half);
+			h_new = 1./(2./(h_new*hh)-1./h_half);
 			h_half = h_new;
 
 			//Step(vel)
@@ -335,8 +358,8 @@ struct prop_verlet
 	 */
 	prop_verlet(const config &cfg)
 	{
-		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet needs a timestep ('time step' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("time step").c_str());
+		if(!cfg.count("time step factor")) ERROR("Integrator gpu_verlet needs a timestep ('time step factor' keyword in the config file).");
+		gpu_obj.h = atof(cfg.at("time step factor").c_str());
 	}
 
 	/*!
@@ -353,7 +376,14 @@ struct prop_verlet
 };
 
 
-// factory
+/*!
+ * \brief factory function to create an integrator 
+ * 	  
+ * This factory uses the gpu_generic_integrator class
+ * with the propagator prop_verlet and the stopper stop_on_ejection
+ * 
+ * @param[in] cfg contains configuration data for gpu_generic_integrator
+ */
 extern "C" integrator *create_gpu_verlet(const config &cfg)
 {
 	return new gpu_generic_integrator<stop_on_ejection, prop_verlet>(cfg);

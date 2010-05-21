@@ -1,3 +1,23 @@
+/***************************************************************************
+ *   Copyright (C) 2005 by Mario Juric   *
+ *   mjuric@astro.Princeton.EDU   *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #ifndef _astro_util_h
 #define _astro_util_h
 
@@ -17,11 +37,11 @@
 #endif
 
 namespace peyton {
-/// everything else
+// contains string processing functions, type name demangling,
 namespace util {
 
 	/// return approximate longitude of the Sun for a given \a time
-	Radians approxSunLongitude(peyton::MJD t);
+	//	Radians approxSunLongitude(peyton::MJD t);
 
 	/// remove whitespace from the begining of the string \a str
 	std::string ltrim(const std::string &str, const std::string &whitespace = "\t ");
@@ -46,7 +66,7 @@ namespace util {
 	inline std::string toupper(const std::string &s) { std::string o(s); FOREACH2(std::string::iterator, o) { *i = ::toupper(*i); }; return o; }
 
 	/// convert size_t to std::string
-	inline std::string str(size_t n) { char buf[20]; sprintf(buf, "%d", n); return buf; }
+	inline std::string str(size_t n) { char buf[20]; sprintf(buf, "%u", n); return buf; }
 	/// convert int to std::string
 	inline std::string str(int n) { char buf[20]; sprintf(buf, "%d", n); return buf; }
 	/// convert char to std::string

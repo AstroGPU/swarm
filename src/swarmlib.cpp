@@ -1,3 +1,28 @@
+/*************************************************************************
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarmlib.cpp
+ *  \brief provides several functions for public interface for swarm libaray
+ *
+ *  If you want to use the swarm library and have questions about what the 
+ *  functions do, this is a great plae to start looking.
+*/
+
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include <vector>
@@ -9,7 +34,7 @@
 #include <fstream>
 #include <valarray>
 #include "swarmio.h"
-
+#include "cux/cux.h"
 //
 // Utilities
 //
@@ -24,6 +49,9 @@ static bool swarm_initialized = false;
 void swarm::init(const config &cfg)
 {
 	if(swarm_initialized) { return; }
+
+        // Initialize appropriate GPU
+        cux_init();
 
 	// initialize the output log (default: null)
 	std::string wcfg = cfg.count("output") ? cfg.at("output") : "null";
@@ -138,6 +166,9 @@ void cpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)	//
 
 		// Set all systems to active
 		for(int sys = 0; sys != nsys; sys++) { flags(sys) = 0; }
+
+		// Set nstep=0
+		for(int sys = 0; sys != nsys; sys++) { nstep(sys) = 0; }
 	}
 
 	m_last_integrator = NULL;
@@ -380,9 +411,15 @@ void gpu_ensemble::reset(int nsys, int nbod, bool reinitIndices)
 		tmp2 = 0;
 		cudaMemcpy(m_flags, &tmp2[0], tmp2.size()*sizeof(tmp2[0]), cudaMemcpyHostToDevice);
 
-		// nactive
-//		int tmp3 = nsys;
-//		cudaMemcpy(m_nactive, &tmp3, sizeof(tmp3), cudaMemcpyHostToDevice);
+                // Set nsteps = 0
+                std::valarray<uint> tmp3(nsys);
+                tmp3 = 0;
+                cudaMemcpy(m_nstep, &tmp3[0], tmp3.size()*sizeof(tmp3[0]), cudaMemcpyHostToDevice);
+
+                // nactive
+//              int tmp4 = nsys;
+//              cudaMemcpy(m_nactive, &tmp4, sizeof(tmp4), cudaMemcpyHostToDevice);
+
 	}
 
 	// clear the m_last_integrator field

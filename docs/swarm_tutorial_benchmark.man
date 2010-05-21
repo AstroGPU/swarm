@@ -1,0 +1,99 @@
+swarm_tutorial_benchmark(1)
+===========================
+
+NAME
+---- 
+swarm_tutorial_benchmark - Calculates a speed-up factor for comparing your GPU to your CPU
+
+
+SYMPOSIS
+--------
+*swarm_tutorial_benchmark*
+There are no command line arguements or configuration files.
+If library paths give you trouble, try running from *run* directory.
+
+Description
+-----------
+The integrator parameters and initial conditions are hard coded and
+are not configurable (except as described in the [Options] section below. 
+
+The benchmark is based on integrating several giant planets by
+performing many n-body integrations using the swarm library first with
+the GPU and then repeating with the CPU.
+
+In the present version, the benchmark is based on the time to perform
+the integration using the fixed time-step hermite_gpu integrator and
+the same integrator on the CPU.  The choice of benchmark may change in
+future releases.
+
+[[Options]]
+OPTIONS
+-------
+
+This demo defaults to integrating 960 system, each of 3 bodies (star
+plus two planets), for a time of 2pi (roughly one orbital period of
+the inner planet) using all double precission arithmetic.  The code
+chooses a blocksize (currently hardcoded to 64 threads per block).
+These default values may be replaced using the following command line
+arguements:
+-  -h [ --help ]           produce help message
+-  -s [ --systems ] arg    number of systems [1,30720]
+-  -n [ --num_bodies ] arg number of bodies per system [3,10]
+-  -t [ --time ] arg       time to integrate (0,62832.)
+-  -b [ --blocksize ] arg  number of threads per block {16,32,48,64,128}
+-  -p [ --precision ] arg  precision (1=double, 2=single, 3=mixed)
+
+The default values are choosen so that it doesn't take too long.
+To get good performance on a GPU requires a large number of systems.
+
+
+EXAMPLE
+-------
+To build the demo: ''make; cd run;'' + 
+
+To perform a quick test (which will result in poor GPU performance):
+''../bin/swarm_tutorial_benchmark -s 960 -t 1.''
+
+To perform a much longer test (which is expected to result in good GPU performance on G92-based cards):
+''../bin/swarm_tutorial_benchmark -s 7680 -n 3 -t 1. -b 64 -p 3'' +
+We find that using 15360 systems often results in slightly better performance, but is twice as slow.
+
+To perform a much longer test (which is expected to result in good GPU performance on G80-based cards):
+''../bin/swarm_tutorial_benchmark -s 8096 -n 3 -t 1. -b 64 -p 3'' +
+
+
+OUTPUT
+------
+This demo does not use the swarm logging system and simply writes to
+stdout and stderr.  When completing successfully, the program writes
+a single floating-point "speed-up factor" (based on the integration only)
+to stdout.  Additional timing information about individual parts
+is written to stderr. +
+
+There is no test, since the timing results will differ from one computer to another.
+
+PERFORMANCE
+-----------
+
+We encourage users to report their performance results via http://www.astro.ufl.edu/~eford/code/swarm/[this form], after which it is automatically entered in a public spreadsheet (link to spreadsheet from form).
+  
+LIMITATIONS & BUGS
+------------------
+See http://www.astro.ufl.edu/~eford/code/swarm/[website] for updated
+information on bugs.
+
+RESOURCES
+---------
+
+Main Web site: <http://www.astro.ufl.edu/~eford/code/swarm/>
+
+Google Group: <http://groups.google.com/group/swarm-ng>
+
+COPYING
+-------
+Copyright \(C) 2010 Eric B. Ford + 
+Free use of this software is granted under the terms of the GNU
+General Public License (GPL) v3, which should be included as
+link:gpl-3.0.txt[] and also avaliable
+http://www.gnu.org/licenses/gpl-3.0.html[online].
+

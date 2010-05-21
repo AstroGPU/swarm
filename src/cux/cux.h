@@ -28,7 +28,7 @@
 
 #include "cux_lowlevel.h"
 
-/**
+/*
 	Initialize compute device. Must be called before any other
 	calls involving the device.
 */
@@ -38,7 +38,7 @@ bool cux_init();
 // Useful host and device functions
 //////////////////////////////////////////////////////////////////////////
 
-/**
+/*
 	Rounds up v to the nearest integer divisible by mod. Usually used to
 	compute size of padded and aligned arrays.
 */
@@ -64,7 +64,8 @@ inline __device__ uint32_t threadID()
 ************************************************************************/
 
 /**
-	cuxException -- thrown if a CUDA-related error is detected
+ * cuxException
+ * \brief class to be thrown if a CUDA-related error is detected
 */
 struct cuxException
 {
@@ -73,7 +74,7 @@ struct cuxException
 	const char *msg() const { return cudaGetErrorString(err); }
 };
 
-/**
+/*
 	cuxErrCheck macro -- aborts with message if the enclosed call returns != cudaSuccess
 */
 void cuxErrCheck_impl(cudaError err, const char *fun, const char *file, const int line);
@@ -81,7 +82,7 @@ void cuxErrCheck_impl(cudaError err, const char *fun, const char *file, const in
 	cuxErrCheck_impl(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 
 
-/**
+/*
 	Compute the size, in bytes, of an aligned (strided) 1/2/3D array.
 */
 size_t arrayMemSize_impl(size_t nx, size_t ny, size_t nz, size_t align, size_t elementSize);
@@ -91,7 +92,7 @@ template<typename T>
 		return arrayMemSize_impl(nx, ny, nz, align, sizeof(T));
 	}
 
-/**
+/*
 	cuxNew<T> -- Allocate an array on the current device
 
 	Low level API -- cuxDevicePtr<> should be used instead.
@@ -111,7 +112,7 @@ template<typename T>
 		return devptr;
 	}
 
-/**
+/*
 	cuxFree() -- Free memory on the current device
 
 	Low level API -- cuxDevicePtr<> should be used instead.
@@ -125,7 +126,7 @@ template<typename T>
 	}
 
 
-/**
+/*
 	cuxUploadConst -- Copy a variable to __constant__ memory variable
 
 	The __constant__ variable can be given via address (if compiling with nvcc)
@@ -156,7 +157,7 @@ template<typename T>
 		cuxErrCheck( cudaMemcpyToSymbol(symbol, &source, size) );
 	}
 
-/**
+/*
 	arrayPtr -- Multidimensional strided array interface.
 
 	Size: sizeof(T*) + sizeof(size_t)*(dim-1)
@@ -208,7 +209,7 @@ template<typename T, int dim = 1>
 		}
 	};
 
-/**
+/*
 	cuxDevicePtr<T, dim, align> -- n-dimensional array on the device
 
 	Size: sizeof(T*) + sizeof(size_t)*(dim-1)
@@ -220,7 +221,7 @@ template<typename T, int dim = 1>
 	Provides NO automatic memory management (e.g., RAII); must be allocated
 	and deallocated manually via member functions. For a smart pointer, see
 	cuxSmartPtr (below).
-**/
+*/
 
 template<typename T, int dim = 1, int align = 128>
 	struct cuxDevicePtr : public arrayPtr<T, dim>
@@ -287,7 +288,7 @@ template<typename T, int dim = 1, int align = 128>
 		cuxDevicePtr<T, dim, align> operator =(const cuxDevicePtr<T> &p) { this->ptr = p.ptr; return *this; }
 	};
 
-/**
+/*
 	cuxDeviceAutoPtr<T, dim, align> -- n-dimensional array on the device
 		with automatic deallocation in destructor
 **/
@@ -429,7 +430,7 @@ private:
 	cuxSmartPtr_impl_t& operator=(const cuxSmartPtr_impl_t &);
 };
 
-/**
+/*
 	Smart pointer to an array in GPU or CPU memory, with on-demand garbage collection, and auto-syncing of CPU/GPU copies
 
 		- Points to an arrayPtr<>-styled n-dimensional block of memory
@@ -658,7 +659,7 @@ struct ALIGN(8) afloat2 : public float2
 	afloat2& operator =(const float2 &a) { (float2&)*this = a; return *this; }
 };
 
-/**
+/*
 	cuxTexture<T,dim> -- host copy of texture data and associated texture coordinates
 
 	Convenience class -- holds both the pointer to texture data
@@ -722,7 +723,7 @@ struct cuxTexture : public cuxSmartPtr<T>
 	}
 };
 
-/**
+/*
 	cuxTextureReferenceInterface -- abstract bind/unbind interface for textures
 
 	Common, type-independent base class for textures, permitting cuxTextureBinder
@@ -745,7 +746,7 @@ template<int dim>
 		__host__       float2 &operator[](int i)       { return tc[i]; }
 	};
 
-/**
+/*
 	cuxTextureReference<T,dim,readmode> -- host texture reference interface
 
 	Holds the pointer to CUDA texture reference, and implements host emulation
@@ -837,7 +838,7 @@ template<typename T, int dim, enum cudaTextureReadMode mode>
 		}
 };
 
-/**
+/*
 	tex1D/2D/3D -- Host implementation of texture sampling, source-compat w. CUDA
 
 	These are here primarely for source-compabitbility with CUDA tex?D calls,
@@ -863,7 +864,7 @@ template<typename T, int dim, enum cudaTextureReadMode mode>
 		return texref.tex3D(x, y, z);
 	}
 
-/**
+/*
 	sample_impl -- GPU implementation of sampling with texture coordinates
 
 	Transforms the "real space" coordinates (x,y,z), to texture-space
@@ -900,7 +901,7 @@ template<typename T, typename Texref>
 		return v;
 	}
 
-/**
+/*
 	Macros to declare, define and sample from CUDA texture references, on device or the host.
 
 	DEFINE_TEXTURE(name...) -- if compiled with nvcc, defines a CUDA textureReference,
@@ -1011,7 +1012,7 @@ template<typename T, typename Texref>
 		}
 #endif
 
-/**
+/*
 	texture loading/construction utilities
 */
 cuxTexture<float, 1> construct_texture_by_resampling_1D	(double *X, double *Y, int ndata, int nsamp = 1024);
@@ -1027,7 +1028,7 @@ cuxTexture<float, 1> load_resample_and_clip_texture_1D		(const char *fn, float c
 
 float2		     texcoord_from_range			(float imgx, float imgy, float x, float y);
 
-/**
+/*
 	cuxTextureBinder -- RAII style texture binding/unbinding
 
 	Use the cuxTextureBinder to binds a cuxTexture<> to a cuxTextureReference<>. The object's
