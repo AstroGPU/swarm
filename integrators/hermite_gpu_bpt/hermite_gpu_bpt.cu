@@ -18,11 +18,12 @@ namespace hermite_gpu_bpt {
 	 * acceleration and jerk at a time
 	 *
 	 */
-	__device__ static void accjerk_updater_component(int c
+	template<int nbod>
+	__device__ static void accjerk_updater_component(int c,int i
 			,double dx[3],double dv[3],double scalar,double rv
-			,double (&acc)[3],double (&jerk)[3]){
-		acc[c] += dx[c]* scalar;
-		jerk[c] += (dv[c] - dx[c] * rv) * scalar;
+			,double (&acc)[3][nbod],double (&jerk)[3][nbod]){
+		acc[c][i] += dx[c]* scalar;
+		jerk[c][i] += (dv[c] - dx[c] * rv) * scalar;
 
 	}
 
@@ -36,13 +37,12 @@ namespace hermite_gpu_bpt {
 	struct accjerk_updater {
 		ensemble::systemref& sysref;
 		const double (&pos)[3][nbod],(&vel)[3][nbod];
-		double (&acc)[3], (&jerk)[3];
-		const double (&mass)[nbod];
+		double (&acc)[3][nbod], (&jerk)[3][nbod];
 		const int i;
-		__device__ accjerk_updater(const int bodid,ensemble::systemref& sysref,const double (&pos)[3][nbod],const double (&vel)[3][nbod], double (&acc)[3], double (&jerk)[3], const double(&mass)[nbod])
-			:sysref(sysref),pos(pos),vel(vel),acc(acc),jerk(jerk),i(bodid),mass(mass){
-				acc[0] = acc[1] = acc[2] = 0.0;
-				jerk[0] = jerk[1] = jerk[2] = 0.0;
+		__device__ accjerk_updater(const int bodid,ensemble::systemref& sysref,const double (&pos)[3][nbod],const double (&vel)[3][nbod], double (&acc)[3][nbod], double (&jerk)[3][nbod])
+			:sysref(sysref),pos(pos),vel(vel),acc(acc),jerk(jerk),i(bodid){
+				acc[0][i] = acc[1][i] = acc[2][i] = 0.0;
+				jerk[0][i] = jerk[1][i] = jerk[2][i] = 0.0;
 			}
 		__device__ void operator()(int j)const{
 			if(i != j){
@@ -56,33 +56,34 @@ namespace hermite_gpu_bpt {
 				double rinv = rsqrt(r2)  / r2;
 
 				// vectorized part
-				const double scalar_i = +rinv*mass[j];
-				accjerk_updater_component(0,dx,dv,scalar_i,rv,acc,jerk);
-				accjerk_updater_component(1,dx,dv,scalar_i,rv,acc,jerk);
-				accjerk_updater_component(2,dx,dv,scalar_i,rv,acc,jerk);
+				const double scalar_i = +rinv*sysref[j].mass();
+				for(int c = 0; c < 3 ; c++)
+					accjerk_updater_component<nbod>(c,i,dx,dv,scalar_i,rv,acc,jerk);
 
 			}
-
-
+		}
+		__device__ void compute(){
+			for(int j = 0; j < nbod; j++) (*this)(j);
+			//Unroller<0,nbod>::step(*this);
 		}
 	};
 
 
 	template<int nbod>
 		__device__ static void predictor(int i,int c,const int& s, const int& d
-				,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3],double (&jerk)[2][3]
+				,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3][nbod],double (&jerk)[2][3][nbod]
 				,double h){
-			pos[d][c][i] = pos[s][c][i] +  h*(vel[s][c][i]+(h/2)*(acc[s][c]+(h/3)*jerk[s][c]));
-			vel[d][c][i] = vel[s][c][i] +  h*(acc[s][c]+(h/2)*jerk[s][c]);
+			pos[d][c][i] = pos[s][c][i] +  h*(vel[s][c][i]+(h/2)*(acc[s][c][i]+(h/3)*jerk[s][c][i]));
+			vel[d][c][i] = vel[s][c][i] +  h*(acc[s][c][i]+(h/2)*jerk[s][c][i]);
 		}
 
 	template<int nbod>
 	__device__ static void corrector(int i,const int& c,const int& s, const int& d
-			,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3],double (&jerk)[2][3]
+			,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3][nbod],double (&jerk)[2][3][nbod]
 			,const double& h){
 		pos[d][c][i] = pos[s][c][i] + (h/2) * ( (vel[s][c][i]+vel[d][c][i]) 
-				+ (h*7.0/30)*( (acc[s][c]-acc[d][c]) + (h/7) * (jerk[s][c]+jerk[d][c])));
-		vel[d][c][i] = vel[s][c][i] + (h/2) * ( (acc[s][c]+acc[d][c]) + (h/6) * (jerk[s][c]-jerk[d][c]));
+				+ (h*7.0/30)*( (acc[s][c][i]-acc[d][c][i]) + (h/7) * (jerk[s][c][i]+jerk[d][c][i])));
+		vel[d][c][i] = vel[s][c][i] + (h/2) * ( (acc[s][c][i]+acc[d][c][i]) + (h/6) * (jerk[s][c][i]-jerk[d][c][i]));
 	}
 
 	__device__ void copy(double src[3],double des[3]){
@@ -118,9 +119,11 @@ namespace hermite_gpu_bpt {
 		double (*shared_array)[2][3][nbod] = (double (*)[2][3][nbod]) shared_mem;
 			
 		// pointers to shared_memory
-		double (&pos)[2][3][nbod] = shared_array[sysid_in_block*2], (&vel)[2][3][nbod] = shared_array[sysid_in_block*2+1];
+		double (&pos)[2][3][nbod] = shared_array[sysid_in_block*4], (&vel)[2][3][nbod] = shared_array[sysid_in_block*4+1];
+		double (&acc)[2][3][nbod] = shared_array[sysid_in_block*4+2] , (&jerk)[2][3][nbod] = shared_array[sysid_in_block*4+3];
+
+//		double mass[nbod];
 		// local memory allocation
-		double acc[2][3], jerk[2][3] , mass[nbod];
 
 		double t_start = gsys.time(), t = t_start;
 		double t_end = min(t_start + destination_time,gsys.time_end());
@@ -129,108 +132,45 @@ namespace hermite_gpu_bpt {
 		load_to_shared<nbod>(pos,vel,gsys,0,0,bodid);
 		load_to_shared<nbod>(pos,vel,gsys,0,1,bodid);
 		load_to_shared<nbod>(pos,vel,gsys,0,2,bodid);
-		#pragma unroll
-		for(int i = 0; i < nbod; i++) mass[i] = gsys[i].mass();
+//		#pragma unroll
+//		for(int i = 0; i < nbod; i++) mass[i] = gsys[i].mass();
 
 		
 		__syncthreads(); // load should complete before calculating acceleration and jerk
 
 		// Calculate acceleration and jerk
-		Unroller<0,nbod>::step(accjerk_updater<nbod>(bodid,gsys,pos[0],vel[0],acc[0],jerk[0],mass));
+		accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[0],vel[0],acc[0],jerk[0]);
+		accjerk_updater_instance.compute();
 
 		while(t < t_end){
-
+			for(int k = 0; k < 2; k++)
 			{
 				double h = min(time_step, t_end - t);
 				// these two variable determine how each half of pos/vel/acc/jerk arrays
 				// are going to be used to avoid unnecessary copying.
-				const int s = 0, d = 1; 
+				const int s = k, d = 1-k; 
 				// Predict 
-				predictor<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-				predictor<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-				predictor<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
+				for(int c = 0; c < 3; c++)
+					predictor<nbod>(bodid,c,s,d,pos,vel,acc,jerk,h);
 
 
 				// Do evaluation and correction two times (PEC2)
+				for(int l = 0; l < 2; l++)
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
-					Unroller<0,nbod>::step(accjerk_updater_instance);
+					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
+					accjerk_updater_instance.compute();
+					//Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
 
 					// Correct
-					corrector<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
+					for(int c = 0; c < 3; c++)
+						corrector<nbod>(bodid,c,s,d,pos,vel,acc,jerk,h);
 
 				}
-				{
-					__syncthreads();
-					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
-					Unroller<0,nbod>::step(accjerk_updater_instance);
-
-					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
-
-					// Correct
-					corrector<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
-
-				}
-
 				t += h;
-
-			}
-//			if(bodid == 0) 
-//				gsys.increase_stepcount();
-			// the following block is exact copy of block above with only change in s,d
-			// please don't edit and always copy from block above
-			{
-				double h = min(time_step, t_end - t);
-				// these two variable determine how each half of pos/vel/acc/jerk arrays
-				// are going to be used to avoid unnecessary copying.
-				const int s = 1, d = 0; 
-				// Predict 
-				predictor<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-				predictor<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-				predictor<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
-
-
-				// Do evaluation and correction two times (PEC2)
-				{
-					__syncthreads();
-					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
-					Unroller<0,nbod>::step(accjerk_updater_instance);
-
-					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
-
-					// Correct
-					corrector<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
-
-				}
-				{
-					__syncthreads();
-					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
-					Unroller<0,nbod>::step(accjerk_updater_instance);
-
-					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
-
-					// Correct
-					corrector<nbod>(bodid,0,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,1,s,d,pos,vel,acc,jerk,h);
-					corrector<nbod>(bodid,2,s,d,pos,vel,acc,jerk,h);
-
-				}
-
-				t += h;
-
 			}
 
 			/*debug_hook();
@@ -295,8 +235,11 @@ namespace hermite_gpu_bpt {
 				int system_per_block = threadsPerBlock / ens.nbod();
 				threadDim.x = ens.nbod();
 				threadDim.y = system_per_block;
-
-				this->shared_memory_size = system_per_block * ens.nbod() * 2 * 2 * 3 * sizeof(double);
+				
+				// 2: new and old copies
+				// 4: {pos,vel,acc,jerk}
+				// 3: x,y,z
+				this->shared_memory_size = system_per_block * ens.nbod() * 2 * 4 * 3 * sizeof(double);
 
 				ens.set_last_integrator(this); 
 				configure_grid(gridDim,  system_per_block , ens.nsys()); 

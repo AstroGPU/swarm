@@ -311,6 +311,8 @@ namespace swarm {
 						bool accepted = true; // the step is accepted by default to avoid infinite loop
 						advance_internal<3>(sysref,h,accepted);
 						advance_internal<4>(sysref,h,accepted);
+						advance_internal<5>(sysref,h,accepted);
+						advance_internal<6>(sysref,h,accepted);
 						// save new timestep in thread state
 						pt.hcurrent = h;
 						if(accepted){
