@@ -37,9 +37,10 @@ namespace hermite_gpu_bpt {
 		ensemble::systemref& sysref;
 		const double (&pos)[3][nbod],(&vel)[3][nbod];
 		double (&acc)[3], (&jerk)[3];
+		const double (&mass)[nbod];
 		const int i;
-		__device__ accjerk_updater(const int bodid,ensemble::systemref& sysref,const double (&pos)[3][nbod],const double (&vel)[3][nbod], double (&acc)[3], double (&jerk)[3])
-			:sysref(sysref),pos(pos),vel(vel),acc(acc),jerk(jerk),i(bodid){
+		__device__ accjerk_updater(const int bodid,ensemble::systemref& sysref,const double (&pos)[3][nbod],const double (&vel)[3][nbod], double (&acc)[3], double (&jerk)[3], const double(&mass)[nbod])
+			:sysref(sysref),pos(pos),vel(vel),acc(acc),jerk(jerk),i(bodid),mass(mass){
 				acc[0] = acc[1] = acc[2] = 0.0;
 				jerk[0] = jerk[1] = jerk[2] = 0.0;
 			}
@@ -55,7 +56,7 @@ namespace hermite_gpu_bpt {
 				double rinv = rsqrt(r2)  / r2;
 
 				// vectorized part
-				const double scalar_i = +rinv*sysref[j].mass();
+				const double scalar_i = +rinv*mass[j];
 				accjerk_updater_component(0,dx,dv,scalar_i,rv,acc,jerk);
 				accjerk_updater_component(1,dx,dv,scalar_i,rv,acc,jerk);
 				accjerk_updater_component(2,dx,dv,scalar_i,rv,acc,jerk);
@@ -119,7 +120,7 @@ namespace hermite_gpu_bpt {
 		// pointers to shared_memory
 		double (&pos)[2][3][nbod] = shared_array[sysid_in_block*2], (&vel)[2][3][nbod] = shared_array[sysid_in_block*2+1];
 		// local memory allocation
-		double acc[2][3], jerk[2][3] ;
+		double acc[2][3], jerk[2][3] , mass[nbod];
 
 		double t_start = gsys.time(), t = t_start;
 		double t_end = min(t_start + destination_time,gsys.time_end());
@@ -128,11 +129,14 @@ namespace hermite_gpu_bpt {
 		load_to_shared<nbod>(pos,vel,gsys,0,0,bodid);
 		load_to_shared<nbod>(pos,vel,gsys,0,1,bodid);
 		load_to_shared<nbod>(pos,vel,gsys,0,2,bodid);
+		#pragma unroll
+		for(int i = 0; i < nbod; i++) mass[i] = gsys[i].mass();
+
 		
 		__syncthreads(); // load should complete before calculating acceleration and jerk
 
 		// Calculate acceleration and jerk
-		Unroller<0,nbod>::step(accjerk_updater<nbod>(bodid,gsys,pos[0],vel[0],acc[0],jerk[0]));
+		Unroller<0,nbod>::step(accjerk_updater<nbod>(bodid,gsys,pos[0],vel[0],acc[0],jerk[0],mass));
 
 		while(t < t_end){
 
@@ -151,7 +155,7 @@ namespace hermite_gpu_bpt {
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
+					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
 					Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
@@ -165,7 +169,7 @@ namespace hermite_gpu_bpt {
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
+					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
 					Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
@@ -180,8 +184,8 @@ namespace hermite_gpu_bpt {
 				t += h;
 
 			}
-			if(bodid == 0) 
-				gsys.increase_stepcount();
+//			if(bodid == 0) 
+//				gsys.increase_stepcount();
 			// the following block is exact copy of block above with only change in s,d
 			// please don't edit and always copy from block above
 			{
@@ -199,7 +203,7 @@ namespace hermite_gpu_bpt {
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
+					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
 					Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
@@ -213,7 +217,7 @@ namespace hermite_gpu_bpt {
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
+					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d],mass);
 					Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
@@ -228,11 +232,12 @@ namespace hermite_gpu_bpt {
 				t += h;
 
 			}
-			debug_hook();
+
+			/*debug_hook();
 
 			if(bodid == 0) 
 				gsys.increase_stepcount();
-
+*/
 			if(log::needs_output(ens, t, sysid))
 			{
 				// Save pos/vel to global memory

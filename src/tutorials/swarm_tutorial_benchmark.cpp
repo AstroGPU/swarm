@@ -60,17 +60,21 @@ int main(int argc,  char **argv)
     ("blocksize,b", po::value<int>(),  "number of threads per block {16,32,48,64,128}")
     ("precision,p", po::value<int>(),  "precision (1=double, 2=single, 3=mixed)")
     ("nocpu", "Do not run CPU part")
+	("cfg,c", po::value<std::string>(), "Integrator configuration file")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm);
 
-  // Set integrator parameters (no config file for this tutorial)
-  // integrator, runon and time step are hard coded, rest can come from command line
   config cfg;
-  cfg["integrator"] = "gpu_hermite"; // Set to use a GPU integrator
-  cfg["runon"]      = "gpu";         // Set to runon GPU
-  cfg["time step"] = "0.0005";       // time step
+  if(vm.count("cfg")){
+	  std::string icfgfn =  vm["cfg"].as<std::string>();
+	  load_config(cfg,icfgfn);
+  }else{
+	  cfg["integrator"] = "gpu_hermite"; // Set to use a GPU integrator
+	  cfg["runon"]      = "gpu";         // Set to runon GPU
+	  cfg["time step"] = "0.0005";       // time step
+  }
   bool valid = true;                 // Indicates whether cfg parameters are valid
 
   // Get values for config hashmap from command line arguements (or use defaults)
