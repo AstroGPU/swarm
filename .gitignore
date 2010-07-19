@@ -21,3 +21,4 @@ src/*~
 bin/*
 docs/*.html
 feedback.*
+.*.swp

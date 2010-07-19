@@ -59,6 +59,7 @@ int main(int argc,  char **argv)
     ("time,t", po::value<double>(), "time to integrate (0,62832.)")
     ("blocksize,b", po::value<int>(),  "number of threads per block {16,32,48,64,128}")
     ("precision,p", po::value<int>(),  "precision (1=double, 2=single, 3=mixed)")
+    ("nocpu", "Do not run CPU part")
     ;
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -92,7 +93,7 @@ int main(int argc,  char **argv)
       {
 	int bs = vm["blocksize"].as<int>();
 	blocksize_stream << bs;
-	if((bs<16)||(bs>128)||(bs%16!=0))
+	if((bs<16)||(bs>512)||(bs%16!=0))
 	 valid =false;
       }
     else
@@ -183,25 +184,27 @@ int main(int argc,  char **argv)
   swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
   std::cerr << "# Download complete.\n";
   
-  // Get ready to perform the same integration on the cpu
-  cfg["integrator"] = "cpu_hermite"; // change to CPU version of integrator
-  cfg["runon"]      = "cpu";         // change to runon CPU
-  swatch_init_cpu.start();           // restart timer for initializing CPU integrator
-  // Initialize the CPU integrator
-  std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
-  swatch_init_cpu.stop();            // Stop timer for initializing CPU integrator
+  if(vm.count("nocpu") == 0){
+	  // Get ready to perform the same integration on the cpu
+	  cfg["integrator"] = "cpu_hermite"; // change to CPU version of integrator
+	  cfg["runon"]      = "cpu";         // change to runon CPU
+	  swatch_init_cpu.start();           // restart timer for initializing CPU integrator
+	  // Initialize the CPU integrator
+	  std::auto_ptr<integrator> integ_cpu(integrator::create(cfg));
+	  swatch_init_cpu.stop();            // Stop timer for initializing CPU integrator
 
-  std::cerr << "# Integrate a copy of ensemble on CPU for comparison.\n";
-  swatch_temps_cpu.start();      // Start timer for 0th step on CPU  
-  integ_cpu->integrate(ens_check, 0.);  // a 0th step of dT=0 results in initialization of the integrator only				
-  swatch_temps_cpu.stop();       // Stop timer for 0th step on CPU
+	  std::cerr << "# Integrate a copy of ensemble on CPU for comparison.\n";
+	  swatch_temps_cpu.start();      // Start timer for 0th step on CPU  
+	  integ_cpu->integrate(ens_check, 0.);  // a 0th step of dT=0 results in initialization of the integrator only				
+	  swatch_temps_cpu.stop();       // Stop timer for 0th step on CPU
 
-  swatch_kernel_cpu.start();     // Start timer for CPU integration kernel
-  integ_cpu->integrate(ens_check, dT);	 // Actually do the integration w/ CPU!
-  swatch_kernel_cpu.stop();      // Stop timer for CPU integration kernel
+	  swatch_kernel_cpu.start();     // Start timer for CPU integration kernel
+	  integ_cpu->integrate(ens_check, dT);	 // Actually do the integration w/ CPU!
+	  swatch_kernel_cpu.stop();      // Stop timer for CPU integration kernel
 
-  swatch_all.stop();             // Stop timer for all calculations
-  std::cerr << "# CPU integration complete.\n";
+	  swatch_all.stop();             // Stop timer for all calculations
+	  std::cerr << "# CPU integration complete.\n";
+  }
 
 #if PRINT_OUTPUT
   // Print results

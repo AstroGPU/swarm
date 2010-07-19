@@ -144,6 +144,129 @@ class ensemble
 		}
 
 	public:
+
+
+		//! Point structure delegating items from the ensemble
+		template<class real_pos>
+		struct point {
+			real_pos x,y,z;
+			__device__ point(){
+			};
+			__device__ point(const real_pos x ,const real_pos y ,const real_pos z ):x(x),y(y),z(z){};
+			template<class T>
+			__device__ point (const point<T>& a):x(a.x),y(a.y),z(a.z) {}
+			__device__ real_pos * data() {
+				return (real_pos *) this;
+			}
+			__device__ const real_pos * data()const {
+				return (real_pos *) this;
+			}
+			template<class T>
+			__device__ point operator -(const point<T>& a)const {
+				return point(x-a.x,y-a.y,z-a.z);
+			}
+			template<class T>
+			__device__ point operator +(const point<T>& a)const {
+				return point(x+a.x,y+a.y,z+a.z);
+			}
+			template<class T>
+			__device__ point operator *(const T& a)const {
+				return point(x*a,y*a,z*a);
+			}
+			template<class T>
+			__device__ point operator /(const T& a)const {
+				return point(x/a,y/a,z/a);
+			}
+			template<class T>
+			__device__ point& operator +=(const point<T>& a){
+				x += a.x, y += a.y, z+= a.z;
+				return (*this);
+			}
+			template<class T>
+			__device__ point& operator *=(const T& a){
+				x *= a, y *= a, z*= a;
+				return (*this);
+			}
+			template<class T>
+			__device__ point& operator -=(const point<T>& a){
+				x -= a.x, y -= a.y, z-= a.z;
+				return (*this);
+			}
+			__device__ real_pos length() const {
+				return sqrt(x*x + y*y + z*z);
+			}
+			__device__ real_pos squared_length() const {
+				return (x*x + y*y + z*z);
+			}
+			__device__ point xy_project()const{
+				return point(x,y,0);
+			}
+			__device__ point normalize()const{
+				return (*this)/length();
+			}
+			__device__ point outer_product(const point& a)const {
+				return point( y*a.z - a.y*z, z*a.x - x*a.z, x*a.y-y*a.x);
+			}
+			__device__ real_pos operator *(const point& a)const{
+				return x*a.x + y*a.y + z*a.z;
+			}
+			template<class T>
+			__device__ point& operator =(const point<T>& a){
+				x = a.x, y = a.y, z = a.z;
+				return (*this);
+			}
+			//static point i,j,k,o;
+		};
+		/*
+		struct pointref {
+			real_pos &x,&y,&z;
+			__device__ pointref(real_pos &xx,real_pos& yy,real_pos &zz):x(xx),y(yy),z(zz){};
+			__device__ pointref(const pointref& p):x(p.x),y(p.y),z(p.z){}
+			__device__ operator point<real_pos>()const{ return point<real_pos>(x,y,z);}
+			__device__ pointref& operator =(const point<real_pos>& p){ x = p.x, y = p.y, z = p.z; return *this;}
+			__device__ pointref& operator =(const pointref& p){ x = p.x, y = p.y, z = p.z; return *this;}
+		};
+		*/
+		typedef point<real_pos> pointref;
+
+		struct bodyref {
+			ensemble * ens;
+			int sys,bod;
+			__device__ bodyref(ensemble& ens,const int& sys,const int& bod):ens(&ens),sys(sys),bod(bod){};
+			__host__ __device__ real_pos& p(int c) { return ens->p(sys,bod,c) ; }
+			__host__ __device__ real_pos& v(int c) { return ens->v(sys,bod,c) ; }
+			__host__ __device__ pointref  pos() { return pointref(ens->x(sys,bod),ens->y(sys,bod),ens->z(sys,bod)) ; }
+			__host__ __device__ pointref  vel() { return pointref(ens->vx(sys,bod),ens->vy(sys,bod),ens->vz(sys,bod)) ; }
+			__host__ __device__ void set_pos(const pointref& p){ ens->x(sys,bod) = p.x, ens->y(sys,bod) = p.y, ens->z(sys,bod) = p.z; }
+			__host__ __device__ void set_vel(const pointref& v){ ens->vx(sys,bod) = v.x, ens->vy(sys,bod) = v.y, ens->vz(sys,bod) = v.z; }
+			__host__ __device__ real_pos mass() { return ens->mass(sys,bod); }
+		};
+		struct systemref {
+			ensemble * ens;
+			int sys;
+			__device__ systemref(ensemble& ens,const int& sys):ens(&ens),sys(sys){};
+			__host__ __device__ bodyref operator [](const int& i){ return bodyref(*ens,sys,i); }
+			__host__ __device__ real_time& time() { return ens->time(sys); }
+			__host__ __device__ real_time& time_end() { return ens->time_end(sys); }
+			__host__ __device__ void increase_stepcount() { ens->nstep(sys)++; }
+			__host__ __device__ int nbod() { return ens->nbod(); }
+			/*
+			__host__ __device__ pointref  pos(int bod) { return pointref(ens->x(sys,bod),ens->y(sys,bod),ens->z(sys,bod)) ; }
+			__host__ __device__ pointref  vel(int bod) { return pointref(ens->vx(sys,bod),ens->vy(sys,bod),ens->vz(sys,bod)) ; }
+			__host__ __device__ real_pos mass(int bod) { return ens->mass(sys,bod); }
+			*/
+			__host__ __device__ void set_time(const real_time& t) { ens->time(sys) = t; }
+		};
+
+		/*
+		__host__ __device__ pointref  pos(int sys, int bod) { return pointref(x(sys,bod),y(sys,bod),z(sys,bod)) ; }
+		*/
+		__host__ __device__ systemref  sys(int sys) { return systemref(*this,sys); }
+		__host__ __device__ systemref operator [](const int & i){ return sys(i); };
+
+
+
+
 		// non-const versions
 
 		/// return system time
@@ -153,6 +276,8 @@ class ensemble
 		/// return system ... time 
 		__host__ __device__ real_time&   time_output(int sys, int k) { return m_Toutput[k*m_nsys + sys]; }
 	
+		/// return the current position compononte of the body  
+		__host__ __device__ real_pos&  p(int sys, int bod, int c) { return m_xyz[m_nbod*m_nsys*c + bod*m_nsys + sys]; }
 		/// return the current position x of the body  
 		__host__ __device__ real_pos&  x(int sys, int bod) { return m_xyz[bod*m_nsys + sys]; }
 		/// return the current position y of the body  
@@ -160,6 +285,8 @@ class ensemble
 		/// return the current position z of the body  
 		__host__ __device__ real_pos&  z(int sys, int bod) { return m_xyz[m_nbod*m_nsys*2 + bod*m_nsys + sys]; }
 
+		/// return the current velocity component of the body  
+		__host__ __device__ real_vel& v(int sys, int bod, int c) { return m_vxyz[m_nbod*m_nsys*c + bod*m_nsys + sys]; }
 		/// return the current velocity x of the body  
 		__host__ __device__ real_vel& vx(int sys, int bod) { return m_vxyz[bod*m_nsys + sys]; }
 		/// return the current velocity y of the body  
