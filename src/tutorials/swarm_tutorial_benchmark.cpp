@@ -72,6 +72,7 @@ int main(int argc,  char **argv)
 	  load_config(cfg,icfgfn);
   }else{
 	  cfg["integrator"] = "gpu_hermite"; // Set to use a GPU integrator
+//	  cfg["integrator"] = "gpu_hermite_bpt"; // Set to use a GPU integrator
 	  cfg["runon"]      = "gpu";         // Set to runon GPU
 	  cfg["time step"] = "0.0005";       // time step
   }

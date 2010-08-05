@@ -65,7 +65,11 @@ namespace gpulog
 		#endif
 		}
 
+                #ifdef __CUDACC__
 		__device__ static inline int atomicAdd(int *x, int add)
+                #else
+                __host__ static inline int atomicAdd(int *x, int add)
+                #endif
 		{
 		#ifdef __CUDACC__
 			return ::atomicAdd(x, add);

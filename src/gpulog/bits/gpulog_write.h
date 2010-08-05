@@ -3,7 +3,10 @@
 // Generated using ../scripts/gen_gpulog_write.pl write
 //
 template<typename T1>
-	__host__ __device__ inline PTR_T(SCALAR(T1)) write(const int recid, const T1 &v1)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T1)) write(const int recid, const T1 &v1)
 	{
 		typedef internal::pktsize<header, T1> P;
 		//P::dump();
@@ -32,7 +35,10 @@ template<typename T1>
 	}
 
 template<typename T1, typename T2>
-	__host__ __device__ inline PTR_T(SCALAR(T2)) write(const int recid, const T1 &v1, const T2 &v2)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T2)) write(const int recid, const T1 &v1, const T2 &v2)
 	{
 		typedef internal::pktsize<header, T1, T2> P;
 		//P::dump();
@@ -62,7 +68,10 @@ template<typename T1, typename T2>
 	}
 
 template<typename T1, typename T2, typename T3>
-	__host__ __device__ inline PTR_T(SCALAR(T3)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T3)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3)
 	{
 		typedef internal::pktsize<header, T1, T2, T3> P;
 		//P::dump();
@@ -93,7 +102,10 @@ template<typename T1, typename T2, typename T3>
 	}
 
 template<typename T1, typename T2, typename T3, typename T4>
-	__host__ __device__ inline PTR_T(SCALAR(T4)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T4)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4> P;
 		//P::dump();
@@ -125,7 +137,10 @@ template<typename T1, typename T2, typename T3, typename T4>
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5>
-	__host__ __device__ inline PTR_T(SCALAR(T5)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T5)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5> P;
 		//P::dump();
@@ -158,7 +173,10 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5>
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-	__host__ __device__ inline PTR_T(SCALAR(T6)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T6)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5, T6> P;
 		//P::dump();
@@ -192,7 +210,10 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-	__host__ __device__ inline PTR_T(SCALAR(T7)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T7)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5, T6, T7> P;
 		//P::dump();
@@ -227,7 +248,10 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-	__host__ __device__ inline PTR_T(SCALAR(T8)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T8)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5, T6, T7, T8> P;
 		//P::dump();
@@ -263,7 +287,10 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-	__host__ __device__ inline PTR_T(SCALAR(T9)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T9)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5, T6, T7, T8, T9> P;
 		//P::dump();
@@ -300,7 +327,10 @@ template<typename T1, typename T2, typename T3, typename T4, typename T5, typena
 	}
 
 template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-	__host__ __device__ inline PTR_T(SCALAR(T10)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9, const T10 &v10)
+#ifdef __CUDACC__
+        __device__
+#endif
+	inline PTR_T(SCALAR(T10)) write(const int recid, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8, const T9 &v9, const T10 &v10)
 	{
 		typedef internal::pktsize<header, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> P;
 		//P::dump();
