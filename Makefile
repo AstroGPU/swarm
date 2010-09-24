@@ -25,8 +25,8 @@
 ###
 ### libswarm library
 ###
-LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
-LIBSWARM_CUDA=src/swarmlib.cu
+LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/cpu_ensemble.cpp src/gpu_ensemble.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
+LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu
 
 ###
 ### documentation in asciidoc format
@@ -37,8 +37,7 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ####
 #### Integrator pieces of libswarm
 ####
-# include integrators/*/Makefile.mk
-include integrators/hermite_gpu/Makefile.mk
+include integrators/*/Makefile.mk
 
 ###
 ### Applications
@@ -86,7 +85,7 @@ swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 # Defaults: you should override these in Makefile.user
 #
 CUDAPATH?=/opt/cuda
-CCUDA?=$(CUDAPATH)/bin/nvcc -arch=sm_20 
+CCUDA?=$(CUDAPATH)/bin/nvcc -arch=sm_13 
 CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
@@ -102,8 +101,7 @@ CXXFLAGS+= -I ./src
 CXX+=-fPIC
 
 # Link command just adds the required bits to compiler command
-# LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas -lboost_program_options -lboost_regex
-LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lboost_program_options -lboost_regex
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas -lboost_program_options -lboost_regex
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects

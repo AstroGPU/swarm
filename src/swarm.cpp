@@ -89,7 +89,7 @@ int main(int argc, const char **argv)
 		SWATCH_STOP(swatch_mem);
 
 		SWATCH_START(swatch_temps);
-		integ->integrate(gpu_ens, 0.);				// initialize internal data structures
+		integ->integrate(gpu_ens, 0.0);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
 		SWATCH_START(swatch_kernel);
@@ -114,12 +114,12 @@ int main(int argc, const char **argv)
 	std::cerr << "# Done.\n\n";
 
 	// print out timings
-	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
-	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000;
+	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000.0;
+	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000.0;
 	std::cerr << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
 	std::cerr << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
-	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
-	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
+	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000.0 << " ms.\n";
+	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000.0 << " ms.\n";
 
 	return 0;
 }

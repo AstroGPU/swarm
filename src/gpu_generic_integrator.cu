@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2010 by Mario Juric  and the Swarm-NG Development Team  *
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -16,13 +16,18 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file verlet.cu
- * \brief declares prop_verlet for use with gpu_generic_integrator
+/*! \file gpu_generic_integrator 
+ *  \brief kernel code for gpu_generic_integrator
+ *
 */
 
 #include "swarm.h"
-#include "verlet.h"
+#include <cux/cux.h>
+#include <astro/util.h>
+#include <cassert>
 #include "swarmlog.h"
+
+namespace swarm {
 
 /*!
 	\brief gpu_generic_integrator - Versatile GPU integrator template
@@ -177,219 +182,125 @@
 
 */
 
-/// namespace for Swarm-NG library
-namespace swarm {
-
-
-/*!  
- *  \brief propagator class for verlet integrator on GPU: Advance the system by one time step.
- *
- *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
- *  Keep any data that need to reside on the CPU here.
- */
-struct prop_verlet
+/********* CLASS DEFINITION *********/
+template<typename stopper_t, typename propagator_t>
+class gpu_generic_integrator : public integrator
 {
-	/*! 
-	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
-         *
-	 * Any per-block read-only variables should be members of this structure.
-         */
-	struct gpu_t
-	{
-		//! per-block variables, time step
-		double h;
-		//! per-block variables, acceleration
-		cuxDevicePtr<double, 3> aa;
+protected:
+	stopper_t	stop;
+	propagator_t	H;
 
-		/*!
-		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
-                 *
-		 * Any per-thread variables should be members of this structure.
-		 */
-		struct thread_state_t
-		{
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
-			{ }
-		};
+	int gpu_ensemble_id;
+	int steps_per_kernel_run;
 
-		/*!
-                 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
-		 *
-		 * This function MUST return the new time of the system.
-		 * This function MUST also call stop.test_body() for every body
-		 * in the system, after that body has been advanced by a timestep.
-		 * @tparam stop_t ...
-		 * @param[in,out] ens ensemble
-		 * @param[in,out] pt ...
-		 * @param[in] sys system ID
-		 * @param[in] T start time
-		 * @param[in] Tend destination time
-		 * @param[in] stop ...
-		 * @param[in] stop_ts ...
-		 * @param[in] step  ...
-		 * @return new time of the system
-		 */
-		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
-		{
-			if(T >= Tend) { return T; }
-			double hh = T + this->h <= Tend ? this->h : Tend - T;
-			double h_half= hh*0.5;
+	dim3 gridDim;
+	int threadsPerBlock;
 
-			//Step(pos);
-			//CalcDerivForDrift(); -> returns velocity
-			for(int bod = 0; bod != ens.nbod(); bod++) // starting from 1, assuming 0 is the central body
-			{
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				x += vx * h_half;
-				y += vy * h_half;
-				z += vz * h_half;
-				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-			}
+	/// temp variable for return values (gpu pointer)
+	cuxDeviceAutoPtr<retval_t> retval_gpu;	
 
-			//CalcDerivForKick();
-			// compute accelerations
-			compute_acc(ens, sys, aa);
+public:
+	gpu_generic_integrator(const config &cfg);
 
-			//Step(vel)
-			for(int bod = 0; bod != ens.nbod(); bod++) 
-			{
-				// load
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				// advance
-				//x += vx * h_half;
-				//y += vy * h_half;
-				//z += vz * h_half;
-				vx += aa(sys, bod, 0) * h_half;
-				vy += aa(sys, bod, 1) * h_half;
-				vz += aa(sys, bod, 2) * h_half;
-
-				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
-
-				// store
-				//ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
-			}
-		        
-			T = T + h_half;
-			//Calculate New HalfDeltaT; HalfDeltaT =1./(2./(CalcTimeScaleFactor(mass, pos, nBodies)*DeltaTau)-1./HalfDeltaTLast);
-			//CalcTimeScaleFactor(mass, pos, nBodies)
-			double rinv3 = 0.;
-			for ( unsigned int i=0;i<ens.nbod();++i )
-			{
-				//V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
-				double xi0= ens.x ( sys,i );
-				double xi1= ens.y ( sys,i );
-				double xi2= ens.z ( sys,i );
-				
-				double mass_sum = ens.mass(sys,i);
-				for (int j=i+1; j < ens.nbod(); ++j) {
-					//double msum = g_mass[i]+g_mass[j];
-					mass_sum += ens.mass(sys,j); 
-					//V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
-					//double r2 = dx.MagnitudeSquared();
-					double dx0=ens.x(sys,j) - xi0;
-					double dx1=ens.y(sys,j) - xi1;
-					double dx2=ens.z(sys,j) - xi2;
-					double r2 = dx0*dx0 + dx1*dx1 + dx2*dx2;
-					/* Faster implementation using rsqrt and less operations -- CW 9/15/10
-					* double rinv = 1./sqrt ( r2 );
-					* rinv *= mass_sum;
-					* rinv3 += rinv/r2;
-					*/
-					rinv3 += mass_sum*rsqrt(r2)/r2;
-				}
-			}
-
-			double h_new= 1./(1.+sqrt(rinv3)); 
-			// Technically, missing a factor of 2.*M_PI, but this choice is arbitrary 
-			h_new = 1./(2./(h_new*hh)-1./h_half);
-			h_half = h_new;
-
-			//Step(vel)
-			for(int bod = 0; bod != ens.nbod(); bod++) 
-			{
-				// load
-				double  x = ens.x(sys, bod),   y = ens.y(sys, bod),   z = ens.z(sys, bod);
-				double vx = ens.vx(sys, bod), vy = ens.vy(sys, bod), vz = ens.vz(sys, bod);
-				vx += aa(sys, bod, 0) * h_half;
-				vy += aa(sys, bod, 1) * h_half;
-				vz += aa(sys, bod, 2) * h_half;
-				x += vx * h_half;
-				y += vy * h_half;
-				z += vz * h_half;
-
-				//stop.test_body(stop_ts, ens, sys, bod, T+h_half, x, y, z, vx, vy, vz);
-
-				// store
-				ens.x(sys, bod)  = x;   ens.y(sys, bod) = y;   ens.z(sys, bod) = z;
-				ens.vx(sys, bod) = vx; ens.vy(sys, bod) = vy; ens.vz(sys, bod) = vz;
-			}
-
-
-			return T + h_half;
-		}
-	};
-
-	//! CPU state and interface
-	cuxDeviceAutoPtr<double, 3> aa;
-	gpu_t gpu_obj;
-
-	/*!
-         * \brief initialize temporary variables for ensemble ens. 
-         *
-         * This function should initialize any temporary state that is needed for integration of ens. 
-	 * It will be called from gpu_generic_integrator, but only if ens.last_integrator() != this. 
-         * If any temporary state exists from previous invocation of this function, it should be deallocated and the new state (re)allocated.
-	 */
-	void initialize(ensemble &ens)
-	{
-		// Here you'd initialize the object to be passed to the kernel, or
-		// upload any temporary data you need to constant/texture/global memory
-		aa.realloc(ens.nsys(), ens.nbod(), 3);
-		gpu_obj.aa = aa;
-	}
-
-	/*!
-	 * \brief constructor 
-         * 
-         * Constructor will be passed the cfg object with the contents of integrator configuration file. 
-         * It will be called during construction of gpu_generic_integrator. 
-         * It should load any values necessary for initialization.
-	 */
-	prop_verlet(const config &cfg)
-	{
-		if(!cfg.count("time step factor")) ERROR("Integrator gpu_verlet needs a timestep ('time step factor' keyword in the config file).");
-		gpu_obj.h = atof(cfg.at("time step factor").c_str());
-	}
-
-	/*!
-         * \brief Cast operator for gpu_t.
-         *
-         * This operator must return the gpu_t object to be passed to integration kernel. 
-         * It is called once per kernel invocation.
-	 * @return gpu_t object to be passed to integration kernel.
-	 */
-	operator gpu_t()
-	{
-		return gpu_obj;
-	}
+public:
+	void integrate(gpu_ensemble &ens, double T);
 };
+
+/*!
+ \brief gpu generic integrator 
+ ***************** CONSTRUCTOR*****************
+
+ ...
+ @param[in] cfg
+*/
+template<typename stopper_t, typename propagator_t>
+gpu_generic_integrator<stopper_t, propagator_t>::gpu_generic_integrator(const config &cfg)
+        : H(cfg), stop(cfg), retval_gpu(1)
+{
+        steps_per_kernel_run = cfg.count("steps per kernel run") ? static_cast<int>(std::floor(atof(cfg.at("steps per kernel run").c_str()))) : 1000;
+        threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
+        gpu_ensemble_id = cfg.count("gpu_ensemble_id") ? atoi(cfg.at("gpu_ensemble_id").c_str()) : 0;
+
+        // test the number of threads for validity
+        if(threadsPerBlock <= 0) { ERROR("'threads per block' must be greater than zero (currently, " + str(threadsPerBlock) + ")"); }
+        if(!is_power_of_two(threadsPerBlock)) { ERROR("'threads per block' must be a power of two (currently, " + str(threadsPerBlock) + ")"); }
+        if(threadsPerBlock > MAXTHREADSPERBLOCK) { ERROR("'threads per block' cannot be greater than " + str(MAXTHREADSPERBLOCK) + " (currently, " + str(threadsPerBlock) + ")"); }
+}
+
+/********************* define integrate function here **************
+ *
+ * integrate initializes the propagator and stopper and then executes 
+ * the specified kernel using the gpu_integ_driver function in swarmlib.cu
+ *
+ */
 
 
 /*!
- * \brief factory function to create an integrator 
- * 	  
- * This factory uses the gpu_generic_integrator class
- * with the propagator prop_verlet and the stopper stop_on_ejection
- * 
- * @param[in] cfg contains configuration data for gpu_generic_integrator
- */
-extern "C" integrator *create_gpu_verlet(const config &cfg)
+ \brief gpu integrate 
+ 
+ @param[out] ens
+ @param[in] dT
+*/
+template<typename stopper_t, typename propagator_t>
+void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &ens, double dT)
 {
-	return new gpu_generic_integrator<stop_on_ejection, prop_verlet>(cfg);
+	// Upload the kernel parameters
+	if(ens.last_integrator() != this)
+	{
+		ens.set_last_integrator(this);
+		configure_grid(gridDim, threadsPerBlock, ens.nsys());
+
+		// upload ensemble
+		assert((gpu_ensemble_id>=0)&&(gpu_ensemble_id<MAX_GPU_ENSEMBLES));
+		cuxErrCheck( cudaMemcpyToSymbol(gpu_integ_ens[gpu_ensemble_id], &ens, sizeof(gpu_integ_ens[gpu_ensemble_id])) );
+
+		// initialize propagator, stopping condition
+		H.initialize(ens);
+		stop.initialize(ens);
+
+		if(dT == 0.) { return; }
+	}
+
+	// flush CPU/GPU logs
+	log::flush(log::memory | log::if_full);
+
+	// initialize stop-time temporary array
+	cuxDeviceAutoPtr<real_time> Tstop(ens.nsys());
+
+	// execute the kernel in blocks of steps_per_kernel_run timesteps
+	int nactive0 = -1;
+	int iter = 0;
+	do
+	{
+//		lprintf(hlog, "Starting kernel run #%d\n", iter);
+//		lprintf(hlog, "Another unnecessary message from the CPU side\n");
+
+		retval_gpu.memset(0);
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id, Tstop, iter == 0 ? dT : 0.);
+		cuxErrCheck( cudaThreadSynchronize() );
+		iter++;
+
+		// flush CPU/GPU logs
+		log::flush(log::memory | log::if_full);
+
+		retval_t retval;
+		retval_gpu.get(&retval);
+		if(nactive0 == -1) { nactive0 = retval.nrunning; }
+
+		// check if we should compactify or stop
+		if(retval.nrunning == 0)
+		{
+			break;
+		}
+		if(retval.nrunning - nactive0 > 128)
+		{
+			// TODO: compactify here
+			nactive0 = retval.nrunning;
+		}
+	} while(true);
+//	lprintf(hlog, "Exiting integrate");
+
+	log::flush(log::memory);
 }
 
 } // end namespace swarm

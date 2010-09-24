@@ -52,7 +52,7 @@ namespace hermite_gpu_bpt {
 
 				// computing scalar part of the acceleration
 				double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
-				double rv =  inner_product(dx,dv) * 3 / r2;
+				double rv =  inner_product(dx,dv) * 3. / r2;
 				double rinv = rsqrt(r2)  / r2;
 
 				// vectorized part
@@ -73,17 +73,17 @@ namespace hermite_gpu_bpt {
 		__device__ static void predictor(int i,int c,const int& s, const int& d
 				,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3][nbod],double (&jerk)[2][3][nbod]
 				,double h){
-			pos[d][c][i] = pos[s][c][i] +  h*(vel[s][c][i]+(h/2)*(acc[s][c][i]+(h/3)*jerk[s][c][i]));
-			vel[d][c][i] = vel[s][c][i] +  h*(acc[s][c][i]+(h/2)*jerk[s][c][i]);
+			pos[d][c][i] = pos[s][c][i] +  h*(vel[s][c][i]+(h*0.5)*(acc[s][c][i]+(h/3.)*jerk[s][c][i]));
+			vel[d][c][i] = vel[s][c][i] +  h*(acc[s][c][i]+(h*0.5)*jerk[s][c][i]);
 		}
 
 	template<int nbod>
 	__device__ static void corrector(int i,const int& c,const int& s, const int& d
 			,double (&pos)[2][3][nbod],double (&vel)[2][3][nbod],double (&acc)[2][3][nbod],double (&jerk)[2][3][nbod]
 			,const double& h){
-		pos[d][c][i] = pos[s][c][i] + (h/2) * ( (vel[s][c][i]+vel[d][c][i]) 
-				+ (h*7.0/30)*( (acc[s][c][i]-acc[d][c][i]) + (h/7) * (jerk[s][c][i]+jerk[d][c][i])));
-		vel[d][c][i] = vel[s][c][i] + (h/2) * ( (acc[s][c][i]+acc[d][c][i]) + (h/6) * (jerk[s][c][i]-jerk[d][c][i]));
+		pos[d][c][i] = pos[s][c][i] + (h*0.5) * ( (vel[s][c][i]+vel[d][c][i]) 
+				+ (h*7.0/30.)*( (acc[s][c][i]-acc[d][c][i]) + (h/7.) * (jerk[s][c][i]+jerk[d][c][i])));
+		vel[d][c][i] = vel[s][c][i] + (h*0.5) * ( (acc[s][c][i]+acc[d][c][i]) + (h/6.) * (jerk[s][c][i]-jerk[d][c][i]));
 	}
 
 	__device__ void copy(double src[3],double des[3]){

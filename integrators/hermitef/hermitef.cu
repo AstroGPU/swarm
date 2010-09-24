@@ -65,9 +65,9 @@ struct prop_hermitef
 				,double (&pos)[3][nbod],double (&vel)[3][nbod],double (&acc)[3][nbod],double (&jerk)[3][nbod]
 				,double (&acc_old)[3][nbod],double (&jerk_old)[3][nbod]
 				,const double& h){
-			pos[c][i] = sysref[i].p(c) + (h/2) * ( (sysref[i].v(c)+vel[c][i]) 
-					+ (h*7.0/30)*( (acc_old[c][i]-acc[c][i]) + (h/7) * (jerk_old[c][i]+jerk[c][i])));
-			vel[c][i] = sysref[i].v(c) + (h/2) * ( (acc_old[c][i]+acc[c][i]) + (h/6) * (jerk_old[c][i]-jerk[c][i]));
+			pos[c][i] = sysref[i].p(c) + (h*0.5) * ( (sysref[i].v(c)+vel[c][i]) 
+					+ (h*7.0/30.)*( (acc_old[c][i]-acc[c][i]) + (h/7.) * (jerk_old[c][i]+jerk[c][i])));
+			vel[c][i] = sysref[i].v(c) + (h*0.5) * ( (acc_old[c][i]+acc[c][i]) + (h/6.) * (jerk_old[c][i]-jerk[c][i]));
 		}
 
 
@@ -75,8 +75,8 @@ struct prop_hermitef
 		__device__ static void predictor(int i,int c
 				,double (&pos)[3][nbod],double (&vel)[3][nbod],double (&acc)[3][nbod],double (&jerk)[3][nbod]
 				,double h){
-			pos[c][i] +=  h*(vel[c][i]+(h/2)*(acc[c][i]+(h/3)*jerk[c][i]));
-			vel[c][i] +=  h*(acc[c][i]+(h/2)*jerk[c][i]);
+			pos[c][i] +=  h*(vel[c][i]+(h*0.5)*(acc[c][i]+(h/3.)*jerk[c][i]));
+			vel[c][i] +=  h*(acc[c][i]+(h*0.5)*jerk[c][i]);
 		}
 
 		/**!
@@ -113,7 +113,7 @@ struct prop_hermitef
 
 				// computing scalar part of the acceleration
 				double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
-				double rv =  inner_product(dx,dv) * 3 / r2;
+				double rv =  inner_product(dx,dv) * 3. / r2;
 				double rinv = rsqrt(r2)  / r2;
 
 				// vectorized part
@@ -148,7 +148,7 @@ struct prop_hermitef
 				for(int c = 0; c < 3 ; c++)
 					#pragma unroll
 					for(int i = 0; i < nbod;i++)
-						acc_old[c][i] = 0, jerk_old[c][i] = 0;
+						acc_old[c][i] = 0., jerk_old[c][i] = 0.;
 				// Update Acc Jerk before predicting
 				//Unroller<0,nbod*nbod>::step(bind<void>(&accjerk_updater<nbod>,boost::arg<1>(),sysref,pos,vel,acc_old,jerk_old));
 				#pragma unroll
@@ -167,7 +167,7 @@ struct prop_hermitef
 				for(int c = 0; c < 3 ; c++)
 					#pragma unroll
 					for(int i = 0; i < nbod;i++)
-						acc[c][i] = 0, jerk[c][i] = 0;
+						acc[c][i] = 0., jerk[c][i] = 0.;
 				// Update Acc Jerk
 				//Unroller<0,nbod*nbod>::step(bind<void>(accjerk_updater<nbod>,_1,sysref,pos,vel,acc,jerk));
 				#pragma unroll
@@ -184,7 +184,7 @@ struct prop_hermitef
 				for(int c = 0; c < 3 ; c++)
 					#pragma unroll
 					for(int i = 0; i < nbod;i++)
-						acc[c][i] = 0, jerk[c][i] = 0;
+						acc[c][i] = 0., jerk[c][i] = 0.;
 				// Update Acc Jerk
 				//Unroller<0,nbod*nbod>::step(bind<void>(accjerk_updater<nbod>,_1,sysref,pos,vel,acc,jerk));
 				#pragma unroll

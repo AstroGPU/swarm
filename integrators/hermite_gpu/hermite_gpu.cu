@@ -834,9 +834,7 @@ __global__ void gpu_hermite_integrator_kernel(double dT, double h, float rmax, f
 		else
 			UpdateAccJerkGeneral<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], &s_mass[0]);
 	}	
-	
-//	cuPrintf("T=%g Tend=%g\n",T,Tend);
-	__syncthreads();
+
 	while(T<Tend)
 	{
 
@@ -963,13 +961,11 @@ lprintf(dlog, "System was set to be inactive: sys=%d T=%f.\n", sys,  T);
                   }
 #endif
 
-#if 1
 		if(stop||log::needs_output(ens, T, sys))
 		{
 			store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
 			log::output_system(dlog, ens, T, sys);
 		}
-#endif
 	}
 	store_to_gmem<pre, nbod>(ens, T, sys, mPos, mVel, mAcc, mJerk, mPosOld, mVelOld, mAccOld, mJerkOld);
 }

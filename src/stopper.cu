@@ -75,7 +75,7 @@ namespace swarm {
 #if 1
 /// a simple stopper that triggers stopping/logging if orbits cross
 /// hardwired for no more than 10 bodies
-struct stop_on_crossing_orbit_or_close_approach
+struct stop_on_crossing_orbit_or_close_approach// : public stopper
 {
 	/// GPU state and interface (per-grid) for stop_on_ejection
 	struct gpu_t
@@ -132,7 +132,7 @@ struct stop_on_crossing_orbit_or_close_approach
 			lprintf(dlog, "Orbit is parabolic: sys=%d, bod=%d, T=%f r=%f energy=%f energy*r/GM=%f.\n", sys, bod, T, r, energy, energy*r/ts.GM);
 		    	    ts.stop = true; //  parabola
 }
-			else if(energy>0) 
+			else if(energy>0.) 
 		{
 			lprintf(dlog, "Orbit is hyperbolic: sys=%d, bod=%d, T=%f r=%f energy=%f energy*r/GM=%f.\n", sys, bod, T, r, energy, energy*r/ts.GM);
 		            ts.stop = true; //  hyperbola
@@ -140,7 +140,7 @@ struct stop_on_crossing_orbit_or_close_approach
 		           { // ellipse
                            ts.a[bod-1] = -0.5*ts.GM/energy;
                            double fac = 1.-h2/(ts.GM*ts.a[bod-1]);
-                           ts.e[bod-1] = (fac>1e-8) ? sqrt(fac) : 0.;
+                           ts.e[bod-1] = (fac>1.e-8) ? sqrt(fac) : 0.;
 			   }	
                         if(ts.stop==false) { return; }   
 //			::debug_hook();
@@ -234,7 +234,7 @@ struct stop_on_crossing_orbit_or_close_approach
 
 
 /// a simple stopper that checks if the distance from origin exceeds a threshold (for demonstration purposes only)
-struct stop_on_ejection
+struct stop_on_ejection// : public stopper
 {
 	/// GPU state and interface (per-grid) for stop_on_ejection
 	struct gpu_t
