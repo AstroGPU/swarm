@@ -76,7 +76,8 @@ exec 1>&3
 if [[ "$CREATE" != "0" ]]; then
 	cp -a output.log "$TEST/output.ref" && echo "Reference test output created in $TEST/output.ref."
 else
-	cmp output.log "$TEST/output.ref" &&
+	#cmp output.log "$TEST/output.ref" &&
+        $PREFIX/scripts/swarmOutputCompare.py output.log "$TEST/output.ref" &&
 	(
 		echo "Test succeeded. Additional outputs in $RUN/output.log"
 		true
