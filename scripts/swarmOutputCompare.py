@@ -46,7 +46,7 @@ for j in range(len(out)):
   refsplit = ref[j].split()
   if (len(outsplit) != len(refsplit)):
     #If different number of tokens, lines differ.
-    print "Files differ on line "+j
+    print "Files differ on line "+str(j+1)
     sys.exit(1)
   #Loop over and compare tokens
   for l in range(len(outsplit)):
@@ -56,12 +56,12 @@ for j in range(len(out)):
       refval = float(refsplit[l])
       #Compare float vals
       if (abs(outval-refval) > 1.e-5):
-	print "Files differ on line "+j
+	print "Files differ on line "+str(j+1)
 	sys.exit(1)
     except ValueError:
       #Tokens are strings, should match exactly
       if (outsplit[l] != refsplit[l]):
-	print "Files differ on line "+j
+	print "Files differ on line "+str(j+1)
 	sys.exit(1)
 print "Files match."
 sys.exit(0)
