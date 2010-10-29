@@ -63,8 +63,8 @@ namespace hermite_gpu_bpt {
 			}
 		}
 		__device__ void compute(){
-			for(int j = 0; j < nbod; j++) (*this)(j);
-			//Unroller<0,nbod>::step(*this);
+			//for(int j = 0; j < nbod; j++) (*this)(j);
+			Unroller<0,nbod>::step(*this);
 		}
 	};
 
@@ -150,6 +150,7 @@ namespace hermite_gpu_bpt {
 				// are going to be used to avoid unnecessary copying.
 				const int s = k, d = 1-k; 
 				// Predict 
+#pragma unroll
 				for(int c = 0; c < 3; c++)
 					predictor<nbod>(bodid,c,s,d,pos,vel,acc,jerk,h);
 
@@ -161,11 +162,11 @@ namespace hermite_gpu_bpt {
 					// Calculate acceleration and jerk
 					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,pos[d],vel[d],acc[d],jerk[d]);
 					accjerk_updater_instance.compute();
-					//Unroller<0,nbod>::step(accjerk_updater_instance);
 
 					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
 
 					// Correct
+#pragma unroll
 					for(int c = 0; c < 3; c++)
 						corrector<nbod>(bodid,c,s,d,pos,vel,acc,jerk,h);
 

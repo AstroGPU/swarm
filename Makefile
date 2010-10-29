@@ -85,7 +85,7 @@ swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 # Defaults: you should override these in Makefile.user
 #
 CUDAPATH?=/opt/cuda
-CCUDA?=$(CUDAPATH)/bin/nvcc -arch=sm_13 
+CCUDA?=$(CUDAPATH)/bin/nvcc -gencode 'arch=compute_20,code=sm_20' -gencode 'arch=compute_13,code=sm_13'
 CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
@@ -101,7 +101,7 @@ CXXFLAGS+= -I ./src
 CXX+=-fPIC
 
 # Link command just adds the required bits to compiler command
-LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas -lboost_program_options -lboost_regex
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lboost_program_options -lboost_regex
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects

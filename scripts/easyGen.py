@@ -3,6 +3,8 @@
 
 import math as M
 import random as R
+import time
+import sys
 #
 #
 # define basic parameters for ensemble
@@ -13,7 +15,14 @@ import random as R
 #
 # Example parameters 
 #
-nSystems=960
+if (len(sys.argv) > 1) and (int(sys.argv[1]) != 0):
+	nSystems = int(sys.argv[1])
+	thisSeed = time.time()  # Seed for random generator
+else:
+	nSystems=960
+	thisSeed = 314159
+
+
 mPrimary=1. # mass of the primary
 massMin=.001/320. # 1 earth-mass minimum
 massMax=0.01 # 10 Jupiter mass max
@@ -29,7 +38,6 @@ timeEnd=100. # time should be given in yr
 numObs=100 # number of system observations. File is unnecessary for most demos. Used as the list of times file in swarm_scatter_demo
 ObserveFile="observeTimes.dat"
 RANDOM_TIMES=0
-thisSeed = 314159 # Seed for random generator
 
 def getUniformLog(b0,b1):
         a0=M.log10(b0)

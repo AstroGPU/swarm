@@ -233,10 +233,10 @@ struct prop_hermitef
 			double hh = T + this->h <= Tend ? this->h : Tend - T;
 
 			advance_internal< 3>(sysref,hh);
-			/*
 			advance_internal< 4>(sysref,hh);
 			advance_internal< 5>(sysref,hh);
 			advance_internal< 6>(sysref,hh);
+			/*
 			advance_internal< 7>(sysref,hh);
 			advance_internal< 8>(sysref,hh);
 			advance_internal< 9>(sysref,hh);

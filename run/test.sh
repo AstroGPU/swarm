@@ -2,7 +2,7 @@
 export CUDA_PROFILE=1
 export CUDA_PROFILE_CONFIG="profiler.cfg"
 export CUDA_PROFILE_LOG="cudalog.txt"
-../scripts/easyGen.py
+../scripts/easyGen.py 7680
 ../bin/swarm integrator.cfg
 ../bin/swarm_test_energy log.bin > e1.txt
 ../bin/swarmquery log.bin  > s1.txt

@@ -75,41 +75,38 @@ int main(int argc,  char **argv)
 //	  cfg["integrator"] = "gpu_hermite_bpt"; // Set to use a GPU integrator
 	  cfg["runon"]      = "gpu";         // Set to runon GPU
 	  cfg["time step"] = "0.0005";       // time step
+	  cfg["precision"] = "1";
+	  cfg["threads per block"] = "64";
+	  cfg["integration end"] =  "2.*M_PI";
+	  cfg["num bodies"] = "3";
+	  cfg["systems"] = "960";
   }
   bool valid = true;                 // Indicates whether cfg parameters are valid
 
   // Get values for config hashmap from command line arguements (or use defaults)
-  {
-  std::ostringstream precision_stream;
   if(vm.count("precision")) 
-    {
-      int prec = vm["precision"].as<int>();
-      precision_stream <<  prec;
-      if(!((prec==1)||(prec==2)||(prec==3)))
-	 valid =false;
-    }
-  else
-    precision_stream << 1; 
-  cfg["precision"] = precision_stream.str();
-  }
   {
-    std::ostringstream blocksize_stream;
-    if(vm.count("blocksize")) 
-      {
-	int bs = vm["blocksize"].as<int>();
-	blocksize_stream << bs;
-	if((bs<16)||(bs>512)||(bs%16!=0))
-	 valid =false;
-      }
-    else
-      blocksize_stream << 64; 
-    cfg["threads per block"] = blocksize_stream.str();
+	  std::ostringstream precision_stream;
+	  int prec = vm["precision"].as<int>();
+	  precision_stream <<  prec;
+	  if(!((prec==1)||(prec==2)||(prec==3)))
+		  valid =false;
+	  cfg["precision"] = precision_stream.str();
+  }
+  if(vm.count("blocksize")) 
+  {
+	  std::ostringstream blocksize_stream;
+	  int bs = vm["blocksize"].as<int>();
+	  blocksize_stream << bs;
+	  if((bs<16)||(bs>512)||(bs%16!=0))
+		  valid =false;
+	  cfg["threads per block"] = blocksize_stream.str();
   }
   
   // Get simple values from command line arguements (or use defaults)
-  int nsystems = (vm.count("systems")) ? vm["systems"].as<int>() : 960;
-  int nbodyspersystem = (vm.count("num_bodies")) ? vm["num_bodies"].as<int>() : 3;
-  double dT = (vm.count("time")) ? vm["time"].as<double>() : 2.*M_PI;
+  int nsystems = (vm.count("systems")) ? vm["systems"].as<int>() : atoi(cfg["systems"].c_str());
+  int nbodyspersystem = (vm.count("num_bodies")) ? vm["num_bodies"].as<int>() : atoi(cfg["num bodies"].c_str());
+  double dT = (vm.count("time")) ? vm["time"].as<double>() : atof(cfg["integration end"].c_str());
 
   // Check that parameters from command line are ok
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
