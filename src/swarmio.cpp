@@ -63,7 +63,7 @@ namespace swarm
 
 		std::string type() const
 		{
-			char *c = strstr(m_type, "//");
+			const char *c = strstr(m_type, "//");
 			if(!c) { return trim(m_type); }
 			return trim(std::string(m_type, c - m_type));
 		}
