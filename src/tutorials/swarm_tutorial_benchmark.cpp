@@ -24,8 +24,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <memory>
 #include <boost/program_options.hpp>
+#include <boost/program_options/positional_options.hpp>
 
 #define PRINT_OUTPUT 0
 #define PARANOID_ENERGY_CHECK 1
@@ -37,10 +39,31 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens);
 void print_selected_systems_for_demo(swarm::ensemble& ens);
 #endif
 
-int main(int argc,  char **argv)
-{
-  using namespace swarm;
-  namespace po = boost::program_options;
+using namespace swarm;
+using namespace std;
+
+
+void run_integration(config& cfg) {
+
+  bool valid = true;                 // Indicates whether cfg parameters are valid
+  int nsystems = atoi(cfg["systems"].c_str());
+  int nbodyspersystem = atoi(cfg["num bodies"].c_str());
+  double dT = atof(cfg["integration end"].c_str());
+  int bs = atoi(cfg["blocksize"].c_str()) ;
+  int prec = atoi(cfg["precision"].c_str()) ;
+
+
+  // Check that parameters from command line are ok
+  if(!((prec==1)||(prec==2)||(prec==3))) valid =false;
+  if((bs<16)||(bs>512)||(bs%16!=0)) valid =false;
+  if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
+  if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
+  if(!(dT>0.)||!(dT<=2.*M_PI*10000.+1.)) valid = false;
+  
+  if(!valid) {
+	  std::cerr << "Invalid configuration" << std::endl;
+	  return;
+  }
 
   // performance stopwatches
   stopwatch swatch_kernel_gpu, swatch_upload_gpu, swatch_download_gpu, swatch_temps_gpu, swatch_init_gpu;
@@ -50,71 +73,8 @@ int main(int argc,  char **argv)
   swatch_all.start(); // Start timer for entire program
   srand(42u);    // Seed random number generator, so output is reproducible
 
-  // Parse command line arguements (making it easy to compare)
-  po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
-  desc.add_options()
-    ("help,h", "produce help message")
-    ("systems,s", po::value<int>(), "number of systems [1,30720]")
-    ("num_bodies,n", po::value<int>(),  "number of bodies per system [3,10]")
-    ("time,t", po::value<double>(), "time to integrate (0,62832.)")
-    ("blocksize,b", po::value<int>(),  "number of threads per block {16,32,48,64,128}")
-    ("precision,p", po::value<int>(),  "precision (1=double, 2=single, 3=mixed)")
-    ("nocpu", "Do not run CPU part")
-	("cfg,c", po::value<std::string>(), "Integrator configuration file")
-    ;
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
-  po::notify(vm);
 
-  config cfg;
-  if(vm.count("cfg")){
-	  std::string icfgfn =  vm["cfg"].as<std::string>();
-	  load_config(cfg,icfgfn);
-  }else{
-	  cfg["integrator"] = "gpu_hermite"; // Set to use a GPU integrator
-//	  cfg["integrator"] = "gpu_hermite_bpt"; // Set to use a GPU integrator
-	  cfg["runon"]      = "gpu";         // Set to runon GPU
-	  cfg["time step"] = "0.0005";       // time step
-	  cfg["precision"] = "1";
-	  cfg["threads per block"] = "64";
-	  cfg["integration end"] =  "2.*M_PI";
-	  cfg["num bodies"] = "3";
-	  cfg["systems"] = "960";
-  }
-  bool valid = true;                 // Indicates whether cfg parameters are valid
 
-  // Get values for config hashmap from command line arguements (or use defaults)
-  if(vm.count("precision")) 
-  {
-	  std::ostringstream precision_stream;
-	  int prec = vm["precision"].as<int>();
-	  precision_stream <<  prec;
-	  if(!((prec==1)||(prec==2)||(prec==3)))
-		  valid =false;
-	  cfg["precision"] = precision_stream.str();
-  }
-  if(vm.count("blocksize")) 
-  {
-	  std::ostringstream blocksize_stream;
-	  int bs = vm["blocksize"].as<int>();
-	  blocksize_stream << bs;
-	  if((bs<16)||(bs>512)||(bs%16!=0))
-		  valid =false;
-	  cfg["threads per block"] = blocksize_stream.str();
-  }
-  
-  // Get simple values from command line arguements (or use defaults)
-  int nsystems = (vm.count("systems")) ? vm["systems"].as<int>() : atoi(cfg["systems"].c_str());
-  int nbodyspersystem = (vm.count("num_bodies")) ? vm["num_bodies"].as<int>() : atoi(cfg["num bodies"].c_str());
-  double dT = (vm.count("time")) ? vm["time"].as<double>() : atof(cfg["integration end"].c_str());
-
-  // Check that parameters from command line are ok
-  if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
-  if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
-  if(!(dT>0.)||!(dT<=2.*M_PI*10000.+1.)) valid = false;
-
-  // Print help message if requested or invalid parameters
-  if (vm.count("help")||!valid) { std::cout << desc << "\n"; return 1; }
 
   // Print parameters for this set of benchmarks
   std::cerr << "# Parameters: systems= " << nsystems << " num_bodies= " << nbodyspersystem << " time= " << dT << " precision= " << cfg["precision"] << " blocksize= " << cfg["threads per block"] << ".\n";
@@ -186,7 +146,7 @@ int main(int argc,  char **argv)
   swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
   std::cerr << "# Download complete.\n";
   
-  if(vm.count("nocpu") == 0){
+  if(cfg["nocpu"] != ""){
 	  // Get ready to perform the same integration on the cpu
 	  cfg["integrator"] = "cpu_hermite"; // change to CPU version of integrator
 	  cfg["runon"]      = "cpu";         // change to runon CPU
@@ -257,7 +217,6 @@ int main(int argc,  char **argv)
 
   // both the integrator & the ensembles are automatically deallocated on exit
   // so there's nothing special we have to do here.
-  return 0;
 }
 
 
@@ -313,3 +272,82 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
   std::cout.flush();
 }
 
+
+void benchmark_loop(config& cfg, const string& param, const vector<string>& values) {
+	for(vector<string>::const_iterator i = values.begin();  i != values.end(); i++){
+		std::cout << "\n\nBenchmarking for   " << param << " =  " << *i << "     =========================================\n\n" << std::endl;
+		cfg[param] = *i;
+		run_integration(cfg);
+	}
+}
+
+int main(int argc,  char **argv)
+{
+  namespace po = boost::program_options;
+
+
+  // Parse command line arguements (making it easy to compare)
+  po::positional_options_description pos;
+  po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
+
+  pos.add("parameter", 1);
+  pos.add("value", -1);
+
+
+  desc.add_options()
+	  ("value" , po::value<vector<string> >() , "Values to iterate over ")
+	  ("parameter" , po::value<vector<string> >() , "Parameteres to benchmark ")
+    ("help,h", "produce help message")
+    ("nocpu", "Do not run CPU part")
+	("cfg,c", po::value<std::string>(), "Integrator configuration file")
+    ;
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).
+		  options(desc).positional(pos).run(), vm);
+  po::notify(vm);
+
+  config cfg;
+  // Default configuration
+	  cfg["integrator"] = "gpu_hermite"; // Set to use a GPU integrator
+	  cfg["runon"]      = "gpu";         // Set to runon GPU
+	  cfg["time step"] = "0.0005";       // time step
+	  cfg["precision"] = "1";
+	  cfg["threads per block"] = "64";
+	  cfg["integration end"] =  "12.56";
+	  cfg["num bodies"] = "3";
+	  cfg["systems"] = "960";
+	  cfg["blocksize"] = "64";
+  if(vm.count("cfg")){
+	  std::string icfgfn =  vm["cfg"].as<std::string>();
+	  load_config(cfg,icfgfn);
+  }
+
+  // Get values for config hashmap from command line arguements (or use defaults)
+  if(vm.count("precision")) 
+  {
+	  std::ostringstream precision_stream;
+	  int prec = vm["precision"].as<int>();
+	  precision_stream <<  prec;
+	  cfg["precision"] = precision_stream.str();
+  }
+  if(vm.count("blocksize")) 
+  {
+	  std::ostringstream blocksize_stream;
+	  int bs = vm["blocksize"].as<int>();
+	  blocksize_stream << bs;
+	  cfg["threads per block"] = blocksize_stream.str();
+  }
+
+  // Print help message if requested or invalid parameters
+  if (vm.count("help")) { std::cout << desc << "\n"; return 1; }
+
+  if((vm.count("parameter") > 0) && (vm.count("value") > 0)) {
+		string param = vm["parameter"].as< vector<string> >().front();
+		vector<string> values = vm["value"].as< vector<string> >();
+	  benchmark_loop(cfg, param,  values );
+  } else {
+	  run_integration(cfg);
+  }
+
+}
