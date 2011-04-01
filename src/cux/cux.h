@@ -26,6 +26,7 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <stdint.h>
 
 #include "cux_lowlevel.h"
 

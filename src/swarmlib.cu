@@ -363,4 +363,7 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 #endif
 }
 
+// Templated acc_jerk calculation functions
+
+
 } // end namespace swarm
