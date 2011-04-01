@@ -82,7 +82,7 @@ namespace swarm {
 			{
 				//! Current time step that it going to be used for next advance call. It will be updated by each advance call.
 				double hcurrent;
-				thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : hcurrent(H.hinit){}
+				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : hcurrent(H.hinit){}
 			};
 
 
@@ -101,7 +101,7 @@ namespace swarm {
 			struct rk_error {
 					double (&y)[3][nbod],(&k)[rk_order][3][nbod];
 					const double (&b)[rk_order],h;
-					rk_error(double (&y)[3][nbod],double (&k)[rk_order][3][nbod], const double (&b)[rk_order],double h)
+					__device__ rk_error(double (&y)[3][nbod],double (&k)[rk_order][3][nbod], const double (&b)[rk_order],double h)
 						:y(y),k(k),b(b),h(h){}
 					__device__ void operator()(int i)const{
 						y[c][i] = h * (b[0]*k[0][c][i] + b[2]*k[2][c][i] + b[3]*k[3][c][i] 
@@ -113,7 +113,7 @@ namespace swarm {
 				struct rk_step {
 					double (&y)[3][nbod],(&ytmp)[3][nbod],(&k)[rk_order][3][nbod];
 					const double (&b)[step],h;
-					rk_step(double (&y)[3][nbod],double (&ytmp)[3][nbod], double (&k)[rk_order][3][nbod], const double (&b)[step], double h): y(y),ytmp(ytmp),k(k),b(b),h(h){}
+					__device__ rk_step(double (&y)[3][nbod],double (&ytmp)[3][nbod], double (&k)[rk_order][3][nbod], const double (&b)[step], double h): y(y),ytmp(ytmp),k(k),b(b),h(h){}
 					__device__ void operator()(int i)const{
 						double s = 0;
 						#pragma unroll

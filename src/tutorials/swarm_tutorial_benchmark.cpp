@@ -281,6 +281,16 @@ void benchmark_loop(config& cfg, const string& param, const vector<string>& valu
 	}
 }
 
+void benchmark_range(config& cfg, const string& param, int  from, int to , int increment ){
+	  for(int i = from; i <= to ; i+= increment ){
+			std::cout << "\n\nBenchmarking for   " << param << " =  " << i << "     =========================================\n\n" << std::endl;
+			std::ostringstream stream;
+			stream <<  i;
+			cfg[param] = stream.str();
+			run_integration(cfg);
+	  }
+}
+
 int main(int argc,  char **argv)
 {
   namespace po = boost::program_options;
@@ -297,6 +307,9 @@ int main(int argc,  char **argv)
   desc.add_options()
 	  ("value" , po::value<vector<string> >() , "Values to iterate over ")
 	  ("parameter" , po::value<vector<string> >() , "Parameteres to benchmark ")
+    ("from", po::value<int>() , "from integer value")
+    ("to", po::value<int>() , "to integer value")
+    ("inc", po::value<int>() , "increment integer value")
     ("help,h", "produce help message")
     ("nocpu", "Do not run CPU part")
 	("cfg,c", po::value<std::string>(), "Integrator configuration file")
@@ -346,6 +359,11 @@ int main(int argc,  char **argv)
 		string param = vm["parameter"].as< vector<string> >().front();
 		vector<string> values = vm["value"].as< vector<string> >();
 	  benchmark_loop(cfg, param,  values );
+  } else if ((vm.count("parameter") > 0) &&(vm.count("from") > 0) && (vm.count("to") > 0)){
+	  int from = vm["from"].as<int>(), to = vm["to"].as<int>();
+	  int increment = vm.count("inc") > 0 ? vm["inc"].as<int>() : 1;
+	  string param = vm["parameter"].as< vector<string> >().front();
+	  benchmark_range(cfg, param,  from, to , increment );
   } else {
 	  run_integration(cfg);
   }

@@ -90,7 +90,7 @@ CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src
+CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src -I .
 LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
@@ -121,7 +121,7 @@ BIN=$(shell pwd)/bin
 ifneq ($(VERBOSE),1)
 DEPUI=@ echo "[ DEP  ] $@ " &&
 CXXUI=@ echo "[ CXX  ] $@ " &&
-NVCCUI=@ echo "[ NVCC ] $@ " &&
+NVCCUI=echo "[ NVCC ] $@ " &&
 LINKUI=@ echo "[ LINK ] $@ " &&
 ARUI=@ echo "[ AR   ] $@ " &&
 GENUI=@ echo "[ GEN  ] $@ " &&

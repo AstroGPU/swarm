@@ -55,7 +55,7 @@ struct prop_hermitef
 		 */
 		struct thread_state_t
 		{
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+			inline __device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
 			{ }
 		};
 
