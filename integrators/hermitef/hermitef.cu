@@ -24,6 +24,7 @@
 #include "hermitef.h"
 #include "swarmlog.h"
 #include "meta.hpp"
+#include "static_accjerk.hpp"
 
 
 /// namespace for Swarm-NG library
@@ -79,12 +80,14 @@ struct prop_hermitef
 			vel[c][i] +=  h*(acc[c][i]+(h*0.5)*jerk[c][i]);
 		}
 
+
 		/**!
 		 * helper function for accjerk_updater that operates on each component
 		 * it gets scalar part of acceleration as input and calculates one component of
 		 * acceleration and jerk at a time
          *
 		 */
+		/*
 		template<int nbod>
 		__device__ static void accjerk_updater_component(int i,int c
 				,double dx[3],double dv[3],double scalar,double rv
@@ -92,7 +95,7 @@ struct prop_hermitef
 			acc[c][i] += dx[c]* scalar;
 			jerk[c][i] += (dv[c] - dx[c] * rv) * scalar;
 
-		}
+		}*/
 
 		inline __device__ static double inner_product(const double a[3],const double b[3]){
 			return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
@@ -102,6 +105,7 @@ struct prop_hermitef
 			return a*a;
 		}
 
+		/*
 		template<int nbod>
 		__device__ static void accjerk_updater(int ij,ensemble::systemref sys
 				,double (&pos)[3][nbod],double (&vel)[3][nbod],double (&acc)[3][nbod],double (&jerk)[3][nbod]){
@@ -128,7 +132,7 @@ struct prop_hermitef
 				accjerk_updater_component<nbod>(j,2,dx,dv,scalar_j,rv,acc,jerk);
 			}
 		}
-
+*/
 
 		template<int nbod>
 	    __device__ static void advance_internal(ensemble::systemref& sysref, double h){
@@ -145,15 +149,10 @@ struct prop_hermitef
 						pos[c][i] = sysref[i].p(c), vel[c][i] = sysref[i].v(c);
 					
 
-				for(int c = 0; c < 3 ; c++)
-					#pragma unroll
-					for(int i = 0; i < nbod;i++)
-						acc_old[c][i] = 0., jerk_old[c][i] = 0.;
-				// Update Acc Jerk before predicting
-				//Unroller<0,nbod*nbod>::step(bind<void>(&accjerk_updater<nbod>,boost::arg<1>(),sysref,pos,vel,acc_old,jerk_old));
-				#pragma unroll
-				for(int ij = nbod*nbod-1; ij >=0 ;ij--)
-					accjerk_updater<nbod>(ij,sysref,pos,vel,acc_old,jerk_old);
+				{
+					Compute_AccJerk<nbod> cc(sysref,pos,vel,acc_old,jerk_old);
+					cc.compute();
+				}
 				
 
 				// Predict
@@ -164,15 +163,10 @@ struct prop_hermitef
 						predictor<nbod>(i,c,pos,vel,acc_old,jerk_old,h);
 
 
-				for(int c = 0; c < 3 ; c++)
-					#pragma unroll
-					for(int i = 0; i < nbod;i++)
-						acc[c][i] = 0., jerk[c][i] = 0.;
-				// Update Acc Jerk
-				//Unroller<0,nbod*nbod>::step(bind<void>(accjerk_updater<nbod>,_1,sysref,pos,vel,acc,jerk));
-				#pragma unroll
-				for(int ij = nbod*nbod-1; ij >=0 ;ij--)
-					accjerk_updater<nbod>(ij,sysref,pos,vel,acc,jerk);
+				{
+					Compute_AccJerk<nbod> cc(sysref,pos,vel,acc,jerk);
+					cc.compute();
+				}
 
 				// Correct
 				//Unroller<0,nbod>::step(bind<void>(corrector<nbod>,_1,0,sysref,pos,vel,acc,jerk,acc_old,jerk_old,h));
@@ -181,15 +175,10 @@ struct prop_hermitef
 					for(int i = 0; i < nbod;i++)
 						corrector<nbod>(i,c,sysref,pos,vel,acc,jerk,acc_old,jerk_old,h);
 
-				for(int c = 0; c < 3 ; c++)
-					#pragma unroll
-					for(int i = 0; i < nbod;i++)
-						acc[c][i] = 0., jerk[c][i] = 0.;
-				// Update Acc Jerk
-				//Unroller<0,nbod*nbod>::step(bind<void>(accjerk_updater<nbod>,_1,sysref,pos,vel,acc,jerk));
-				#pragma unroll
-				for(int ij = nbod*nbod-1; ij >=0 ;ij--)
-					accjerk_updater<nbod>(ij,sysref,pos,vel,acc,jerk);
+				{
+					Compute_AccJerk<nbod> cc(sysref,pos,vel,acc,jerk);
+					cc.compute();
+				}
 
 				// Correct
 				//Unroller<0,nbod>::step(bind<void>(corrector<nbod>,_1,0,sysref,pos,vel,acc,jerk,acc_old,jerk_old,h));

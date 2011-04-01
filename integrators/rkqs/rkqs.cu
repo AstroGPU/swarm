@@ -86,17 +86,6 @@ namespace swarm {
 			};
 
 
-				/**!
-		 * helper function for acc_updater that operates on each component
-		 * it gets scalar part of acceleration as input and calculates one component of
-		 * acceleration at a time
-         *
-		 */
-		template<int nbod>
-		__device__ static void acc_updater_component(int i,int c
-				,double dx[3],double scalar,double (&acc)[3][nbod]){
-			acc[c][i] += dx[c]* scalar;
-		}
 
 		inline __device__ static double inner_product(const double a[3],const double b[3]){
 			return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
@@ -106,30 +95,6 @@ namespace swarm {
 			return a*a;
 		}
 
-		template<int nbod>
-		__device__ static void acc_updater(int ij,ensemble::systemref sys
-				,double (&pos)[3][nbod],double (&acc)[3][nbod]){
-			const int i = ij/nbod, j = ij%nbod;
-			if(i < j){
-
-				double dx[3] =  { pos[0][j]-pos[0][i],pos[1][j]-pos[1][i],pos[2][j]-pos[2][i]};
-
-				// computing scalar part of the acceleration
-				double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
-				double rinv = rsqrt(r2)  / r2;
-
-				// vectorized part
-				const double scalar_i = +rinv*sys[j].mass();
-				acc_updater_component<nbod>(i,0,dx,scalar_i,acc);
-				acc_updater_component<nbod>(i,1,dx,scalar_i,acc);
-				acc_updater_component<nbod>(i,2,dx,scalar_i,acc);
-
-				const double scalar_j = -rinv*sys[i].mass();
-				acc_updater_component<nbod>(j,0,dx,scalar_j,acc);
-				acc_updater_component<nbod>(j,1,dx,scalar_j,acc);
-				acc_updater_component<nbod>(j,2,dx,scalar_j,acc);
-			}
-		}
 	
 
 		template<int nbod,int c>
@@ -165,13 +130,9 @@ namespace swarm {
 					,double(&vtmp)[rk_order][3][nbod],double (&atmp)[rk_order][3][nbod]
 					,const double (&b)[step],double h){
 				;
-				for(int i = 0; i < nbod; i++) atmp[step-1][0][i] = 0;
-				for(int i = 0; i < nbod; i++) atmp[step-1][1][i] = 0;
-				for(int i = 0; i < nbod; i++) atmp[step-1][2][i] = 0;
 
-				#pragma unroll
-				for(int ij = nbod*nbod-1; ij >=0 ;ij--)
-					acc_updater<nbod>(ij,sysref,in_pos,atmp[step-1]);
+				Compute_Acc<nbod>(sysref,in_pos,atmp[step-1]).compute();
+
 				// positions
 				Unroller<0,nbod>::step(rk_step<nbod,step,0>(pos,out_pos,vtmp,b,h));
 				Unroller<0,nbod>::step(rk_step<nbod,step,1>(pos,out_pos,vtmp,b,h));
