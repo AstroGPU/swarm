@@ -121,7 +121,7 @@ BIN=$(shell pwd)/bin
 ifneq ($(VERBOSE),1)
 DEPUI=@ echo "[ DEP  ] $@ " &&
 CXXUI=@ echo "[ CXX  ] $@ " &&
-NVCCUI=echo "[ NVCC ] $@ " &&
+NVCCUI=@echo "[ NVCC ] $@ " &&
 LINKUI=@ echo "[ LINK ] $@ " &&
 ARUI=@ echo "[ AR   ] $@ " &&
 GENUI=@ echo "[ GEN  ] $@ " &&
@@ -183,31 +183,18 @@ test-feedback:
 .PHONY: test test-ref
 
 benchmark-quick: bin/swarm_tutorial_benchmark
-	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -p 1 -s 3840 -b 128 | tee benchmark.out
+	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark --nocpu | tee benchmark.out
 
 benchmark: bin/swarm_tutorial_benchmark
 	rm -f run/benchmark.out ;
 	@ echo "# Benchmarking num systems (Please be patient)" |tee run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -s   960 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -s  1920 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu -t 1. -n 3 -s 15360 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark nsystems 960 1920 3840 7680 15360 2>> benchmark.out 
 	@ echo "# Benchmarking num bodys per system (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 3 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 4 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 5 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 6 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark "num bodies" 3 4 5 2>> benchmark.out
 	@ echo "# Benchmarking blocksize (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 3 -p 1 -b  16 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 3 -p 1 -b  32 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 3 -p 1 -b  64 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu  -t 1. -n 3 -p 1 -b  96 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu   -t 1. -n 3 -p 1 -b 128 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark "threads per block" 16 32 64 96 128 2>> benchmark.out
 	@ echo "# Benchmarking preision (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark --nocpu   -t 1. -n 3 -p 1 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark  --nocpu  -t 1. -n 3 -p 2 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark  --nocpu  -t 1. -n 3 -p 3 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark precision 1 2 3  2>> benchmark.out
 	@ echo "# Thank you for your patience" | tee -a run/benchmark.out
 
 clean: clean-test

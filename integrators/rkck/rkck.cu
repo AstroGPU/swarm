@@ -68,6 +68,7 @@ struct prop_rkck
 			{ }
 		};
 
+		__host__ __device__ static int threads_per_system(int nbod) { return 1; }
 		/*! \brief compute accelerations from a temporary state in y
 		 * @param[in]  ens   ensemble 
 		 * @param[in]  y   temporary coordinates (3d array)
@@ -161,7 +162,7 @@ struct prop_rkck
 		 * @return new time of the system
 		 */
 		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 //		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
 		const double b21 = 1.0 / 5.0;

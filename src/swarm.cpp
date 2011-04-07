@@ -29,6 +29,7 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
+
 int main(int argc, const char **argv)
 {
 	if(argc != 2)
@@ -81,21 +82,25 @@ int main(int argc, const char **argv)
 	swarm::log::output_systems_needing_output(hlog, ens);
 
 	// perform the integration
-	std::cerr << "\n# Integrating... ";
 	if(ongpu)
 	{
+		$$("Uploading to GPU... ");
 		SWATCH_START(swatch_mem);
 		swarm::gpu_ensemble gpu_ens(ens);			// upload to GPU
 		SWATCH_STOP(swatch_mem);
 
+
+		$$("Initializing integrator... ");
 		SWATCH_START(swatch_temps);
 		integ->integrate(gpu_ens, 0.0);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
+		$$("Integrating... ");
 		SWATCH_START(swatch_kernel);
 		integ->integrate(gpu_ens, Tend);			// integrate
 		SWATCH_STOP(swatch_kernel);
 
+		$$("Downloading data... ");
 		SWATCH_START(swatch_mem);
 		ens.copy_from(gpu_ens);					// download to host
 		SWATCH_STOP(swatch_mem);

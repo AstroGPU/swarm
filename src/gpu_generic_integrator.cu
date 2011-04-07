@@ -194,6 +194,7 @@ protected:
 	int steps_per_kernel_run;
 
 	dim3 gridDim;
+	dim3 blockDim;
 	int threadsPerBlock;
 
 	/// temp variable for return values (gpu pointer)
@@ -248,7 +249,11 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 	if(ens.last_integrator() != this)
 	{
 		ens.set_last_integrator(this);
-		configure_grid(gridDim, threadsPerBlock, ens.nsys());
+		int tps = propagator_t::gpu_t::threads_per_system(ens.nbod());
+		blockDim.x = threadsPerBlock / tps;
+		blockDim.y = tps;
+		blockDim.z = 1;
+		configure_grid(gridDim, blockDim.x * blockDim.y , ens.nsys() * tps );
 
 		// upload ensemble
 		assert((gpu_ensemble_id>=0)&&(gpu_ensemble_id<MAX_GPU_ENSEMBLES));
@@ -276,7 +281,7 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 //		lprintf(hlog, "Another unnecessary message from the CPU side\n");
 
 		retval_gpu.memset(0);
-		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, threadsPerBlock>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id, Tstop, iter == 0 ? dT : 0.);
+		gpu_integ_driver<typename stopper_t::gpu_t, typename propagator_t::gpu_t><<<gridDim, blockDim>>>(retval_gpu, steps_per_kernel_run, H, stop, gpu_ensemble_id, Tstop, iter == 0 ? dT : 0.);
 		cuxErrCheck( cudaThreadSynchronize() );
 		iter++;
 

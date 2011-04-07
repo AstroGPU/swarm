@@ -236,6 +236,8 @@ namespace swarm {
 					return min( h * max(min(step_change_factor,step_grow_max_factor),1.0), hmax);
 			}
 
+			__host__ __device__ static int threads_per_system(int nbod) { return 1; }
+
 			/*!
 			 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
 			 *
@@ -262,7 +264,7 @@ namespace swarm {
 			 * @return new time of the system
 			 */
 			template<typename stop_t>
-				__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+				__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 			{
 						if(T >= Tend) { return T; }
 						// reload time step from thread state (last used time step)

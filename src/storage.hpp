@@ -31,36 +31,36 @@ template< class T, class Storage >
 class storage {
 	T* p;
 public:
-	T& operator* (){
+	__device__ T& operator* (){
 		return *p;
 	}
-	T* operator-> (){
+	__device__ T* operator-> (){
 		return p;
 	}
-	T& operator[] (const int& i){
+	__device__ T& operator[] (const int& i){
 		return p[i];
 	}
 	const static int local_memory_usage = 0;
 	const static int shared_memory_usage = 0;
-	storage(void* local_memory_pointer, void* shared_memory_pointer);
+	__device__ storage(void* local_memory_pointer, void* shared_memory_pointer);
 };
 
 template< class T>
 class storage<T, LocalMemory>{
 	T* p;
 public:
-	T& operator* (){
+	__device__ T& operator* (){
 		return *p;
 	}
-	T* operator-> (){
+	__device__ T* operator-> (){
 		return p;
 	}
-	T& operator[] (const int& i){
+	__device__ T& operator[] (const int& i){
 		return p[i];
 	}
 	const static int local_memory_usage = sizeof(T);
 	const static int shared_memory_usage = 0;
-	storage(void* local_memory_pointer, void* shared_memory_pointer)
+	__device__ storage(void* local_memory_pointer, void* shared_memory_pointer)
 		:p((T*) local_memory_pointer){}
 	
 };
@@ -69,18 +69,18 @@ template< class T>
 class storage<T, SharedMemory>{
 	T* p;
 public:
-	T& operator* (){
+	__device__ T& operator* (){
 		return *p;
 	}
-	T* operator-> (){
+	__device__ T* operator-> (){
 		return p;
 	}
-	T& operator[] (const int& i){
+	__device__ T& operator[] (const int& i){
 		return p[i];
 	}
 	const static int local_memory_usage =  0;
 	const static int shared_memory_usage = sizeof(T);
-	storage(void* local_memory_pointer, void* shared_memory_pointer)
+	__device__ storage(void* local_memory_pointer, void* shared_memory_pointer)
 		:p((T*) shared_memory_pointer){}
 	
 };

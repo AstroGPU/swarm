@@ -270,7 +270,7 @@ struct retval_t
  @param[in,out] stop
 */
 template<typename stopper_t, typename propagator_t>
-__device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int max_steps, propagator_t &H, stopper_t &stop, double Tstop)
+__device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sys, int thr, int max_steps, propagator_t &H, stopper_t &stop, double Tstop)
 {
 	// initialize propagator and stopper per-thread states
 	double T = ens.time(sys);
@@ -292,7 +292,7 @@ __device__ void generic_integrate_system(retval_t *retval, ensemble &ens, int sy
  	 	   }
 
 		// actual work
-		T = H.advance(ens, H_ts, sys, T, Tstop, stop, stop_ts, step);
+		T = H.advance(ens, H_ts, sys, thr, T, Tstop, stop, stop_ts, step);
 
 		if(stop_ts.is_step_complete())
    		   step++;
@@ -323,7 +323,9 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 
 	// find the system we're to work on
 	ensemble &ens = gpu_integ_ens[gpu_ensemble_id];
-	int sys = threadId();
+	int tps = propagator_t::threads_per_system(ens.nbod());
+	int sys = threadId() / tps;
+	int thr = threadId() % tps;
 
 #if __DEVICE_EMULATION__
 	if(sys == ens.nsys()-1)
@@ -342,7 +344,7 @@ __global__ void gpu_integ_driver(retval_t *retval, int max_steps, propagator_t H
 			Tstop[sys] = min(ens.time_end(sys), ens.time(sys) + dT);
 		}
 
-		generic_integrate_system(retval, ens, sys, max_steps, H, stop, Tstop[sys]);
+		generic_integrate_system(retval, ens, sys, thr, max_steps, H, stop, Tstop[sys]);
 	}
 
 #if __DEVICE_EMULATION__
