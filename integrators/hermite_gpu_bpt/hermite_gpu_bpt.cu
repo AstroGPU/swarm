@@ -14,17 +14,15 @@ namespace hermite_gpu_bpt {
 
 
 	/**!
-	 * helper function for accjerk_updater that operates on each component
+	 * helper function for Gravitation that operates on each component
 	 * it gets scalar part of acceleration as input and calculates one component of
 	 * acceleration and jerk at a time
 	 *
 	 */
 	template<int nbod>
-	__device__ static void accjerk_updater_component(int c,int i
+	__device__ static void Gravitation_component(int c,int i
 			,double dx[3],double dv[3],double scalar,double rv
 			,double (&acc)[3][nbod],double (&jerk)[3][nbod]){
-		acc[c][i] += dx[c]* scalar;
-		jerk[c][i] += (dv[c] - dx[c] * rv) * scalar;
 
 	}
 
@@ -32,8 +30,10 @@ namespace hermite_gpu_bpt {
 		struct systemdata {
 			double pos[3][nbod];
 			double vel[3][nbod];
-			double acc[3][nbod];
-			double jerk[3][nbod];
+			double acc_length[nbod];
+			double jerk_length[nbod];
+//			double acc[3][nbod*nbod]
+//			double jerk[3][nbod*nbod]
 		} ;
 
 	/*! 
@@ -43,32 +43,51 @@ namespace hermite_gpu_bpt {
 	 *
 	 */
 	template<int nbod>
-	struct accjerk_updater {
+	struct Gravitation {
 		ensemble::systemref& sysref;
 		systemdata<nbod> &system;
+		double &acc,&jerk;
 		const int i;
-		__device__ accjerk_updater(const int bodid,ensemble::systemref& sysref,systemdata<nbod> &system)
-			:sysref(sysref),system(system),i(bodid){
-				system.acc[0][i] = system.acc[1][i] = system.acc[2][i] = 0.0;
-				system.jerk[0][i] = system.jerk[1][i] = system.jerk[2][i] = 0.0;
+		const int c;
+		__device__ Gravitation(const int bodid,const int c,ensemble::systemref& sysref,systemdata<nbod> &system, double &acc, double &jerk)
+			:sysref(sysref),system(system),i(bodid),acc(acc),jerk(jerk),c(c){
+				acc = 0;
+				jerk = 0;
 			}
-		__device__ void operator()(int j)const{
+
+		__device__ void calc_pair(int j,double &ac,double& je)const{
 			if(i != j){
 
-				double dx[3] =  { system.pos[0][j]-system.pos[0][i],system.pos[1][j]-system.pos[1][i],system.pos[2][j]-system.pos[2][i]};
-				double dv[3] =  { system.vel[0][j]-system.vel[0][i],system.vel[1][j]-system.vel[1][i],system.vel[2][j]-system.vel[2][i]};
+				if( c == 0 ) {
+					double dx[3] =  { system.pos[0][j]-system.pos[0][i],system.pos[1][j]-system.pos[1][i],system.pos[2][j]-system.pos[2][i]};
+					double dv[3] =  { system.vel[0][j]-system.vel[0][i],system.vel[1][j]-system.vel[1][i],system.vel[2][j]-system.vel[2][i]};
 
-				// computing scalar part of the acceleration
-				double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
-				double rv =  inner_product(dx,dv) * 3. / r2;
-				double rinv = rsqrt(r2)  / r2;
+					// computing scalar part of the acceleration
+					double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
+					double rinv = rsqrt(r2)  / r2;
 
-				// vectorized part
-				const double scalar_i = +rinv*sysref[j].mass();
-				for(int c = 0; c < 3 ; c++)
-					accjerk_updater_component<nbod>(c,i,dx,dv,scalar_i,rv,system.acc,system.jerk);
+					system.jerk_length[i] =  inner_product(dx,dv) * 3. / r2;
+					system.acc_length[i] =  sysref[j].mass() * rsqrt(r2) / r2;
+				}
+				__syncthreads();
 
+				double dxc = system.pos[c][j] - system.pos[c][i];
+				double dvc = system.vel[c][j] - system.vel[c][i];
+				ac = dxc* system.acc_length[i];
+				je = (dvc - dxc * system.jerk_length[i] ) * system.acc_length[i];
+
+			} else {
+				ac = 0;
+				je = 0;
 			}
+
+		}
+
+		__device__ void operator()(int j)const{
+			double ac,je;
+			calc_pair(j,ac,je);
+			acc += ac;
+			jerk += je;
 		}
 		__device__ void compute(){
 			//for(int j = 0; j < nbod; j++) (*this)(j);
@@ -77,22 +96,6 @@ namespace hermite_gpu_bpt {
 	};
 
 
-	template<int nbod>
-		__device__ static void predictor(int i,int c,systemdata<nbod> &s,systemdata<nbod> &d,double h){
-			d.pos[c][i] = s.pos[c][i] +  h*(s.vel[c][i]+(h*0.5)*(s.acc[c][i]+(h/3.)*s.jerk[c][i]));
-			d.vel[c][i] = s.vel[c][i] +  h*(s.acc[c][i]+(h*0.5)*s.jerk[c][i]);
-		}
-
-	template<int nbod>
-	__device__ static void corrector(int i,const int& c,systemdata<nbod> &s,systemdata<nbod> &d,const double& h){
-		d.pos[c][i] = s.pos[c][i] + (h*0.5) * ( (s.vel[c][i]+d.vel[c][i]) 
-				+ (h*7.0/30.)*( (s.acc[c][i]-d.acc[c][i]) + (h/7.) * (s.jerk[c][i]+d.jerk[c][i])));
-		d.vel[c][i] = s.vel[c][i] + (h*0.5) * ( (s.acc[c][i]+d.acc[c][i]) + (h/6.) * (s.jerk[c][i]-d.jerk[c][i]));
-	}
-
-	__device__ void copy(double src[3],double des[3]){
-		des[0] = src[0], des[1] = src[1] , des[2] = src[2];
-	}
 
 	template<int nbod>
 	__device__ void load_to_shared(systemdata<nbod> &system,ensemble::systemref& sysref,int c,int i){
@@ -104,19 +107,46 @@ namespace hermite_gpu_bpt {
 		sysref[i].p(c) = system.pos[c][i] ,  sysref[i].v(c) = system.vel[c][i];
 	}
 
+	__device__ void copy(double src[3],double des[3]){ 
+		des[0] = src[0], des[1] = src[1] , des[2] = src[2]; 
+	}
+
 
 	template<int nbod>
 	__global__ void gpu_hermite_bpt_integrator_kernel(double destination_time, double time_step){
 		
+		ensemble &ens = gpu_hermite_ens;
+
 		// this kernel will process specific body of specific system
 		// getting essential pointers
 		int sysid = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
 		int sysid_in_block = threadIdx.y;
-		int bodid = threadIdx.x;
-		ensemble &ens = gpu_hermite_ens;
-		if(sysid >= ens.nsys() || bodid >= nbod) { return; }
+		int thr = threadIdx.x;
+		// Body number
+		int b = thr / 3 ;
+		// Component number
+		int c = thr % 3 ;
+
+		bool p = true;
+
+		if(sysid >= ens.nsys() || b >= nbod || c >= 3) { return; }
+
 		ensemble::systemref gsys ( ens[sysid] );
 
+
+/*
+		int ii = nbod - 1 - thr / (nbod/2);
+		int jj = thr % (nbod/2);
+		int b, j 
+		if (jj < ii) {
+			b = jj;
+			j = ii;
+		} else {
+			b = nbod - 1 - jj - nbod%2;
+			j = nbod - 1 - ii - nbod%2 + 1;
+		}
+		bool p = b < nbod;
+*/
 
 
 			
@@ -140,19 +170,19 @@ namespace hermite_gpu_bpt {
 		double t_start = gsys.time(), t = t_start;
 		double t_end = min(t_start + destination_time,gsys.time_end());
 
+
 		// Load data into shared memory (cooperative load)
-		load_to_shared<nbod>(system[0],gsys,0,bodid);
-		load_to_shared<nbod>(system[0],gsys,1,bodid);
-		load_to_shared<nbod>(system[0],gsys,2,bodid);
-//		#pragma unroll
-//		for(int i = 0; i < nbod; i++) mass[i] = gsys[i].mass();
+		if( p )
+			load_to_shared<nbod>(system[0],gsys,c,b);
 
 		
 		__syncthreads(); // load should complete before calculating acceleration and jerk
 
+		double acc,jerk;
+
 		// Calculate acceleration and jerk
-		accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,system[0]);
-		accjerk_updater_instance.compute();
+		Gravitation<nbod> gi(b,c,gsys,system[0],acc,jerk);
+		gi.compute(); //for(int j = 0; j < nbod; j++) gi(j);
 
 		while(t < t_end){
 			for(int k = 0; k < 2; k++)
@@ -162,25 +192,30 @@ namespace hermite_gpu_bpt {
 				// are going to be used to avoid unnecessary copying.
 				const int s = k, d = 1-k; 
 				// Predict 
-#pragma unroll
-				for(int c = 0; c < 3; c++)
-					predictor<nbod>(bodid,c,system[s],system[d],h);
+				if( p ) {
+					system[d].pos[c][b] = system[s].pos[c][b] +  h*(system[s].vel[c][b]+(h*0.5)*(acc+(h/3.)*jerk));
+					system[d].vel[c][b] = system[s].vel[c][b] +  h*(acc+(h*0.5)*jerk);
+				}
 
+			
+				double acc_old = acc,jerk_old = jerk;
 
 				// Do evaluation and correction two times (PEC2)
 				for(int l = 0; l < 2; l++)
 				{
 					__syncthreads();
 					// Calculate acceleration and jerk
-					accjerk_updater<nbod> accjerk_updater_instance(bodid,gsys,system[d]);
-					accjerk_updater_instance.compute();
+					Gravitation<nbod> gi(b,c,gsys,system[d],acc,jerk);
+					gi.compute(); //for(int j = 0; j < nbod; j++) gi(j);
 
-					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that accjerk_updater would read
+					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that Gravitation would read
 
 					// Correct
-#pragma unroll
-					for(int c = 0; c < 3; c++)
-						corrector<nbod>(bodid,c,system[s],system[d],h);
+					if( p ) {
+						system[d].pos[c][b] = system[s].pos[c][b] + (h*0.5) * ( (system[s].vel[c][b]+system[d].vel[c][b]) 
+								+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
+						system[d].vel[c][b] = system[s].vel[c][b] + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+					}
 
 				}
 				t += h;
@@ -188,16 +223,14 @@ namespace hermite_gpu_bpt {
 
 			/*debug_hook();
 
-			if(bodid == 0) 
+			if(b == 0) 
 				gsys.increase_stepcount();
 */
 			if(log::needs_output(ens, t, sysid))
 			{
 				// Save pos/vel to global memory
-				store_from_shared<nbod>(system[0],gsys,0,bodid);
-				store_from_shared<nbod>(system[0],gsys,1,bodid);
-				store_from_shared<nbod>(system[0],gsys,2,bodid);
-				if(bodid == 0) {
+				store_from_shared<nbod>(system[0],gsys,c,b);
+				if(thr == 0) {
 					gsys.set_time(t);
 					log::output_system(dlog, ens, t, sysid);
 				}
@@ -205,12 +238,11 @@ namespace hermite_gpu_bpt {
 
 		}
 
-		if(bodid == 0) 
+		if(thr == 0) 
 			gsys.set_time(t);
 		// Save pos/vel to global memory
-		store_from_shared<nbod>(system[0],gsys,0,bodid);
-		store_from_shared<nbod>(system[0],gsys,1,bodid);
-		store_from_shared<nbod>(system[0],gsys,2,bodid);
+		if( p )
+			store_from_shared<nbod>(system[0],gsys,c,b);
 
 	}
 
@@ -242,17 +274,19 @@ namespace hermite_gpu_bpt {
 	 */
 		void gpu_hermite_bpt_integrator::integrate(gpu_ensemble &ens, double dT)
 		{
+			const int thread_per_system = ens.nbod() * 3 ;
+			const int shmem_per_system = ens.nbod() * 2 * 4 * 3 * sizeof(double);
 			/* Upload the kernel parameters */ 
 			if(ens.last_integrator() != this) 
 			{ 
-				int system_per_block = threadsPerBlock / ens.nbod();
-				threadDim.x = ens.nbod();
+				int system_per_block = threadsPerBlock / thread_per_system;
+				threadDim.x = thread_per_system;
 				threadDim.y = system_per_block;
 				
 				// 2: new and old copies
 				// 4: {pos,vel,acc,jerk}
 				// 3: x,y,z
-				this->shared_memory_size = system_per_block * ens.nbod() * 2 * 4 * 3 * sizeof(double);
+				this->shared_memory_size = system_per_block * shmem_per_system ;
 
 				ens.set_last_integrator(this); 
 				configure_grid(gridDim,  system_per_block , ens.nsys()); 
@@ -263,7 +297,7 @@ namespace hermite_gpu_bpt {
 			log::flush(log::memory | log::if_full);
 
 			this->dT = dT;
-			const int MAX_NBODIES = 10;
+			const int MAX_NBODIES = 3;
 			if(ens.nbod() <= MAX_NBODIES){
 				choose<kernel_launcher,3,MAX_NBODIES,void>(ens.nbod(),*this);
 			} else {
