@@ -2,9 +2,11 @@
 #include "meta.hpp"
 #include "storage.hpp"
 
+
 namespace swarm {
 namespace hermite_gpu_bpt {
 
+	const int MAX_NBODIES = 10;
 		
 	__constant__ ensemble gpu_hermite_ens;
 
@@ -27,13 +29,11 @@ namespace hermite_gpu_bpt {
 	}
 
 	template<int nbod>
-		struct systemdata {
-			double pos[3][nbod];
-			double vel[3][nbod];
+		struct shared_data {
 			double acc_length[nbod];
 			double jerk_length[nbod];
-//			double acc[3][nbod*nbod]
-//			double jerk[3][nbod*nbod]
+//			double acc[3][(nbod*(nbod-1)/2]
+//			double jerk[3][(nbod*(nbod-1)/2]
 		} ;
 
 	/*! 
@@ -44,13 +44,13 @@ namespace hermite_gpu_bpt {
 	 */
 	template<int nbod>
 	struct Gravitation {
-		ensemble::systemref& sysref;
-		systemdata<nbod> &system;
+		ensemble::systemref& sys;
+		shared_data<nbod> &shared;
 		double &acc,&jerk;
 		const int i;
 		const int c;
-		__device__ Gravitation(const int bodid,const int c,ensemble::systemref& sysref,systemdata<nbod> &system, double &acc, double &jerk)
-			:sysref(sysref),system(system),i(bodid),acc(acc),jerk(jerk),c(c){
+		__device__ Gravitation(const int bodid,const int c,ensemble::systemref& sys,shared_data<nbod> &shared, double &acc, double &jerk)
+			:sys(sys),shared(shared),i(bodid),acc(acc),jerk(jerk),c(c){
 				acc = 0;
 				jerk = 0;
 			}
@@ -59,22 +59,22 @@ namespace hermite_gpu_bpt {
 			if(i != j){
 
 				if( c == 0 ) {
-					double dx[3] =  { system.pos[0][j]-system.pos[0][i],system.pos[1][j]-system.pos[1][i],system.pos[2][j]-system.pos[2][i]};
-					double dv[3] =  { system.vel[0][j]-system.vel[0][i],system.vel[1][j]-system.vel[1][i],system.vel[2][j]-system.vel[2][i]};
+					double dx[3] =  { sys[j].p(0)- sys[i].p(0),sys[j].p(1)- sys[i].p(1), sys[j].p(2)- sys[i].p(2) };
+					double dv[3] =  { sys[j].v(0)- sys[i].v(0),sys[j].v(1)- sys[i].v(1), sys[j].v(2)- sys[i].v(2) };
 
 					// computing scalar part of the acceleration
 					double r2 =  dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] ;
 					double rinv = rsqrt(r2)  / r2;
 
-					system.jerk_length[i] =  inner_product(dx,dv) * 3. / r2;
-					system.acc_length[i] =  sysref[j].mass() * rsqrt(r2) / r2;
+					shared.jerk_length[i] =  inner_product(dx,dv) * 3. / r2;
+					shared.acc_length[i] =  sys[j].mass() * rsqrt(r2) / r2;
 				}
 				__syncthreads();
 
-				double dxc = system.pos[c][j] - system.pos[c][i];
-				double dvc = system.vel[c][j] - system.vel[c][i];
-				ac = dxc* system.acc_length[i];
-				je = (dvc - dxc * system.jerk_length[i] ) * system.acc_length[i];
+				double dxc = sys[j].p(c)- sys[i].p(c);
+				double dvc = sys[j].v(c)- sys[i].v(c);
+				ac = dxc* shared.acc_length[i];
+				je = (dvc - dxc * shared.jerk_length[i] ) * shared.acc_length[i];
 
 			} else {
 				ac = 0;
@@ -96,16 +96,6 @@ namespace hermite_gpu_bpt {
 	};
 
 
-
-	template<int nbod>
-	__device__ void load_to_shared(systemdata<nbod> &system,ensemble::systemref& sysref,int c,int i){
-		system.pos[c][i] = sysref[i].p(c), system.vel[c][i] = sysref[i].v(c);
-	}
-
-	template<int nbod>
-	__device__ void store_from_shared(systemdata<nbod> &system,ensemble::systemref& sysref,int c,int i){
-		sysref[i].p(c) = system.pos[c][i] ,  sysref[i].v(c) = system.vel[c][i];
-	}
 
 	__device__ void copy(double src[3],double des[3]){ 
 		des[0] = src[0], des[1] = src[1] , des[2] = src[2]; 
@@ -131,7 +121,7 @@ namespace hermite_gpu_bpt {
 
 		if(sysid >= ens.nsys() || b >= nbod || c >= 3) { return; }
 
-		ensemble::systemref gsys ( ens[sysid] );
+		ensemble::systemref sys ( ens[sysid] );
 
 
 /*
@@ -149,89 +139,88 @@ namespace hermite_gpu_bpt {
 */
 
 
-			
-		// TODO: you can put LocalMemory instead of SharedMemory here to tell the class to store
-		// data in local memory.
-		typedef storage< systemdata<nbod>[2], SharedMemory > systemst_t;
-
 		// shared memory allocation
 		extern __shared__ char shared_mem[];
-		char local_memory_pointer[systemst_t::local_memory_usage];
-		char * shared_memory_pointer = shared_mem + sysid_in_block * systemst_t::shared_memory_usage;
+		char * shared_memory_pointer = shared_mem + sysid_in_block * sizeof(shared_data<nbod>);
 
-		// Storage class for System. it will act as a smart pointer class
-		systemst_t systemst(local_memory_pointer,shared_memory_pointer);
-
-		systemdata<nbod> (&system)[2] = *systemst;
+		shared_data<nbod> (&shared) = *( (shared_data<nbod>*) shared_memory_pointer );
 
 //		double mass[nbod];
 		// local memory allocation
 
-		double t_start = gsys.time(), t = t_start;
-		double t_end = min(t_start + destination_time,gsys.time_end());
+		double t_start = sys.time(), t = t_start;
+		double t_end = min(t_start + destination_time,sys.time_end());
 
 
 		// Load data into shared memory (cooperative load)
-		if( p )
-			load_to_shared<nbod>(system[0],gsys,c,b);
+
+		// local information per component per body
+		double pos = sys[b].p(c), vel = sys[b].v(c), acc, jerk;
 
 		
-		__syncthreads(); // load should complete before calculating acceleration and jerk
-
-		double acc,jerk;
 
 		// Calculate acceleration and jerk
-		Gravitation<nbod> gi(b,c,gsys,system[0],acc,jerk);
+		Gravitation<nbod> gi(b,c,sys,shared,acc,jerk);
 		gi.compute(); //for(int j = 0; j < nbod; j++) gi(j);
+
 
 		while(t < t_end){
 			for(int k = 0; k < 2; k++)
 			{
 				double h = min(time_step, t_end - t);
+				double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;
+
 				// these two variable determine how each half of pos/vel/acc/jerk arrays
 				// are going to be used to avoid unnecessary copying.
-				const int s = k, d = 1-k; 
 				// Predict 
 				if( p ) {
-					system[d].pos[c][b] = system[s].pos[c][b] +  h*(system[s].vel[c][b]+(h*0.5)*(acc+(h/3.)*jerk));
-					system[d].vel[c][b] = system[s].vel[c][b] +  h*(acc+(h*0.5)*jerk);
+					pos = pos_old +  h*(vel_old+(h*0.5)*(acc+(h/3.)*jerk));
+					vel = vel_old +  h*(acc+(h*0.5)*jerk);
 				}
 
 			
-				double acc_old = acc,jerk_old = jerk;
 
 				// Do evaluation and correction two times (PEC2)
 				for(int l = 0; l < 2; l++)
 				{
+
+					// Gravitational force calculation
+
+					// Write positions to shared memory
+					if( p ) {
+						sys[b].p(c) = pos, sys[b].v(c) = vel;
+					}
 					__syncthreads();
-					// Calculate acceleration and jerk
-					Gravitation<nbod> gi(b,c,gsys,system[d],acc,jerk);
+
+					// Calculate acceleration and jerk using shared memory
+					Gravitation<nbod> gi(b,c,sys,shared,acc,jerk);
 					gi.compute(); //for(int j = 0; j < nbod; j++) gi(j);
 
-					//__syncthreads(); // to prevent WAR. corrector updates pos/vel that Gravitation would read
 
 					// Correct
 					if( p ) {
-						system[d].pos[c][b] = system[s].pos[c][b] + (h*0.5) * ( (system[s].vel[c][b]+system[d].vel[c][b]) 
+						pos = pos_old + (h*0.5) * ( (vel_old + vel) 
 								+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-						system[d].vel[c][b] = system[s].vel[c][b] + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+						vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
 					}
 
 				}
 				t += h;
 			}
 
+			if( p ) {
+				sys[b].p(c) = pos, sys[b].v(c) = vel;
+			}
+		
 			/*debug_hook();
 
 			if(b == 0) 
-				gsys.increase_stepcount();
+				sys.increase_stepcount();
 */
 			if(log::needs_output(ens, t, sysid))
 			{
-				// Save pos/vel to global memory
-				store_from_shared<nbod>(system[0],gsys,c,b);
 				if(thr == 0) {
-					gsys.set_time(t);
+					sys.set_time(t);
 					log::output_system(dlog, ens, t, sysid);
 				}
 			}
@@ -239,10 +228,7 @@ namespace hermite_gpu_bpt {
 		}
 
 		if(thr == 0) 
-			gsys.set_time(t);
-		// Save pos/vel to global memory
-		if( p )
-			store_from_shared<nbod>(system[0],gsys,c,b);
+			sys.set_time(t);
 
 	}
 
@@ -275,7 +261,8 @@ namespace hermite_gpu_bpt {
 		void gpu_hermite_bpt_integrator::integrate(gpu_ensemble &ens, double dT)
 		{
 			const int thread_per_system = ens.nbod() * 3 ;
-			const int shmem_per_system = ens.nbod() * 2 * 4 * 3 * sizeof(double);
+			const int pair_count = ens.nbod() * (ens.nbod() - 1) / 2;
+			const int shmem_per_system = ens.nbod() * 2 * sizeof(double);
 			/* Upload the kernel parameters */ 
 			if(ens.last_integrator() != this) 
 			{ 
@@ -289,7 +276,7 @@ namespace hermite_gpu_bpt {
 				this->shared_memory_size = system_per_block * shmem_per_system ;
 
 				ens.set_last_integrator(this); 
-				configure_grid(gridDim,  system_per_block , ens.nsys()); 
+				configure_grid(gridDim,  thread_per_system * system_per_block , ens.nsys()); 
 				cudaMemcpyToSymbol(gpu_hermite_ens,	&ens, sizeof(gpu_hermite_ens) ); 
 				if(dT == 0.) { return; } 
 			} 
@@ -297,7 +284,6 @@ namespace hermite_gpu_bpt {
 			log::flush(log::memory | log::if_full);
 
 			this->dT = dT;
-			const int MAX_NBODIES = 3;
 			if(ens.nbod() <= MAX_NBODIES){
 				choose<kernel_launcher,3,MAX_NBODIES,void>(ens.nbod(),*this);
 			} else {
