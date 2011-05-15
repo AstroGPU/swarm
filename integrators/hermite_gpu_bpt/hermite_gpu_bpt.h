@@ -40,14 +40,9 @@ class gpu_hermite_bpt_integrator : public integrator
 protected:
 	//! time step 
 	float h;
-	double dT;
 	
-	dim3 gridDim;
 	//! blocksize
 	int threadsPerBlock;
-	//! size of required shared memory that should be dynamically allocated at launch time
-	int shared_memory_size;
-	dim3 threadDim;
 
 public:
 	/*!
@@ -57,6 +52,9 @@ public:
 	 */
 	gpu_hermite_bpt_integrator(const config &cfg);
 
+	template<int nbod>
+		void integrate_internal(gpu_ensemble &ens, double dT);
+
 	/*!
 	 * \brief host function to invoke a kernel (double precision) 
 	 *
@@ -64,9 +62,6 @@ public:
 	 * @param[in] dT destination time 
 	 */
 	void integrate(gpu_ensemble &ens, double dT);
-
-	template<int N>
-	friend  struct kernel_launcher;
 
 };
 

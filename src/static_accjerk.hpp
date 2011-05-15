@@ -22,6 +22,8 @@
 */
 
 /// The main namespace for the Swarm-NG library
+//
+#include "meta.hpp"
 namespace swarm {
 
 		template<int nbod>
@@ -143,5 +145,109 @@ namespace swarm {
 				Unroller<0,nbod*nbod>::step(*this);
 			}
 		};
+
+	/*! 
+	 * templatized Class to calculate acceleration and jerk in parallel
+	 *
+	 * It operates in two steps:
+	 *
+	 * Step 1: Calculate distances between pairs using calc_pair
+	 * you should supply ij that is between 0 and n*(n-1)/2. It calculates the
+	 * inverse of distance squared between each pair of bodies.
+	 *
+	 * Step 2: Calculate forces that operate on each body.
+	 * This function should be called per body per component. It uses the shared
+	 * data and calculates the acc/jerk for each body.
+	 *
+	 */
+	template<int nbod>
+	class Gravitation {
+		public:
+		struct shared_data {
+			double acc[3][(nbod*(nbod-1))/2];
+			double jerk[3][(nbod*(nbod-1))/2];
+		} ;
+
+		private:
+		ensemble::systemref& sys;
+		shared_data &shared;
+
+		inline __device__ static double inner_product(const double a[3],const double b[3]){
+			return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+		}
+
+		__device__ static int first ( int ij ){
+			int i = nbod - 1 - ij / (nbod/2);
+			int j = ij % (nbod/2);
+			if (j < i) 
+				return i;
+			else 
+				return nbod - 1 - i - nbod%2 + 1;
+		}
+
+		__device__ static int second ( int ij ){
+			int i = nbod - 1 - ij / (nbod/2);
+			int j = ij % (nbod/2);
+			if (j < i) 
+				return j;
+			else 
+				return nbod - 1 - j - nbod%2;
+		}
+
+		public:
+
+		__device__ Gravitation(ensemble::systemref& sys,shared_data &shared):sys(sys),shared(shared){	}
+
+		__device__ void calc_pair(int ij)const{
+			int i = first( ij );
+			int j = second( ij );
+			if(i != j){
+
+				double dx[3] =  { sys[j].p(0)- sys[i].p(0),sys[j].p(1)- sys[i].p(1), sys[j].p(2)- sys[i].p(2) };
+				double dv[3] =  { sys[j].v(0)- sys[i].v(0),sys[j].v(1)- sys[i].v(1), sys[j].v(2)- sys[i].v(2) };
+
+				// computing scalar part of the acceleration
+				double r2 =  dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2];
+				double rinv = rsqrt(r2)  / r2;
+
+				double jerk_mag =  inner_product(dx,dv) * 3. / r2;
+				double acc_mag =  rsqrt(r2) / r2;
+
+#pragma unroll
+				for(int c = 0; c < 3; c ++)
+				{
+					shared.acc[c][ij] = dx[c]* acc_mag;
+					shared.jerk[c][ij] = (dv[c] - dx[c] * jerk_mag ) * acc_mag;
+				}
+			}
+
+		}
+
+		__device__ void sum_forces(int b,int c,double& acc,double& jerk)const{
+			acc = jerk = 0;
+#pragma unroll
+			for(int d = 0; d < (nbod*(nbod-1))/2; d++){
+				int x = first(d), y= second(d);
+
+				if(x == b){
+					acc  += shared.acc[c][d] * sys[y].mass();
+					jerk += shared.jerk[c][d]* sys[y].mass();
+				}else if(y == b){
+					acc  -= shared.acc[c][d] * sys[x].mass();
+					jerk -= shared.jerk[c][d]* sys[x].mass();
+				}
+			}
+		}
+
+		__device__ void operator() (int ij,int b,int c,double& acc,double& jerk)const{
+			if(ij < (nbod*(nbod-1))/2)
+				calc_pair(ij);
+			__syncthreads();
+			if(b < nbod)
+				sum_forces(b,c,acc,jerk);
+		}
+
+
+	};
 
 }

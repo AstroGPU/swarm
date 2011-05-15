@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CUDAPATH=/opt/cuda4.0rc
+export CUDAPATH=/usr/local/cuda
 export CUDAARCH=-gencode 'arch=compute_13,code=sm_13'
 
 #pushd $(dirname $0)/.. > /dev/null
