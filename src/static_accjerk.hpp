@@ -146,10 +146,23 @@ namespace swarm {
 			}
 		};
 
+
+	__device__ int sysid(){
+		return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
+	}
+	__device__ int sysid_in_block(){
+		return threadIdx.y;
+	}
+	__device__ int thread_in_system() {
+		return threadIdx.x;
+	}
+
 	/*! 
 	 * templatized Class to calculate acceleration and jerk in parallel
 	 *
 	 * It operates in two steps:
+	 *
+	 * Step 0: Write positions and velocities to global memory which is cached. 
 	 *
 	 * Step 1: Calculate distances between pairs using calc_pair
 	 * you should supply ij that is between 0 and n*(n-1)/2. It calculates the
@@ -198,6 +211,11 @@ namespace swarm {
 
 		__device__ Gravitation(ensemble::systemref& sys,shared_data &shared):sys(sys),shared(shared){	}
 
+		__device__ Gravitation(ensemble::systemref& sys,char * shmem):sys(sys)
+			,shared(*( (struct shared_data*) ( shmem + 
+				 sysid_in_block() * sizeof(shared_data))) )
+		{}
+
 		__device__ void calc_pair(int ij)const{
 			int i = first( ij );
 			int j = second( ij );
@@ -239,7 +257,11 @@ namespace swarm {
 			}
 		}
 
-		__device__ void operator() (int ij,int b,int c,double& acc,double& jerk)const{
+		__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc,double& jerk)const{
+			// Write positions to shared (global) memory
+			if(b < nbod)
+				sys[b].p(c) = pos, sys[b].v(c) = vel;
+			__syncthreads();
 			if(ij < (nbod*(nbod-1))/2)
 				calc_pair(ij);
 			__syncthreads();

@@ -40,10 +40,10 @@ namespace hermite_gpu_bpt {
 gpu_hermite_bpt_integrator::gpu_hermite_bpt_integrator(const config &cfg)
 {
 	if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
-	h = atof(cfg.at("time step").c_str());
+	_time_step = atof(cfg.at("time step").c_str());
 
 
-	threadsPerBlock = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 64;
+	_threads_per_block = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 128;
 }
 
 /*!
