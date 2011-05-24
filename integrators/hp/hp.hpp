@@ -30,6 +30,7 @@ class integrator : public swarm::integrator {
 	protected:
 	//// Launch Variables
 	int _threads_per_block;
+	double _destination_time;
 
 	public:
 	integrator(const config &cfg) {
@@ -46,11 +47,13 @@ class integrator : public swarm::integrator {
 			load_ensemble(ens);
 		}
 
-		launch_integrator(dT);
+		_destination_time = dT;
+
+		launch_integrator();
 	}
 
 
-	virtual void launch_integrator(const double& destination_time) = 0;
+	virtual void launch_integrator() = 0;
 
 	dim3 gridDim(){
 		const int nbod = _ens->nbod();
@@ -95,6 +98,53 @@ class integrator : public swarm::integrator {
 	}
 
 };
+
+template<int i>
+struct params_t {
+	const static int n = i;
+};
+
+template<class I,class T>
+__global__ void generic_kernel(I* integ,T a) {
+	integ->kernel(a);
+}
+
+template<class implementation>
+class template_integrator : public integrator {
+
+	public:
+	
+	template_integrator(const config& cfg): integrator(cfg){}
+
+	template<class T>
+	void launch_template(T a,implementation* gpu_integ)
+	{
+		if(_ens->nbod() == T::n) 
+			generic_kernel<<<gridDim(), threadDim(), shmemSize() >>>(gpu_integ,a);
+
+	}
+
+	virtual void launch_integrator(){
+			// flush CPU/GPU output logs
+			log::flush(log::memory | log::if_full);
+
+			if(_ens->nbod() <= 3){
+				implementation* integ;
+				cudaMalloc(&integ,sizeof(implementation));
+				cudaMemcpy(integ,this,sizeof(implementation),cudaMemcpyHostToDevice);
+				launch_template(params_t<3>(),integ);
+				cudaFree(integ);
+			} else {
+				// How do we get an error message out of here?
+				ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+			}
+
+			// flush CPU/GPU output logs
+			log::flush(log::memory);
+	}
+
+};
+
 	
 }
 }

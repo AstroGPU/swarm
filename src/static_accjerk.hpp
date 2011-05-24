@@ -240,36 +240,52 @@ namespace swarm {
 
 		}
 
-		__device__ void sum_forces(int b,int c,double& acc,double& jerk)const{
-			acc = jerk = 0;
+		__device__ double sum_jerk(int b,int c)const{
+			double jerk = 0;
+			double jerk_from_sun = 0;
+
+			/// Find the contribution from/to Sun first
 #pragma unroll
 			for(int d = 0; d < (nbod*(nbod-1))/2; d++){
 				int x = first(d), y= second(d);
 
 				if(x == b){
-					acc  += shared.acc[c][d] * sys[y].mass();
-					jerk += shared.jerk[c][d]* sys[y].mass();
+					if(y == 0)
+						jerk_from_sun += shared.jerk[c][d]* sys[y].mass();
+					else
+						jerk += shared.jerk[c][d]* sys[y].mass();
 				}else if(y == b){
-					acc  -= shared.acc[c][d] * sys[x].mass();
-					jerk -= shared.jerk[c][d]* sys[x].mass();
+					if(x == 0)
+						jerk_from_sun -= shared.jerk[c][d]* sys[x].mass();
+					else
+						jerk -= shared.jerk[c][d]* sys[x].mass();
 				}
 			}
+
+			return jerk_from_sun + jerk;
 		}
 
 		__device__ double sum_acc(int b,int c)const{
 			double	acc = 0;
+			double acc_from_sun = 0;
 #pragma unroll
 			for(int d = 0; d < (nbod*(nbod-1))/2; d++){
 				int x = first(d), y= second(d);
 
 				if(x == b){
-					acc  += shared.acc[c][d] * sys[y].mass();
+					if( y == 0)
+						acc_from_sun  += shared.acc[c][d] * sys[y].mass();
+					else
+						acc  += shared.acc[c][d] * sys[y].mass();
 				}else if(y == b){
-					acc  -= shared.acc[c][d] * sys[x].mass();
+					if( x == 0)
+						acc_from_sun  -= shared.acc[c][d] * sys[x].mass();
+					else
+						acc  -= shared.acc[c][d] * sys[x].mass();
 				}
 			}
 
-			return acc;
+			return acc + acc_from_sun;
 		}
 
 		__device__ double acc(int ij,int b,int c,double& pos,double& vel)const{
@@ -294,8 +310,10 @@ namespace swarm {
 			if(ij < (nbod*(nbod-1))/2)
 				calc_pair(ij);
 			__syncthreads();
-			if(b < nbod)
-				sum_forces(b,c,acc,jerk);
+			if(b < nbod){
+				acc = sum_acc(b,c);
+				jerk = sum_jerk(b,c);
+			}
 		}
 
 

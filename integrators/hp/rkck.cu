@@ -28,24 +28,35 @@ namespace hp {
 #define ADAPTIVE_TIMESTEP	
 
 
-template<int i>
-struct TT {
-	const static int n = i;
-};
-
-template<class I,class T>
-__global__ void generic_kernel(I* integ,T a) {
-	integ->kernel(a);
-}
-
-class rkck: public integrator {
+class rkck: public template_integrator< rkck > {
+	typedef template_integrator<rkck> base;
 	private:
 	double _min_time_step;
 	double _max_time_step;
 	double _error_tolerance;
-	double _destination_time;
 
 	public:
+
+	/*! Public constructor to configure the integrator
+	 *  Read the configuration provided and set-up integrator variables
+	 *
+	 */
+	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1) {
+		if(!cfg.count("min time step")) ERROR("Integrator hp_rkck requires a min timestep ('min time step' keyword in the config file).");
+		_min_time_step = atof(cfg.at("min time step").c_str());
+		if(!cfg.count("max time step")) ERROR("Integrator hp_rkck requires a max timestep ('max time step' keyword in the config file).");
+		_max_time_step = atof(cfg.at("max time step").c_str());
+
+		if(!cfg.count("error tolerance")) ERROR("Integrator hp_rkck requires a error tolerance ('error tolerance' keyword in the config file).");
+		_error_tolerance = atof(cfg.at("error tolerance").c_str());
+	}
+
+
+
+	/*! Integrator Kernel to be run on GPU
+	 *  
+	 *
+	 */
 	 template<class T >
 	__device__ void kernel(T a)  {
 
@@ -278,50 +289,6 @@ class rkck: public integrator {
 		if(thr == 0) 
 			sys.set_time(t);
 	}
-	rkck(const config& cfg): integrator(cfg),_min_time_step(0.001),_max_time_step(0.1) {
-		if(!cfg.count("min time step")) ERROR("Integrator hp_rkck requires a min timestep ('min time step' keyword in the config file).");
-		_min_time_step = atof(cfg.at("min time step").c_str());
-		if(!cfg.count("max time step")) ERROR("Integrator hp_rkck requires a max timestep ('max time step' keyword in the config file).");
-		_max_time_step = atof(cfg.at("max time step").c_str());
-
-		if(!cfg.count("error tolerance")) ERROR("Integrator hp_rkck requires a error tolerance ('error tolerance' keyword in the config file).");
-		_error_tolerance = atof(cfg.at("error tolerance").c_str());
-	}
-
-
-	template<class T>
-	void launch_template(T a,rkck* gpu_integ)
-	{
-
-
-		if(_ens->nbod() == T::n) 
-			generic_kernel<<<gridDim(), threadDim(), shmemSize() >>>(gpu_integ,a);
-
-	}
-
-	virtual void launch_integrator(const double& destination_time){
-			// flush CPU/GPU output logs
-			log::flush(log::memory | log::if_full);
-
-			_destination_time = destination_time ;
-
-			if(_ens->nbod() <= 3){
-				rkck* integ;
-				cudaMalloc(&integ,sizeof(rkck));
-				cudaMemcpy(integ,this,sizeof(rkck),cudaMemcpyHostToDevice);
-				launch_template(TT<3>(),integ);
-				cudaFree(integ);
-			} else {
-				// How do we get an error message out of here?
-				ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
-			}
-
-			// flush CPU/GPU output logs
-			log::flush(log::memory);
-	}
-
-
-
 
 };
 
