@@ -147,13 +147,13 @@ namespace swarm {
 		};
 
 
-	__device__ int sysid(){
+	inline __device__ int sysid(){
 		return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
 	}
-	__device__ int sysid_in_block(){
+	inline __device__ int sysid_in_block(){
 		return threadIdx.y;
 	}
-	__device__ int thread_in_system() {
+	inline __device__ int thread_in_system() {
 		return threadIdx.x;
 	}
 
@@ -255,6 +255,36 @@ namespace swarm {
 					jerk -= shared.jerk[c][d]* sys[x].mass();
 				}
 			}
+		}
+
+		__device__ double sum_acc(int b,int c)const{
+			double	acc = 0;
+#pragma unroll
+			for(int d = 0; d < (nbod*(nbod-1))/2; d++){
+				int x = first(d), y= second(d);
+
+				if(x == b){
+					acc  += shared.acc[c][d] * sys[y].mass();
+				}else if(y == b){
+					acc  -= shared.acc[c][d] * sys[x].mass();
+				}
+			}
+
+			return acc;
+		}
+
+		__device__ double acc(int ij,int b,int c,double& pos,double& vel)const{
+			// Write positions to shared (global) memory
+			if(b < nbod)
+				sys[b].p(c) = pos, sys[b].v(c) = vel;
+			__syncthreads();
+			if(ij < (nbod*(nbod-1))/2)
+				calc_pair(ij);
+			__syncthreads();
+			if(b < nbod)
+				return sum_acc(b,c);
+			else
+				return 0;
 		}
 
 		__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc,double& jerk)const{
