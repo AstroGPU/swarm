@@ -27,9 +27,19 @@ namespace hp {
 
 #define ADAPTIVE_TIMESTEP	
 
+struct FixedTimeStep {
+	const static bool adaptive_time_step = false;
+	const static bool conditional_accept_step = false;
+};
 
-class rkck: public template_integrator< rkck > {
-	typedef template_integrator<rkck> base;
+struct AdaptiveTimeStep {
+	const static bool adaptive_time_step = true;
+	const static bool conditional_accept_step = true;
+};
+
+template < class AdaptationStyle >
+class rkck: public integrator {
+	typedef integrator base;
 	private:
 	double _min_time_step;
 	double _max_time_step;
@@ -52,6 +62,9 @@ class rkck: public template_integrator< rkck > {
 	}
 
 
+	virtual void launch_integrator() {
+		launch_templatized_integrator(this);
+	}
 
 	/*! Integrator Kernel to be run on GPU
 	 *  
@@ -109,7 +122,7 @@ class rkck: public template_integrator< rkck > {
 		double time_step = _min_time_step;
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc = 0, jerk = 0;
+		double pos = 0, vel = 0;
 		if( body_component_grid )
 			pos = sys[b].p(c), vel = sys[b].v(c);
 
@@ -118,7 +131,6 @@ class rkck: public template_integrator< rkck > {
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
-		calcForces(ij,b,c,pos,vel,acc,jerk);
 
 		while(t < t_end){
 			double h = min(time_step, t_end - t);
@@ -176,94 +188,94 @@ class rkck: public template_integrator< rkck > {
 			double vel_error = h * ( ecc[0] * k1_acc + ecc[1] * k2_acc + ecc[2] * k3_acc + ecc[3] * k4_acc + ecc[4] * k5_acc + ecc[5] * k6_acc );
 
 
-			////////////////////////  Adapting Time step algorithm /////////////////////////////
-#ifdef ADAPTIVE_TIMESTEP
-			const int   integrator_order = 5;
-			//! Value used as power in formula to produce larger time step
-			const float step_grow_power = -1./(integrator_order+1.);
-			//! Value used as power in formula to produce smaller time step
-			const float step_shrink_power = -1./integrator_order;
-			//! Safety factor to prevent extreme changes in time step
-			const float step_guess_safety_factor = 0.9;
-			//! Maximum growth of step size allowed at a time
-			const float step_grow_max_factor = 5.0; 
-			//! Maximum shrinkage of step size allowed at a time
-			const float step_shrink_min_factor = 0.2; 
-
-			//  Calculate the error estimate
-			if( body_component_grid ) {
-				double pos_mag = 1, pos_error_mag = 0 , vel_mag = 1, vel_error_mag = 0;
-
-				//// Compute pos magnitute in c=0 thread
-				shared_mag[b][c] = p6 * p6;
-				__syncthreads();
-				if( c == 0 ) pos_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-				__syncthreads();
-
-				//// Compute pos error magnitute in c=0 thread
-				shared_mag[b][c] = pos_error * pos_error;
-				__syncthreads();
-				if( c == 0 ) pos_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-				__syncthreads();
-
-				//// Compute vel magnitute in c=0 thread
-				shared_mag[b][c] = v6 * v6;
-				__syncthreads();
-				if( c == 0 ) vel_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-				__syncthreads();
-
-				//// Compute vel error magnitute in c=0 thread
-				shared_mag[b][c] = vel_error * vel_error;
-				__syncthreads();
-				if( c == 0 ) vel_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-				__syncthreads();
-
-				//// Write error estimates for each body to shared memory
-				if( c == 0 ) shared_err[b][0] = pos_error_mag / pos_mag ;
-				if( c == 0 ) shared_err[b][1] = vel_error_mag / vel_mag ;
-
-				__syncthreads();
-
-				// Calculate the maximum error in one of the threads
-				if( b == 0 && c == 0 )  {
-					double max_error = 0;
-					for(int i = 0; i < nbod; i++)
-						for(int j = 0; j < 2; j++)
-							if(shared_err[i][j] > max_error) max_error = shared_err[i][j];
-
-					double normalized_error = max_error / _error_tolerance;
-
-					// Calculate New time_step
-					double step_guess_power = (normalized_error<1.) ? step_grow_power : step_shrink_power;
-
-					/// factor of 0.5 below due to use of squares in calculate_normalized_error, should we change to match gsl?
-					/// gsl uses 1.1, but that seems dangerous, any reason we shouldn't use 1?
-					double step_change_factor = ((normalized_error<0.5)||(normalized_error>1.0)) ? step_guess_safety_factor*pow(normalized_error,0.5*step_guess_power) : 1.0;
-
-
-					//// Update the time step
-					double new_time_step = (normalized_error>1.) ? max( time_step * max(step_change_factor,step_shrink_min_factor), _min_time_step ) 
-						: min( time_step * max(min(step_change_factor,step_grow_max_factor),1.0), _max_time_step );
-
-					bool accept_step = ( normalized_error < 1.0 ) || abs(time_step - new_time_step) < 1e-10;
-
-					shared_err[0][0] = accept_step ? 0.0 : 1.0;
-					shared_err[0][1] = new_time_step;
-				}
-
-				__syncthreads();
-			}
-
-			time_step = shared_err[0][1];
-			bool accept_step = shared_err[0][0] == 0.0;
-#else
 			bool accept_step = true;
-#endif
-			////////////////////////// End of Adaptive time step algorithm  ////////////////////////////////////////////
+
+			if( AdaptationStyle::adaptive_time_step ) {
+				////////////////////////  Adapting Time step algorithm /////////////////////////////
+				const int   integrator_order = 5;
+				//! Value used as power in formula to produce larger time step
+				const float step_grow_power = -1./(integrator_order+1.);
+				//! Value used as power in formula to produce smaller time step
+				const float step_shrink_power = -1./integrator_order;
+				//! Safety factor to prevent extreme changes in time step
+				const float step_guess_safety_factor = 0.9;
+				//! Maximum growth of step size allowed at a time
+				const float step_grow_max_factor = 5.0; 
+				//! Maximum shrinkage of step size allowed at a time
+				const float step_shrink_min_factor = 0.2; 
+
+				//  Calculate the error estimate
+				if( body_component_grid ) {
+					double pos_mag = 1, pos_error_mag = 0 , vel_mag = 1, vel_error_mag = 0;
+
+					//// Compute pos magnitute in c=0 thread
+					shared_mag[b][c] = p6 * p6;
+					__syncthreads();
+					if( c == 0 ) pos_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
+
+					__syncthreads();
+
+					//// Compute pos error magnitute in c=0 thread
+					shared_mag[b][c] = pos_error * pos_error;
+					__syncthreads();
+					if( c == 0 ) pos_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
+
+					__syncthreads();
+
+					//// Compute vel magnitute in c=0 thread
+					shared_mag[b][c] = v6 * v6;
+					__syncthreads();
+					if( c == 0 ) vel_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
+
+					__syncthreads();
+
+					//// Compute vel error magnitute in c=0 thread
+					shared_mag[b][c] = vel_error * vel_error;
+					__syncthreads();
+					if( c == 0 ) vel_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
+
+					__syncthreads();
+
+					//// Write error estimates for each body to shared memory
+					if( c == 0 ) shared_err[b][0] = pos_error_mag / pos_mag ;
+					if( c == 0 ) shared_err[b][1] = vel_error_mag / vel_mag ;
+
+					__syncthreads();
+
+					// Calculate the maximum error in one of the threads
+					if( b == 0 && c == 0 )  {
+						double max_error = 0;
+						for(int i = 0; i < nbod; i++)
+							for(int j = 0; j < 2; j++)
+								if(shared_err[i][j] > max_error) max_error = shared_err[i][j];
+
+						double normalized_error = max_error / _error_tolerance;
+
+						// Calculate New time_step
+						double step_guess_power = (normalized_error<1.) ? step_grow_power : step_shrink_power;
+
+						/// factor of 0.5 below due to use of squares in calculate_normalized_error, should we change to match gsl?
+						/// gsl uses 1.1, but that seems dangerous, any reason we shouldn't use 1?
+						double step_change_factor = ((normalized_error<0.5)||(normalized_error>1.0)) ? step_guess_safety_factor*pow(normalized_error,0.5*step_guess_power) : 1.0;
+
+
+						//// Update the time step
+						double new_time_step = (normalized_error>1.) ? max( time_step * max(step_change_factor,step_shrink_min_factor), _min_time_step ) 
+							: min( time_step * max(min(step_change_factor,step_grow_max_factor),1.0), _max_time_step );
+
+						bool accept_step = ( normalized_error < 1.0 ) || abs(time_step - new_time_step) < 1e-10;
+
+						shared_err[0][0] = accept_step ? 0.0 : 1.0;
+						shared_err[0][1] = new_time_step;
+					}
+
+				}
+				__syncthreads();
+
+				time_step = shared_err[0][1];
+				accept_step = AdaptationStyle::conditional_accept_step ? shared_err[0][0] == 0.0 : true;
+				////////////////////////// End of Adaptive time step algorithm  ////////////////////////////////////////////
+			}
 
 
 			if ( accept_step ) {
@@ -299,9 +311,14 @@ class rkck: public template_integrator< rkck > {
  *
  * @return        pointer to integrator cast to integrator*
  */
-extern "C" integrator *create_hp_rkck(const config &cfg)
+extern "C" integrator *create_hp_rkck_fixed(const config &cfg)
 {
-	return new rkck(cfg);
+	return new rkck< FixedTimeStep> (cfg);
+}
+
+extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
+{
+	return new rkck< AdaptiveTimeStep> (cfg);
 }
 
 }

@@ -24,14 +24,21 @@
 namespace swarm {
 namespace hp {
 
-class hermite: public integrator {
+/** Simple degree 2 verlet integrator
+ *
+ * TODO: Second half-step should be adaptive based on forces.
+ * TODO: we should utilize jerk in this integrator to improve accuracy
+ *
+ */
+
+class verlet: public integrator {
 	typedef integrator base;
 	private:
 	double _time_step;
 
 	public:
-	hermite(const config& cfg): base(cfg),_time_step(0.001) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
+	verlet(const config& cfg): base(cfg),_time_step(0.001) {
+		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -69,11 +76,12 @@ class hermite: public integrator {
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
 
+		// Set up times
 		double t_start = sys.time(), t = t_start;
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc = 0, jerk = 0;
+		double pos = 0, vel = 0 ;
 		if( body_component_grid )
 			pos = sys[b].p(c), vel = sys[b].v(c);
 
@@ -82,37 +90,44 @@ class hermite: public integrator {
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
-		calcForces(ij,b,c,pos,vel,acc,jerk);
 
 		while(t < t_end){
-			for(int k = 0; k < 2; k++)
-			{
-				double h = min(_time_step, t_end - t);
-				double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;
+			double h = min(_time_step, t_end - t);
 
-				// Predict 
-				pos = pos_old +  h*(vel_old+(h*0.5)*(acc+(h/3.)*jerk));
-				vel = vel_old +  h*(acc+(h*0.5)*jerk);
+			///////// INTEGRATION STEP /////////////////
 
-				// Do evaluation and correction two times (PEC2)
-				for(int l = 0; l < 2; l++)
-				{
+			double h_first_half = h / 2 ;
 
-					// Calculate acceleration and jerk using shared memory
-					calcForces(ij,b,c,pos,vel,acc,jerk);
+			// First half step for positions
+			pos = pos + h_first_half * vel;
 
-					// Correct
-					pos = pos_old + (h*0.5) * ( (vel_old + vel) 
-							+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-					vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+			// Calculate acceleration in the middle
+			double acc = calcForces.acc(ij,b,c,pos,vel);
 
-				}
-				t += h;
-			}
+			// First half step for velocities
+			vel = vel + h_first_half * acc;
 
+			// Step time to the middle of the step
+			t  +=  h_first_half;
+
+			// TODO: change half time step based on acc
+			double h_second_half = h_first_half;
+
+			// Second half step for positions and velocities
+			vel = vel + h_second_half * acc;
+			pos = pos + h_second_half * vel;
+
+			// Step time to the end of the step
+			t  +=  h_second_half;
+
+			//////////////// END of Integration Step /////////////////
+
+
+			// Update pos,vel in global memory
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;
 
+			// Test if we need output
 			if(thr == 0) 
 				if(log::needs_output(*_gpu_ens, t, sysid()))
 				{
@@ -122,6 +137,9 @@ class hermite: public integrator {
 
 		}
 
+		//////////////// Finalize ////////////////////
+
+		// Set final time
 		if(thr == 0) 
 			sys.set_time(t);
 
@@ -129,16 +147,9 @@ class hermite: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed hermite gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_hp_hermite(const config &cfg)
+extern "C" integrator *create_hp_verlet(const config &cfg)
 {
-	return new hermite(cfg);
+	return new verlet(cfg);
 }
 
 }

@@ -24,14 +24,20 @@
 namespace swarm {
 namespace hp {
 
-class hermite: public integrator {
+/** Simple degree 3 euler integrator
+ *
+ *
+ *
+ */
+
+class euler: public integrator {
 	typedef integrator base;
 	private:
 	double _time_step;
 
 	public:
-	hermite(const config& cfg): base(cfg),_time_step(0.001) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
+	euler(const config& cfg): base(cfg),_time_step(0.001) {
+		if(!cfg.count("time step")) ERROR("Integrator gpu_euler requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -69,6 +75,7 @@ class hermite: public integrator {
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
 
+		// Set up times
 		double t_start = sys.time(), t = t_start;
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
@@ -82,37 +89,26 @@ class hermite: public integrator {
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
-		calcForces(ij,b,c,pos,vel,acc,jerk);
 
 		while(t < t_end){
-			for(int k = 0; k < 2; k++)
-			{
-				double h = min(_time_step, t_end - t);
-				double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;
+			double h = min(_time_step, t_end - t);
 
-				// Predict 
-				pos = pos_old +  h*(vel_old+(h*0.5)*(acc+(h/3.)*jerk));
-				vel = vel_old +  h*(acc+(h*0.5)*jerk);
+			// Calculate forces
+			calcForces(ij,b,c,pos,vel,acc,jerk);
 
-				// Do evaluation and correction two times (PEC2)
-				for(int l = 0; l < 2; l++)
-				{
+			// Integratore
+			pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.)*jerk));
+			vel = vel +  h*(acc+(h*0.5)*jerk);
 
-					// Calculate acceleration and jerk using shared memory
-					calcForces(ij,b,c,pos,vel,acc,jerk);
+			// Step time
 
-					// Correct
-					pos = pos_old + (h*0.5) * ( (vel_old + vel) 
-							+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-					vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+			t += h;
 
-				}
-				t += h;
-			}
-
+			// Update pos,vel in global memory
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;
 
+			// Test if we need output
 			if(thr == 0) 
 				if(log::needs_output(*_gpu_ens, t, sysid()))
 				{
@@ -122,6 +118,9 @@ class hermite: public integrator {
 
 		}
 
+		//////////////// Finalize ////////////////////
+
+		// Set final time
 		if(thr == 0) 
 			sys.set_time(t);
 
@@ -129,16 +128,9 @@ class hermite: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed hermite gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_hp_hermite(const config &cfg)
+extern "C" integrator *create_hp_euler(const config &cfg)
 {
-	return new hermite(cfg);
+	return new euler(cfg);
 }
 
 }

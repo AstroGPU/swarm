@@ -21,6 +21,7 @@
 #include <cuda_runtime_api.h>
 #include "swarm.h"
 #include "swarmlog.h"
+#include "gravitation.hpp"
 
 namespace swarm {
 namespace hp {
@@ -49,7 +50,13 @@ class integrator : public swarm::integrator {
 
 		_destination_time = dT;
 
+		// flush CPU/GPU output logs
+		log::flush(log::memory | log::if_full);
+
 		launch_integrator();
+
+		// flush CPU/GPU output logs
+		log::flush(log::memory);
 	}
 
 
@@ -104,46 +111,38 @@ struct params_t {
 	const static int n = i;
 };
 
-template<class I,class T>
-__global__ void generic_kernel(I* integ,T a) {
+template<class implementation,class T>
+__global__ void generic_kernel(implementation* integ,T a) {
 	integ->kernel(a);
 }
 
+
+template< class implementation, class T>
+void launch_template(implementation* integ, implementation* gpu_integ, T a)
+{
+	if(integ->get_ensemble()->nbod() == T::n) 
+		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
+
+}
+
 template<class implementation>
-class template_integrator : public integrator {
+void launch_templatized_integrator(implementation* integ){
 
-	public:
-	
-	template_integrator(const config& cfg): integrator(cfg){}
+	if(integ->get_ensemble()->nbod() <= 3){
+		implementation* gpu_integ;
+		cudaMalloc(&gpu_integ,sizeof(implementation));
+		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
 
-	template<class T>
-	void launch_template(T a,implementation* gpu_integ)
-	{
-		if(_ens->nbod() == T::n) 
-			generic_kernel<<<gridDim(), threadDim(), shmemSize() >>>(gpu_integ,a);
+		launch_template(integ,gpu_integ,params_t<3>());
 
+		cudaFree(integ);
+	} else {
+		// How do we get an error message out of here?
+		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
 	}
 
-	virtual void launch_integrator(){
-			// flush CPU/GPU output logs
-			log::flush(log::memory | log::if_full);
+}
 
-			if(_ens->nbod() <= 3){
-				implementation* integ;
-				cudaMalloc(&integ,sizeof(implementation));
-				cudaMemcpy(integ,this,sizeof(implementation),cudaMemcpyHostToDevice);
-				launch_template(params_t<3>(),integ);
-				cudaFree(integ);
-			} else {
-				// How do we get an error message out of here?
-				ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
-			}
-
-			// flush CPU/GPU output logs
-			log::flush(log::memory);
-	}
-
-};
 
 	
 }
