@@ -1,4 +1,4 @@
-#
+
 # swarm build system (mjuric, 2010/01/31)
 #
 # Requirements:
@@ -106,7 +106,7 @@ LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lboo
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects
 EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
-LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
+LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o) $(LIBSWARM_CUDASOURCES:.cu=_cu.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
 DOC_OUTPUT=$(DOC_INPUT:.txt=.html)              # html version of asciidoc text documentation
@@ -242,7 +242,11 @@ bin/Makefile.d: Makefile
 %.cu_o:%.cu
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
 
+%_cu.o:%.cu
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
+
 # C++ object files
+#
 %.o:%.cpp
 	$(CXXUI) $(CXX) -c $(CXXFLAGS) $< -o $@
 

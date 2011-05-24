@@ -16,54 +16,28 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file hermite_gpu_bpt.h
- *  \brief declares gpu_hermite_bpt_integrator
- *
- *  Note that while this clas derivers from integrator, it does not use gpu_generic_integrator
- */
 #pragma once
 
 #include <cuda_runtime_api.h>
 #include "swarm.h"
+#include "swarmlog.h"
 
 namespace swarm {
-namespace hermite_gpu_bpt {
+namespace hp {
 
-/*!
- * \brief gpu_hermite_bpt_integrator class
- * computing only in double
- *
- */
-class gpu_hermite_bpt_integrator : public integrator
-{
-	private:
-	//// Variables
-	ensemble* _gpu_ens;
-	ensemble* _ens;
+class integrator : public swarm::integrator {
 
+	protected:
 	//// Launch Variables
 	int _threads_per_block;
-	double _time_step;
 
 	public:
-	/*!
-	 * \brief Constructor for hermite gpu integrator
-	 *
-	 * @param[in] cfg configuration class
-	 */
-	gpu_hermite_bpt_integrator(const config &cfg);
+	integrator(const config &cfg) {
+		_threads_per_block = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 128;
+	}
 
-	~gpu_hermite_bpt_integrator() { if(_gpu_ens) cudaFree(_gpu_ens); }
+	~integrator() { if(_gpu_ens) cudaFree(_gpu_ens); }
 
-	template<int nbod>
-		void launch_template(const double& destination_time);
-
-	/*!
-	 * \brief host function to invoke a kernel (double precision) 
-	 *
-	 * @param[in,out] ens gpu_ensemble for data communication
-	 * @param[in] dT destination time 
-	 */
 	void integrate(gpu_ensemble &ens, double dT){
 		/* Upload ensemble */ 
 		if(ens.last_integrator() != this) 
@@ -75,15 +49,8 @@ class gpu_hermite_bpt_integrator : public integrator
 		launch_integrator(dT);
 	}
 
-	void load_ensemble(gpu_ensemble& ens){
-		_ens = &ens;
-		if(_gpu_ens)
-			cudaFree(_gpu_ens);
-		cudaMalloc(&_gpu_ens,sizeof(gpu_ensemble));
-		cudaMemcpy(_gpu_ens, _ens, sizeof(gpu_ensemble),cudaMemcpyHostToDevice ); 
-	}
 
-	void launch_integrator(const double& destination_time);
+	virtual void launch_integrator(const double& destination_time) = 0;
 
 	dim3 gridDim(){
 		const int nbod = _ens->nbod();
@@ -122,8 +89,6 @@ class gpu_hermite_bpt_integrator : public integrator
 	}
 
 };
-
-
-} // end namespace hermite_gpu_bpt
-} // end namespace swarm
-
+	
+}
+}

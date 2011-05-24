@@ -92,6 +92,9 @@ int main(int argc, const char **argv)
 
 		$$("Initializing integrator... ");
 		SWATCH_START(swatch_temps);
+		void* dlog;
+		cudaGetSymbolAddress(&dlog,"dlog");
+		integ->set_log((gpulog::device_log*)dlog);
 		integ->integrate(gpu_ens, 0.0);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 

@@ -21,6 +21,7 @@
  *
 */
 
+#include "swarmlog.h"
 #include "swarm_error.h"
 
 /// The main namespace for the Swarm-NG library
@@ -39,11 +40,27 @@ typedef std::map<std::string, std::string> config;
 */
 class integrator
 {
+	protected:
+	//// Variables
+	ensemble* _gpu_ens;
+	ensemble* _ens;
+	gpulog::device_log* _gpu_log;
+
         public:
                 virtual void integrate(gpu_ensemble &ens, double T)     //!< for GPU based integrators
                         { ERROR("Execution on GPU not supported by this implementation"); }
                 virtual void integrate(cpu_ensemble &ens, double T)     //!< for CPU based integrators
                         { ERROR("Execution on CPU not supported by this implementation"); }
+
+	void set_log(gpulog::device_log* log) { _gpu_log = log; }
+
+	void load_ensemble(gpu_ensemble& ens){
+		_ens = &ens;
+		if(_gpu_ens)
+			cudaFree(_gpu_ens);
+		cudaMalloc(&_gpu_ens,sizeof(gpu_ensemble));
+		cudaMemcpy(_gpu_ens, _ens, sizeof(gpu_ensemble),cudaMemcpyHostToDevice ); 
+	}
 
 		// Destructor
                 virtual ~integrator() {};       //!< has to be here to ensure the derived class' destructor is called (if it exists)

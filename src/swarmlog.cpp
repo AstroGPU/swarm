@@ -31,6 +31,7 @@
 #include <limits>
 #include <boost/shared_ptr.hpp>
 
+
 extern "C" void debug_hook()
 {
 	// a hook into which to place a breakpoint when the debugger
@@ -41,6 +42,7 @@ extern "C" void debug_hook()
 // global pointer to log output writer
 namespace swarm
 {
+
 	namespace log
 	{
 		std::auto_ptr<writer> log_writer;

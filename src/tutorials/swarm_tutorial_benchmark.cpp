@@ -129,6 +129,9 @@ void run_integration(config& cfg) {
 
   std::cerr << "# Integrate ensemble on GPU.\n";
   swatch_temps_gpu.start();  // Start timer for 0th step on GPU
+  void* dlog;
+  cudaGetSymbolAddress(&dlog,"dlog");
+  integ_gpu->set_log((gpulog::device_log*)dlog);
   integ_gpu->integrate(gpu_ens, 0.);  // a 0th step of dT=0 results in initialization of the integrator only
   cudaThreadSynchronize();   // Block until CUDA call completes
   swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU

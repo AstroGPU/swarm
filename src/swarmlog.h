@@ -31,16 +31,8 @@
 
 #define NEW 1
 
-#if __CUDACC__
-// The assumption is all CUDA code will be concatenated/included and compiled
-// as a single source file (thus avoiding the creation of duplicate copies of 
-// hlog and dlog)
-gpulog::host_log hlog;
-__constant__ gpulog::device_log dlog;
-#endif
-
-// declaration for g++-compiled sources
 extern gpulog::host_log hlog;
+
 
 namespace swarm
 {

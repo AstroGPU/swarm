@@ -29,6 +29,16 @@
 #include "ThreeVector.hpp"
 
 
+gpulog::host_log hlog;
+
+#if __CUDACC__
+// The assumption is all CUDA code will be concatenated/included and compiled
+// as a single source file (thus avoiding the creation of duplicate copies of 
+// hlog and dlog)
+__constant__ gpulog::device_log dlog;
+#endif
+
+
 /*********** USEFUL UTILITY FUNCTIONS ****************/
 #if __DEVICE_EMULATION__
 	extern "C" void debug_hook();
