@@ -211,9 +211,8 @@ namespace swarm {
 
 		__device__ Gravitation(ensemble::systemref& sys,shared_data &shared):sys(sys),shared(shared){	}
 
-		__device__ Gravitation(ensemble::systemref& sys,char * shmem):sys(sys)
-			,shared(*( (struct shared_data*) ( shmem + 
-				 sysid_in_block() * sizeof(shared_data))) )
+		__device__ Gravitation(ensemble::systemref& sys,char * system_shmem):sys(sys)
+			,shared(*( (struct shared_data*)  system_shmem ) )
 		{}
 
 		__device__ void calc_pair(int ij)const{

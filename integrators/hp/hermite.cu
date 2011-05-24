@@ -46,6 +46,7 @@ __global__ static void hermite_kernel(ensemble* ens,gpulog::device_log* dlog,dou
 
 	// shared memory allocation
 	extern __shared__ char shared_mem[];
+	char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
 
 	double t_start = sys.time(), t = t_start;
 	double t_end = min(t_start + destination_time,sys.time_end());
@@ -59,7 +60,7 @@ __global__ static void hermite_kernel(ensemble* ens,gpulog::device_log* dlog,dou
 	////////// INTEGRATION //////////////////////
 
 	// Calculate acceleration and jerk
-	Gravitation<nbod> calcForces(sys,shared_mem);
+	Gravitation<nbod> calcForces(sys,system_shmem);
 	calcForces(ij,b,c,pos,vel,acc,jerk);
 
 	while(t < t_end){

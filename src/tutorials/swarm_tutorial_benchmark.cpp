@@ -58,7 +58,7 @@ void run_integration(config& cfg) {
   if((bs<16)||(bs>512)||(bs%16!=0)) valid =false;
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
   if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
-  if(!(dT>0.)||!(dT<=2.*M_PI*10000.+1.)) valid = false;
+  if(!(dT>0.)||!(dT<=2.*M_PI*1000000.+1.)) valid = false;
   
   if(!valid) {
 	  std::cerr << "Invalid configuration" << std::endl;

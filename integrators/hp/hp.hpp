@@ -77,15 +77,21 @@ class integrator : public swarm::integrator {
 		tD.y = system_per_block;
 		return tD;
 	}
-	int  shmemSize(){
+	int  system_per_block() {
 		const int nbod = _ens->nbod();
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
 		const int thread_per_system = std::max( body_comp, pair_count) ;
-		const int shmem_per_system = pair_count * 3  * 2 * sizeof(double);
-		const int system_per_block = _threads_per_block / thread_per_system;
-		const int shared_memory_size = system_per_block * shmem_per_system ;
-		return shared_memory_size;
+		return  _threads_per_block / thread_per_system;
+	}
+	int  shmemSize(){
+		const int nbod = _ens->nbod();
+		return system_per_block() * shmem_per_system(nbod);
+	}
+
+	static __device__ __host__ inline int shmem_per_system(int nbod) {
+		const int pair_count = nbod * (nbod - 1) / 2;
+		return pair_count * 3  * 2 * sizeof(double);
 	}
 
 };
