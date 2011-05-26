@@ -66,6 +66,12 @@ swarm_tutorial_compare_SOURCES=src/tutorials/swarm_tutorial_compare.cpp
 APPS+=swarm_tutorial_benchmark
 swarm_tutorial_benchmark_SOURCES=src/tutorials/swarm_tutorial_benchmark.cpp 
 
+APPS+=swarm_benchmark
+swarm_benchmark_SOURCES=src/tutorials/swarm_benchmark.cpp src/tutorials/utils.cpp
+
+APPS+=swarm_stability_test
+swarm_stability_test_SOURCES=src/tutorials/swarm_stability_test.cpp  src/tutorials/utils.cpp
+
 APPS+=swarm_tutorial_montecarlo
 swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp 
 

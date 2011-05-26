@@ -129,9 +129,7 @@ void run_integration(config& cfg) {
 
   std::cerr << "# Integrate ensemble on GPU.\n";
   swatch_temps_gpu.start();  // Start timer for 0th step on GPU
-  void* dlog;
-  cudaGetSymbolAddress(&dlog,"dlog");
-  integ_gpu->set_log((gpulog::device_log*)dlog);
+  integ_gpu->set_default_log();
   integ_gpu->integrate(gpu_ens, 0.);  // a 0th step of dT=0 results in initialization of the integrator only
   cudaThreadSynchronize();   // Block until CUDA call completes
   swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU
@@ -278,7 +276,8 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 
 void benchmark_loop(config& cfg, const string& param, const vector<string>& values) {
 	for(vector<string>::const_iterator i = values.begin();  i != values.end(); i++){
-		std::cout << "\n\nBenchmarking for   " << param << " =  " << *i << "     =========================================\n\n" << std::endl;
+		std::cout << "=========================================\n";
+		std::cout << "Benchmarking for   " << param << " =  " << *i << std::endl;
 		cfg[param] = *i;
 		run_integration(cfg);
 	}
@@ -286,11 +285,12 @@ void benchmark_loop(config& cfg, const string& param, const vector<string>& valu
 
 void benchmark_range(config& cfg, const string& param, int  from, int to , int increment ){
 	  for(int i = from; i <= to ; i+= increment ){
-			std::cout << "\n\nBenchmarking for   " << param << " =  " << i << "     =========================================\n\n" << std::endl;
-			std::ostringstream stream;
-			stream <<  i;
-			cfg[param] = stream.str();
-			run_integration(cfg);
+		  std::cout << "=========================================\n";
+		  std::cout << "Benchmarking for   " << param << " =  " << i << std::endl;
+		  std::ostringstream stream;
+		  stream <<  i;
+		  cfg[param] = stream.str();
+		  run_integration(cfg);
 	  }
 }
 
