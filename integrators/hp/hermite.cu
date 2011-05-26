@@ -82,33 +82,44 @@ class hermite: public integrator {
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
-		calcForces(ij,b,c,pos,vel,acc,jerk);
 
 		while(t < t_end){
-			for(int k = 0; k < 2; k++)
+			double h = min(_time_step, t_end - t);
+
+			double pos_old = pos, vel_old = vel;
+
 			{
-				double h = min(_time_step, t_end - t);
-				double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;
+				// Initial Evaluation
+				calcForces(ij,b,c,pos,vel,acc,jerk);
 
 				// Predict 
 				pos = pos_old +  h*(vel_old+(h*0.5)*(acc+(h/3.)*jerk));
 				vel = vel_old +  h*(acc+(h*0.5)*jerk);
-
-				// Do evaluation and correction two times (PEC2)
-				for(int l = 0; l < 2; l++)
-				{
-
-					// Calculate acceleration and jerk using shared memory
-					calcForces(ij,b,c,pos,vel,acc,jerk);
-
-					// Correct
-					pos = pos_old + (h*0.5) * ( (vel_old + vel) 
-							+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-					vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
-
-				}
-				t += h;
 			}
+
+			double acc_old = acc,jerk_old = jerk;
+
+			{
+				// Evaluation
+				calcForces(ij,b,c,pos,vel,acc,jerk);
+
+				// Correct
+				pos = pos_old + (h*0.5) * ( (vel_old + vel) 
+						+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
+				vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+			}
+
+			{
+				// Evaluation
+				calcForces(ij,b,c,pos,vel,acc,jerk);
+
+				// Correct
+				pos = pos_old + (h*0.5) * ( (vel_old + vel) 
+						+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
+				vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+			}
+
+			t += h;
 
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;

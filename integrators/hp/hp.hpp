@@ -35,7 +35,7 @@ class integrator : public swarm::integrator {
 
 	public:
 	integrator(const config &cfg) {
-		_threads_per_block = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 128;
+		_threads_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 128;
 	}
 
 	~integrator() { if(_gpu_ens) cudaFree(_gpu_ens); }

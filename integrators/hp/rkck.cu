@@ -24,9 +24,6 @@
 namespace swarm {
 namespace hp {
 
-
-#define ADAPTIVE_TIMESTEP	
-
 struct FixedTimeStep {
 	const static bool adaptive_time_step = false;
 	const static bool conditional_accept_step = false;
@@ -114,12 +111,11 @@ class rkck: public integrator {
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
 
-		double (&shared_mag)[nbod][3] = * (double (*)[nbod][3]) system_shmem;
-		double (&shared_err)[nbod][2] = * (double (*)[nbod][2]) system_shmem;
+		double (&shared_mag)[2][nbod][3] = * (double (*)[2][nbod][3]) system_shmem;
 
 		double t_start = sys.time(), t = t_start;
 		double t_end = min(t_start + _destination_time,sys.time_end());
-		double time_step = _min_time_step;
+		double time_step = _max_time_step;
 
 		// local information per component per body
 		double pos = 0, vel = 0;
@@ -206,48 +202,26 @@ class rkck: public integrator {
 
 				//  Calculate the error estimate
 				if( body_component_grid ) {
-					double pos_mag = 1, pos_error_mag = 0 , vel_mag = 1, vel_error_mag = 0;
 
-					//// Compute pos magnitute in c=0 thread
-					shared_mag[b][c] = p6 * p6;
-					__syncthreads();
-					if( c == 0 ) pos_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
+					sys[b].p(c) = p6 * p6 , sys[b].v(c) = v6 * v6;
+					shared_mag[0][b][c] = pos_error * pos_error;
+					shared_mag[1][b][c] = vel_error * vel_error;
 
 					__syncthreads();
+					if ( (c == 0) && (b == 0) ) {
 
-					//// Compute pos error magnitute in c=0 thread
-					shared_mag[b][c] = pos_error * pos_error;
-					__syncthreads();
-					if( c == 0 ) pos_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-					__syncthreads();
-
-					//// Compute vel magnitute in c=0 thread
-					shared_mag[b][c] = v6 * v6;
-					__syncthreads();
-					if( c == 0 ) vel_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-					__syncthreads();
-
-					//// Compute vel error magnitute in c=0 thread
-					shared_mag[b][c] = vel_error * vel_error;
-					__syncthreads();
-					if( c == 0 ) vel_error_mag = shared_mag[b][0] + shared_mag[b][1] + shared_mag[b][2];
-
-					__syncthreads();
-
-					//// Write error estimates for each body to shared memory
-					if( c == 0 ) shared_err[b][0] = pos_error_mag / pos_mag ;
-					if( c == 0 ) shared_err[b][1] = vel_error_mag / vel_mag ;
-
-					__syncthreads();
-
-					// Calculate the maximum error in one of the threads
-					if( b == 0 && c == 0 )  {
 						double max_error = 0;
-						for(int i = 0; i < nbod; i++)
-							for(int j = 0; j < 2; j++)
-								if(shared_err[i][j] > max_error) max_error = shared_err[i][j];
+						for(int i = 0; i < nbod ; i++){
+							double pos_error_mag = shared_mag[0][i][0] + shared_mag[0][i][1] + shared_mag[0][i][2];
+							double pos_mag = sys[i].p(0) + sys[i].p(1) + sys[i].p(2);
+							double pe = pos_error_mag / pos_mag ;
+
+							double vel_error_mag = shared_mag[1][i][0] + shared_mag[1][i][1] + shared_mag[1][i][2];
+							double vel_mag = sys[i].v(0) + sys[i].v(1) + sys[i].v(2);
+							double ve = vel_error_mag / vel_mag ;
+
+							max_error = max ( max( pe, ve) , max_error );
+						}
 
 						double normalized_error = max_error / _error_tolerance;
 
@@ -263,17 +237,17 @@ class rkck: public integrator {
 						double new_time_step = (normalized_error>1.) ? max( time_step * max(step_change_factor,step_shrink_min_factor), _min_time_step ) 
 							: min( time_step * max(min(step_change_factor,step_grow_max_factor),1.0), _max_time_step );
 
-						bool accept_step = ( normalized_error < 1.0 ) || abs(time_step - new_time_step) < 1e-10;
+						bool accept = ( normalized_error < 1.0 ) || (abs(time_step - new_time_step) < 1e-10) ;
 
-						shared_err[0][0] = accept_step ? 0.0 : 1.0;
-						shared_err[0][1] = new_time_step;
+						shared_mag[0][0][0] = accept ? 0.0 : 1.0;
+						shared_mag[0][0][1] = new_time_step;
 					}
 
 				}
 				__syncthreads();
 
-				time_step = shared_err[0][1];
-				accept_step = AdaptationStyle::conditional_accept_step ? shared_err[0][0] == 0.0 : true;
+				time_step = shared_mag[0][0][1];
+				accept_step = AdaptationStyle::conditional_accept_step ? (shared_mag[0][0][0] == 0.0) : true;
 				////////////////////////// End of Adaptive time step algorithm  ////////////////////////////////////////////
 			}
 
