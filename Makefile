@@ -26,7 +26,7 @@
 ### libswarm library
 ###
 LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/cpu_ensemble.cpp src/gpu_ensemble.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
-LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu
+LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu src/stopper.cu
 
 ###
 ### documentation in asciidoc format

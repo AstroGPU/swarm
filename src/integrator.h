@@ -60,6 +60,11 @@ class integrator
 					return _gpu_ens;
 				}
 
+				void set_default_log () {
+					void* dlog;
+					cudaGetSymbolAddress(&dlog,"dlog");
+					set_log((gpulog::device_log*)dlog);
+				}
 				void set_log(gpulog::device_log* log) { _gpu_log = log; }
 
 				void load_ensemble(gpu_ensemble& ens){

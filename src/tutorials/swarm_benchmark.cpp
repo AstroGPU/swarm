@@ -171,6 +171,15 @@ int main(int argc,  char **argv)
 	if( ( cfg["blocksize"] != "" )  && (cfg["threads per block"] == "" )) 
 		cfg["threads per block"] = cfg["blocksize"];
 
+	std::cout << "# Base configuration \n"
+		<< "# Integrator\t" << cfg["integrator"] << "\n"
+		<< "# Time step\t" << cfg["time step"] << "\n"
+		<< "# Min time step\t" << cfg["min time step"] << "\n"
+		<< "# Max time step\t" << cfg["max time step"] << "\n"
+		<< "# No. Systems\t" << cfg["nsys"] << "\n"
+		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
+		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
+		<< std::endl;
 
 
 	//////////////////////// BENCHMARKING /////////////////////// 

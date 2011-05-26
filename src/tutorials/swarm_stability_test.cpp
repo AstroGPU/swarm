@@ -154,16 +154,24 @@ int main(int argc,  char **argv)
 		cfg["time step"] = "0.0005";       // time step
 		cfg["precision"] = "1";
 		cfg["duration"] = "31.41592";
-		cfg["threads per block"] = "126";
 		cfg["nbod"] = "3";
 		cfg["nsys"] = "960";
-		cfg["blocksize"] = "126";
+		cfg["blocksize"] = "128";
 	}
 
 	if(vm.count("cfg")){
 		std::string icfgfn =  vm["cfg"].as<std::string>();
 		load_config(cfg,icfgfn);
 	}
+
+	std::cout << "# Integrator:\t" << cfg["integrator"] << "\n"
+		<< "# Time step\t" << cfg["time step"] << "\n"
+		<< "# Min time step\t" << cfg["min time step"] << "\n"
+		<< "# Max time step\t" << cfg["max time step"] << "\n"
+		<< "# No. Systems\t" << cfg["nsys"] << "\n"
+		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
+		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
+		<< std::endl;
 
 	if( ( cfg["blocksize"] != "" )  && (cfg["threads per block"] == "" )) 
 		cfg["threads per block"] = cfg["blocksize"];

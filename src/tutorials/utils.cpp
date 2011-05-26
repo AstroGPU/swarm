@@ -69,7 +69,7 @@ bool validate_configuration(config& cfg){
 
   // Check that parameters from command line are ok
   if(!((prec==1)||(prec==2)||(prec==3))) valid =false;
-  if((bs<16)||(bs>512)) valid =false;
+  if((bs<8)||(bs>512)) valid =false;
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
   if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
   if(!(dT>0.)||!(dT<=2.*M_PI*1000000.+1.)) valid = false;
