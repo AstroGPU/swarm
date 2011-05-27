@@ -839,7 +839,7 @@ __global__ void gpu_hermite_adap_integrator_kernel(double dT, double h, double s
                 dt=getAdaptiveTimeStep<nbod>(&mPos[0], &mVel[0], &mAcc[0], &mJerk[0], hh, sstepfac);
                 if(dt+T>Tend)dt=Tend-T;
  
-        	typename acc_type<pre>::type dtby2=dt/2.;
+        	typename acc_type<pre>::type dtby2=dt*0.5;
 	        typename acc_type<pre>::type dtby3=dt/3.;
         	typename acc_type<pre>::type dtby6=dt/6.;
  	        typename acc_type<pre>::type dt7by30=dt*7./30.;

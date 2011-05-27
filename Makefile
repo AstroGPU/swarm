@@ -1,4 +1,4 @@
-#
+
 # swarm build system (mjuric, 2010/01/31)
 #
 # Requirements:
@@ -25,8 +25,8 @@
 ###
 ### libswarm library
 ###
-LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
-LIBSWARM_CUDA=src/swarmlib.cu
+LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/cpu_ensemble.cpp src/gpu_ensemble.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
+LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu
 
 ###
 ### documentation in asciidoc format
@@ -85,13 +85,13 @@ swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 # Defaults: you should override these in Makefile.user
 #
 CUDAPATH?=/opt/cuda
-CCUDA?=$(CUDAPATH)/bin/nvcc -arch=sm_13
+CCUDA?=$(CUDAPATH)/bin/nvcc -gencode 'arch=compute_20,code=sm_20' -gencode 'arch=compute_13,code=sm_13'
 CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src
-LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64
+CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src -I .
+LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64 -L /usr/lib/nvidia-current/
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
 
@@ -101,12 +101,12 @@ CXXFLAGS+= -I ./src
 CXX+=-fPIC
 
 # Link command just adds the required bits to compiler command
-LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lgsl -lgslcblas -lboost_program_options -lboost_regex
+LINK=$(CXX) -Wl,-rpath,$(BIN) -rdynamic $(LDFLAGS) -lcuda -lcudart -lswarm -lboost_program_options -lboost_regex
 
 SWARM_SOURCES := $(foreach app,$(APPS),$($(app)_SOURCES))	# Collect all app sources
 SWARM_OBJECTS=$(SWARM_SOURCES:.cpp=.o)				# All app objects
 EXE=$(addprefix bin/, $(APPS))			# bin/swarm bin/swarm_test_energy
-LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o)	# libswarm objects
+LIBSWARM_OBJECTS=$(LIBSWARM_SOURCES:.cpp=.o) $(LIBSWARM_CUDASOURCES:.cu=_cu.o)	# libswarm objects
 OBJECTS=$(SWARM_OBJECTS) $(LIBSWARM_OBJECTS)	# all objects
 SOURCES=$(SWARM_SOURCES) $(LIBSWARM_SOURCES)	# all sources
 DOC_OUTPUT=$(DOC_INPUT:.txt=.html)              # html version of asciidoc text documentation
@@ -121,7 +121,7 @@ BIN=$(shell pwd)/bin
 ifneq ($(VERBOSE),1)
 DEPUI=@ echo "[ DEP  ] $@ " &&
 CXXUI=@ echo "[ CXX  ] $@ " &&
-NVCCUI=@ echo "[ NVCC ] $@ " &&
+NVCCUI=@echo "[ NVCC ] $@ " &&
 LINKUI=@ echo "[ LINK ] $@ " &&
 ARUI=@ echo "[ AR   ] $@ " &&
 GENUI=@ echo "[ GEN  ] $@ " &&
@@ -183,31 +183,18 @@ test-feedback:
 .PHONY: test test-ref
 
 benchmark-quick: bin/swarm_tutorial_benchmark
-	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s 3840 | tee benchmark.out
+	cd run; rm -f benchmark.out ; ../bin/swarm_tutorial_benchmark --nocpu | tee benchmark.out
 
 benchmark: bin/swarm_tutorial_benchmark
 	rm -f run/benchmark.out ;
 	@ echo "# Benchmarking num systems (Please be patient)" |tee run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s   960 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  1920 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s 15360 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark nsystems 960 1920 3840 7680 15360 2>> benchmark.out 
 	@ echo "# Benchmarking num bodys per system (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 4 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 5 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 6 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark "num bodies" 3 4 5 2>> benchmark.out
 	@ echo "# Benchmarking blocksize (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  16 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  32 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  64 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b  96 -s  7680 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -b 128 -s  7680 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark "threads per block" 16 32 64 96 128 2>> benchmark.out
 	@ echo "# Benchmarking preision (Please be patient)" |tee -a run/benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 1 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 2 -s  3840 2>> benchmark.out
-	cd run; ../bin/swarm_tutorial_benchmark -t 1. -n 3 -p 3 -s  3840 2>> benchmark.out
+	cd run; ../bin/swarm_tutorial_benchmark precision 1 2 3  2>> benchmark.out
 	@ echo "# Thank you for your patience" | tee -a run/benchmark.out
 
 clean: clean-test
@@ -255,7 +242,11 @@ bin/Makefile.d: Makefile
 %.cu_o:%.cu
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
 
+%_cu.o:%.cu
+	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
+
 # C++ object files
+#
 %.o:%.cpp
 	$(CXXUI) $(CXX) -c $(CXXFLAGS) $< -o $@
 

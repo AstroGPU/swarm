@@ -208,9 +208,11 @@ struct prop_verlet
 		 */
 		struct thread_state_t
 		{
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+			__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
 			{ }
 		};
+
+		__host__ __device__ static int threads_per_system(int nbod) { return 1; }
 
 		/*!
                  *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
@@ -230,7 +232,7 @@ struct prop_verlet
 		 * @return new time of the system
 		 */
 		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
 			double hh = T + this->h <= Tend ? this->h : Tend - T;
@@ -294,9 +296,12 @@ struct prop_verlet
 					double dx1=ens.y(sys,j) - xi1;
 					double dx2=ens.z(sys,j) - xi2;
 					double r2 = dx0*dx0 + dx1*dx1 + dx2*dx2;
-					double rinv = 1./sqrt ( r2 );
-					rinv *= mass_sum;
-					rinv3 += rinv/r2;
+					/* Faster implementation using rsqrt and less operations -- CW 9/15/10
+					* double rinv = 1./sqrt ( r2 );
+					* rinv *= mass_sum;
+					* rinv3 += rinv/r2;
+					*/
+					rinv3 += mass_sum*rsqrt(r2)/r2;
 				}
 			}
 

@@ -22,9 +22,11 @@
 #define cuda_cux__
 
 #include <assert.h>
+#include <stdint.h>
 #include <map>
 #include <set>
 #include <algorithm>
+#include <stdint.h>
 
 #include "cux_lowlevel.h"
 

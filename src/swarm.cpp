@@ -29,6 +29,7 @@
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
+
 int main(int argc, const char **argv)
 {
 	if(argc != 2)
@@ -81,21 +82,28 @@ int main(int argc, const char **argv)
 	swarm::log::output_systems_needing_output(hlog, ens);
 
 	// perform the integration
-	std::cerr << "\n# Integrating... ";
 	if(ongpu)
 	{
+		$$("Uploading to GPU... ");
 		SWATCH_START(swatch_mem);
 		swarm::gpu_ensemble gpu_ens(ens);			// upload to GPU
 		SWATCH_STOP(swatch_mem);
 
+
+		$$("Initializing integrator... ");
 		SWATCH_START(swatch_temps);
-		integ->integrate(gpu_ens, 0.);				// initialize internal data structures
+		void* dlog;
+		cudaGetSymbolAddress(&dlog,"dlog");
+		integ->set_log((gpulog::device_log*)dlog);
+		integ->integrate(gpu_ens, 0.0);				// initialize internal data structures
 		SWATCH_STOP(swatch_temps);
 
+		$$("Integrating... ");
 		SWATCH_START(swatch_kernel);
 		integ->integrate(gpu_ens, Tend);			// integrate
 		SWATCH_STOP(swatch_kernel);
 
+		$$("Downloading data... ");
 		SWATCH_START(swatch_mem);
 		ens.copy_from(gpu_ens);					// download to host
 		SWATCH_STOP(swatch_mem);
@@ -114,12 +122,12 @@ int main(int argc, const char **argv)
 	std::cerr << "# Done.\n\n";
 
 	// print out timings
-	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000;
-	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000;
+	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000.0;
+	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000.0;
 	std::cerr << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
 	std::cerr << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
-	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000 << " ms.\n";
-	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000 << " ms.\n";
+	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000.0 << " ms.\n";
+	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000.0 << " ms.\n";
 
 	return 0;
 }

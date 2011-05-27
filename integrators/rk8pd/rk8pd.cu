@@ -141,6 +141,7 @@ struct prop_rk8pd
 		    } // end loop over bodies
 		}
 
+		__host__ __device__ static int threads_per_system(int nbod) { return 1; }
 		/*!
                  *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
 		 *
@@ -162,7 +163,7 @@ struct prop_rk8pd
 		 * @return new time of the system
 		 */
 		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 //		const double ah[] = { 1.0 / 18.0, 1.0 / 12.0, 1.0 / 8.0, 5.0 / 16.0, 3.0 / 8.0, 59.0 / 400.0, 93.0 / 200.0, 5490023248.0 / 9719169821.0, 13.0 / 20.0, 1201146811.0 / 1299019798.0 };
 

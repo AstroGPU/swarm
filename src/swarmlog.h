@@ -31,16 +31,8 @@
 
 #define NEW 1
 
-#if __CUDACC__
-// The assumption is all CUDA code will be concatenated/included and compiled
-// as a single source file (thus avoiding the creation of duplicate copies of 
-// hlog and dlog)
-gpulog::host_log hlog;
-__constant__ gpulog::device_log dlog;
-#endif
-
-// declaration for g++-compiled sources
 extern gpulog::host_log hlog;
+
 
 namespace swarm
 {
@@ -67,7 +59,10 @@ namespace swarm
 
 
 		// load body information from ensemble to body structure
-		__device__ __host__ void set(const ensemble &ens, int sys, int bod_)
+		#ifdef __CUDACC__
+        __device__
+#endif
+ void set(const ensemble &ens, int sys, int bod_)
 		{
 #if NEW
 			m_bod = bod_;
@@ -92,38 +87,86 @@ namespace swarm
 #if NEW
 		//		/*
 		/// return reference to the current position x of the body  
-		__host__ __device__ double&  x() { return m_x; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double&  x() { return m_x; };
 		/// return reference to the current position y of the bm_ody  
-		__host__ __device__ double&  y() { return m_y; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double&  y() { return m_y; };
 		/// return reference to the current position z of the body  
-		__host__ __device__ double&  z() { return m_z; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double&  z() { return m_z; };
 		/// return reference to the current velocity x of the body  
-		__host__ __device__ double& vx() { return m_vx; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double& vx() { return m_vx; };
 		/// return reference to the current velocity y of the body  
-		__host__ __device__ double& vy() { return m_vy; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double& vy() { return m_vy; };
 		/// return reference to the current velocity z of the body  
-		__host__ __device__ double& vz() { return m_vz; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double& vz() { return m_vz; };
 		/// return reference to the mass of the body  
-		__host__ __device__ float& mass()   { return m_mass; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+float& mass()   { return m_mass; };
 		/// return reference to the id of the body  
-		__host__ __device__ int& bod()   { return m_bod; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+int& bod()   { return m_bod; };
 
 		/// return the current position x of the body  
-		__host__ __device__ double x() const { return m_x; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double x() const { return m_x; };
 		/// return the current position y of the body  
-		__host__ __device__ double  y() const { return m_y; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double  y() const { return m_y; };
 		/// return the current position z of the body  
-		__host__ __device__ double  z() const { return m_z; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double  z() const { return m_z; };
 		/// return the current velocity x of the body  
-		__host__ __device__ double vx() const { return m_vx; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double vx() const { return m_vx; };
 		/// return the current velocity y of the body  
-		__host__ __device__ double vy() const { return m_vy; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double vy() const { return m_vy; };
 		/// return the current velocity z of the body  
-		__host__ __device__ double vz() const  { return m_vz; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+double vz() const  { return m_vz; };
        		/// return the mass of thebody  
-		__host__ __device__ float mass() const { return m_mass; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+float mass() const { return m_mass; };
 		/// return  the id of the body  
-		__host__ __device__ int bod() const  { return m_bod; };
+		#ifdef __CUDACC__
+        __device__
+#endif
+int bod() const  { return m_bod; };
 		//		*/
 #endif		
 	};
@@ -137,23 +180,35 @@ namespace swarm
 		const ensemble &ens;
 		int sys, bod[N];
 
-		__device__ __host__ inline body_set(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
+		#ifdef __CUDACC__
+        __device__
+#endif
+ inline body_set(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
 	};
 
-	__device__ __host__ inline const body_set<1> make_body_set(const ensemble &ens, int sys, int bod0)
+	#ifdef __CUDACC__
+        __device__
+#endif
+ inline const body_set<1> make_body_set(const ensemble &ens, int sys, int bod0)
 	{
 		body_set<1> br(ens, sys);
 		br.bod[0] = bod0;
 		return br;
 	}
-	__device__ __host__ inline const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, int bod1)
+	#ifdef __CUDACC__
+        __device__
+#endif
+ inline const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, int bod1)
 	{
 		body_set<2> br(ens, sys);
 		br.bod[0] = bod0;
 		br.bod[1] = bod1;
 		return br;
 	}
-	__device__ __host__ inline const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
+	#ifdef __CUDACC__
+        __device__
+#endif
+ inline const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
 	{
 		body_set<3> br(ens, sys);
 		br.bod[0] = bod0;
@@ -175,49 +230,77 @@ namespace swarm
 		void shutdown();
 
 		template<typename L, typename T1>
-			__host__ __device__ inline PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)
+#ifdef __CUDACC__
+        __device__
+#endif
+
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)
 			{
 				return l.write(recid, T, sys, v1);
 			}
 	
 		template<typename L, typename T1, typename T2>
-			__host__ __device__ inline PTR_T(SCALAR(T2)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T2)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2)
 			{
 				return l.write(recid, T, sys, v1, v2);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3>
-			__host__ __device__ inline PTR_T(SCALAR(T3)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T3)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3)
 			{
 				return l.write(recid, T, sys, v1, v2, v3);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3, typename T4>
-			__host__ __device__ inline PTR_T(SCALAR(T4)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T4)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
 			{
 				return l.write(recid, T, sys, v1, v2, v3, v4);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5>
-			__host__ __device__ inline PTR_T(SCALAR(T5)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T5)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
 			{
 				return l.write(recid, T, sys, v1, v2, v3, v4, v5);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-			__host__ __device__ inline PTR_T(SCALAR(T6)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T6)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
 			{
 				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-			__host__ __device__ inline PTR_T(SCALAR(T7)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T7)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7)
 			{
 				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7);
 			}
 	
 		template<typename L, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-			__host__ __device__ inline PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
+			#ifdef __CUDACC__
+        __device__
+#endif
+inline PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int sys, const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6, const T7 &v7, const T8 &v8)
 			{
 				return l.write(recid, T, sys, v1, v2, v3, v4, v5, v6, v7, v8);
 			}
@@ -239,7 +322,10 @@ namespace swarm
 			Store a snapshot of the entire system (EVT_SNAPSHOT).
 		*/
 		template<typename L>
-		__device__ __host__ inline void system(L &l, const ensemble &ens, const int sys, const double T)
+		#ifdef __CUDACC__
+        __device__
+#endif
+ inline void system(L &l, const ensemble &ens, const int sys, const double T)
 		{
 			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, T, sys, ens.flags(sys), ens.nbod(), gpulog::array<body>(ens.nbod()));
 			if(bodies != NULL) // buffer overflow hasn't happened
@@ -255,7 +341,10 @@ namespace swarm
 			Store a snapshot of the entire ensemble (convenience).
 		*/
 		template<typename L>
-		__device__ __host__ inline void ensemble(L &l, const swarm::ensemble &ens)
+		#ifdef __CUDACC__
+        __device__
+#endif
+ inline void ensemble(L &l, const swarm::ensemble &ens)
 		{
 			for(int sys = 0; sys != ens.nsys(); sys++)
 			{
@@ -263,14 +352,20 @@ namespace swarm
 			}
 		}
 
-		__host__ __device__ inline bool needs_output(swarm::ensemble &ens, double T, int sys)
+		#ifdef __CUDACC__
+        __device__
+#endif
+inline bool needs_output(swarm::ensemble &ens, double T, int sys)
 		{
 			// simple output
 			return T >= ens.time_output(sys, 0);
 		}
 		
 		template<typename L>
-		__host__ __device__ inline void output_system(L &log, swarm::ensemble &ens, double T, int sys)
+		#ifdef __CUDACC__
+        __device__
+#endif
+inline void output_system(L &log, swarm::ensemble &ens, double T, int sys)
 		{
 			// store the snapshot
 			log::system(log, ens, sys, T);
@@ -305,7 +400,10 @@ namespace swarm
 		@param[in] sys
 		*/
 		template<typename L>
-		__host__ __device__ void output_system_if_needed(L &log, swarm::ensemble &ens, double T, int sys)
+		#ifdef __CUDACC__
+        __device__
+#endif
+void output_system_if_needed(L &log, swarm::ensemble &ens, double T, int sys)
 		{
 			// simple output
 			if(needs_output(ens, T, sys))
@@ -317,7 +415,10 @@ namespace swarm
 		}
 
 		template<typename L>
-		__host__ __device__ void output_systems_needing_output(L &log, swarm::ensemble &ens)
+		#ifdef __CUDACC__
+        __device__
+#endif
+void output_systems_needing_output(L &log, swarm::ensemble &ens)
 		{
 			for(int sys = 0; sys != ens.nsys(); sys++)
 			{
@@ -343,7 +444,10 @@ namespace gpulog
 		// serialization of a list of bodies
 		template<int N> struct     argio<swarm::body_set<N> >
 		{
-			__host__ __device__ static inline void put(char *ptr, const swarm::body_set<N> &br, int start, int datalen)
+			#ifdef __CUDACC__
+        __device__
+#endif
+static inline void put(char *ptr, const swarm::body_set<N> &br, int start, int datalen)
 			{
 				DHOST( std::cerr << "Writing [" << br << "] start=" << start << " len=" << datalen << "\n" );
 				DGPU( printf("Writing start=%d len=%d\n", start, datalen); );

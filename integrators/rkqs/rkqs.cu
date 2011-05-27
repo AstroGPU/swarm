@@ -20,7 +20,7 @@
  *  \brief declares prop_rkqs for use with gpu_generic_integrator
  * 
  *  based on GSL's 
-*/
+ */
 
 #include "swarm.h"
 #include "../../src/swarmlog.h"
@@ -30,420 +30,374 @@
 /// namespace for Swarm-NG library
 namespace swarm {
 
-// If want to declare __shared__ do it here (just like const variables for ensembles)
+	// If want to declare __shared__ do it here (just like const variables for ensembles)
 
-/*!  
- *  \brief propagator class for RKQS integrator on GPU: Advance the system by one time step.
- *
- *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
- *  Keep any data that need to reside on the CPU here.
- */
-struct prop_rkqs
-{
-	/*! 
-	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
-         *
-	 * Any per-block read-only variables should be members of this structure.
-         */
-	struct gpu_t
+	/*!  
+	 *  \brief propagator class for RKQS integrator on GPU: Advance the system by one time step.
+	 *
+	 *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
+	 *  Keep any data that need to reside on the CPU here.
+	 */
+	struct prop_rkqs
 	{
-		//! per-block variables, time step
-		double hinit;
-		double error_tolerance;
-		//! per-block variables, 
-		cuxDevicePtr<double, 3> k1, k2, k3, k4, k5, k6;
-		//! per-block variables, initial & temporary coordinates, error term
-		cuxDevicePtr<double, 3> y0;
-		cuxDevicePtr<double, 3> ytmp;
-		cuxDevicePtr<double, 3> yerr;
-
-		// Cash-Karp constants From GSL
-		static const int   integrator_order = 5;
-                static const float step_grow_power = -1./(integrator_order+1.);
-                static const float step_shrink_power = -1./integrator_order;
-                static const float step_guess_safety_factor = 0.9;
-		static const float step_grow_max_factor = 5.0; 
-                static const float step_shrink_min_factor = 0.2; 
- 
-		/*!
-		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
-                 *
-		 * Any per-thread variables should be members of this structure.
+		/*! 
+		 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
+		 *
+		 * Any per-block read-only variables should be members of this structure.
 		 */
-		struct thread_state_t
+		struct gpu_t
 		{
-			float h_try, h_prev;
-	        	int substep_state;
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : h_try(H.hinit), h_prev(0.), substep_state(0)
-			{ }
+			//! per-block variables, time step
+			//! Initial time step (cfg)
+			double hinit;
+			//! Smallest time step allowed (cfg)
+			double hmin;
+			//! Largest time step allowed (cfg)
+			double hmax;
+			//! Error tolerance
+			double error_tolerance;
+		
+			// Cash-Karp constants From GSL
+			static const int   integrator_order = 5;
+			//! Value used as power in formula to produce larger time step
+			static const float step_grow_power = -1./(integrator_order+1.);
+			//! Value used as power in formula to produce smaller time step
+			static const float step_shrink_power = -1./integrator_order;
+			//! Safety factor to prevent extreme changes in time step
+			static const float step_guess_safety_factor = 0.9;
+			//! Maximum growth of step size allowed at a time
+			static const float step_grow_max_factor = 5.0; 
+			//! Maximum shrinkage of step size allowed at a time
+			static const float step_shrink_min_factor = 0.2; 
+
+			static const int rk_order = 6;
+
+
+			/*!
+			 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
+			 *
+			 * Any per-thread variables should be members of this structure.
+			 */
+			struct thread_state_t
+			{
+				//! Current time step that it going to be used for next advance call. It will be updated by each advance call.
+				double hcurrent;
+				__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : hcurrent(H.hinit){}
+			};
+
+
+
+		inline __device__ static double inner_product(const double a[3],const double b[3]){
+			return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+		}
+
+		inline __device__ static double sqr(const double &a){
+			return a*a;
+		}
+
+	
+
+		template<int nbod,int c>
+			struct rk_error {
+					double (&y)[3][nbod],(&k)[rk_order][3][nbod];
+					const double (&b)[rk_order],h;
+					__device__ rk_error(double (&y)[3][nbod],double (&k)[rk_order][3][nbod], const double (&b)[rk_order],double h)
+						:y(y),k(k),b(b),h(h){}
+					__device__ void operator()(int i)const{
+						y[c][i] = h * (b[0]*k[0][c][i] + b[2]*k[2][c][i] + b[3]*k[3][c][i] 
+								+ b[4]*k[4][c][i] + b[5]*k[5][c][i] );
+					}
+
+			};
+			template<int nbod,int step, int c>
+				struct rk_step {
+					double (&y)[3][nbod],(&ytmp)[3][nbod],(&k)[rk_order][3][nbod];
+					const double (&b)[step],h;
+					__device__ rk_step(double (&y)[3][nbod],double (&ytmp)[3][nbod], double (&k)[rk_order][3][nbod], const double (&b)[step], double h): y(y),ytmp(ytmp),k(k),b(b),h(h){}
+					__device__ void operator()(int i)const{
+						double s = 0;
+						#pragma unroll
+						for(int j=0;j<step;j++)
+							s += b[j] * k[j][c][i];
+						ytmp[c][i] = y[c][i] + h * s;
+					}
+				};
+
+			template<int nbod,int step>
+			__device__ void rk_full_step(ensemble::systemref& sysref
+					,double(&pos)[3][nbod],double(&in_pos)[3][nbod],double(&out_pos)[3][nbod]
+					,double(&vel)[3][nbod],double(&out_vel)[3][nbod]
+					,double(&vtmp)[rk_order][3][nbod],double (&atmp)[rk_order][3][nbod]
+					,const double (&b)[step],double h){
+				;
+
+				Compute_Acc<nbod>(sysref,in_pos,atmp[step-1]).compute();
+
+				// positions
+				Unroller<0,nbod>::step(rk_step<nbod,step,0>(pos,out_pos,vtmp,b,h));
+				Unroller<0,nbod>::step(rk_step<nbod,step,1>(pos,out_pos,vtmp,b,h));
+				Unroller<0,nbod>::step(rk_step<nbod,step,2>(pos,out_pos,vtmp,b,h));
+				// velocities
+				Unroller<0,nbod>::step(rk_step<nbod,step,0>(vel,out_vel,atmp,b,h));
+				Unroller<0,nbod>::step(rk_step<nbod,step,1>(vel,out_vel,atmp,b,h));
+				Unroller<0,nbod>::step(rk_step<nbod,step,2>(vel,out_vel,atmp,b,h));
+			}
+
+			//! Sub stepper based on rkck (just tries a step and stores into ytmp) 
+			// returns error
+			template<int nbod>
+			__device__ void substep(ensemble::systemref& sysref,double(&pos)[3][nbod], double(&vel)[3][nbod], double h, double& error_estimate)
+			{
+				if(sysref.nbod() == nbod ) {
+					//		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
+					const double b2[] = { 1.0 / 5.0 };
+					const double b3[] = { 3.0 / 40.0, 9.0 / 40.0 };
+					const double b4[] = { 0.3, -0.9, 1.2 };
+					const double b5[] = { -11.0 / 54.0, 2.5, -70.0 / 27.0, 35.0 / 27.0 };
+					const double b6[] = { 1631.0 / 55296.0, 175.0 / 512.0, 575.0 / 13824.0, 44275.0 / 110592.0, 253.0 / 4096.0 };
+					const double c1 = 37.0 / 378.0;
+					const double c3 = 250.0 / 621.0;
+					const double c4 = 125.0 / 594.0;
+					const double c6 = 512.0 / 1771.0;
+
+					const double cc[] = { c1, 0, c3, c4, 0, c6 };
+
+					const double ec[] = 
+						{ 
+							// the first value is the same as c1, above 
+							37.0 / 378.0 - 2825.0 / 27648.0,
+							0.0,
+							// the first value is the same as c3, above 
+							250.0 / 621.0 - 18575.0 / 48384.0,
+							// the first value is the same as c4, above 
+							125.0 / 594.0 - 13525.0 / 55296.0,
+							-277.00 / 14336.0,
+							// the first value is the same as c6, above 
+							512.0 / 1771.0 - 0.25 
+						};
+
+
+
+					typedef double bodarray_t[3][nbod];
+					bodarray_t atmp[rk_order],ptmp,vtmp[rk_order];
+
+					// initialize vtmp
+					for(int i = 0; i < nbod; i++)
+						vtmp[0][0][i] = vel[0][i],vtmp[0][1][i] = vel[1][i],vtmp[0][2][i] = vel[2][i];
+					
+					rk_full_step<nbod,1>(sysref,pos,pos ,ptmp,vel,vtmp[1],vtmp,atmp,b2,h);
+					rk_full_step<nbod,2>(sysref,pos,ptmp,ptmp,vel,vtmp[2],vtmp,atmp,b3,h);
+					rk_full_step<nbod,3>(sysref,pos,ptmp,ptmp,vel,vtmp[3],vtmp,atmp,b4,h);
+					rk_full_step<nbod,4>(sysref,pos,ptmp,ptmp,vel,vtmp[4],vtmp,atmp,b5,h);
+					rk_full_step<nbod,5>(sysref,pos,ptmp,ptmp,vel,vtmp[5],vtmp,atmp,b6,h);
+
+					rk_full_step<nbod,6>(sysref,pos,ptmp,pos ,vel,vel    ,vtmp,atmp,cc,h);
+
+					bodarray_t perr,verr;
+					Unroller<0,nbod>::step(rk_error<nbod,0>(perr,vtmp,ec,h));
+					Unroller<0,nbod>::step(rk_error<nbod,1>(perr,vtmp,ec,h));
+					Unroller<0,nbod>::step(rk_error<nbod,2>(perr,vtmp,ec,h));
+					Unroller<0,nbod>::step(rk_error<nbod,0>(verr,atmp,ec,h));
+					Unroller<0,nbod>::step(rk_error<nbod,1>(verr,atmp,ec,h));
+					Unroller<0,nbod>::step(rk_error<nbod,2>(verr,atmp,ec,h));
+
+					error_estimate = max(calculate_error(pos,perr),calculate_error(vel,verr));
+				}	
+			}
+
+			/// use error estimates for each coordinate to estimate the "scaled error" for the trial step
+			/// based on scaling in John Chamber's mercury
+			/// should we cache the scale factors (mercury does) or is recomputing better on GPU ?
+			template<int nbod>
+			static __device__ double calculate_error(double (&y)[3][nbod],double(&e)[3][nbod]) 
+			{
+				double errmax = 0.;
+				for(int i=0;i<nbod;i++)
+				{
+					double mag = y[0][i]*y[0][i] + y[1][i]*y[1][i] + y[2][i]*y[2][i] ;
+					double err = e[0][i]*e[0][i] + e[1][i]*e[1][i] + e[2][i]*e[2][i] ;
+
+					if(err/mag>errmax) errmax = err/mag;
+				}
+				return errmax;
+			}
+
+			//! Utility function to calculate new time step based on error
+			__device__ inline double calculate_h(double h,double error){
+				double step_guess_power = (error<1.) ? step_grow_power : step_shrink_power;
+				/// factor of 0.5 below due to use of squares in calculate_error, should we change to match gsl?
+
+				/// gsl uses 1.1, but that seems dangerous, any reason we shouldn't use 1?
+				double step_change_factor = ((error<0.5)||(error>1.0)) ? step_guess_safety_factor*pow(error,0.5*step_guess_power) : 1.0;
+
+				if(error>1.)
+					return max( h * max(step_change_factor,step_shrink_min_factor), hmin);
+				else
+					return min( h * max(min(step_change_factor,step_grow_max_factor),1.0), hmax);
+			}
+
+			__host__ __device__ static int threads_per_system(int nbod) { return 1; }
+
+			/*!
+			 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
+			 *
+			 * This function MUST return the new time of the system.
+			 * This function MUST also call stop.test_body() for every body
+			 * in the system, after that body has been advanced by a timestep.
+			 *
+			 * see RKCK implementation GSL 
+			 *
+			 * this implementation uses RKCK as substep and updates time step based on error
+			 * estimates from RKCK algorithm. Time step is stored in thread_state_t and is 
+			 * updated after each time step.
+			 * 
+			 *
+			 * @tparam stop_t ...
+			 * @param[in,out] ens ensemble
+			 * @param[in,out] pt ...
+			 * @param[in] sys system ID
+			 * @param[in] T start time
+			 * @param[in] Tend destination time
+			 * @param[in] stop ...
+			 * @param[in] stop_ts ...
+			 * @param[in] step  ...
+			 * @return new time of the system
+			 */
+			template<typename stop_t>
+				__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+			{
+						if(T >= Tend) { return T; }
+						// reload time step from thread state (last used time step)
+						double h = T + pt.hcurrent <= Tend ? pt.hcurrent : Tend - T;
+						double Ttmp = T + h;
+						ensemble::systemref sysref = ens[sys];
+						bool accepted = true; // the step is accepted by default to avoid infinite loop
+						advance_internal<3>(sysref,h,accepted);
+						advance_internal<4>(sysref,h,accepted);
+						advance_internal<5>(sysref,h,accepted);
+						advance_internal<6>(sysref,h,accepted);
+						// save new timestep in thread state
+						pt.hcurrent = h;
+						if(accepted){
+							for(int bod = 0; bod < ens.nbod(); bod++)
+							{
+								stop.test_body(stop_ts, ens, sys, bod, Ttmp, ens.x(sys,bod),ens.y(sys,bod),ens.z(sys,bod),ens.vx(sys,bod),ens.vy(sys,bod),ens.vz(sys,bod));
+							}
+							return Ttmp;
+						}else
+							return T;
+			}
+
+			template<int nbod>
+				__device__ void advance_internal(ensemble::systemref &sysref, double & h, bool& accept_step)
+				{
+					if(sysref.nbod() == nbod){ 
+
+						double pos[3][nbod],vel[3][nbod];
+
+						#pragma unroll
+						for(int i = 0; i < nbod;i++)
+							pos[0][i] = sysref[i].p(0), vel[0][i] = sysref[i].v(0);
+						#pragma unroll
+						for(int i = 0; i < nbod;i++)
+							pos[1][i] = sysref[i].p(1), vel[1][i] = sysref[i].v(1);
+						#pragma unroll
+						for(int i = 0; i < nbod;i++)
+							pos[2][i] = sysref[i].p(2), vel[2][i] = sysref[i].v(2);
+
+						double error_estimate = 0;
+						substep<nbod>(sysref,pos,vel,h,error_estimate);
+						double error = error_estimate/error_tolerance; 
+						// Decision on what to is based on error, if error<1, it means error is 
+						// in range and maybe we can grow time step.
+						// Otherwise, calculations are erroneous and we recalculate using smaller
+						// time step.
+						double new_h = calculate_h(h,error);
+						accept_step = (error < 1.0) || (abs(new_h - h) < 1e-10);
+						// calculate new time step
+
+						h = new_h;
+
+
+						if(accept_step)
+						{
+							// accept the step
+							#pragma unroll
+							for(int i = 0; i < nbod;i++)
+								sysref[i].p(0) = pos[0][i], sysref[i].v(0) = vel[0][i];
+							#pragma unroll
+							for(int i = 0; i < nbod;i++)
+								sysref[i].p(1) = pos[1][i], sysref[i].v(1) = vel[1][i];
+							#pragma unroll
+							for(int i = 0; i < nbod;i++)
+								sysref[i].p(2) = pos[2][i], sysref[i].v(2) = vel[2][i];
+							// Store results to global memory. Invoke stopper.
+						}
+					}
+				}
+
 		};
 
-		/*! \brief compute accelerations from a temporary state in y
-		 * @param[in]  ens   ensemble 
-		 * @param[in]  y   temporary coordinates (3d array)
-		 * @param[in]  sys    system id
- 		 * @param[out] dydx  derivatives (3d array)
-		 */
-		__device__ void compute_acc(const ensemble &ens, const cuxDevicePtr<double, 3> y, const int sys, cuxDevicePtr<double, 3> dydx)
-		{
-		typedef ThreeVector<double> V3;
+			gpu_t gpu_obj;
 
-		for ( unsigned int i=0;i<ens.nbod();++i )
-		    {
-		    V3 xi( y( sys,i,0 ), y( sys,i,1 ), y( sys,i,2 ) );
-		    V3 ai(0.);
-		    for (int j=ens.nbod()-1; j >= 0; j--)
-			{
-			if ( j==i ) continue; // Ignore body interacting with itself
-
-			V3 dx(y(sys,j,0), y(sys,j,1), y(sys,j,2));  dx -= xi;
-			double r2 = dx.MagnitudeSquared();
-			double rinv = rsqrt ( r2 );
-			rinv *= ens.mass ( sys,j );
-			double rinv3 = rinv/r2;
-
-			dx *= rinv3;
-			ai += dx;
-			}
-		    dydx ( sys, i, 0 ) = y( sys, i, 3 );
-		    dydx ( sys, i, 1 ) = y( sys, i, 4 );
-		    dydx ( sys, i, 2 ) = y( sys, i, 5 );
-		    dydx ( sys, i, 3 ) = ai.X();
-		    dydx ( sys, i, 4 ) = ai.Y();
-		    dydx ( sys, i, 5 ) = ai.Z();
-		    } // end loop over bodies
-		}
-
-		/*! \brief compute accelerations from state in ensemble
-		 * @param[in]  ens   ensemble 
-		 * @param[in]  y     temporary coordinates (3d array)
-		 * @param[in]  sys   system id
- 		 * @param[out] dydx  derivatives (3d array)
-		 */
-		__device__ void compute_acc(ensemble &ens, int sys, cuxDevicePtr<double, 3> dydx)
-		{
-		typedef ThreeVector<double> V3;
-
-		for ( unsigned int i=0;i<ens.nbod();++i )
-		    {
-		    V3 xi( ens.x ( sys,i ), ens.y ( sys,i ), ens.z ( sys,i ) );
-		    V3 ai(0.);
-		    for (int j=ens.nbod()-1; j >= 0; j--)
-			{
-			if ( j==i ) continue; // Ignore body interacting with itself
-
-			V3 dx(ens.x(sys,j), ens.y(sys,j), ens.z(sys,j));  dx -= xi;
-			double r2 = dx.MagnitudeSquared();
-			double rinv = rsqrt ( r2 );
-			rinv *= ens.mass ( sys,j );
-			double rinv3 = rinv/r2;
-
-			dx *= rinv3;
-			ai += dx;
-			}
-		    dydx ( sys, i, 0 ) = ens.vx( sys, i);
-		    dydx ( sys, i, 1 ) = ens.vy( sys, i);
-		    dydx ( sys, i, 2 ) = ens.vz( sys, i);
-		    dydx ( sys, i, 3 ) = ai.X();
-		    dydx ( sys, i, 4 ) = ai.Y();
-		    dydx ( sys, i, 5 ) = ai.Z();
-		    } // end loop over bodies
-		}
-
-		/// Sub stepper based on rkck (just tries a step and stores into ytmp) 
-		template<typename stop_t>
-		__device__ double substep(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
-		{
-//		const double ah[] = { 1.0 / 5.0, 0.3, 3.0 / 5.0, 1.0, 7.0 / 8.0 };
-		const double b21 = 1.0 / 5.0;
-		const double b3[] = { 3.0 / 40.0, 9.0 / 40.0 };
-		const double b4[] = { 0.3, -0.9, 1.2 };
-		const double b5[] = { -11.0 / 54.0, 2.5, -70.0 / 27.0, 35.0 / 27.0 };
-		const double b6[] = { 1631.0 / 55296.0, 175.0 / 512.0, 575.0 / 13824.0, 44275.0 / 110592.0, 253.0 / 4096.0 };
-		const double c1 = 37.0 / 378.0;
-		const double c3 = 250.0 / 621.0;
-		const double c4 = 125.0 / 594.0;
-		const double c6 = 512.0 / 1771.0;
-
-		const double ec[] = 
-		     { 0.0,
-		       // the first value is the same as c1, above 
-		       37.0 / 378.0 - 2825.0 / 27648.0,
-		       0.0,
-		       // the first value is the same as c3, above 
-		       250.0 / 621.0 - 18575.0 / 48384.0,
-		       // the first value is the same as c4, above 
-		       125.0 / 594.0 - 13525.0 / 55296.0,
-		       -277.00 / 14336.0,
-		       // the first value is the same as c6, above 
-		       512.0 / 1771.0 - 0.25 };
-
-
-			if(T >= Tend) { return T; }
-			double hh = T + pt.h_try <= Tend ? pt.h_try : Tend - T;
-
-			// k1 step
-			compute_acc(ens,sys,k1);       // at T
-			double htmp = b21*hh;
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + htmp* k1(sys, bod, 0);
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + htmp* k1(sys, bod, 1);
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + htmp* k1(sys, bod, 2);
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + htmp* k1(sys, bod, 3);
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + htmp* k1(sys, bod, 4);
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + htmp* k1(sys, bod, 5);
-			}
-			// k2 step
-			compute_acc(ens,ytmp,sys,k2);  // at T + ah[0]*hh
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b3[0]*k1(sys, bod, 0) + b3[1]*k2(sys, bod, 0));
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b3[0]*k1(sys, bod, 1) + b3[1]*k2(sys, bod, 1));
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b3[0]*k1(sys, bod, 2) + b3[1]*k2(sys, bod, 2));
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b3[0]*k1(sys, bod, 3) + b3[1]*k2(sys, bod, 3));
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b3[0]*k1(sys, bod, 4) + b3[1]*k2(sys, bod, 4));
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b3[0]*k1(sys, bod, 5) + b3[1]*k2(sys, bod, 5));
-			}
-			// k3 step
-			compute_acc(ens,ytmp,sys,k3);  // at T + ah[1]*hh
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b4[0]*k1(sys, bod, 0) + b4[1]*k2(sys, bod, 0) + b4[2]*k3(sys, bod, 0) );
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b4[0]*k1(sys, bod, 1) + b4[1]*k2(sys, bod, 1) + b4[2]*k3(sys, bod, 1) );
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b4[0]*k1(sys, bod, 2) + b4[1]*k2(sys, bod, 2) + b4[2]*k3(sys, bod, 2) );
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b4[0]*k1(sys, bod, 3) + b4[1]*k2(sys, bod, 3) + b4[2]*k3(sys, bod, 3) );
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b4[0]*k1(sys, bod, 4) + b4[1]*k2(sys, bod, 4) + b4[2]*k3(sys, bod, 4) );
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b4[0]*k1(sys, bod, 5) + b4[1]*k2(sys, bod, 5) + b4[2]*k3(sys, bod, 5) );
-			}
-			// k4 step
-			compute_acc(ens,ytmp,sys,k4);// at T + ah[2]*hh
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b5[0]*k1(sys, bod, 0) + b5[1]*k2(sys, bod, 0) + b5[2]*k3(sys, bod, 0) + b5[3]*k4(sys, bod, 0) );
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b5[0]*k1(sys, bod, 1) + b5[1]*k2(sys, bod, 1) + b5[2]*k3(sys, bod, 1) + b5[3]*k4(sys, bod, 1) );
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b5[0]*k1(sys, bod, 2) + b5[1]*k2(sys, bod, 2) + b5[2]*k3(sys, bod, 2) + b5[3]*k4(sys, bod, 2) );
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b5[0]*k1(sys, bod, 3) + b5[1]*k2(sys, bod, 3) + b5[2]*k3(sys, bod, 3) + b5[3]*k4(sys, bod, 3) );
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b5[0]*k1(sys, bod, 4) + b5[1]*k2(sys, bod, 4) + b5[2]*k3(sys, bod, 4) + b5[3]*k4(sys, bod, 4) );
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b5[0]*k1(sys, bod, 5) + b5[1]*k2(sys, bod, 5) + b5[2]*k3(sys, bod, 5) + b5[3]*k4(sys, bod, 5) );
-			}
-			// k5 step
-			compute_acc(ens,ytmp,sys,k5);// at T + ah[3]*hh
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ytmp(sys, bod, 0) = ens.x (sys, bod) + hh* (b6[0]*k1(sys, bod, 0) + b6[1]*k2(sys, bod, 0) + b6[2]*k3(sys, bod, 0) + b6[3]*k4(sys, bod, 0) + b6[4]*k5(sys, bod, 0));
-			ytmp(sys, bod, 1) = ens.y (sys, bod) + hh* (b6[0]*k1(sys, bod, 1) + b6[1]*k2(sys, bod, 1) + b6[2]*k3(sys, bod, 1) + b6[3]*k4(sys, bod, 1) + b6[4]*k5(sys, bod, 1));
-			ytmp(sys, bod, 2) = ens.z (sys, bod) + hh* (b6[0]*k1(sys, bod, 2) + b6[1]*k2(sys, bod, 2) + b6[2]*k3(sys, bod, 2) + b6[3]*k4(sys, bod, 2) + b6[4]*k5(sys, bod, 2));
-			ytmp(sys, bod, 3) = ens.vx(sys, bod) + hh* (b6[0]*k1(sys, bod, 3) + b6[1]*k2(sys, bod, 3) + b6[2]*k3(sys, bod, 3) + b6[3]*k4(sys, bod, 3) + b6[4]*k5(sys, bod, 3));
-			ytmp(sys, bod, 4) = ens.vy(sys, bod) + hh* (b6[0]*k1(sys, bod, 4) + b6[1]*k2(sys, bod, 4) + b6[2]*k3(sys, bod, 4) + b6[3]*k4(sys, bod, 4) + b6[4]*k5(sys, bod, 4));
-			ytmp(sys, bod, 5) = ens.vz(sys, bod) + hh* (b6[0]*k1(sys, bod, 5) + b6[1]*k2(sys, bod, 5) + b6[2]*k3(sys, bod, 5) + b6[3]*k4(sys, bod, 5) + b6[4]*k5(sys, bod, 5));
-			}
-			// k6 step & final sum
-			compute_acc(ens,ytmp,sys,k6);// at T + ah[4]*hh
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			double di;
-			di = c1*k1(sys, bod, 0) + c3*k3(sys, bod, 0) + c4*k4(sys, bod, 0) + c6*k6(sys, bod, 0);
-			ytmp(sys, bod, 0) = ens.x(sys,bod) + hh * di;
-			yerr(sys, bod, 0) = hh* ( ec[1]*k1(sys, bod, 0) + ec[3]*k3(sys, bod, 0) + ec[4] * k4(sys, bod, 0) + ec[5] * k5(sys, bod, 0) + ec[6] * k6(sys, bod, 0) );
-			di = c1*k1(sys, bod, 1) + c3*k3(sys, bod, 1) + c4*k4(sys, bod, 1) + c6*k6(sys, bod, 1);
-			ytmp(sys, bod, 1) = ens.y(sys,bod) + hh * di;
-			yerr(sys, bod, 1) = hh* ( ec[1]*k1(sys, bod, 1) + ec[3]*k3(sys, bod, 1) + ec[4] * k4(sys, bod, 1) + ec[5] * k5(sys, bod, 1) + ec[6] * k6(sys, bod, 1) );
-			di = c1*k1(sys, bod, 2) + c3*k3(sys, bod, 2) + c4*k4(sys, bod, 2) + c6*k6(sys, bod, 2);
-			ytmp(sys, bod, 2) = ens.z(sys,bod) + hh * di;
-			yerr(sys, bod, 2) = hh* ( ec[1]*k1(sys, bod, 2) + ec[3]*k3(sys, bod, 2) + ec[4] * k4(sys, bod, 2) + ec[5] * k5(sys, bod, 2) + ec[6] * k6(sys, bod, 2) );
-			di = c1*k1(sys, bod, 3) + c3*k3(sys, bod, 3) + c4*k4(sys, bod, 3) + c6*k6(sys, bod, 3);
-			ytmp(sys, bod, 3) = ens.vx(sys,bod) + hh * di;
-			yerr(sys, bod, 3) = hh* ( ec[1]*k1(sys, bod, 3) + ec[3]*k3(sys, bod, 3) + ec[4] * k4(sys, bod, 3) + ec[5] * k5(sys, bod, 3) + ec[6] * k6(sys, bod, 3) );
-			di = c1*k1(sys, bod, 4) + c3*k3(sys, bod, 4) + c4*k4(sys, bod, 4) + c6*k6(sys, bod, 4);
-			ytmp(sys, bod, 4) = ens.vy(sys,bod) + hh * di;
-			yerr(sys, bod, 4) = hh* ( ec[1]*k1(sys, bod, 4) + ec[3]*k3(sys, bod, 4) + ec[4] * k4(sys, bod, 4) + ec[5] * k5(sys, bod, 4) + ec[6] * k6(sys, bod, 4) );
-			di = c1*k1(sys, bod, 5) + c3*k3(sys, bod, 5) + c4*k4(sys, bod, 5) + c6*k6(sys, bod, 5);
-			ytmp(sys, bod, 5) = ens.vz(sys,bod) + hh * di;
-			yerr(sys, bod, 5) = hh* ( ec[1]*k1(sys, bod, 5) + ec[3]*k3(sys, bod, 5) + ec[4] * k4(sys, bod, 5) + ec[5] * k5(sys, bod, 5) + ec[6] * k6(sys, bod, 5) );
-
-//			stop.test_body(stop_ts, ens, sys, bod, T+hh, ytmp(sys,bod,0), ytmp(sys,bod,1),ytmp(sys,bod,2),ytmp(sys,bod,3),ytmp(sys,bod,4),ytmp(sys,bod,5));
-			}
-		return T + hh;
-		}
-
-		/// use error estimates for each coordinate to estimate the "scaled error" for the trial step
- 		/// based on scaling in John Chamber's mercury
-		/// should we cache the scale factors (mercury does) or is recomputing better on GPU ?
-		__device__ double calculate_error(ensemble &ens, thread_state_t &pt, int sys, cuxDevicePtr<double, 3> y,  cuxDevicePtr<double, 3> yerr) const
-		{
-		   double errmax = 0.;
- 		   for(int bod=0;bod<ens.nbod();bod++)
-		      {
-			double rmag = y(sys,bod,0)*y(sys,bod,0)+ y(sys,bod,1)*y(sys,bod,1)+ y(sys,bod,2)*y(sys,bod,2);
-			double rerrmag = yerr(sys,bod,0)*yerr(sys,bod,0)+ yerr(sys,bod,1)*yerr(sys,bod,1)+ yerr(sys,bod,2)*yerr(sys,bod,2);
-                        if(rerrmag/rmag>errmax) errmax = rerrmag/rmag;
-			double vmag = y(sys,bod,3)*y(sys,bod,3)+ y(sys,bod,4)*y(sys,bod,4)+ y(sys,bod,5)*y(sys,bod,5);
-			double verrmag = yerr(sys,bod,3)*yerr(sys,bod,3)+ yerr(sys,bod,4)*yerr(sys,bod,4)+ yerr(sys,bod,5)*yerr(sys,bod,5);
-                        if(verrmag/vmag>errmax) errmax = verrmag/vmag;
-		      }
-		   return errmax;
-		}
 		/*!
-                 *  \brief Advance the system - this function must advance the system sys by one timestep, making sure that T does not exceed Tend.
+		 * \brief initialize temporary variables for ensemble ens. 
 		 *
-		 * This function MUST return the new time of the system.
-		 * This function MUST also call stop.test_body() for every body
-		 * in the system, after that body has been advanced by a timestep.
-                 *
-  		 * see RKCK implementation GSL 
-                 *
-		 * @tparam stop_t ...
-		 * @param[in,out] ens ensemble
-		 * @param[in,out] pt ...
-		 * @param[in] sys system ID
-		 * @param[in] T start time
-		 * @param[in] Tend destination time
-		 * @param[in] stop ...
-		 * @param[in] stop_ts ...
-		 * @param[in] step  ...
-		 * @return new time of the system
+		 * This function should initialize any temporary state that is needed for integration of ens. 
+		 * It will be called from gpu_generic_integrator, but only if ens.last_integrator() != this. 
+		 * If any temporary state exists from previous invocation of this function, it should be deallocated and the new state (re)allocated.
 		 */
-		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		void initialize(ensemble &ens)
 		{
-			if(T >= Tend) { return T; }
-
-        	typename stop_t::thread_state_t stop_ts_tmp = stop_ts;
-
-			double Ttmp = substep(ens,pt,sys,T,Tend,stop,stop_ts_tmp,step); 
-
-                        double error = calculate_error(ens,pt,sys,ytmp,yerr)/error_tolerance;
-
-			double step_guess_power = (error<1.) ? step_grow_power : step_shrink_power;
-			/// factor of 0.5 below due to use of squares in calculate_error, should we change to match gsl?
-			double step_change_factor = 1.;
-			
-			/// gsl uses 1.1, but that seems dangerous, any reason we shouldn't use 1?
-			if((error<0.5)||(error>1.0))
-			   step_change_factor = step_guess_safety_factor*pow(error,0.5*step_guess_power);
- 
-			if(error>1.)
-			  {
-                          if(step_change_factor<step_shrink_min_factor) { step_change_factor = step_shrink_min_factor; } 
-  			  pt.h_try *= step_change_factor;
-			  pt.substep_state++;
-			  stop_ts.set_step_incomplete();				
-			  return T;
-			  }
-
-			// else (effectively implies error<=1.)
-
-                          if(step_change_factor>step_grow_max_factor) { step_change_factor = step_grow_max_factor; } 
-			  if(step_change_factor<1) step_change_factor = 1.;
-
-			  /// TODO: Currently storing info in both thread state and stopper's thread state, but checking only stopper's thread state.  Decide where this should be.
-			  pt.h_prev = pt.h_try;
-			  pt.h_try *= step_change_factor;
-			  pt.substep_state = 0;
-                          stop_ts = stop_ts_tmp;
-			  stop_ts.set_step_complete();				
-
-//if((step%1000==0)||(step%1000==1)) lprintf(dlog, "sys = %d  time = %g  time step did = %g  time step try next = %g\n", sys, Ttmp, pt.h_prev, pt.h_try);
-                        
-			for(int bod = 0; bod != ens.nbod(); bod++)
-			{
-			ens.x(sys,bod)  = ytmp(sys,bod,0);
-			ens.y(sys,bod)  = ytmp(sys,bod,1);
-			ens.z(sys,bod)  = ytmp(sys,bod,2);
-			ens.vx(sys,bod) = ytmp(sys,bod,3);
-			ens.vy(sys,bod) = ytmp(sys,bod,4);
-			ens.vz(sys,bod) = ytmp(sys,bod,5);
-
-			stop.test_body(stop_ts, ens, sys, bod, Ttmp, ytmp(sys,bod,0), ytmp(sys,bod,1),ytmp(sys,bod,2),ytmp(sys,bod,3),ytmp(sys,bod,4),ytmp(sys,bod,5));
-//			stop.test_body(stop_ts, ens, sys, bod, T+hh, ens.x(sys,bod), ens.y(sys,bod), ens.z(sys,bod), ens.vx(sys,bod), ens.vy(sys,bod), ens.vz(sys,bod));
-			}
-			++step;
-
-			return Ttmp;
+			// Here you'd initialize the object to be passed to the kernel, or
+			// upload any temporary data you need to constant/texture/global memory
 		}
 
+		/*!
+		 * \brief constructor 
+		 * 
+		 * Constructor will be passed the cfg object with the contents of integrator configuration file. 
+		 * It will be called during construction of gpu_generic_integrator. 
+		 * It should load any values necessary for initialization.
+		 */
+		prop_rkqs(const config &cfg)
+		{
+			if(!cfg.count("initial time step factor")) ERROR("Integrator gpu_rkqs requires a timestep ('initial time step factor' keyword in the config file).");
+			gpu_obj.hinit = atof(cfg.at("initial time step factor").c_str());
+			if(!cfg.count("min time step")) ERROR("Integrator gpu_rkqs requires smallest time step allowed ('min time step' keyword in the config file).");
+			gpu_obj.hmin = atof(cfg.at("min time step").c_str());
+			if(!cfg.count("max time step")) ERROR("Integrator gpu_rkqs requires largest time step allowed ('min time step' keyword in the config file).");
+			gpu_obj.hmax = atof(cfg.at("max time step").c_str());
+			if(!cfg.count("error tolerance")) ERROR("Integrator gpu_rkqs requires an error tolerance  ('error tolerance' keyword in the config file).");
+			gpu_obj.error_tolerance = atof(cfg.at("error tolerance").c_str());
+		}
+
+		/*!
+		 * \brief Cast operator for gpu_t.
+		 *
+		 * This operator must return the gpu_t object to be passed to integration kernel. 
+		 * It is called once per kernel invocation.
+		 * @return gpu_t object to be passed to integration kernel.
+		 */
+		operator gpu_t()
+		{
+			return gpu_obj;
+		}
 	};
 
-	//! CPU state and interface
-	cuxDeviceAutoPtr<double, 3> k1, k2, k3, k4, k5, k6;
-	cuxDeviceAutoPtr<double, 3> y0;
-	cuxDeviceAutoPtr<double, 3> ytmp;
-	cuxDeviceAutoPtr<double, 3> yerr;
-	gpu_t gpu_obj;
 
 	/*!
-         * \brief initialize temporary variables for ensemble ens. 
-         *
-         * This function should initialize any temporary state that is needed for integration of ens. 
-	 * It will be called from gpu_generic_integrator, but only if ens.last_integrator() != this. 
-         * If any temporary state exists from previous invocation of this function, it should be deallocated and the new state (re)allocated.
+	 * \brief factory function to create an integrator 
+	 * 	  
+	 * This factory uses the gpu_generic_integrator class
+	 * with the propagator rkqs and the stopper stop_on_ejection
+	 * 
+	 * @param[in] cfg contains configuration data for gpu_generic_integrator
 	 */
-	void initialize(ensemble &ens)
+	extern "C" integrator *create_gpu_rkqs(const config &cfg)
 	{
-		// Here you'd initialize the object to be passed to the kernel, or
-		// upload any temporary data you need to constant/texture/global memory
-		k1.realloc(ens.nsys(), ens.nbod(), 6);
-		k2.realloc(ens.nsys(), ens.nbod(), 6);
-		k3.realloc(ens.nsys(), ens.nbod(), 6);
-		k4.realloc(ens.nsys(), ens.nbod(), 6);
-		k5.realloc(ens.nsys(), ens.nbod(), 6);
-		k6.realloc(ens.nsys(), ens.nbod(), 6);
-		y0.realloc(ens.nsys(), ens.nbod(), 6);
-		ytmp.realloc(ens.nsys(), ens.nbod(), 6);
-		yerr.realloc(ens.nsys(), ens.nbod(), 6);
-		gpu_obj.k1= k1;
-		gpu_obj.k2= k2;
-		gpu_obj.k3= k3;
-		gpu_obj.k4= k4;
-		gpu_obj.k5= k5;
-		gpu_obj.k6= k6;
-		gpu_obj.y0= y0;
-		gpu_obj.ytmp= ytmp;
-		gpu_obj.yerr= yerr;
+		return new gpu_generic_integrator<stop_on_ejection, prop_rkqs>(cfg);
+		//return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkqs>(cfg);
 	}
-
-	/*!
-	 * \brief constructor 
-         * 
-         * Constructor will be passed the cfg object with the contents of integrator configuration file. 
-         * It will be called during construction of gpu_generic_integrator. 
-         * It should load any values necessary for initialization.
-	 */
-	prop_rkqs(const config &cfg)
-	{
-		if(!cfg.count("initial time step factor")) ERROR("Integrator gpu_rkqs requires a timestep ('initial time step factor' keyword in the config file).");
-		gpu_obj.hinit = atof(cfg.at("initial time step factor").c_str());
-		if(!cfg.count("error tolerance")) ERROR("Integrator gpu_rkqs requires an error tolerance  ('error tolerance' keyword in the config file).");
-		gpu_obj.error_tolerance = atof(cfg.at("error tolerance").c_str());
-	}
-
-	/*!
-         * \brief Cast operator for gpu_t.
-         *
-         * This operator must return the gpu_t object to be passed to integration kernel. 
-         * It is called once per kernel invocation.
-	 * @return gpu_t object to be passed to integration kernel.
-	 */
-	operator gpu_t()
-	{
-		return gpu_obj;
-	}
-};
-
-
-/*!
- * \brief factory function to create an integrator 
- * 	  
- * This factory uses the gpu_generic_integrator class
- * with the propagator rkqs and the stopper stop_on_ejection
- * 
- * @param[in] cfg contains configuration data for gpu_generic_integrator
- */
-extern "C" integrator *create_gpu_rkqs(const config &cfg)
-{
-	return new gpu_generic_integrator<stop_on_ejection, prop_rkqs>(cfg);
-       //return new gpu_generic_integrator< stop_on_crossing_orbit_or_close_approach, prop_rkqs>(cfg);
-}
 
 } // end namespace swarm

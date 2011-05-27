@@ -1,5 +1,5 @@
 test-outputs
-run/integrator.cfg
+run
 run/data*
 scripts/ic/data*
 scripts/ic/observeTimes.dat
@@ -21,3 +21,4 @@ src/*~
 bin/*
 docs/*.html
 feedback.*
+.*.swp

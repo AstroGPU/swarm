@@ -178,13 +178,14 @@ struct prop_euler
 		/// GPU per-thread state and interface for prop_euler
 		struct thread_state_t
 		{
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+			__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
 			{ }
 		};
-
+		__host__ __device__ static int threads_per_system(int nbod) { return 1; }
+ 
 		/// advances the system using euler propagator
 		template<typename stop_t>
-		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
+		__device__ double advance(ensemble &ens, thread_state_t &pt, int sys, int thr, double T, double Tend, stop_t &stop, typename stop_t::thread_state_t &stop_ts, int step)
 		{
 			if(T >= Tend) { return T; }
 			double h = T + this->h <= Tend ? this->h : Tend - T;
