@@ -1,3 +1,5 @@
+#ifndef H_STOPPER_CU
+#define H_STOPPER_CU
 /*! \file stopper.cu
  * \brief declares stopper classes
  */
@@ -312,3 +314,5 @@ struct stop_on_ejection// : public stopper
 };
 
 } // end namespace swarm
+
+#endif

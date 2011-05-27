@@ -78,8 +78,12 @@ swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp
 # APPS+=swarm_tutorial_montecarlo_rv
 # swarm_tutorial_montecarlo_rv_SOURCES=src/tutorials/swarm_tutorial_montecarlo_rv.cpp 
 
+
 APPS+=swarm_scatter_demo
 swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
+
+# APPS+=test_cuda_installtion
+# swarm_scatter_demo_SOURCES=src/test_cuda_installation.cpp
 
 ##########################################################
 #
@@ -136,6 +140,9 @@ TIDYUI=@ echo "[ TIDY  ]" &&
 endif
 
 all: $(APPS)
+
+bin/test_cuda_installation.exe:src/test_cuda_installation.cpp
+	$(CXXUI) $(CXX)  $(CXXFLAGS) $< -o $@ -L/scratch/cuda_3.2/cuda/lib -L/scratch/cuda_3.2/cuda/lib64 -lcuda -lcudart -L./bin -lswarm
 
 #
 # rules for libswarm.so
