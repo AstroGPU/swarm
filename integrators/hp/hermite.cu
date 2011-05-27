@@ -17,7 +17,6 @@
  ************************************************************************/
 
 #include "hp.hpp"
-#include "static_accjerk.hpp"
 #include "swarmlog.h"
 
 
@@ -73,7 +72,7 @@ class hermite: public integrator {
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc = 0, jerk = 0;
+		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
 		if( body_component_grid )
 			pos = sys[b].p(c), vel = sys[b].v(c);
 
@@ -82,43 +81,41 @@ class hermite: public integrator {
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
+		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 		while(t < t_end){
 			double h = min(_time_step, t_end - t);
 
-			double pos_old = pos, vel_old = vel;
+			
+			// Initial Evaluation
+			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-			{
-				// Initial Evaluation
-				calcForces(ij,b,c,pos,vel,acc,jerk);
+			// Predict 
+			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.)*jerk0));
+			vel = vel +  h*(acc0+(h*0.5)*jerk0);
 
-				// Predict 
-				pos = pos_old +  h*(vel_old+(h*0.5)*(acc+(h/3.)*jerk));
-				vel = vel_old +  h*(acc+(h*0.5)*jerk);
-			}
+			double pre_pos = pos, pre_vel = vel;
 
-			double acc_old = acc,jerk_old = jerk;
-
+			double acc1,jerk1;
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc,jerk);
+				calcForces(ij,b,c,pos,vel,acc1,jerk1);
 
 				// Correct
-				pos = pos_old + (h*0.5) * ( (vel_old + vel) 
-						+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-				vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
+				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
 			}
-
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc,jerk);
+				calcForces(ij,b,c,pos,vel,acc1,jerk1);
 
 				// Correct
-				pos = pos_old + (h*0.5) * ( (vel_old + vel) 
-						+ (h*7.0/30.)*( (acc_old-acc) + (h/7.) * (jerk_old+jerk)));
-				vel = vel_old + (h*0.5) * ( (acc_old+acc) + (h/6.) * (jerk_old-jerk));
+				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
+				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
 			}
+			acc0 = acc1, jerk0 = jerk1;
 
+			// Finalize the step
 			t += h;
 
 			if( body_component_grid )

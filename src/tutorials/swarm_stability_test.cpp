@@ -22,9 +22,9 @@ void stability_test(config& cfg){
 		return;
 	}
 
-	double duration = (cfg["duration"] != "") ? atoi(cfg["duration"].c_str()) : 10 * M_PI ;        
-	double interval = (cfg["interval"] != "") ? atoi(cfg["interval"].c_str()) : (duration / 10 ) ; 
-	double logarithmic = (cfg["logarithmic"] != "") ? atoi(cfg["logarithmic"].c_str()) : 0 ; 
+	double duration = (cfg["duration"] != "") ? atof(cfg["duration"].c_str()) : 10 * M_PI ;        
+	double interval = (cfg["interval"] != "") ? atof(cfg["interval"].c_str()) : (duration / 10 ) ; 
+	double logarithmic = (cfg["logarithmic"] != "") ? atof(cfg["logarithmic"].c_str()) : 0 ; 
 
 	if(interval < 1e-02 ) {
 		std::cerr << "Interval is too small : " << interval << std::endl;
