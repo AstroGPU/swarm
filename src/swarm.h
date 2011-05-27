@@ -54,6 +54,9 @@
 /// The main namespace for the Swarm-NG library
 namespace swarm {
 
+void set_cuda_cache_small();
+void set_cuda_cache_large();
+
 	typedef std::map<std::string, std::string> config;
 	void init(const config &cfg);
 

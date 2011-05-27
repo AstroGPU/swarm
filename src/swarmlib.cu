@@ -70,6 +70,29 @@ inline __device__ uint32_t threadsPerBlock()
 namespace swarm {
 
 /*!
+  \brief empty kernel to simplify setting of L1 cache size
+*/
+__global__ void dummy() {};
+
+/*!
+  \brief Sets larger avaliable L1 cache size to be default (48k on GF100)
+*/
+void set_cuda_cache_large()
+{
+cudaFuncSetCacheConfig(dummy, cudaFuncCachePreferL1);
+dummy<<<16,32>>>();
+};
+
+/*!
+  \brief Sets smaller avaliable L1 cache size to be default (16k on GF100)
+*/
+void set_cuda_cache_small()
+{
+cudaFuncSetCacheConfig(dummy, cudaFuncCachePreferShared);
+dummy<<<16,32>>>();
+};
+
+/*!
   \brief compute and store the number of systems that remain active
 
   NOTE: assumes not more than MAXTHREADSPERBLOCK threads per block

@@ -99,7 +99,9 @@ int main(int argc,  char **argv)
       blocksize_stream << 64; 
     cfg["threads per block"] = blocksize_stream.str();
   }
-  
+ 
+  swarm::set_cuda_cache_large();
+ 
   // Get simple values from command line arguements (or use defaults)
   int nsystems = (vm.count("systems")) ? vm["systems"].as<int>() : 960;
   int nbodyspersystem = (vm.count("num_bodies")) ? vm["num_bodies"].as<int>() : 3;
