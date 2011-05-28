@@ -461,7 +461,7 @@ bool cux_init()
 
 #if !__DEVICE_EMULATION__
 	// Memory info
-	unsigned int free = 0, total = 0;
+	size_t free = 0, total = 0;
 	cuxErrCheck( (cudaError)cuMemGetInfo(&free, &total) );
 //	MLOG(verb2) << "Device memory (free, total): " << free / (1<<20) << "M, " << total / (1<<20) << "M" << "\n";
 #endif

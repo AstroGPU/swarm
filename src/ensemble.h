@@ -209,7 +209,7 @@ class ensemble
 			__host__ __device__ real_time& time() { return ens->time(sys); }
 			__host__ __device__ real_time& time_end() { return ens->time_end(sys); }
 			__host__ __device__ void increase_stepcount() { ens->nstep(sys)++; }
-			__host__ __device__ int nbod() { return ens->nbod(); }
+			__host__ __device__ int nbod() const { return ens->nbod(); }
 			/*
 			__host__ __device__ pointref  pos(int bod) { return pointref(ens->x(sys,bod),ens->y(sys,bod),ens->z(sys,bod)) ; }
 			__host__ __device__ pointref  vel(int bod) { return pointref(ens->vx(sys,bod),ens->vy(sys,bod),ens->vz(sys,bod)) ; }

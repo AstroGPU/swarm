@@ -32,7 +32,7 @@ class integrator : public swarm::integrator {
 
 	//// Launch Variables
 	int _threads_per_block;
-        unsigned int _max_itterataions_per_kernel_call;
+        unsigned int _max_itterations_per_kernel_call;
         unsigned int _max_kernel_calls_per_integrate_call;
 	double _destination_time;
 
@@ -40,7 +40,7 @@ class integrator : public swarm::integrator {
 	integrator(const config &cfg) {
 		_threads_per_block = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 128;
 		// TODO: Check that there are at least as many threads per block as threads per system
-		assert(_threads_per_block>=
+		assert(_threads_per_block>=thread_per_system());
 		_max_itterations_per_kernel_call = cfg.count("max itterations per kernel call") ? atoi(cfg.at("max itterations per kernel call").c_str()) : 10000;
 		// TODO: Once are able to check for how many systems are still active, increase the default value
 		_max_kernel_calls_per_integrate_call = cfg.count("max kernel calls per integrate call") ? atoi(cfg.at("max kernel calls per integrate call").c_str()) : 10;
@@ -85,7 +85,7 @@ class integrator : public swarm::integrator {
 
 	virtual void launch_integrator() = 0;
 
-	int thread_per_system() {
+	int thread_per_system() const {
 		const int nbod = _ens->nbod();
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
@@ -93,11 +93,11 @@ class integrator : public swarm::integrator {
 		return threads_per_system;
 	}
 
-	int  system_per_block() {
+        int system_per_block() const {
 		return  _threads_per_block / thread_per_system();
 	}
 
-	dim3 gridDim(){
+	dim3 gridDim() const {
 		const int systems_per_block = system_per_block();
 		// TODO: Saleh check that new code is correct
 		//  OLD:	const int nblocks = ( _ens->nsys() + systems_per_block ) / systems_per_block;
@@ -110,16 +110,16 @@ class integrator : public swarm::integrator {
 		find_best_factorization(gD.x,gD.y,nblocks);
 		return gD;
 	}
-	dim3 threadDim(){
+	dim3 threadDim() const {
 		const int threads_per_system = thread_per_system();
-		const int system_per_block = system_per_block();
+		const int systems_per_block = system_per_block();
 
 		dim3 tD;
-		tD.x = thread_per_system;
-		tD.y = system_per_block;
+		tD.x = threads_per_system;
+		tD.y = systems_per_block;
 		return tD;
 	}
-	int  shmemSize(){
+        int  shmemSize() const {
 		const int nbod = _ens->nbod();
 		return system_per_block() * shmem_per_system(nbod);
 	}

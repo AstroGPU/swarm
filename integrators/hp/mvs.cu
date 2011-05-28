@@ -27,11 +27,22 @@
 namespace swarm {
 namespace hp {
 
+struct FixedTimeStep {
+	const static bool adaptive_time_step = false;
+	const static bool conditional_accept_step = false;
+};
+
+struct AdaptiveTimeStep {
+	const static bool adaptive_time_step = true;
+	const static bool conditional_accept_step = true;
+};
+
+template < class AdaptationStyle >
 class mvs: public integrator {
 	typedef integrator base;
 	private:
 	double _time_step;
-	static int _N_LAG = 5.0;
+	static const int _N_LAG = 5.0;
 
 	public:
 	mvs(const config& cfg): base(cfg),_time_step(0.001) {
@@ -52,7 +63,7 @@ class mvs: public integrator {
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ////////////////////////////////////////////////////////////////
-
+#define MINDENOM 1e-8  // mininum denominator
 __device__ double solvex(double r0dotv0, double alpha,
                 double M1, double r0, double dt)
 {
@@ -117,8 +128,6 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ///////////////////////////////////////////////////////////////
 #define MINR 1.0e-5 // minimum radius
-#define MINDENOM 1e-8  // mininum denominator
-__device__ void kepstep(double4 pos, double4 vel, double4* npos, double4* nvel, double deltaTime, double GM)
 __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double& vy, double& vz, const double GM, const double deltaTime)
 {
    double x_old = x, y_old = y, z_old = z, vx_old = vx, vy_old = vy, vz_old = vz;
@@ -212,7 +221,7 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 		Gravitation<nbod> calcForces(sys,system_shmem);
 		calcForces(ij,b,c,pos,vel,acc,jerk);
 
-		unsigned int iter=0
+		unsigned int iter=0;
 		while(t < t_end)
 		{
 		   double hby2 = 0.5*min(_time_step, t_end - t);
@@ -234,7 +243,7 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 		   {
 		   // TODO: For now using heliocentric drift; improve
 		   double cx = sys[0].p(0), cy = sys[0].p(1), cz = sys[0].p(2);
-		   double cvx = sys[0].v(0), cvy = sys[0].v(1), cvz = sys[0].v(d2);
+		   double cvx = sys[0].v(0), cvy = sys[0].v(1), cvz = sys[0].v(2);
 		   double x = sys[bb].p(0)-cx, y = sys[bb].p(1)-cy, z = sys[bb].p(2)-cz;
 		   double vx = sys[bb].v(0)-cvx, vy = sys[bb].v(1)-cvy, vz = sys[bb].v(2)-cvz;
 		   // TODO: could probably cache sqrt(mass) across steps
@@ -259,7 +268,7 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 		     sys[b].p(c) = pos;
 		     sys[b].v(c) = vel;
 		     }
-		   __sync_threads(); // in case will output from sys
+		   __syncthreads(); // in case will output from sys
 
 
 		   t += 2.*hby2;

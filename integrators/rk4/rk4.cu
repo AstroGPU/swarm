@@ -58,14 +58,8 @@ struct prop_rk4
 		 */
 		struct thread_state_t
 		{
-<<<<<<< HEAD
-		//! per-block variables, acceleration0
-		cuxDevicePtr<double, 3> aa0;
-			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
-=======
 			__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
->>>>>>> 3b5f14358263e19e7b6c968c8dd1cc2f2d26d3b1
-			{ }
+			{ };
 		};
 
 		__host__ __device__ static int threads_per_system(int nbod) { return 1; }
