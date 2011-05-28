@@ -151,6 +151,28 @@ class Gravitation {
 	}
 
 
+
+	__device__ double sum_values_no_sun(double (&values)[3][pair_count] , int b,int c)const{
+		double total = 0;
+
+		/// Find the contribution from/to Sun first
+#pragma unroll
+		for(int d = 0; d < pair_count; d++){
+			int x = first(d), y= second(d);
+
+			if(x == b){
+				if(y != 0)
+					total += values[c][d]* sys[y].mass();
+			}else if(y == b){
+				if(x != 0)
+					total -= values[c][d]* sys[x].mass();
+			}
+		}
+
+		return total;
+	}
+
+
 	__device__ double acc(int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod)
@@ -180,7 +202,7 @@ class Gravitation {
 		}
 	}
 
-	__device__ void operator() (int ij,int b,int c,double& acc,double& jerk)const{
+	__device__ void operator() (int ij,int b,int c,double& acc,double& jerk) const{
 	  // TODO: Do we really need this syncthreads?
 		__syncthreads();
 		if(ij < pair_count)
@@ -189,6 +211,18 @@ class Gravitation {
 		if(b < nbod){
 			acc =  sum_values(shared.acc,b,c);
 			jerk = sum_values(shared.jerk,b,c);
+		}
+	}
+
+	__device__ void calc_accel_no_sun(int ij,int b,int c,double& acc,double& jerk) const{
+	  // TODO: Do we really need this syncthreads?
+		__syncthreads();
+		if(ij < pair_count)
+			calc_pair(ij);
+		__syncthreads();
+		if(b < nbod){
+			acc =  sum_values_no_sun(shared.acc,b,c);
+			jerk = sum_values_no_sun(shared.jerk,b,c);
 		}
 	}
 

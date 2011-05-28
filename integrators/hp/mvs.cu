@@ -186,10 +186,12 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 		// Body/Component Grid
 		// Body number
 		int b = thr / 3 ;
+		int bb = b+1; // for excluding central body
 		// Component number
 		int c = thr % 3 ;
-		bool body_component_grid = b < nbod;
-		bool body_grid = thr < nbod;
+//		bool body_component_grid = b < nbod;
+		bool body_component_grid_no_sun = bb < nbod;
+//		bool body_grid = thr < nbod;
 
 		// i,j pairs Grid
 		int ij = thr;
@@ -203,14 +205,14 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc = 0, jerk = 0;
-		if( body_component_grid )
-			pos = sys[b].p(c), vel = sys[b].v(c);
+		if( body_component_grid_no_sun )
+			pos = sys[bb].p(c), vel = sys[bb].v(c);
 
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
-		calcForces(ij,b,c,pos,vel,acc,jerk);
+		calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 
 		unsigned int iter=0;
 		while(t < t_end)
@@ -219,45 +221,46 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 //		   double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;	
 
 		   // Kick
-		   if( body_component_grid )
+		   if( body_component_grid_no_sun )
 		      {
-		      pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
-		      sys[b].p(c) = pos; 
+//		      pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
+//		      sys[bb].p(c) = pos; 
 		      vel = vel +  hby2*(acc+(hby2*0.5)*jerk);
-		      sys[b].v(c) = vel;
+		      sys[bb].v(c) = vel;
 		      }
 		   __syncthreads();
 
 		   // Drift
-		   int bb = b+1;
-		   if(bb < nbod)  // Central body does not drift
+		   int bbb = thr+1;
+		   if(bbb < nbod)  // Central body does not drift
 		   {
 		   // TODO: For now using heliocentric drift; improve
+		   // TODO: Use algorithm that works; currently in non-inertial frame, but not including ficticous forces to compensate
 		   double cx = sys[0].p(0), cy = sys[0].p(1), cz = sys[0].p(2);
 		   double cvx = sys[0].v(0), cvy = sys[0].v(1), cvz = sys[0].v(2);
-		   double x = sys[bb].p(0)-cx, y = sys[bb].p(1)-cy, z = sys[bb].p(2)-cz;
-		   double vx = sys[bb].v(0)-cvx, vy = sys[bb].v(1)-cvy, vz = sys[bb].v(2)-cvz;
+		   double x = sys[bbb].p(0)-cx, y = sys[bbb].p(1)-cy, z = sys[bbb].p(2)-cz;
+		   double vx = sys[bbb].v(0)-cvx, vy = sys[bbb].v(1)-cvy, vz = sys[bbb].v(2)-cvz;
 		   // TODO: could probably cache sqrt(mass) across steps
-		   double GM = sys[0].mass()+sys[bb].mass();
+		   double GM = sys[0].mass()+sys[bbb].mass();
                    drift_kepler(x,y,z,vx,vy,vz,GM,2.0*hby2);
-		   sys[bb].p(0) = cx + x;
-		   sys[bb].p(1) = cy + y;
-		   sys[bb].p(2) = cz + z;
-		   sys[bb].p(0) = cvx + vx;
-		   sys[bb].p(1) = cvy + vy;
-		   sys[bb].p(2) = cvz + vz;
+		   sys[bbb].p(0) = cx + x; // + 2.0*hby2*cvx;
+		   sys[bbb].p(1) = cy + y; // + 2.0*hby2*cvy;
+		   sys[bbb].p(2) = cz + z; // + 2.0*hby2*cvz;
+		   sys[bbb].v(0) = cvx + vx;
+		   sys[bbb].v(1) = cvy + vy;
+		   sys[bbb].v(2) = cvz + vz;
 		   }
 		   __syncthreads();	   		   
 
 		   // Kick
-		   calcForces(ij,b,c,acc,jerk);
+		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 
-		   if( body_component_grid )
+		   if( body_component_grid_no_sun )
 		     {
-		     pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
+//		     pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
+//		     sys[bb].p(c) = pos;
 		     vel = vel +  hby2*(acc+(hby2*0.5)*jerk);
-		     sys[b].p(c) = pos;
-		     sys[b].v(c) = vel;
+		     sys[bb].v(c) = vel;
 		     }
 		   __syncthreads(); // in case will output from sys
 
