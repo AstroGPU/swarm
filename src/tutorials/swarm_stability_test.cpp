@@ -130,6 +130,7 @@ int main(int argc,  char **argv)
 		("interval,i", po::value<std::string>() , "Stability test intervals")
 		("duration,d", po::value<std::string>() , "Duration of the integration")
 		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
+		("timestep,t", po::value<std::string>() , "time step" )
 		("help,h", "produce help message")
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
@@ -164,6 +165,9 @@ int main(int argc,  char **argv)
 		load_config(cfg,icfgfn);
 	}
 
+	if(vm.count("timestep")) {
+		cfg["time step"] = vm["timestep"].as<std::string>();
+	}
 	std::cout << "# Integrator:\t" << cfg["integrator"] << "\n"
 		<< "# Time step\t" << cfg["time step"] << "\n"
 		<< "# Min time step\t" << cfg["min time step"] << "\n"
