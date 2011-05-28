@@ -391,6 +391,29 @@ bool cux_init()
 {
 	if(cuda_initialized) { return true; }
 
+#if 1
+    {
+    int deviceCount = 0;
+        if (cudaGetDeviceCount(&deviceCount) != cudaSuccess) {
+                std::cerr << "cudaGetDeviceCount FAILED CUDA Driver and Runtime version may be mismatched.\n";
+                std::cerr << "\nFAILED\n";
+       		return 255; 
+	}
+	else { std:: cerr << "# cudaGetDeviceCount: " << deviceCount << "\n";  }
+
+    int dev = 0 ;
+        int driverVersion = 0, runtimeVersion = 0;     
+        cudaDeviceProp deviceProp;
+        cudaGetDeviceProperties(&deviceProp, dev);
+	printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+
+        void *tmp;
+        if( cudaMalloc(&tmp, 1024) != cudaSuccess) std::cerr << "# Error in cudaMalloc\n";
+        if( cudaFree(tmp) != cudaSuccess) std::cerr << "# Error in cudaFree\n";
+    }
+
+#endif
+
 	// get requested device from environment
 	int dev;
 	const char *devStr = getenv("CUDA_DEVICE");

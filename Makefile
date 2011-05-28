@@ -26,7 +26,7 @@
 ### libswarm library
 ###
 LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/cpu_ensemble.cpp src/gpu_ensemble.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
-LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu src/stopper.cu
+LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu
 
 ###
 ### documentation in asciidoc format
@@ -66,24 +66,14 @@ swarm_tutorial_compare_SOURCES=src/tutorials/swarm_tutorial_compare.cpp
 APPS+=swarm_tutorial_benchmark
 swarm_tutorial_benchmark_SOURCES=src/tutorials/swarm_tutorial_benchmark.cpp 
 
-APPS+=swarm_benchmark
-swarm_benchmark_SOURCES=src/tutorials/swarm_benchmark.cpp src/tutorials/utils.cpp
-
-APPS+=swarm_stability_test
-swarm_stability_test_SOURCES=src/tutorials/swarm_stability_test.cpp  src/tutorials/utils.cpp
-
 APPS+=swarm_tutorial_montecarlo
 swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp 
 
 # APPS+=swarm_tutorial_montecarlo_rv
 # swarm_tutorial_montecarlo_rv_SOURCES=src/tutorials/swarm_tutorial_montecarlo_rv.cpp 
 
-
 APPS+=swarm_scatter_demo
 swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
-
-# APPS+=test_cuda_installtion
-# swarm_scatter_demo_SOURCES=src/test_cuda_installation.cpp
 
 ##########################################################
 #
@@ -140,9 +130,6 @@ TIDYUI=@ echo "[ TIDY  ]" &&
 endif
 
 all: $(APPS)
-
-bin/test_cuda_installation.exe:src/test_cuda_installation.cpp
-	$(CXXUI) $(CXX)  $(CXXFLAGS) $< -o $@ -L/scratch/cuda_3.2/cuda/lib -L/scratch/cuda_3.2/cuda/lib64 -lcuda -lcudart -L./bin -lswarm
 
 #
 # rules for libswarm.so

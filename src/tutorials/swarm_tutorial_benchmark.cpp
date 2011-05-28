@@ -73,9 +73,6 @@ void run_integration(config& cfg) {
   swatch_all.start(); // Start timer for entire program
   srand(42u);    // Seed random number generator, so output is reproducible
 
-
-
-
   // Print parameters for this set of benchmarks
   std::cerr << "# Parameters: systems= " << nsystems << " num_bodies= " << nbodyspersystem << " time= " << dT << " precision= " << cfg["precision"] << " blocksize= " << cfg["threads per block"] << ".\n";
 
@@ -129,7 +126,9 @@ void run_integration(config& cfg) {
 
   std::cerr << "# Integrate ensemble on GPU.\n";
   swatch_temps_gpu.start();  // Start timer for 0th step on GPU
-  integ_gpu->set_default_log();
+  void* dlog;
+  cudaGetSymbolAddress(&dlog,"dlog");
+  integ_gpu->set_log((gpulog::device_log*)dlog);
   integ_gpu->integrate(gpu_ens, 0.);  // a 0th step of dT=0 results in initialization of the integrator only
   cudaThreadSynchronize();   // Block until CUDA call completes
   swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU
@@ -276,8 +275,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 
 void benchmark_loop(config& cfg, const string& param, const vector<string>& values) {
 	for(vector<string>::const_iterator i = values.begin();  i != values.end(); i++){
-		std::cout << "=========================================\n";
-		std::cout << "Benchmarking for   " << param << " =  " << *i << std::endl;
+		std::cout << "\n\nBenchmarking for   " << param << " =  " << *i << "     =========================================\n\n" << std::endl;
 		cfg[param] = *i;
 		run_integration(cfg);
 	}
@@ -285,12 +283,11 @@ void benchmark_loop(config& cfg, const string& param, const vector<string>& valu
 
 void benchmark_range(config& cfg, const string& param, int  from, int to , int increment ){
 	  for(int i = from; i <= to ; i+= increment ){
-		  std::cout << "=========================================\n";
-		  std::cout << "Benchmarking for   " << param << " =  " << i << std::endl;
-		  std::ostringstream stream;
-		  stream <<  i;
-		  cfg[param] = stream.str();
-		  run_integration(cfg);
+			std::cout << "\n\nBenchmarking for   " << param << " =  " << i << "     =========================================\n\n" << std::endl;
+			std::ostringstream stream;
+			stream <<  i;
+			cfg[param] = stream.str();
+			run_integration(cfg);
 	  }
 }
 
@@ -339,24 +336,41 @@ int main(int argc,  char **argv)
 	  load_config(cfg,icfgfn);
   }
 
+  bool valid = true;
   // Get values for config hashmap from command line arguements (or use defaults)
-  if(vm.count("precision")) 
   {
-	  std::ostringstream precision_stream;
-	  int prec = vm["precision"].as<int>();
-	  precision_stream <<  prec;
-	  cfg["precision"] = precision_stream.str();
+    std::ostringstream precision_stream;
+    if(vm.count("precision")) 
+      {
+	
+	int prec = vm["precision"].as<int>();
+	precision_stream <<  prec;
+	if(!((prec==1)||(prec==2)||(prec==3)))
+	  valid =false;
+      }
+    else
+      precision_stream << 1; 
+    cfg["precision"] = precision_stream.str();
   }
-  if(vm.count("blocksize")) 
   {
-	  std::ostringstream blocksize_stream;
-	  int bs = vm["blocksize"].as<int>();
-	  blocksize_stream << bs;
-	  cfg["threads per block"] = blocksize_stream.str();
+    std::ostringstream blocksize_stream;
+    if(vm.count("blocksize")) 
+      {
+	int bs = vm["blocksize"].as<int>();
+	blocksize_stream << bs;
+	if((bs<16)||(bs>128)||(bs%16!=0))
+	 valid =false;
+      }
+    else
+      blocksize_stream << 64; 
+    cfg["threads per block"] = blocksize_stream.str();
   }
 
+
   // Print help message if requested or invalid parameters
-  if (vm.count("help")) { std::cout << desc << "\n"; return 1; }
+  if (vm.count("help")||!valid) { std::cout << desc << "\n"; return 1; } 
+
+  swarm::set_cuda_cache_large();
 
   if((vm.count("parameter") > 0) && (vm.count("value") > 0)) {
 		string param = vm["parameter"].as< vector<string> >().front();
@@ -372,3 +386,5 @@ int main(int argc,  char **argv)
   }
 
 }
+
+ 

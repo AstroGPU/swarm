@@ -32,6 +32,60 @@ namespace swarm {
 
 	// If want to declare __shared__ do it here (just like const variables for ensembles)
 
+<<<<<<< HEAD
+/*!  
+ *  \brief propagator class for RKQS integrator on GPU: Advance the system by one time step.
+ *
+ *  CPU state and interface. Will be instantiated on construction of gpu_generic_integrator object. 
+ *  Keep any data that need to reside on the CPU here.
+ */
+//template<int Nbod>
+struct prop_rkqs
+{
+	/*! 
+	 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
+         *
+	 * Any per-block read-only variables should be members of this structure.
+         */
+	struct gpu_t
+	{
+		//! per-block variables, time step
+		double hinit;
+		double error_tolerance;
+		//! per-block variables, 
+		cuxDevicePtr<double, 3> k1, k2, k3, k4, k5, k6;
+		//! per-block variables, initial & temporary coordinates, error term
+//		cuxDevicePtr<double, 3> y0;  // keep init conditions in ens
+		cuxDevicePtr<double, 3> ytmp;
+		cuxDevicePtr<double, 3> yerr;
+
+		// Cash-Karp constants From GSL
+		static const int   integrator_order = 5;
+                static const float step_grow_power = -1./(integrator_order+1.);
+                static const float step_shrink_power = -1./integrator_order;
+                static const float step_guess_safety_factor = 0.9;
+		static const float step_grow_max_factor = 5.0; 
+                static const float step_shrink_min_factor = 0.2; 
+ 
+		/*!
+		 * \brief  GPU per-thread state and interface. Will be instantiated in the integration kernel. 
+                 *
+		 * Any per-thread variables should be members of this structure.
+		 */
+		struct thread_state_t
+		{
+			float h_try, h_prev;
+	        	int substep_state;
+			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend) : h_try(H.hinit), h_prev(0.), substep_state(0)
+			{ }
+		};
+
+		/*! \brief compute accelerations from a temporary state in y
+		 * @param[in]  ens   ensemble 
+		 * @param[in]  y   temporary coordinates (3d array)
+		 * @param[in]  sys    system id
+ 		 * @param[out] dydx  derivatives (3d array)
+=======
 	/*!  
 	 *  \brief propagator class for RKQS integrator on GPU: Advance the system by one time step.
 	 *
@@ -44,6 +98,7 @@ namespace swarm {
 		 * \brief GPU state and interface (per-grid). Will be passed as an argument to integration kernel. 
 		 *
 		 * Any per-block read-only variables should be members of this structure.
+>>>>>>> 3b5f14358263e19e7b6c968c8dd1cc2f2d26d3b1
 		 */
 		struct gpu_t
 		{
@@ -385,6 +440,46 @@ namespace swarm {
 		}
 	};
 
+<<<<<<< HEAD
+	//! CPU state and interface
+	cuxDeviceAutoPtr<double, 3> k1, k2, k3, k4, k5, k6;
+//	cuxDeviceAutoPtr<double, 3> y0;
+	cuxDeviceAutoPtr<double, 3> ytmp;
+	cuxDeviceAutoPtr<double, 3> yerr;
+	gpu_t gpu_obj;
+
+	/*!
+         * \brief initialize temporary variables for ensemble ens. 
+         *
+         * This function should initialize any temporary state that is needed for integration of ens. 
+	 * It will be called from gpu_generic_integrator, but only if ens.last_integrator() != this. 
+         * If any temporary state exists from previous invocation of this function, it should be deallocated and the new state (re)allocated.
+	 */
+	void initialize(ensemble &ens)
+	{
+		// Here you'd initialize the object to be passed to the kernel, or
+		// upload any temporary data you need to constant/texture/global memory
+		k1.realloc(ens.nsys(), ens.nbod(), 6);
+		k2.realloc(ens.nsys(), ens.nbod(), 6);
+		k3.realloc(ens.nsys(), ens.nbod(), 6);
+		k4.realloc(ens.nsys(), ens.nbod(), 6);
+		k5.realloc(ens.nsys(), ens.nbod(), 6);
+		k6.realloc(ens.nsys(), ens.nbod(), 6);
+//		y0.realloc(ens.nsys(), ens.nbod(), 6);
+		ytmp.realloc(ens.nsys(), ens.nbod(), 6);
+		yerr.realloc(ens.nsys(), ens.nbod(), 6);
+		gpu_obj.k1= k1;
+		gpu_obj.k2= k2;
+		gpu_obj.k3= k3;
+		gpu_obj.k4= k4;
+		gpu_obj.k5= k5;
+		gpu_obj.k6= k6;
+//		gpu_obj.y0= y0;
+		gpu_obj.ytmp= ytmp;
+		gpu_obj.yerr= yerr;
+	}
+=======
+>>>>>>> 3b5f14358263e19e7b6c968c8dd1cc2f2d26d3b1
 
 	/*!
 	 * \brief factory function to create an integrator 

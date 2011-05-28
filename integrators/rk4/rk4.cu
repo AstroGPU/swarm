@@ -58,7 +58,13 @@ struct prop_rk4
 		 */
 		struct thread_state_t
 		{
+<<<<<<< HEAD
+		//! per-block variables, acceleration0
+		cuxDevicePtr<double, 3> aa0;
+			thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+=======
 			__device__ thread_state_t(const gpu_t &H, ensemble &ens, const int sys, double T, double Tend)
+>>>>>>> 3b5f14358263e19e7b6c968c8dd1cc2f2d26d3b1
 			{ }
 		};
 
@@ -108,7 +114,17 @@ struct prop_rk4
 			double  vx_old[3] = {ens.vx(sys, 0), ens.vx(sys, 1), ens.vx(sys, 2)};
 			double  vy_old[3] = {ens.vy(sys, 0), ens.vy(sys, 1), ens.vy(sys, 2)};
 			double  vz_old[3] = {ens.vz(sys, 0), ens.vz(sys, 1), ens.vz(sys, 2)};
-
+#if 0
+			for(int bod = 0; bod != ens.nbod(); bod++) 
+			{
+				x_old[bod] = ens.x(sys,bod);
+				y_old[bod] = ens.y(sys,bod);
+			 	z_old[bod] = ens.z(sys,bod);
+				vx_old[bod] = ens.vx(sys,bod);
+				vy_old[bod] = ens.vy(sys,bod);
+				vz_old[bod] = ens.vz(sys,bod);
+			}
+#endif
 			// compute accelerations
 			compute_acc(ens, sys, aa0);
 
