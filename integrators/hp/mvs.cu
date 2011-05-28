@@ -37,7 +37,7 @@ struct AdaptiveTimeStep {
 	const static bool conditional_accept_step = true;
 };
 
-template < class AdaptationStyle >
+//template < class AdaptationStyle >
 class mvs: public integrator {
 	typedef integrator base;
 	private:
@@ -63,7 +63,9 @@ class mvs: public integrator {
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ////////////////////////////////////////////////////////////////
+#define MINR 1.0e-5 // minimum radius
 #define MINDENOM 1e-8  // mininum denominator
+
 __device__ double solvex(double r0dotv0, double alpha,
                 double M1, double r0, double dt)
 {
@@ -127,7 +129,7 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ///////////////////////////////////////////////////////////////
-#define MINR 1.0e-5 // minimum radius
+//__device__ void kepstep(double4 pos, double4 vel, double4* npos, double4* nvel, double deltaTime, double GM)
 __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double& vy, double& vz, const double GM, const double deltaTime)
 {
    double x_old = x, y_old = y, z_old = z, vx_old = vx, vy_old = vy, vz_old = vz;
@@ -296,6 +298,7 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
  *
  * @return        pointer to integrator cast to integrator*
  */
+/*
 extern "C" integrator *create_hp_mvs_fixed(const config &cfg)
 {
 	return new mvs< FixedTimeStep> (cfg);
@@ -310,7 +313,14 @@ extern "C" integrator *create_hp_mvs(const config &cfg)
 {
 	return create_hp_mvs_fixed(cfg);
 }
+*/
+
+extern "C" integrator *create_hp_mvs(const config &cfg)
+{
+	return new mvs(cfg);
+}
 
 }
 }
+
 

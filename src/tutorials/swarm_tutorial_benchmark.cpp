@@ -73,6 +73,19 @@ void run_integration(config& cfg) {
   swatch_all.start(); // Start timer for entire program
   srand(42u);    // Seed random number generator, so output is reproducible
 
+
+
+  swarm::set_cuda_cache_large();
+ 
+  // Check that parameters from command line are ok
+  if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
+  if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
+  if(!(dT>0.)||!(dT<=2.*M_PI*10000.+1.)) valid = false;
+
+  // Print help message if requested or invalid parameters
+  if (!valid) { std::cout << "# Invalid parameters\n"; return ; }
+
+
   // Print parameters for this set of benchmarks
   std::cerr << "# Parameters: systems= " << nsystems << " num_bodies= " << nbodyspersystem << " time= " << dT << " precision= " << cfg["precision"] << " blocksize= " << cfg["threads per block"] << ".\n";
 
@@ -339,18 +352,17 @@ int main(int argc,  char **argv)
   bool valid = true;
   // Get values for config hashmap from command line arguements (or use defaults)
   {
-    std::ostringstream precision_stream;
-    if(vm.count("precision")) 
-      {
-	
-	int prec = vm["precision"].as<int>();
-	precision_stream <<  prec;
-	if(!((prec==1)||(prec==2)||(prec==3)))
-	  valid =false;
-      }
-    else
-      precision_stream << 1; 
-    cfg["precision"] = precision_stream.str();
+  std::ostringstream precision_stream;
+  if(vm.count("precision")) 
+    {
+      int prec = vm["precision"].as<int>();
+      precision_stream <<  prec;
+      if(!((prec==1)||(prec==2)||(prec==3)))
+	 valid =false;
+    }
+  else
+    precision_stream << 1; 
+  cfg["precision"] = precision_stream.str();
   }
   {
     std::ostringstream blocksize_stream;
