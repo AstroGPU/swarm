@@ -167,8 +167,21 @@ class Gravitation {
 
 	__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc,double& jerk)const{
 		// Write positions to shared (global) memory
+	        // TODO: Move outside this function. I don't think this really belongs here
 		if(b < nbod)
 			sys[b].p(c) = pos, sys[b].v(c) = vel;
+		__syncthreads();
+		if(ij < pair_count)
+			calc_pair(ij);
+		__syncthreads();
+		if(b < nbod){
+			acc =  sum_values(shared.acc,b,c);
+			jerk = sum_values(shared.jerk,b,c);
+		}
+	}
+
+	__device__ void operator() (int ij,int b,int c,double& acc,double& jerk)const{
+	  // TODO: Do we really need this syncthreads?
 		__syncthreads();
 		if(ij < pair_count)
 			calc_pair(ij);
