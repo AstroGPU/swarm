@@ -75,6 +75,15 @@ void run_integration(config& cfg) {
 
 
 
+  swarm::set_cuda_cache_large();
+ 
+  // Check that parameters from command line are ok
+  if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
+  if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
+  if(!(dT>0.)||!(dT<=2.*M_PI*10000.+1.)) valid = false;
+
+  // Print help message if requested or invalid parameters
+  if (!valid) { std::cout << "# Invalid parameters\n"; return ; }
 
   // Print parameters for this set of benchmarks
   std::cerr << "# Parameters: systems= " << nsystems << " num_bodies= " << nbodyspersystem << " time= " << dT << " precision= " << cfg["precision"] << " blocksize= " << cfg["threads per block"] << ".\n";
@@ -340,23 +349,36 @@ int main(int argc,  char **argv)
   }
 
   // Get values for config hashmap from command line arguements (or use defaults)
+  bool valid = true;
+  {
+  std::ostringstream precision_stream;
   if(vm.count("precision")) 
-  {
-	  std::ostringstream precision_stream;
-	  int prec = vm["precision"].as<int>();
-	  precision_stream <<  prec;
-	  cfg["precision"] = precision_stream.str();
+    {
+      int prec = vm["precision"].as<int>();
+      precision_stream <<  prec;
+      if(!((prec==1)||(prec==2)||(prec==3)))
+	 valid =false;
+    }
+  else
+    precision_stream << 1; 
+  cfg["precision"] = precision_stream.str();
   }
-  if(vm.count("blocksize")) 
   {
-	  std::ostringstream blocksize_stream;
-	  int bs = vm["blocksize"].as<int>();
-	  blocksize_stream << bs;
-	  cfg["threads per block"] = blocksize_stream.str();
+    std::ostringstream blocksize_stream;
+    if(vm.count("blocksize")) 
+      {
+	int bs = vm["blocksize"].as<int>();
+	blocksize_stream << bs;
+	if((bs<16)||(bs>128)||(bs%16!=0))
+	 valid =false;
+      }
+    else
+      blocksize_stream << 64; 
+    cfg["threads per block"] = blocksize_stream.str();
   }
 
   // Print help message if requested or invalid parameters
-  if (vm.count("help")) { std::cout << desc << "\n"; return 1; }
+  if (vm.count("help")||!valid) { std::cout << desc << "\n"; return 1; }
 
   if((vm.count("parameter") > 0) && (vm.count("value") > 0)) {
 		string param = vm["parameter"].as< vector<string> >().front();
@@ -372,3 +394,5 @@ int main(int argc,  char **argv)
   }
 
 }
+
+ 

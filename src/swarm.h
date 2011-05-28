@@ -64,9 +64,12 @@
 /// The main namespace for the Swarm-NG library
 namespace swarm {
 
-//class integrator;
-//class writer;
-//class gpu_ensemble;
+void set_cuda_cache_small();
+void set_cuda_cache_large();
+
+class integrator;
+class writer;
+class gpu_ensemble;
 class cpu_ensemble;
 
 typedef std::map<std::string, std::string> config;
