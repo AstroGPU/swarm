@@ -110,6 +110,7 @@ class euler: public integrator {
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;
 
+		        __syncthreads();
 			// Test if we need output
 			if(thr == 0) 
 				if(log::needs_output(*_gpu_ens, t, sysid()))

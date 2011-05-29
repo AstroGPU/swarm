@@ -22,6 +22,10 @@
 
 // #define N_LAG 5.0 // integer n, for recommended Laguerre method
 #define SIGN(a) ((a) < 0 ? -1 : 1)
+// TODO: Figure out why threadfence_block gives differen results
+//       (probably because one of these should be a syncthreads)
+//#define FENCE __threadfence_block();
+#define FENCE __syncthreads();
 
 
 namespace swarm {
@@ -285,7 +289,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[b].p(c) = sump/mtot;
 		      }
 		   }
-		__syncthreads();		
+		__syncthreads();
 		}
 
 		////////// INTEGRATION //////////////////////
@@ -318,7 +322,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	 mv += sys[j].mass()*sys[j].v(c);
 		      sys[bb].p(c) += mv*hby2/sys[0].mass();
 		      }
-		   __syncthreads();
+		   FENCE
 
 		   // Kick Step (planet-planet interactions)
 		   {
@@ -329,7 +333,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
-		   __syncthreads();
+  		   FENCE
   
 		   // Kepler Drift Step (Keplerian orbit about sun/central body)
 		   int bbb = thr+1;
@@ -337,18 +341,19 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		      drift_kepler(sys[bbb].p(0),sys[bbb].p(1),sys[bbb].p(2),sys[bbb].v(0),sys[bbb].v(1),sys[bbb].v(2),sqrtGM,2.0*hby2);
 		   }
-		   __syncthreads();	   		   
+		   FENCE
 		   
 		   /* TODO: Eventually check for close encounters and 
 		            if necessary undo, perform direct n-body, merge and resume
 	  	            Or maybe only in separate integrator? */
 		   bool need_to_rewind = false;
+		   // WARNING: Make sure all or no threads within a block enter (or verify threadfence doesn't need all threads in a block to call it)
 		   if( allow_rewind && need_to_rewind )
 		     {
 			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
 			acc = acc_old;  
 		     	++iter;
-		        __syncthreads();	   		   
+		       FENCE
 		   	if(iter>=_max_itterations_per_kernel_call) break;
 			continue;
                      }
@@ -361,7 +366,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
-		   __syncthreads();
+		     FENCE
 
 		   // Drift Step (center-of-mass motion)
 		   if( body_component_grid_no_sun )
@@ -403,6 +408,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sumv += mj*sys[j].v(c);
 		      	    }
 			 }
+
 		      __syncthreads();
 		      if( (b==0) || body_component_grid_no_sun )
 		         {
@@ -417,7 +423,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sys[b].v(c) -= sumv/m0;
 		      	    }
 		   	 }
-		      __syncthreads();		      
+		      FENCE
 		      }
 		      if(thr == 0)
 		         {
@@ -428,7 +434,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      // Restore working coordinates
 		      if(body_component_grid )
 			{ sys[b].p(c) = pos_tmp; sys[b].v(c) = vel_tmp; }
-		      __syncthreads();
+		      FENCE
 		      }
 
 		   if(iter>=_max_itterations_per_kernel_call) break;
@@ -467,7 +473,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[b].v(c) -= sumv/m0;
 		      }
 		   }
-		   __syncthreads();
+		     FENCE
 		}
 		if(thr == 0) 
 		   sys.set_time(t);

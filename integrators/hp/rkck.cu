@@ -208,8 +208,10 @@ class rkck: public integrator {
 					sys[b].p(c) = p6 * p6 , sys[b].v(c) = v6 * v6;
 					shared_mag[0][b][c] = pos_error * pos_error;
 					shared_mag[1][b][c] = vel_error * vel_error;
-
-					__syncthreads();
+					}
+					// TODO: Check this change.  I think either break up if statement so all threads see sync or need to ensure that all threads are in body_component_grid, so don't get in infinite wait
+				__syncthreads();
+				if( body_component_grid ) {
 					if ( (c == 0) && (b == 0) ) {
 
 						double max_error = 0;
@@ -263,7 +265,10 @@ class rkck: public integrator {
 
 				if( body_component_grid )
 					sys[b].p(c) = pos, sys[b].v(c) = vel;
+					}
 
+		        __syncthreads();
+			if ( accept_step ) {
 				if(thr == 0) 
 					if(log::needs_output(*_gpu_ens, t, sysid()))
 					{
@@ -299,4 +304,3 @@ extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
 
 }
 }
-
