@@ -116,23 +116,25 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
 __device__ void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussing + Conway
 {
   if (fabs(y)<1e-4) 
-  {
+     {
      S = 1.0/6.0*(1.0 - y/20.0*(1.0 - y/42.0*(1.0 - y/72.0)));
      C = 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
-     return;
-  }
-  double u = sqrt(fabs(y));
-  double u3 = u*u*u;
-  if (y>0.0) 
-     {
-     sincos(u,&S,&C);  // TODO: Need to verify called correctly
-     S = (u -  S)/u3;
-     C = (1.0- C)/ y;
      }
   else
      {
-       S = (sinh(u) - u)/u3;
-       C = (cosh(u)-1.0)/-y;
+     double u = sqrt(fabs(y));
+     double u3 = u*u*u;
+     if (y>0.0) 
+        {
+     	sincos(u,&S,&C);  // TODO: Need to verify called correctly
+     	S = (u -  S)/u3;
+     	C = (1.0- C)/ y;
+     	}
+     else
+	{
+     	S = (sinh(u) - u)/u3;
+     	C = (cosh(u)-1.0)/-y;
+     	}
      }
   return;
 }
@@ -226,8 +228,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		// Body/Component Grid
 		// Body number
-		int b = thr / 3 ;  // index for parts w/ 1 thread per body
-		int bb = b+1;      // index for parts w/ 1 thread per body excluding sun/central body
+		int b = thr / 3 ;  // index for parts w/ 1 thread per body per component
+		int bb = b+1;      // index for parts w/ 1 thread per body per component excluding sun/central body
 		// Component number
 		int c = thr % 3 ;  
 		bool body_component_grid = b < nbod;          // if needed for parts w/ 1 thread per body per component including sun/central body
