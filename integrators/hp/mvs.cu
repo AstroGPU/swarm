@@ -36,8 +36,6 @@ class mvs: public integrator {
 
 	private:
 	double _time_step;
-	static const int _N_LAG = 5.0;
-
 
 	public:
 	mvs(const config& cfg): base(cfg),_time_step(0.001) {
@@ -64,6 +62,7 @@ class mvs: public integrator {
 __device__ double solvex(double r0dotv0, double alpha,
                 double sqrtM1, double r0, double dt)
 {
+   const double _N_LAG = 5.0; // integer n, for recommended Laguerre method
 //   double smu = sqrt(M1);
    double smu = sqrtM1;
    double foo = 1.0 - r0*alpha;
@@ -220,7 +219,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		/////////////// FETCH LOCAL VARIABLES ///////////////////
 
-		int thr = thread_in_system();
+		const int thr = thread_in_system();
 
 		/* WARNING: This is fine for now, but I wonder if this should be removed in the future.
 		   I think it's here to prevent readingn outside the bounds of _gpu_ens.
@@ -231,18 +230,18 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		// Body/Component Grid
 		// Body number
-		int b = thr / 3 ;  // index for parts w/ 1 thread per body per component
-		int bb = b+1;      // index for parts w/ 1 thread per body per component excluding sun/central body
+		const int b = thr / 3 ;  // index for parts w/ 1 thread per body per component
+		const int bb = b+1;      // index for parts w/ 1 thread per body per component excluding sun/central body
 		// Component number
-		int c = thr % 3 ;  
-		bool body_component_grid = b < nbod;          // if needed for parts w/ 1 thread per body per component including sun/central body
-		bool body_component_grid_no_sun = bb < nbod;  // if needed for parts w/ 1 thread per body per component excluding sun/central body
-//		bool body_grid = thr < nbod;                  // if needed for parts w/ 1 thread per body including sun/central body
+		const int c = thr % 3 ;  
+		const bool body_component_grid = b < nbod;          // if needed for parts w/ 1 thread per body per component including sun/central body
+		const bool body_component_grid_no_sun = bb < nbod;  // if needed for parts w/ 1 thread per body per component excluding sun/central body
+//		const bool body_grid = thr < nbod;                  // if needed for parts w/ 1 thread per body including sun/central body
 
 		// i,j pairs Grid
 		// TODO: Be more clever about calculating accelerations
 		//       Either avoid pairs with sun or specialize Gravitation?
-		int ij = thr;      // index for parts w/ 1 thread per body pair
+		const int ij = thr;      // index for parts w/ 1 thread per body pair
 
 
 		// shared memory allocation
@@ -251,14 +250,14 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		double t_start = sys.time(), t = t_start;
 		// TODO: Change the way stopping is done
-		double t_end = min(_destination_time,sys.time_end());
-//		double t_end = min(t_start + _destination_time,sys.time_end());
+		const double t_end = min(_destination_time,sys.time_end());
+//		const double t_end = min(t_start + _destination_time,sys.time_end());
 
 
 		// local information per component per body
 		double pos_old, vel_old, acc_old; // needed if allowing rewindss
 		double acc = 0.;
-		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?  Probbly not.
+		const double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?  Probbly not.
 
 		// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 		{
@@ -299,10 +298,13 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		calcForces.calc_accel_no_sun(ij,bb,c,acc);
 
 		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
-		bool skip_loop = false;
-		while((t < t_end) && !skip_loop)      // Only enter loop if need to integrate
+		const bool skip_loop = false; // For debugging coordinate shifts
+		while((t + _time_step <= t_end) && (iter<_max_itterations_per_kernel_call) && !skip_loop )      // Only enter loop if need to integrate
 		{
-		   double hby2 = 0.5*min(_time_step, t_end - t);
+		   // TODO: Need to think about how to deal with logging at times not a multiple of _time_step without affecting integration
+		   // double hby2 = 0.5*min(_time_step, t_end - t);
+		   double hby2 = 0.5*_time_step;
+
 		   if(allow_rewind)   // Could be useful if later reject step
 		     { 
 		     if( body_component_grid )
@@ -354,7 +356,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 			acc = acc_old;  
 		     	++iter;
 		       FENCE
-		   	if(iter>=_max_itterations_per_kernel_call) break;
+//		   	if(iter>=_max_itterations_per_kernel_call) break;
 			continue;
                      }
 
@@ -366,7 +368,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
-		     FENCE
+		   FENCE
 
 		   // Drift Step (center-of-mass motion)
 		   if( body_component_grid_no_sun )
@@ -383,17 +385,24 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   t += 2.*hby2;
 
 		   ++iter;
-		   if( log::needs_output(*_gpu_ens, t, sysid()) )
+		   const bool sys_needs_output = log::needs_output(*_gpu_ens, t, sysid());
+		   {
+		   double sump = 0., sumv = 0., mtot;
+		   double m0, pc0, vc0;
+		   if( sys_needs_output )
 		      {
+		      if(thr == 0)
+		         sys.set_time(t);
+
 		      // Save working coordinates
 		      double pos_tmp, vel_tmp;
 		      if(body_component_grid )
 			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
-
-		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
+		      }
+		    __syncthreads();
+		   if( sys_needs_output )
 		      {
-		      double sump = 0., sumv = 0., mtot;
-		      double m0, pc0, vc0;
+		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
 		      if( (b==0) || body_component_grid_no_sun )
 		         {
 		   	 m0 = sys[0].mass();
@@ -408,8 +417,10 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sumv += mj*sys[j].v(c);
 		      	    }
 			 }
-
-		      __syncthreads();
+		      }
+		   __syncthreads();
+		   if( sys_needs_output )
+		      {
 		      if( (b==0) || body_component_grid_no_sun )
 		         {
 		   	 if( body_component_grid_no_sun ) // For all bodies except sun
@@ -423,25 +434,31 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sys[b].v(c) -= sumv/m0;
 		      	    }
 		   	 }
-		      FENCE
 		      }
+		   __syncthreads();
+		   if( sys_needs_output )
+		      {
 		      if(thr == 0)
-		         {
-		         sys.set_time(t);
 		         log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
-		         }
-		      __syncthreads();
+		      }
+		   __syncthreads();
+
+		   if( sys_needs_output )
+		      {
 		      // Restore working coordinates
 		      if(body_component_grid )
 			{ sys[b].p(c) = pos_tmp; sys[b].v(c) = vel_tmp; }
-		      FENCE
 		      }
-
-		   if(iter>=_max_itterations_per_kernel_call) break;
+		   FENCE
+		   }
+//		   if(iter>=_max_itterations_per_kernel_call) break;
 		}
 
 		// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
 		{
+		if(thr == 0) 
+		   sys.set_time(t);
+
 		double sump = 0., sumv = 0., mtot;
 		double m0, pc0, vc0;
 		if( (b==0) || body_component_grid_no_sun )
@@ -473,11 +490,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[b].v(c) -= sumv/m0;
 		      }
 		   }
-		     FENCE
+		FENCE
 		}
-		if(thr == 0) 
-		   sys.set_time(t);
-
 	}
 
 };
