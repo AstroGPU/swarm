@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 	snaps.next(ens);
 	unsigned int nprint = std::min(2, ens.nsys());
 
+#if 1
 	// Shift into center-of-mass frame
 	for(unsigned int i=0; i<ens.nsys() ; ++i)
 	  {
@@ -103,7 +104,7 @@ int main(int argc, char **argv)
 		ens.vz(i,j) -= cvz;
 	      }
 	  }
-
+#endif
 	// Calculate energy at beginning of integration
 	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
 	calc_total_energy(ens, Einit);
@@ -116,6 +117,7 @@ int main(int argc, char **argv)
 	int cnt = 0;
 	while(snaps.next(ens)) { cnt++; }
 
+#if 1
 	// Shift into center-of-mass frame
 	for(unsigned int i=0; i<ens.nsys() ; ++i)
 	  {
@@ -141,6 +143,7 @@ int main(int argc, char **argv)
 		ens.vz(i,j) -= cvz;
 	      }
 	  }
+#endif
 
 	// Calculate energy at end of integration
 	calc_total_energy(ens, Efinal);

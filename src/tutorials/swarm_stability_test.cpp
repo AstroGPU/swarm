@@ -40,6 +40,34 @@ void stability_test(config& cfg){
 	cpu_ensemble reference_ensemble;
 	generate_ensemble(cfg,reference_ensemble);
 
+#if 0
+	// Shift into center-of-mass frame
+	for(unsigned int i=0; i<reference_ensemble.nsys() ; ++i)
+	  {
+	    double cx=0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., msum=0.;
+	    for(unsigned int j=0; j<reference_ensemble.nbod(); ++j)
+	      {
+		msum += reference_ensemble.mass(i,j);
+		cx   += reference_ensemble.mass(i,j) * reference_ensemble.x(i,j);
+		cy   += reference_ensemble.mass(i,j) * reference_ensemble.y(i,j);
+		cz   += reference_ensemble.mass(i,j) * reference_ensemble.z(i,j);
+		cvx   += reference_ensemble.mass(i,j) * reference_ensemble.vx(i,j);
+		cvy   += reference_ensemble.mass(i,j) * reference_ensemble.vy(i,j);
+		cvz   += reference_ensemble.mass(i,j) * reference_ensemble.vz(i,j);
+	      }
+	    cx /= msum; cy /= msum; cz /= msum; cvx /= msum; cvy /= msum; cvz /= msum;
+	    for(unsigned int j=0; j<reference_ensemble.nbod(); ++j)
+	      {
+		reference_ensemble.x(i,j) -= cx;
+		reference_ensemble.y(i,j) -= cy;
+		reference_ensemble.z(i,j) -= cz;
+		reference_ensemble.vx(i,j) -= cvx;
+		reference_ensemble.vy(i,j) -= cvy;
+		reference_ensemble.vz(i,j) -= cvz;
+	      }
+	  }
+#endif
+
 	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
 	cpu_ensemble ens(reference_ensemble); // Make a copy of the CPU ensemble for comparison
 
