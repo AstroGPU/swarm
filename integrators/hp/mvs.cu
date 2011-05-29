@@ -33,6 +33,7 @@ class mvs: public integrator {
 	double _time_step;
 	static const int _N_LAG = 5.0;
 
+
 	public:
 	mvs(const config& cfg): base(cfg),_time_step(0.001) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_mvs requires a timestep ('time step' keyword in the config file).");
@@ -119,18 +120,20 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ///////////////////////////////////////////////////////////////
 //__device__ void kepstep(double4 pos, double4 vel, double4* npos, double4* nvel, double deltaTime, double GM)
-__device__ void drift_kepler(double& x, double& y, double& z, double& vx, double& vy, double& vz, const double GM, const double deltaTime)
+__device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx_old, double& vy_old, double& vz_old, const double sqrtGM, const double deltaTime)
 {
-   double x_old = x, y_old = y, z_old = z, vx_old = vx, vy_old = vy, vz_old = vz;
+   double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
    // WARNING: Using softened potential
    double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
    double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
+   double GM = sqrtGM*sqrtGM;
    double alpha = (2.0/r0 - v2/GM);  // inverse of semi-major eqn 2.134 MD
 // here alpha=1/a and can be negative
    double x_p = solvex(r0dotv0, alpha, GM, r0, deltaTime); // solve universal kepler eqn
 
-   double smu = sqrt(GM);  // TODO: probably could cache sqrt(GM)
+//   double smu = sqrt(GM);  // before we cached sqrt(GM)
+   double smu = sqrtGM; 
    double foo = 1.0 - r0*alpha;
    double sig0 = r0dotv0/smu;
    double x2 = x_p*x_p;
@@ -157,20 +160,24 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
    x = f_p*x_old + g_p*vx_old;     // eqn 2.65 M+D
    y = f_p*y_old + g_p*vy_old;
    z = f_p*z_old + g_p*vz_old; 
-   vx = dfdt*x_old + dgdt*vx_old; //eqn 2.70 M+D
+   vx = dfdt*x_old + dgdt*vx_old;  // eqn 2.70 M+D
    vy = dfdt*y_old + dgdt*vy_old;
    vz = dfdt*z_old + dgdt*vz_old;
 
+   // Replace values 
+    x_old =  x;  y_old =  y;  z_old =  z;
+   vx_old = vx; vy_old = vy; vz_old = vz;
 }
 
 	/*! Integrator Kernel to be run on GPU
 	 *  
-	 *
+	 * TODO: Need to deal with energy conservation if input not in COM frame
 	 */
 	 template<class T >
 	__device__ void kernel(T a)  {
 
 		const int nbod = T::n;
+		const bool allow_rewind = false;
 
 		/////////////// FETCH LOCAL VARIABLES ///////////////////
 
@@ -185,16 +192,19 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 
 		// Body/Component Grid
 		// Body number
-		int b = thr / 3 ;
-		int bb = b+1; // for excluding central body
+		int b = thr / 3 ;  // index for parts w/ 1 thread per body
+		int bb = b+1;      // index for parts w/ 1 thread per body excluding sun/central body
 		// Component number
-		int c = thr % 3 ;
-//		bool body_component_grid = b < nbod;
-		bool body_component_grid_no_sun = bb < nbod;
-//		bool body_grid = thr < nbod;
+		int c = thr % 3 ;  
+		bool body_component_grid = b < nbod;          // if needed for parts w/ 1 thread per body per component including sun/central body
+		bool body_component_grid_no_sun = bb < nbod;  // if needed for parts w/ 1 thread per body per component excluding sun/central body
+//		bool body_grid = thr < nbod;                  // if needed for parts w/ 1 thread per body including sun/central body
 
 		// i,j pairs Grid
-		int ij = thr;
+		// TODO: Be more clever about calculating accelerations
+		//       Either avoid pairs with sun or specialize Gravitation?
+		int ij = thr;      // index for parts w/ 1 thread per body pair
+
 
 		// shared memory allocation
 		extern __shared__ char shared_mem[];
@@ -204,77 +214,191 @@ __device__ void drift_kepler(double& x, double& y, double& z, double& vx, double
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc = 0, jerk = 0;
-		if( body_component_grid_no_sun )
-			pos = sys[bb].p(c), vel = sys[bb].v(c);
+		double pos_old, vel_old, acc_old, jerk_old; // needed if allowing rewindss
+		double acc = 0., jerk = 0.;
+		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?
+
+		// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
+		if( (b==0) || body_component_grid_no_sun )
+		   {
+		   double sump = 0., sumv = 0., mtot = 0.;
+		   for(int j=0;j<nbod;++j)   // TODO: Could parallelize. Worth it?
+		      {
+		      const double mj = sys[j].mass();
+		      mtot += mj;
+		      sump += mj*sys[j].p(c);
+		      sumv += mj*sys[j].v(c);
+		      }
+		   if(b==0) // For sun only
+		      {
+		      sys[b].v(c) = sumv/mtot;
+		      sys[b].p(c) = sump/mtot;
+		      }
+		   if( body_component_grid_no_sun ) // For all bodies except sun
+		      {
+		      sys[bb].v(c) -= sumv/mtot;
+		      sys[bb].p(c) -= sys[0].p(c);
+  		      }
+		   }
+		   __syncthreads();		
 
 		////////// INTEGRATION //////////////////////
-
 		// Calculate acceleration and jerk
 		Gravitation<nbod> calcForces(sys,system_shmem);
+                // precompute acc and jerk before enter loop, since will cache acc and jerk across loop itterations
 		calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 
-		unsigned int iter=0;
-		while(t < t_end)
+		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
+		while(t < t_end)      // Only enter loop if need to integrate
 		{
 		   double hby2 = 0.5*min(_time_step, t_end - t);
-//		   double pos_old = pos, vel_old = vel, acc_old = acc,jerk_old = jerk;	
+		   if(allow_rewind)   // Could be useful if later reject step
+		     { 
+		     if( body_component_grid )
+			{ 
+			pos_old = sys[b].p(c); vel_old = sys[b].v(c); 
+			acc_old = acc;  jerk_old = jerk;
+			}
+		     }
 
-		   // Kick
+		   // Drift Step (center-of-mass motion)
 		   if( body_component_grid_no_sun )
 		      {
-//		      pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
-//		      sys[bb].p(c) = pos; 
-		      vel = vel +  hby2*(acc+(hby2*0.5)*jerk);
-		      sys[bb].v(c) = vel;
+		      double mv = 0.;
+		      // TODO: In principle could parellalize.  Worth it?
+		      for(int j=1;j<nbod;++j)
+		      	 mv += sys[j].mass()*sys[j].v(c);
+		      sys[bb].p(c) += mv*hby2/sys[0].mass();
 		      }
 		   __syncthreads();
 
-		   // Drift
-		   int bbb = thr+1;
-		   if(bbb < nbod)  // Central body does not drift
+		   // Kick Step (planet-planet interactions)
 		   {
-		   // TODO: For now using heliocentric drift; improve
-		   // TODO: Use algorithm that works; currently in non-inertial frame, but not including ficticous forces to compensate
-		   double cx = sys[0].p(0), cy = sys[0].p(1), cz = sys[0].p(2);
-		   double cvx = sys[0].v(0), cvy = sys[0].v(1), cvz = sys[0].v(2);
-		   double x = sys[bbb].p(0)-cx, y = sys[bbb].p(1)-cy, z = sys[bbb].p(2)-cz;
-		   double vx = sys[bbb].v(0)-cvx, vy = sys[bbb].v(1)-cvy, vz = sys[bbb].v(2)-cvz;
-		   // TODO: could probably cache sqrt(mass) across steps
-		   double GM = sys[0].mass()+sys[bbb].mass();
-                   drift_kepler(x,y,z,vx,vy,vz,GM,2.0*hby2);
-		   sys[bbb].p(0) = cx + x; // + 2.0*hby2*cvx;
-		   sys[bbb].p(1) = cy + y; // + 2.0*hby2*cvy;
-		   sys[bbb].p(2) = cz + z; // + 2.0*hby2*cvz;
-		   sys[bbb].v(0) = cvx + vx;
-		   sys[bbb].v(1) = cvy + vy;
-		   sys[bbb].v(2) = cvz + vz;
+		   // WARNING: If make changes, check that it's ok to not recompute
+ 		   // calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   if( body_component_grid_no_sun )
+		      {
+		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
+		      }
+		   }
+		   __syncthreads();
+  
+		   // Kepler Drift Step (Keplerian orbit about sun/central body)
+		   int bbb = thr+1;
+		   if(bbb < nbod)  // Central body does not do Kepler drift
+		   {
+		      drift_kepler(sys[bbb].p(0),sys[bbb].p(1),sys[bbb].p(2),sys[bbb].v(0),sys[bbb].v(1),sys[bbb].v(2),sqrtGM,2.0*hby2);
 		   }
 		   __syncthreads();	   		   
-
-		   // Kick
-		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
-
-		   if( body_component_grid_no_sun )
+		   
+		   /* TODO: Eventually check for close encounters and 
+		            if necessary undo, perform direct n-body, merge and resume
+	  	            Or maybe only in separate integrator? */
+		   bool need_to_rewind = false;
+		   if( allow_rewind && need_to_rewind )
 		     {
-//		     pos = pos +  hby2*(vel+(hby2*0.5)*(acc+(hby2/3.)*jerk));
-//		     sys[bb].p(c) = pos;
-		     vel = vel +  hby2*(acc+(hby2*0.5)*jerk);
-		     sys[bb].v(c) = vel;
-		     }
-		   __syncthreads(); // in case will output from sys
+			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
+			acc = acc_old;  jerk = jerk_old;
+		     	++iter;
+		   	if(iter>=_max_itterations_per_kernel_call) break;
+			continue;
+                     }
 
-
-		   t += 2.*hby2;
-		   ++iter;
-		   if((thr == 0)  && (log::needs_output(*_gpu_ens, t, sysid())) )
+		   // Kick Step (planet-planet interactions)
+		   {
+		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   if( body_component_grid_no_sun )
 		      {
-		      sys.set_time(t);
-		      log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
+		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
+		      }
+		   }
+		   __syncthreads();
+
+		   // Drift Step (center-of-mass motion)
+		   if( body_component_grid_no_sun )
+		      {
+		      double mv = 0.;
+		      // TODO: In principle could parellalize. Worth it?
+		      for(int j=1;j<nbod;++j)
+		      	 mv += sys[j].mass()*sys[j].v(c);
+		      sys[bb].p(c) += mv*hby2/sys[0].mass();
+		      }
+		   __syncthreads();
+
+		   // WARNING: Need to think about correct order of time updates, if add time dependnt forces
+		   t += 2.*hby2;
+
+		   ++iter;
+		   if( log::needs_output(*_gpu_ens, t, sysid()) )
+		      {
+		      // Save working coordinates
+		      double pos_tmp, vel_tmp;
+		      if(body_component_grid )
+			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
+
+		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
+		      if( (b==0) || body_component_grid_no_sun )
+		         {
+		   	 const double m0 = sys[0].mass();
+		   	 double sump = 0., sumv = 0., mtot = m0;
+		   	 for(int j=1;j<nbod;++j)   // TODO: Could parallelize;  Worth it?
+		      	    {
+		      	    const double mj = sys[j].mass();
+		      	    mtot += mj;
+		      	    sump += mj*sys[j].p(c);
+		      	    sumv += mj*sys[j].v(c);
+		      	    }
+		   	 if(b==0) // For sun only
+		      	    {
+		      	    sys[b].p(c) -= sump/mtot;
+		      	    sys[b].v(c) -= sumv/m0;
+		      	    }
+		   	 if( body_component_grid_no_sun ) // For all bodies except sun
+		      	    {
+		      	    sys[bb].p(c) += sys[0].p(c) - sump/mtot;
+		      	    sys[bb].v(c) += sys[0].v(c);
+  		      	    }
+		   	 }
+		      __syncthreads();		      
+		      if(thr == 0)
+		         {
+		         sys.set_time(t);
+		         log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
+		         }
+		      __syncthreads();
+		      // Restore working coordinates
+		      if(body_component_grid )
+			{ sys[b].p(c) = pos_tmp; sys[b].v(c) = vel_tmp; }
+		      __syncthreads();
 		      }
 
 		   if(iter>=_max_itterations_per_kernel_call) break;
 		}
+
+		// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
+		if( (b==0) || body_component_grid_no_sun )
+		   {
+		   const double m0 = sys[0].mass();
+		   double sump = 0., sumv = 0., mtot = m0;
+		   for(int j=1;j<nbod;++j)   // TODO: Could parallelize. Worth it?
+		      {
+		      const double mj = sys[j].mass();
+		      mtot += mj;
+		      sump += mj*sys[j].p(c);
+		      sumv += mj*sys[j].v(c);
+		      }
+		   if(b==0) // For sun only
+		      {
+		      sys[b].p(c) -= sump/mtot;
+		      sys[b].v(c) -= sumv/m0;
+		      }
+		   if( body_component_grid_no_sun ) // For all bodies except sun
+		      {
+		      sys[bb].p(c) += sys[0].p(c) - sump/mtot;
+		      sys[bb].v(c) += sys[0].v(c);
+  		      }
+		   }
+		   __syncthreads();
 
 		if(thr == 0) 
 		   sys.set_time(t);
