@@ -155,12 +155,16 @@ int main(int argc,  char **argv)
 	po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
 
 	desc.add_options()
-		("interval,i", po::value<std::string>() , "Stability test intervals")
+		("blocksize,b", po::value<std::string>() , "Threads per block")
 		("duration,d", po::value<std::string>() , "Duration of the integration")
+		("interval,i", po::value<std::string>() , "Logging interval")
+
 		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
+		("num_sys,s", po::value<std::string>() , "number of systems")
 		("timestep,t", po::value<std::string>() , "time step" )
-		("help,h", "produce help message")
+
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+		("help,h", "produce help message")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
 		;
 
@@ -196,14 +200,10 @@ int main(int argc,  char **argv)
 	if(vm.count("timestep")) {
 		cfg["time step"] = vm["timestep"].as<std::string>();
 	}
-	std::cout << "# Integrator:\t" << cfg["integrator"] << "\n"
-		<< "# Time step\t" << cfg["time step"] << "\n"
-		<< "# Min time step\t" << cfg["min time step"] << "\n"
-		<< "# Max time step\t" << cfg["max time step"] << "\n"
-		<< "# No. Systems\t" << cfg["nsys"] << "\n"
-		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
-		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
-		<< std::endl;
+
+	if(vm.count("blocksize")) {
+		cfg["blocksize"] = vm["blocksize"].as<std::string>();
+	}
 
 	if( ( cfg["blocksize"] != "" )  && (cfg["threads per block"] == "" )) 
 		cfg["threads per block"] = cfg["blocksize"];
@@ -214,10 +214,22 @@ int main(int argc,  char **argv)
 	if(vm.count("interval")) {
 		cfg["interval"] = vm["interval"].as<std::string>();
 	}
+	if(vm.count("num_sys")) {
+		cfg["nsys"] = vm["num_sys"].as<std::string>();
+	}
 
 	if(vm.count("logarithmic")) {
 		cfg["logarithmic"] = vm["logarithmic"].as<std::string>();
 	}
+
+	std::cout << "# Integrator:\t" << cfg["integrator"] << "\n"
+		<< "# Time step\t" << cfg["time step"] << "\n"
+		<< "# Min time step\t" << cfg["min time step"] << "\n"
+		<< "# Max time step\t" << cfg["max time step"] << "\n"
+		<< "# No. Systems\t" << cfg["nsys"] << "\n"
+		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
+		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
+		<< std::endl;
 
 	////////////// STABILITY TEST /////// 
 	DEBUG_OUTPUT(1,"Initialize swarm library ");
