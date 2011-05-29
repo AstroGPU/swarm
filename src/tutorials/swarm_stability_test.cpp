@@ -102,17 +102,20 @@ void stability_test(config& cfg){
 	cudaThreadSynchronize();   // Block until CUDA call completes
 	swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU
 
-	std::cout << "Time, Energy Conservation Error " << std::endl;
+	std::cout << "# Time, Energy Conservation Error " << std::endl;
 
+	
 	for(double time = 0; time < duration ; ) {
 
 		if((logarithmic > 1) && (time > 0)) interval = time * (logarithmic - 1);
 
+		// TODO: change the way the step_size and tend are handeled
 		double step_size = min(interval, duration - time );
+		double stop_time = time + step_size;
 
 		DEBUG_OUTPUT(1, "Integrator ensemble on GPU" );
 		swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
-		integ_gpu->integrate(gpu_ens, step_size);  // Actually do the integration w/ GPU!			
+		integ_gpu->integrate(gpu_ens, stop_time);  // Actually do the integration w/ GPU!			
 		cudaThreadSynchronize();  // Block until CUDA call completes
 		swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
 
@@ -125,16 +128,18 @@ void stability_test(config& cfg){
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
 
-		time += step_size;
+				time += step_size;
+				// time = ens.time(0);
 
-		std::cout << time << ", " << max_deltaE << std::endl;
+				std::cout << time << ", " << max_deltaE << "\n"; // ", " << ens.time(0) << ", " << interval << std::endl;
 
 	}
 
 	/// CSV output for use in spreadsheet software 
-	std::cout << "\n# Benchmarking times \n" 
-		<< "Integration (ms), Integrator initialize (ms), "
-		<< " Initialize (ms), GPU upload (ms), Download from GPU (ms) \n"
+	std::cerr << "\n# Benchmarking times \n" 
+		<< "# Integration (ms), Integrator initialize (ms), "
+		<< " Initialize (ms), GPU upload (ms), Download from GPU (ms) \n"  
+		<< "# "
 		<< swatch_kernel_gpu.getTime()*1000. << ",    "
 		<< swatch_temps_gpu.getTime()*1000. << ", "
 		<< swatch_init_gpu.getTime()*1000. << ", "
@@ -174,7 +179,7 @@ int main(int argc,  char **argv)
 	po::notify(vm);
 
 	// Print help message if requested or invalid parameters
-	if (vm.count("help")) { std::cout << desc << "\n"; return 1; }
+	if (vm.count("help")) { std::cerr << desc << "\n"; return 1; }
 
 	if (vm.count("verbose") ) DEBUG_LEVEL = vm["verbose"].as<int>();
 
@@ -217,18 +222,18 @@ int main(int argc,  char **argv)
 	if(vm.count("num_sys")) {
 		cfg["nsys"] = vm["num_sys"].as<std::string>();
 	}
-
 	if(vm.count("logarithmic")) {
 		cfg["logarithmic"] = vm["logarithmic"].as<std::string>();
 	}
 
-	std::cout << "# Integrator:\t" << cfg["integrator"] << "\n"
+	std::cerr << "# Integrator:\t" << cfg["integrator"] << "\n"
 		<< "# Time step\t" << cfg["time step"] << "\n"
+		<< "# Interval\t" << cfg["interval"] << "\n"
 		<< "# Min time step\t" << cfg["min time step"] << "\n"
 		<< "# Max time step\t" << cfg["max time step"] << "\n"
 		<< "# No. Systems\t" << cfg["nsys"] << "\n"
 		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
-		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
+		  << "# Blocksize\t" << cfg["blocksize"] // << "\n"
 		<< std::endl;
 
 	////////////// STABILITY TEST /////// 

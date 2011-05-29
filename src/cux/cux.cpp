@@ -433,7 +433,7 @@ bool cux_init()
         int driverVersion = 0, runtimeVersion = 0;     
         cudaDeviceProp deviceProp;
         cudaGetDeviceProperties(&deviceProp, dev);
-	printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+	printf("\n# Device %d: \"%s\"\n", dev, deviceProp.name);
 
         void *tmp;
         if( cudaMalloc(&tmp, 1024) != cudaSuccess) std::cerr << "# Error in cudaMalloc\n";

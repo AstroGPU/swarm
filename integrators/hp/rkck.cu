@@ -114,7 +114,9 @@ class rkck: public integrator {
 		double (&shared_mag)[2][nbod][3] = * (double (*)[2][nbod][3]) system_shmem;
 
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		// TODO: Change the way stopping is done
+		double t_end = min(_destination_time,sys.time_end());
+//		double t_end = min(t_start + _destination_time,sys.time_end());
 		double time_step = _max_time_step;
 
 		// local information per component per body

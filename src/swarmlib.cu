@@ -249,6 +249,8 @@ __device__ void count_running(int *nrunning, double *Tstop, ensemble &ens)
 #endif
 }
 
+
+
 #if 0
 /*!
   \brief Standalone kernel for counting the number of active ensembles in a GPU ensemble

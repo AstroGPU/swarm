@@ -77,7 +77,9 @@ class midpoint: public integrator {
 
 		// Set up times
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		// TODO: Change the way stopping is done
+		double t_end = min(_destination_time,sys.time_end());
+//		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
 		double pos = 0, vel = 0;

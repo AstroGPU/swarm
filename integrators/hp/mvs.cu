@@ -29,6 +29,7 @@ namespace hp {
 
 class mvs: public integrator {
 	typedef integrator base;
+
 	private:
 	double _time_step;
 	static const int _N_LAG = 5.0;
@@ -81,7 +82,7 @@ __device__ double solvex(double r0dotv0, double alpha,
      ddF = sig0*(1.0-alx2*Cp) + foo*x*(1.0 - alx2*Sp);
      z = fabs((_N_LAG - 1.0)*((_N_LAG - 1.0)*dF*dF - _N_LAG*F*ddF));
      z = sqrt(z);
-     double denom = (dF + SIGN(dF)*z); 
+     double denom = (dF + SIGN(dF)*z);  // faster than copysign
      if (denom ==0.0) denom = MINDENOM;
      u = _N_LAG*F/denom; // equation 2.43 PC
      x -= u;
@@ -245,7 +246,10 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
 
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		// TODO: Change the way stopping is done
+		double t_end = min(_destination_time,sys.time_end());
+//		double t_end = min(t_start + _destination_time,sys.time_end());
+
 
 		// local information per component per body
 		double pos_old, vel_old, acc_old; // needed if allowing rewindss
@@ -318,7 +322,6 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		   // Kick Step (planet-planet interactions)
 		   {
-		   // TODO: Test that this call can be removed
 		   // WARNING: If make changes, check that it's ok to not recompute
 		   // calcForces.calc_accel_no_sun(ij,bb,c,acc);
 		   if( body_component_grid_no_sun )
