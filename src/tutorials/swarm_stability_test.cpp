@@ -40,7 +40,7 @@ void stability_test(config& cfg){
 	cpu_ensemble reference_ensemble;
 	generate_ensemble(cfg,reference_ensemble);
 
-#if 0
+#if 1   // For testing if problems with hp_mvs are due to not being in COM frame
 	// Shift into center-of-mass frame
 	for(unsigned int i=0; i<reference_ensemble.nsys() ; ++i)
 	  {

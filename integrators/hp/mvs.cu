@@ -126,7 +126,7 @@ __device__ void SC_prussing(double y, double& S, double &C) // equation 2.40a Pr
      double u3 = u*u*u;
      if (y>0.0) 
         {
-     	sincos(u,&S,&C);  // TODO: Need to verify called correctly
+     	sincos(u,&S,&C); 
      	S = (u -  S)/u3;
      	C = (1.0- C)/ y;
      	}
@@ -252,29 +252,29 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		// local information per component per body
 		double pos_old, vel_old, acc_old, jerk_old; // needed if allowing rewindss
 		double acc = 0., jerk = 0.;
-		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?
+		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?  Probbly not.
 
 		// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 		if( (b==0) || body_component_grid_no_sun )
-		   {
-		   double sump = 0., sumv = 0., mtot = 0.;
-		   for(int j=0;j<nbod;++j)   // TODO: Could parallelize. Worth it?
+		   {	
+	   	   double sump = 0., sumv = 0., mtot = 0.;
+		   for(int j=0;j<nbod;++j)   // Probably not worth parallelizing
 		      {
 		      const double mj = sys[j].mass();
 		      mtot += mj;
 		      sump += mj*sys[j].p(c);
 		      sumv += mj*sys[j].v(c);
 		      }
-		   if(b==0) // For sun only
-		      {
-		      sys[b].v(c) = sumv/mtot;
-		      sys[b].p(c) = sump/mtot;
-		      }
 		   if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
 		      sys[bb].v(c) -= sumv/mtot;
 		      sys[bb].p(c) -= sys[0].p(c);
   		      }
+		   if(b==0) // For sun only
+		      {
+		      sys[b].v(c) = sumv/mtot;
+		      sys[b].p(c) = sump/mtot;
+		      }
 		   }
 		   __syncthreads();		
 
@@ -285,7 +285,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 
 		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
-		while(t < t_end)      // Only enter loop if need to integrate
+//		while(t < t_end)      // Only enter loop if need to integrate
+		while(( t < t_end) && false)      // Only enter loop if need to integrate
 		{
 		   double hby2 = 0.5*min(_time_step, t_end - t);
 		   if(allow_rewind)   // Could be useful if later reject step
@@ -301,7 +302,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   if( body_component_grid_no_sun )
 		      {
 		      double mv = 0.;
-		      // TODO: In principle could parellalize.  Worth it?
+		      // Probably not worth parallelizing 
 		      for(int j=1;j<nbod;++j)
 		      	 mv += sys[j].mass()*sys[j].v(c);
 		      sys[bb].p(c) += mv*hby2/sys[0].mass();
@@ -312,7 +313,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		   // TODO: Test that this call can be removed
 		   // WARNING: If make changes, check that it's ok to not recompute
-		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   // calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 		   if( body_component_grid_no_sun )
 		      {
 		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
@@ -355,7 +356,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   if( body_component_grid_no_sun )
 		      {
 		      double mv = 0.;
-		      // TODO: In principle could parellalize. Worth it?
+		      // Probably not worth parallelizing
 		      for(int j=1;j<nbod;++j)
 		      	 mv += sys[j].mass()*sys[j].v(c);
 		      sys[bb].p(c) += mv*hby2/sys[0].mass();
@@ -378,23 +379,23 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		         {
 		   	 const double m0 = sys[0].mass();
 		   	 double sump = 0., sumv = 0., mtot = m0;
-		   	 for(int j=1;j<nbod;++j)   // TODO: Could parallelize;  Worth it?
+		   	 for(int j=1;j<nbod;++j)   // Probably not worth parallelizing
 		      	    {
 		      	    const double mj = sys[j].mass();
 		      	    mtot += mj;
 		      	    sump += mj*sys[j].p(c);
 		      	    sumv += mj*sys[j].v(c);
 		      	    }
-		   	 if(b==0) // For sun only
-		      	    {
-		      	    sys[b].p(c) -= sump/mtot;
-		      	    sys[b].v(c) -= sumv/m0;
-		      	    }
 		   	 if( body_component_grid_no_sun ) // For all bodies except sun
 		      	    {
 		      	    sys[bb].p(c) += sys[0].p(c) - sump/mtot;
 		      	    sys[bb].v(c) += sys[0].v(c);
   		      	    }
+		   	 if(b==0) // For sun only
+		      	    {
+		      	    sys[b].p(c) -= sump/mtot;
+		      	    sys[b].v(c) -= sumv/m0;
+		      	    }
 		   	 }
 		      __syncthreads();		      
 		      if(thr == 0)
@@ -417,23 +418,23 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		   const double m0 = sys[0].mass();
 		   double sump = 0., sumv = 0., mtot = m0;
-		   for(int j=1;j<nbod;++j)   // TODO: Could parallelize. Worth it?
+		   for(int j=1;j<nbod;++j)  // Probably not worth parallelizing
 		      {
 		      const double mj = sys[j].mass();
 		      mtot += mj;
 		      sump += mj*sys[j].p(c);
 		      sumv += mj*sys[j].v(c);
 		      }
-		   if(b==0) // For sun only
-		      {
-		      sys[b].p(c) -= sump/mtot;
-		      sys[b].v(c) -= sumv/m0;
-		      }
 		   if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
 		      sys[bb].p(c) += sys[0].p(c) - sump/mtot;
 		      sys[bb].v(c) += sys[0].v(c);
   		      }
+		   if(b==0) // For sun only
+		      {
+		      sys[b].p(c) -= sump/mtot;
+		      sys[b].v(c) -= sumv/m0;
+		      }
 		   }
 		   __syncthreads();
 
