@@ -239,11 +239,11 @@ template<typename T, int dim = 1, int align = 128>
 		{
 			size_t size = lastdim;
 			if(dim == 1) return size*sizeof(T);
-
+			else {
 			for(int i = 0; i != dim-1; i++)
 			{
 				size *= this->extent[i];
-			}
+			} }
 			return size;
 		}
 	public:
