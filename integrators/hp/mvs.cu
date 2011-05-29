@@ -253,9 +253,12 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?  Probbly not.
 
 		// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
+		{
+	   	double sump = 0., sumv = 0., mtot = 0.;
+		double pc0;
 		if( (b==0) || body_component_grid_no_sun )
 		   {	
-	   	   double sump = 0., sumv = 0., mtot = 0.;
+		   pc0 = sys[0].p(c);
 		   for(int j=0;j<nbod;++j)   // Probably not worth parallelizing
 		      {
 		      const double mj = sys[j].mass();
@@ -263,10 +266,14 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sump += mj*sys[j].p(c);
 		      sumv += mj*sys[j].v(c);
 		      }
+		   }
+		__syncthreads();
+		if( (b==0) || body_component_grid_no_sun )
+		   {
 		   if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
 		      sys[bb].v(c) -= sumv/mtot;
-		      sys[bb].p(c) -= sys[0].p(c);
+		      sys[bb].p(c) -= pc0; // sys[0].p(c);
   		      }
 		   if(b==0) // For sun only
 		      {
@@ -274,7 +281,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[b].p(c) = sump/mtot;
 		      }
 		   }
-		   __syncthreads();		
+		__syncthreads();		
+		}
 
 		////////// INTEGRATION //////////////////////
 		// Calculate acceleration
@@ -283,7 +291,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		calcForces.calc_accel_no_sun(ij,bb,c,acc);
 
 		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
-		while(t < t_end)      // Only enter loop if need to integrate
+		bool skip_loop = false;
+		while((t < t_end) && !skip_loop)      // Only enter loop if need to integrate
 		{
 		   double hby2 = 0.5*min(_time_step, t_end - t);
 		   if(allow_rewind)   // Could be useful if later reject step
@@ -293,6 +302,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 			pos_old = sys[b].p(c); vel_old = sys[b].v(c); 
 			acc_old = acc;  
 			}
+		     __syncthreads();
 		     }
 
 		   // Drift Step (center-of-mass motion)
@@ -335,6 +345,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
 			acc = acc_old;  
 		     	++iter;
+		        __syncthreads();	   		   
 		   	if(iter>=_max_itterations_per_kernel_call) break;
 			continue;
                      }
@@ -372,10 +383,15 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
 
 		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
+		      {
+		      double sump = 0., sumv = 0., mtot;
+		      double m0, pc0, vc0;
 		      if( (b==0) || body_component_grid_no_sun )
 		         {
-		   	 const double m0 = sys[0].mass();
-		   	 double sump = 0., sumv = 0., mtot = m0;
+		   	 m0 = sys[0].mass();
+			 pc0 = sys[0].p(c);
+			 vc0 = sys[0].v(c);
+			 mtot = m0;
 		   	 for(int j=1;j<nbod;++j)   // Probably not worth parallelizing
 		      	    {
 		      	    const double mj = sys[j].mass();
@@ -383,10 +399,14 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sump += mj*sys[j].p(c);
 		      	    sumv += mj*sys[j].v(c);
 		      	    }
+			 }
+		      __syncthreads();
+		      if( (b==0) || body_component_grid_no_sun )
+		         {
 		   	 if( body_component_grid_no_sun ) // For all bodies except sun
 		      	    {
-		      	    sys[bb].p(c) += sys[0].p(c) - sump/mtot;
-		      	    sys[bb].v(c) += sys[0].v(c);
+		      	    sys[bb].p(c) += pc0 - sump/mtot;
+		      	    sys[bb].v(c) += vc0;
   		      	    }
 		   	 if(b==0) // For sun only
 		      	    {
@@ -395,6 +415,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    }
 		   	 }
 		      __syncthreads();		      
+		      }
 		      if(thr == 0)
 		         {
 		         sys.set_time(t);
@@ -411,10 +432,15 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		}
 
 		// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
+		{
+		double sump = 0., sumv = 0., mtot;
+		double m0, pc0, vc0;
 		if( (b==0) || body_component_grid_no_sun )
 		   {
-		   const double m0 = sys[0].mass();
-		   double sump = 0., sumv = 0., mtot = m0;
+		   m0 = sys[0].mass();
+		   pc0 = sys[0].p(c);
+		   vc0 = sys[0].v(c);
+		   mtot = m0;
 		   for(int j=1;j<nbod;++j)  // Probably not worth parallelizing
 		      {
 		      const double mj = sys[j].mass();
@@ -422,11 +448,16 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sump += mj*sys[j].p(c);
 		      sumv += mj*sys[j].v(c);
 		      }
+		   }
+		__syncthreads();
+		if( (b==0) || body_component_grid_no_sun )
+		   {
 		   if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
-		      sys[bb].p(c) += sys[0].p(c) - sump/mtot;
-		      sys[bb].v(c) += sys[0].v(c);
+		      sys[bb].p(c) += pc0 - sump/mtot;
+		      sys[bb].v(c) += vc0;
   		      }
+
 		   if(b==0) // For sun only
 		      {
 		      sys[b].p(c) -= sump/mtot;
@@ -434,7 +465,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      }
 		   }
 		   __syncthreads();
-
+		}
 		if(thr == 0) 
 		   sys.set_time(t);
 
