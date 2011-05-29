@@ -67,17 +67,15 @@ __device__ double solvex(double r0dotv0, double alpha,
 // better initial guess depends on rperi which would have to be passed
 
    double u=1.0;
-   // TODO: Could allow to exit loop early
    for(int i=0;i<7;i++){  // 7 iterations is probably overkill
-			// as it always converges faster than this
+			  // as it always converges faster than this
      double x2,x3,alx2,Cp,Sp,F,dF,ddF,z;
      x2 = x*x;
      x3 = x2*x;
      alx2 = alpha*x2;
-     Cp = C_prussing(alx2);
-     Sp = S_prussing(alx2);
-//   TODO: Test if this is faster/accurate     
-//   SC_prussing(alx2,Sp,Cp);
+     // Cp = C_prussing(alx2);
+     // Sp = S_prussing(alx2);
+     SC_prussing(alx2,Sp,Cp);  // optimization
      F = sig0*x2*Cp + foo*x3*Sp + r0*x - smu*dt; // eqn 2.41 PC
      dF = sig0*x*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42 PC
      ddF = sig0*(1.0-alx2*Cp) + foo*x*(1.0 - alx2*Sp);
@@ -87,6 +85,7 @@ __device__ double solvex(double r0dotv0, double alpha,
      if (denom ==0.0) denom = MINDENOM;
      u = _N_LAG*F/denom; // equation 2.43 PC
      x -= u;
+     if( (i>=2) && (x+u==x) ) break;      // optimization to allow to exit loop early
    }
 //   if (isnan(x)) printf("solvex: is nan\n");
    return x;
@@ -95,7 +94,6 @@ __device__ double solvex(double r0dotv0, double alpha,
 // functions needed for kepstep
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
-// TODO: could merge into one function that uses sincos
 __device__ double C_prussing(double y) // equation 2.40a Prussing + Conway
 {
   if (fabs(y)<1e-4) return 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
@@ -158,6 +156,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
    double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
    // WARNING: Using softened potential
    double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
+   // double r0 = sqrt(x*x + y*y + z*z ); // current radius
    double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
    double GM = sqrtGM*sqrtGM;
@@ -165,18 +164,17 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 // here alpha=1/a and can be negative
    double x_p = solvex(r0dotv0, alpha, sqrtGM, r0, deltaTime); // solve universal kepler eqn
 
-//   double smu = sqrt(GM);  // before we cached sqrt(GM)
+//   double smu = sqrt(GM);  // from before we cached sqrt(GM)
    double smu = sqrtGM; 
    double foo = 1.0 - r0*alpha;
    double sig0 = r0dotv0/smu;
    double x2 = x_p*x_p;
    double x3 = x2*x_p;
    double alx2 = alpha*x2;
-   double Cp = C_prussing(alx2);
-   double Sp = S_prussing(alx2);
-//   TODO: Test if this is faster/accurate     
-//   double Cp, Sp;
-//   SC_prussing(alx2,Sp,Cp);
+//   double Cp = C_prussing(alx2);
+//   double Sp = S_prussing(alx2);
+   double Cp, Sp;
+   SC_prussing(alx2,Sp,Cp);  // optimization
    double r = sig0*x_p*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42  PC
    if (r < MINR) r=MINR;
 // if dt == 0 then f=dgdt=1 and g=dfdt=0
@@ -250,8 +248,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
-		double pos_old, vel_old, acc_old, jerk_old; // needed if allowing rewindss
-		double acc = 0., jerk = 0.;
+		double pos_old, vel_old, acc_old; // needed if allowing rewindss
+		double acc = 0.;
 		double sqrtGM = sqrt(sys[0].mass()); // TODO: Could parallelize. Worth it?  Probbly not.
 
 		// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
@@ -279,14 +277,13 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   __syncthreads();		
 
 		////////// INTEGRATION //////////////////////
-		// Calculate acceleration and jerk
+		// Calculate acceleration
 		Gravitation<nbod> calcForces(sys,system_shmem);
-                // precompute acc and jerk before enter loop, since will cache acc and jerk across loop itterations
-		calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+                // precompute acc before enter loop, since will cache acc across loop itterations
+		calcForces.calc_accel_no_sun(ij,bb,c,acc);
 
 		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
-//		while(t < t_end)      // Only enter loop if need to integrate
-		while(( t < t_end) && false)      // Only enter loop if need to integrate
+		while(t < t_end)      // Only enter loop if need to integrate
 		{
 		   double hby2 = 0.5*min(_time_step, t_end - t);
 		   if(allow_rewind)   // Could be useful if later reject step
@@ -294,7 +291,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		     if( body_component_grid )
 			{ 
 			pos_old = sys[b].p(c); vel_old = sys[b].v(c); 
-			acc_old = acc;  jerk_old = jerk;
+			acc_old = acc;  
 			}
 		     }
 
@@ -313,10 +310,10 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		   // TODO: Test that this call can be removed
 		   // WARNING: If make changes, check that it's ok to not recompute
-		   // calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   // calcForces.calc_accel_no_sun(ij,bb,c,acc);
 		   if( body_component_grid_no_sun )
 		      {
-		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
+		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
 		   __syncthreads();
@@ -336,7 +333,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   if( allow_rewind && need_to_rewind )
 		     {
 			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
-			acc = acc_old;  jerk = jerk_old;
+			acc = acc_old;  
 		     	++iter;
 		   	if(iter>=_max_itterations_per_kernel_call) break;
 			continue;
@@ -344,10 +341,10 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		   // Kick Step (planet-planet interactions)
 		   {
-		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   calcForces.calc_accel_no_sun(ij,bb,c,acc);
 		   if( body_component_grid_no_sun )
 		      {
-		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
+		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
 		   __syncthreads();

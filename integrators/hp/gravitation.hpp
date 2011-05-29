@@ -214,7 +214,7 @@ class Gravitation {
 		}
 	}
 
-	__device__ void calc_accel_no_sun(int ij,int b,int c,double& acc,double& jerk) const{
+	__device__ void calc_accel_Jerk_no_sun(int ij,int b,int c,double& acc,double& jerk) const{
 	  // TODO: Do we really need this syncthreads?
 		__syncthreads();
 		if(ij < pair_count)
@@ -223,6 +223,17 @@ class Gravitation {
 		if(b < nbod){
 			acc =  sum_values_no_sun(shared.acc,b,c);
 			jerk = sum_values_no_sun(shared.jerk,b,c);
+		}
+	}
+
+	__device__ void calc_accel_no_sun(int ij,int b,int c,double& acc) const{
+	  // TODO: Do we really need this syncthreads?
+		__syncthreads();
+		if(ij < pair_count)
+			calc_pair_acc(ij);
+		__syncthreads();
+		if(b < nbod){
+			acc =  sum_values_no_sun(shared.acc,b,c);
 		}
 	}
 
