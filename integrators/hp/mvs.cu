@@ -57,15 +57,17 @@ class mvs: public integrator {
 #define MINDENOM 1e-8  // mininum denominator
 
 __device__ double solvex(double r0dotv0, double alpha,
-                double M1, double r0, double dt)
+                double sqrtM1, double r0, double dt)
 {
-   double smu = sqrt(M1);
+//   double smu = sqrt(M1);
+   double smu = sqrtM1;
    double foo = 1.0 - r0*alpha;
    double sig0 = r0dotv0/smu;
-   double x = M1*dt*dt/r0; // initial guess could be improved 
+   double x = sqrtM1*sqrtM1*dt*dt/r0; // initial guess could be improved 
 // better initial guess depends on rperi which would have to be passed
 
    double u=1.0;
+   // TODO: Could allow to exit loop early
    for(int i=0;i<7;i++){  // 7 iterations is probably overkill
 			// as it always converges faster than this
      double x2,x3,alx2,Cp,Sp,F,dF,ddF,z;
@@ -74,6 +76,8 @@ __device__ double solvex(double r0dotv0, double alpha,
      alx2 = alpha*x2;
      Cp = C_prussing(alx2);
      Sp = S_prussing(alx2);
+//   TODO: Test if this is faster/accurate     
+//   SC_prussing(alx2,Sp,Cp);
      F = sig0*x2*Cp + foo*x3*Sp + r0*x - smu*dt; // eqn 2.41 PC
      dF = sig0*x*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42 PC
      ddF = sig0*(1.0-alx2*Cp) + foo*x*(1.0 - alx2*Sp);
@@ -91,6 +95,7 @@ __device__ double solvex(double r0dotv0, double alpha,
 // functions needed for kepstep
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
+// TODO: could merge into one function that uses sincos
 __device__ double C_prussing(double y) // equation 2.40a Prussing + Conway
 {
   if (fabs(y)<1e-4) return 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
@@ -107,6 +112,32 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
   if (y>0.0) return (u -  sin(u))/u3;
   else       return (sinh(u) - u)/u3;
 }
+
+__device__ void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussing + Conway
+{
+  if (fabs(y)<1e-4) 
+  {
+     S = 1.0/6.0*(1.0 - y/20.0*(1.0 - y/42.0*(1.0 - y/72.0)));
+     C = 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
+     return;
+  }
+  double u = sqrt(fabs(y));
+  double u3 = u*u*u;
+  if (y>0.0) 
+     {
+     sincos(u,&S,&C);  // TODO: Need to verify called correctly
+     S = (u -  S)/u3;
+     C = (1.0- C)/ y;
+     }
+  else
+     {
+       S = (sinh(u) - u)/u3;
+       C = (cosh(u)-1.0)/-y;
+     }
+  return;
+}
+
+
 
 ///////////////////////////////////////////////////////////////
 // advance a particle using f,g functions and universal variables
@@ -130,7 +161,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
    double GM = sqrtGM*sqrtGM;
    double alpha = (2.0/r0 - v2/GM);  // inverse of semi-major eqn 2.134 MD
 // here alpha=1/a and can be negative
-   double x_p = solvex(r0dotv0, alpha, GM, r0, deltaTime); // solve universal kepler eqn
+   double x_p = solvex(r0dotv0, alpha, sqrtGM, r0, deltaTime); // solve universal kepler eqn
 
 //   double smu = sqrt(GM);  // before we cached sqrt(GM)
    double smu = sqrtGM; 
@@ -141,6 +172,9 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
    double alx2 = alpha*x2;
    double Cp = C_prussing(alx2);
    double Sp = S_prussing(alx2);
+//   TODO: Test if this is faster/accurate     
+//   double Cp, Sp;
+//   SC_prussing(alx2,Sp,Cp);
    double r = sig0*x_p*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42  PC
    if (r < MINR) r=MINR;
 // if dt == 0 then f=dgdt=1 and g=dfdt=0
@@ -274,8 +308,9 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 
 		   // Kick Step (planet-planet interactions)
 		   {
+		   // TODO: Test that this call can be removed
 		   // WARNING: If make changes, check that it's ok to not recompute
- 		   // calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
+		   calcForces.calc_accel_no_sun(ij,bb,c,acc,jerk);
 		   if( body_component_grid_no_sun )
 		      {
 		      sys[bb].v(c) +=  hby2*(acc+hby2*0.5*jerk);
