@@ -15,6 +15,18 @@ using namespace std;
 int DEBUG_LEVEL  = 0;
 const int LOGARITHMIC_BASE = 2;
 
+/* TODO: Move to appropriate location
+   Note to self:  For Fermi GF100 (compute compat=2.0) and 
+   assuming <=64 registers per thread
+   14 SM * 8 blocks/SM * 64 threads/block = 7168 threads
+
+   For hp_* integrators (or _cpt): Nbod<=7, threads/system = 3*Nbod, 
+   so 14*8*21/Nbod = 2352/Nbod systems should be nearly optimal
+   Nbod=3-> 784, Nbod=4-> 588, Nbod=5-> 470, Nbod=6-> 392, Nbod=7-> 336
+
+   For thread/system integrators: threads/system = 1 
+   registers per thread, 7168 systems should be nearly optimal
+*/
 
 void stability_test(config& cfg){
 	if(!validate_configuration(cfg) ) {
@@ -131,7 +143,8 @@ void stability_test(config& cfg){
 				time += step_size;
 				// time = ens.time(0);
 
-				std::cout << time << ", " << max_deltaE << "\n"; // ", " << ens.time(0) << ", " << interval << std::endl;
+				std::cout << time << ", " << max_deltaE << ", " << ens.time(0) << std::endl;
+				std::cout << std::flush;
 
 	}
 

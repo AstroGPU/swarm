@@ -159,8 +159,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 {
    double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
    // WARNING: Using softened potential
-   double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
-   // double r0 = sqrt(x*x + y*y + z*z ); // current radius
+//   double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
+   double r0 = sqrt(x*x + y*y + z*z ); // current radius
    double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
    double GM = sqrtGM*sqrtGM;
@@ -180,7 +180,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
    double Cp, Sp;
    SC_prussing(alx2,Sp,Cp);  // optimization
    double r = sig0*x_p*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42  PC
-   if (r < MINR) r=MINR;
+//   if (r < MINR) r=MINR;
 // if dt == 0 then f=dgdt=1 and g=dfdt=0
 // f,g functions equation 2.38a  PC
    double f_p= 1.0 - (x2/r0)*Cp;
@@ -338,7 +338,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
   		   FENCE
   
 		   // Kepler Drift Step (Keplerian orbit about sun/central body)
-		   int bbb = thr+1;
+		   const int bbb = thr+1;
 		   if(bbb < nbod)  // Central body does not do Kepler drift
 		   {
 		      drift_kepler(sys[bbb].p(0),sys[bbb].p(1),sys[bbb].p(2),sys[bbb].v(0),sys[bbb].v(1),sys[bbb].v(2),sqrtGM,2.0*hby2);
@@ -348,7 +348,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   /* TODO: Eventually check for close encounters and 
 		            if necessary undo, perform direct n-body, merge and resume
 	  	            Or maybe only in separate integrator? */
-		   bool need_to_rewind = false;
+		   const bool need_to_rewind = false;
 		   // WARNING: Make sure all or no threads within a block enter (or verify threadfence doesn't need all threads in a block to call it)
 		   if( allow_rewind && need_to_rewind )
 		     {
@@ -389,13 +389,13 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		   double sump = 0., sumv = 0., mtot;
 		   double m0, pc0, vc0;
+		   double pos_tmp, vel_tmp;
 		   if( sys_needs_output )
 		      {
 		      if(thr == 0)
 		         sys.set_time(t);
 
 		      // Save working coordinates
-		      double pos_tmp, vel_tmp;
 		      if(body_component_grid )
 			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
 		      }
