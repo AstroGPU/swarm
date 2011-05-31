@@ -392,7 +392,12 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      if(body_component_grid )
 			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
 		      }
+#if __CUDA_ARCH__ >= 200
 		   int any_system_in_block_needs_output = __syncthreads_or(sys_needs_output);
+#else              // TODO: In principle could use 1 int of shared memory per block and atomicAdd to determine if any system in the thread will need to output and the syncthreads required to do that right
+		   int any_system_in_block_needs_output = 1;
+		   __syncthreads();
+#endif
 		   if( sys_needs_output )
 		      {
 		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
