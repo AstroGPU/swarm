@@ -40,19 +40,6 @@ template< class implementation>
 __global__ void count_running(int *nrunning, double Tstop, ensemble ens, implementation* integ )
 {
         const int MAXTHREADSPERBLOCK = 256;
-
-#if 0   // WARNING: This code doesn't appear to work
-	// If you don't want to use shared memory for this
-	// Direct counting (via atomicAdd) of the number of running threads. Slower
-	// but requires no shared memory.
-	// TODO: Test if this implementation is fast enough to be activated
-	int sys = blockIdx.x * blockDim.x + threadIdx.x; // threadId();
-	int running = (sys < ens.nsys()) && !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop ) ? 1 : 0;
-	if(running) { atomicAdd(nrunning, 1); /*printf("sys=%d running.\n", sys);*/ }
-		__syncthreads();
-		if(sys<3)	  printf("sys=%d nsys=%d flags=%d t=%g Tstop=%g running=%d nrunning=%d\n",sys,ens.nsys(),(ens.flags(sys) & ensemble::INACTIVE),ens.time(sys),Tstop,running,nrunning);
-	return;
-#else
 	// We think it's ok to make this extern ?
 	// TODO: replcae with dynamicly allocated shared memory 
 	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
@@ -82,7 +69,6 @@ __global__ void count_running(int *nrunning, double Tstop, ensemble ens, impleme
 	  printf("sys=%d nsys=%d flags=%d t=%g Tstop=%g running=%d  ",sys,ens.nsys(),(ens.flags(sys) & ensemble::INACTIVE),ens.time(sys),Tstop,running[widx]);
 	printf("nrunning=%d\n",nrunning[0]);	
 	  }
-#endif
 #endif
 }
 
@@ -121,7 +107,6 @@ class integrator : public swarm::integrator {
 	     // initialize stop-time temporary array
 	     //	     cuxDeviceAutoPtr<real_time> Tstop(ens.nsys(),end_time);
 	     /// temp variable for return values (gpu pointer)
-#if 1
 	     cuxDeviceAutoPtr<int> nrunning_gpu(1);	
 	     nrunning_gpu.memset(0);
 	     int nsys = _ens->nsys();
@@ -134,9 +119,6 @@ class integrator : public swarm::integrator {
 	     nrunning_gpu.download(&nrunning_cpu,1);
 	     //	     std::cerr << "# end_time= " << end_time << " nrunning = " << nrunning_cpu << "\n";
 	     return nrunning_cpu;
-#else
-	     return 1;
-#endif
 }
 
          void integrate(gpu_ensemble &ens, double stop_time ){
@@ -167,12 +149,8 @@ class integrator : public swarm::integrator {
 		    // flush CPU/GPU output logs
 		    log::flush(log::memory | log::if_full);
 
-		    // TODO:  Need to replace this with something that checks how many systems are still trying to be integrated for dT
-		    //		    unsigned int num_systems_active = 1;
 		    unsigned int num_systems_active = count_unfinished(ens,stop_time);
 
-		    //		    std::cerr << "# time = " << _ens->time(0) << "\n";
-		    //		    std::cerr << "# l= " << l << " num_unfinished_sys = " << num_systems_active << "\n";
 		    if(num_systems_active<=0)
 		      break;
 		  }
@@ -188,6 +166,10 @@ class integrator : public swarm::integrator {
 		const int nbod = _ens->nbod();
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
+		// WARNING:  Maximum of 11 bodies w/ 64 threads/block and 1 thread per pair
+		// WARNING:  Maximum of 21 bodies w/ 64 threada/block and 1 threada per component
+		// TODO: Maybe impose a maximum number of threads per system (but would require loops to make sure all work gets done
+		// TODO: Or at least provide a run-time check that someone doesn't integrate a system with too small a block size for their nbod.
 		const int threads_per_system = std::max( body_comp, pair_count) ;
 		return threads_per_system;
 	}
@@ -223,6 +205,7 @@ class integrator : public swarm::integrator {
 		return systems_per_block * shmem_per_system(nbod);
 	}
 
+        // TODO: Warn at run time if request system larger than can fit in shmem
 	static __device__ __host__ inline int shmem_per_system(int nbod) {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * 2 * sizeof(double);

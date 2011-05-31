@@ -228,7 +228,7 @@ class Gravitation {
 	}
 
 	__device__ void calc_accel_Jerk_no_sun(int ij,int b,int c,double& acc,double& jerk) const{
-	  // WARNING: MVS does not need this syncthreads/threadfence_block.
+	  // WARNING: MVS does not need this syncthreads.  Think if used for other integrators
 	  //	        __syncthreads();
 	  int firstij = first(ij);
 	  int secondij = second(ij);
@@ -242,7 +242,7 @@ class Gravitation {
 	}
 
 	__device__ void calc_accel_no_sun(int ij,int b,int c,double& acc) const{
-	  // WARNING: MVS does not need this syncthreads/threadfence_block.
+	  // WARNING: MVS does not need this syncthreads.  Think if used for other integrators
 	  //	        __syncthreads();
 	  int firstij = first(ij);
 	  int secondij = second(ij);

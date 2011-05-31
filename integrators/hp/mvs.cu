@@ -341,7 +341,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		            if necessary undo, perform direct n-body, merge and resume
 	  	            Or maybe only in separate integrator? */
 		   const bool need_to_rewind = false;
-		   // WARNING: Make sure all or no threads within a block enter (or verify threadfence doesn't need all threads in a block to call it)
+
 		   if( allow_rewind && need_to_rewind )
 		     {
 			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
