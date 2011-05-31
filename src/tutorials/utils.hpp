@@ -12,5 +12,5 @@
 
 
 void generate_ensemble(swarm::config& cfg, swarm::cpu_ensemble& ens)  ;
-double find_max_energy_conservation_error(swarm::cpu_ensemble& ens, swarm::cpu_ensemble& reference_ensemble ) ;
+std::pair<double,double> find_max_energy_conservation_error(swarm::cpu_ensemble& ens, swarm::cpu_ensemble& reference_ensemble ) ;
 bool validate_configuration(swarm::config& cfg);

@@ -20,12 +20,7 @@
 #include "static_accjerk.hpp"
 #include "swarmlog.h"
 
-// #define N_LAG 5.0 // integer n, for recommended Laguerre method
 #define SIGN(a) ((a) < 0 ? -1 : 1)
-// TODO: Figure out why threadfence_block gives differen results
-//       (probably because one of these should be a syncthreads)
-//#define FENCE __threadfence_block();
-#define FENCE __syncthreads();
 
 
 namespace swarm {
@@ -159,8 +154,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 {
    double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
    // WARNING: Using softened potential
-//   double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
-   double r0 = sqrt(x*x + y*y + z*z ); // current radius
+   double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
+//   double r0 = sqrt(x*x + y*y + z*z ); // current radius
    double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
    double GM = sqrtGM*sqrtGM;
@@ -180,7 +175,8 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
    double Cp, Sp;
    SC_prussing(alx2,Sp,Cp);  // optimization
    double r = sig0*x_p*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42  PC
-//   if (r < MINR) r=MINR;
+// WARNING: Using softened potentil
+   if (r < MINR) r=MINR;
 // if dt == 0 then f=dgdt=1 and g=dfdt=0
 // f,g functions equation 2.38a  PC
    double f_p= 1.0 - (x2/r0)*Cp;
@@ -188,7 +184,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 // dfdt,dgdt function equation 2.38b PC
    double dfdt;
    double dgdt = 1.0 - (x2/r)*Cp;
-   if (fabs(g_p) > MINDENOM)
+   if (fabs(g_p) > MINDENOM) 
       // conservation of angular momentum means that f dfdt - g dfdt =1
       dfdt = (f_p*dgdt - 1.0)/g_p;
    else
@@ -239,8 +235,6 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 //		const bool body_grid = thr < nbod;                  // if needed for parts w/ 1 thread per body including sun/central body
 
 		// i,j pairs Grid
-		// TODO: Be more clever about calculating accelerations
-		//       Either avoid pairs with sun or specialize Gravitation?
 		const int ij = thr;      // index for parts w/ 1 thread per body pair
 
 
@@ -275,19 +269,16 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      }
 		   }
 		__syncthreads();
-		if( (b==0) || body_component_grid_no_sun )
-		   {
-		   if( body_component_grid_no_sun ) // For all bodies except sun
+		if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
 		      sys[bb].v(c) -= sumv/mtot;
 		      sys[bb].p(c) -= pc0; // sys[0].p(c);
   		      }
-		   if(b==0) // For sun only
+		if(b==0) // For sun only
 		      {
 		      sys[b].v(c) = sumv/mtot;
 		      sys[b].p(c) = sump/mtot;
 		      }
-		   }
 		__syncthreads();
 		}
 
@@ -298,8 +289,9 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		calcForces.calc_accel_no_sun(ij,bb,c,acc);
 
 		unsigned int iter=0;  // Make sure don't get stuck in infinite loop
-		const bool skip_loop = false; // For debugging coordinate shifts
-		while((t + _time_step <= t_end) && (iter<_max_itterations_per_kernel_call) && !skip_loop )      // Only enter loop if need to integrate
+		bool skip_loop = ( t + _time_step > t_end );
+		while(!skip_loop)
+//		while((t + _time_step <= t_end) && (iter<_max_itterations_per_kernel_call) && !skip_loop )      // Only enter loop if need to integrate
 		{
 		   // TODO: Need to think about how to deal with logging at times not a multiple of _time_step without affecting integration
 		   // double hby2 = 0.5*min(_time_step, t_end - t);
@@ -324,7 +316,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	 mv += sys[j].mass()*sys[j].v(c);
 		      sys[bb].p(c) += mv*hby2/sys[0].mass();
 		      }
-		   FENCE
+		   // __syncthreads(); // Not needed as long as next calc_accel remains commented and reuses previous calculataion
 
 		   // Kick Step (planet-planet interactions)
 		   {
@@ -335,7 +327,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
-  		   FENCE
+		   __syncthreads();
   
 		   // Kepler Drift Step (Keplerian orbit about sun/central body)
 		   const int bbb = thr+1;
@@ -343,7 +335,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		   {
 		      drift_kepler(sys[bbb].p(0),sys[bbb].p(1),sys[bbb].p(2),sys[bbb].v(0),sys[bbb].v(1),sys[bbb].v(2),sqrtGM,2.0*hby2);
 		   }
-		   FENCE
+		   __syncthreads();
 		   
 		   /* TODO: Eventually check for close encounters and 
 		            if necessary undo, perform direct n-body, merge and resume
@@ -355,10 +347,9 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 			sys[b].p(c) = pos_old; sys[b].v(c) = vel_old; 
 			acc = acc_old;  
 		     	++iter;
-		       FENCE
-//		   	if(iter>=_max_itterations_per_kernel_call) break;
-			continue;
-                     }
+		     }
+		   if( allow_rewind )                    __syncthreads();
+		   if( allow_rewind && need_to_rewind )  continue; 
 
 		   // Kick Step (planet-planet interactions)
 		   {
@@ -368,7 +359,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      sys[bb].v(c) +=  hby2*acc;
 		      }
 		   }
-		   FENCE
+		   __syncthreads();
 
 		   // Drift Step (center-of-mass motion)
 		   if( body_component_grid_no_sun )
@@ -379,14 +370,16 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	 mv += sys[j].mass()*sys[j].v(c);
 		      sys[bb].p(c) += mv*hby2/sys[0].mass();
 		      }
-		   __syncthreads();
 
 		   // WARNING: Need to think about correct order of time updates, if add time dependnt forces
 		   t += 2.*hby2;
+                   if( (t+2.*hby2>t_end) || (iter>=_max_itterations_per_kernel_call) ) 
+		      skip_loop = true;
 
-		   ++iter;
+
+		   __syncthreads();
 		   const bool sys_needs_output = log::needs_output(*_gpu_ens, t, sysid());
-		   {
+		   { 
 		   double sump = 0., sumv = 0., mtot;
 		   double m0, pc0, vc0;
 		   double pos_tmp, vel_tmp;
@@ -399,7 +392,7 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      if(body_component_grid )
 			{ pos_tmp = sys[b].p(c); vel_tmp = sys[b].v(c); }
 		      }
-		    __syncthreads();
+		   int any_system_in_block_needs_output = __syncthreads_or(sys_needs_output);
 		   if( sys_needs_output )
 		      {
 		      // Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
@@ -418,11 +411,10 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    }
 			 }
 		      }
-		   __syncthreads();
+		   if(any_system_in_block_needs_output)
+		     __syncthreads();
 		   if( sys_needs_output )
 		      {
-		      if( (b==0) || body_component_grid_no_sun )
-		         {
 		   	 if( body_component_grid_no_sun ) // For all bodies except sun
 		      	    {
 		      	    sys[bb].p(c) += pc0 - sump/mtot;
@@ -433,25 +425,24 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      	    sys[b].p(c) -= sump/mtot;
 		      	    sys[b].v(c) -= sumv/m0;
 		      	    }
-		   	 }
 		      }
-		   __syncthreads();
-		   if( sys_needs_output )
+		   if(any_system_in_block_needs_output)
+		      __syncthreads();
+		   if( sys_needs_output && (thr == 0) )
 		      {
-		      if(thr == 0)
-		         log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
+		      log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
 		      }
-		   __syncthreads();
-
-		   if( sys_needs_output )
+   		   if(any_system_in_block_needs_output)
+		      __syncthreads();
+		   if( sys_needs_output && body_component_grid )
 		      {
 		      // Restore working coordinates
-		      if(body_component_grid )
-			{ sys[b].p(c) = pos_tmp; sys[b].v(c) = vel_tmp; }
+			sys[b].p(c) = pos_tmp; sys[b].v(c) = vel_tmp; 
 		      }
-		   FENCE
+		   if(any_system_in_block_needs_output)
+		      __syncthreads();
 		   }
-//		   if(iter>=_max_itterations_per_kernel_call) break;
+		   ++iter;
 		}
 
 		// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
@@ -476,21 +467,18 @@ __device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double
 		      }
 		   }
 		__syncthreads();
-		if( (b==0) || body_component_grid_no_sun )
-		   {
-		   if( body_component_grid_no_sun ) // For all bodies except sun
+	        if( body_component_grid_no_sun ) // For all bodies except sun
 		      {
 		      sys[bb].p(c) += pc0 - sump/mtot;
 		      sys[bb].v(c) += vc0;
   		      }
 
-		   if(b==0) // For sun only
+		if(b==0) // For sun only
 		      {
 		      sys[b].p(c) -= sump/mtot;
 		      sys[b].v(c) -= sumv/m0;
 		      }
-		   }
-		FENCE
+		__syncthreads();
 		}
 	}
 

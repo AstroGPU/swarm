@@ -44,7 +44,7 @@ void generate_ensemble(config& cfg, cpu_ensemble& ens)  {
 	}
 }
 
-double find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& reference_ensemble ) {
+std::pair<double,double> find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& reference_ensemble ) {
 	std::vector<double> energy_init(reference_ensemble.nsys());
 #if 1
 	// Shift into center-of-mass frame
@@ -103,13 +103,18 @@ double find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& refer
 	  }
 #endif
 	ens.calc_total_energy(&energy_final[0]);
-	double max_deltaE = 0.;
+	std::vector<double> deltaE(energy_final.size());
+	//	double max_deltaE = 0.;
 	for(int sysid=0;sysid<ens.nsys();++sysid)
 	{
-		double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
-		max_deltaE = max(deltaE, max_deltaE);
+	  deltaE[sysid] = fabs((energy_final[sysid]-energy_init[sysid])/energy_init[sysid]);
+	  // max_deltaE = max(deltaE, max_deltaE);
 	}
-	return max_deltaE;
+	double max_deltaE = *(max_element(deltaE.begin(), deltaE.end()));
+	int med_index = deltaE.size()/2;
+	nth_element(deltaE.begin(), deltaE.begin()+med_index, deltaE.end());
+	double med_deltaE = deltaE[med_index];
+	return std::make_pair(max_deltaE,med_deltaE);
 }
 
 bool validate_configuration(config& cfg){

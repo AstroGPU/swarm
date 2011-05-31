@@ -138,12 +138,12 @@ void stability_test(config& cfg){
 		swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 
 		DEBUG_OUTPUT(2, "Check energy conservation" );
-		double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
+		std::pair<double,double> max_med_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
 
 				time += step_size;
 				// time = ens.time(0);
 
-				std::cout << time << ", " << max_deltaE << ", " << ens.time(0) << std::endl;
+				std::cout << time << ", " << max_med_deltaE.first << ", " << max_med_deltaE.second << ", " << ens.time(0) << std::endl;
 				std::cout << std::flush;
 
 	}

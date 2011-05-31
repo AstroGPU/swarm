@@ -108,7 +108,7 @@ class integrator : public swarm::integrator {
 		_threads_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 128;
 		// TODO: Check that there are at least as many threads per block as threads per system;  For some reason adding assert causes segfaults
 		//		assert(_threads_per_block>=thread_per_system());
-		_max_itterations_per_kernel_call = cfg.count("max itterations per kernel call") ? atoi(cfg.at("max itterations per kernel call").c_str()) : 10000;
+		_max_itterations_per_kernel_call = cfg.count("max itterations per kernel call") ? atoi(cfg.at("max itterations per kernel call").c_str()) : 100000;
 		_max_kernel_calls_per_integrate_call = cfg.count("max kernel calls per integrate call") ? atoi(cfg.at("max kernel calls per integrate call").c_str()) : 1000;
 
 	}
