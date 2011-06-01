@@ -81,7 +81,7 @@ class verlet: public integrator {
 		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
-		double pos = 0, vel = 0 ;
+		double pos = 0, vel = 0, acc = 0, jerk = 0 ;
 		if( body_component_grid )
 			pos = sys[b].p(c), vel = sys[b].v(c);
 
@@ -98,14 +98,15 @@ class verlet: public integrator {
 
 			double h_first_half = h / 2 ;
 
+
 			// First half step for positions
-			pos = pos + h_first_half * vel;
+			pos = pos + h_first_half *  vel; 
 
 			// Calculate acceleration in the middle
-			double acc = calcForces.acc(ij,b,c,pos,vel);
+			calcForces(ij,b,c,pos,vel,acc,jerk);
 
 			// First half step for velocities
-			vel = vel + h_first_half * acc;
+			vel = vel + h_first_half *  acc ;
 
 			// Step time to the middle of the step
 			t  +=  h_first_half;
@@ -114,8 +115,8 @@ class verlet: public integrator {
 			double h_second_half = h_first_half;
 
 			// Second half step for positions and velocities
-			vel = vel + h_second_half * acc;
-			pos = pos + h_second_half * vel;
+			vel = vel + h_second_half *  acc ;
+			pos = pos + h_second_half *  vel; 
 
 			// Step time to the end of the step
 			t  +=  h_second_half;

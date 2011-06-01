@@ -173,6 +173,7 @@ int main(int argc,  char **argv)
 
 	std::cout << "# Base configuration \n"
 		<< "# Integrator\t" << cfg["integrator"] << "\n"
+		<< "# Duration\t" << cfg["duration"] << "\n"
 		<< "# Time step\t" << cfg["time step"] << "\n"
 		<< "# Min time step\t" << cfg["min time step"] << "\n"
 		<< "# Max time step\t" << cfg["max time step"] << "\n"

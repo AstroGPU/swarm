@@ -83,8 +83,8 @@ class integrator : public swarm::integrator {
 		const int system_per_block = _threads_per_block / thread_per_system;
 
 		dim3 tD;
-		tD.x = thread_per_system;
-		tD.y = system_per_block;
+		tD.y = thread_per_system;
+		tD.x = system_per_block;
 		return tD;
 	}
 	int  system_per_block() {
@@ -143,6 +143,15 @@ void launch_templatized_integrator(implementation* integ){
 
 }
 
+inline __device__ int sysid(){
+	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
+}
+inline __device__ int sysid_in_block(){
+	return threadIdx.x;
+}
+inline __device__ int thread_in_system() {
+	return threadIdx.y;
+}
 
 	
 }

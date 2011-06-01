@@ -1,3 +1,4 @@
+#pragma once
 /*! \file stopper.cu
  * \brief declares stopper classes
  */

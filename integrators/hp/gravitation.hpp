@@ -15,19 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#pragma once
+#include "hp.hpp"
 
 namespace swarm {
 namespace hp {
 
-inline __device__ int sysid(){
-	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
-}
-inline __device__ int sysid_in_block(){
-	return threadIdx.y;
-}
-inline __device__ int thread_in_system() {
-	return threadIdx.x;
-}
 
 /*! 
  * templatized Class to calculate acceleration and jerk in parallel
