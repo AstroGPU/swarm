@@ -26,34 +26,134 @@
 namespace swarm {
 namespace hp {
 
+ // TODO: This probabaly belongs elsewhere
+/*!
+  \brief compute and store the number of systems that remain active
+
+  NOTE: assumes not more than MAXTHREADSPERBLOCK threads per block
+  NOTE: assumes a nthreads is a power of 2
+  NOTE: assumes *nrunning = 0 on input
+ @param[out] nrunning number of active systems
+ @param[in] ens ensemble
+*/
+template< class implementation>
+__global__ void count_running(int *nrunning, double Tstop, ensemble ens, implementation* integ )
+{
+        const int MAXTHREADSPERBLOCK = 256;
+	// We think it's ok to make this extern ?
+	// TODO: replcae with dynamicly allocated shared memory 
+	__shared__ int running[MAXTHREADSPERBLOCK];	// takes up 1k of shared memory (for MAXTHREADSPERBLOCK=256)
+
+	int tpb = blockDim.x; //threadsPerBlock();
+	int sys = blockIdx.x * blockDim.x + threadIdx.x; // threadId();
+	const int widx = sys % tpb;
+	running[widx] = (sys < ens.nsys()) && !(ens.flags(sys) & ensemble::INACTIVE || ens.time(sys) >= Tstop) ? 1 : 0;
+
+	// Prefix sum algorithm (assumes block size <= MAXTHREADSPERBLOCK).
+	// 1) sum up the number of running threads in this block
+	for(int i = 2; i <= tpb; i *= 2)
+	{
+		 __syncthreads();
+		if(widx % i == 0) { running[widx] += running[widx + i/2]; }
+	}
+
+	// 2) add the sum to the total number of running threads
+	if(widx == 0)
+	{
+		atomicAdd(nrunning, running[0]);
+	}
+#if 0
+	__syncthreads();
+	if(widx==0)
+	  {
+	  printf("sys=%d nsys=%d flags=%d t=%g Tstop=%g running=%d  ",sys,ens.nsys(),(ens.flags(sys) & ensemble::INACTIVE),ens.time(sys),Tstop,running[widx]);
+	printf("nrunning=%d\n",nrunning[0]);	
+	  }
+#endif
+}
+
 class integrator : public swarm::integrator {
 
 	protected:
+
 	//// Launch Variables
 	int _threads_per_block;
+        unsigned int _max_itterations_per_kernel_call;
+        unsigned int _max_kernel_calls_per_integrate_call;
 	double _destination_time;
+
+        /// integrator return type
+        struct retval_t
+	{
+	  int nrunning;
+	};
 
 	public:
 	integrator(const config &cfg) {
+	  //		_threads_per_block = cfg.count("threads per block") ? atoi(cfg.at("threads per block").c_str()) : 128;
 		_threads_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 128;
+		// TODO: Check that there are at least as many threads per block as threads per system;  For some reason adding assert causes segfaults
+		//		assert(_threads_per_block>=thread_per_system());
+		_max_itterations_per_kernel_call = cfg.count("max itterations per kernel call") ? atoi(cfg.at("max itterations per kernel call").c_str()) : 100000;
+		_max_kernel_calls_per_integrate_call = cfg.count("max kernel calls per integrate call") ? atoi(cfg.at("max kernel calls per integrate call").c_str()) : 1000;
+
 	}
 
 	~integrator() { if(_gpu_ens) cudaFree(_gpu_ens); }
 
-	void integrate(gpu_ensemble &ens, double dT){
+ // TODO: This probabaly belongs elsewhere
+	int count_unfinished(gpu_ensemble &ens, double end_time )
+           {
+	     // initialize stop-time temporary array
+	     //	     cuxDeviceAutoPtr<real_time> Tstop(ens.nsys(),end_time);
+	     /// temp variable for return values (gpu pointer)
+	     cuxDeviceAutoPtr<int> nrunning_gpu(1);	
+	     nrunning_gpu.memset(0);
+	     int nsys = _ens->nsys();
+	     int blocksize = 64;
+	     int nblocks = (nsys/blocksize) + (nsys%blocksize!=0 ? 1 : 0);
+	     dim3 gridDim(nblocks,1,1);
+	     dim3 threadDim(blocksize,1,1);
+	     count_running<<<gridDim, threadDim>>>(nrunning_gpu, end_time, ens, this);
+	     int nrunning_cpu;
+	     nrunning_gpu.download(&nrunning_cpu,1);
+	     //	     std::cerr << "# end_time= " << end_time << " nrunning = " << nrunning_cpu << "\n";
+	     return nrunning_cpu;
+}
+
+         void integrate(gpu_ensemble &ens, double stop_time ){
 		/* Upload ensemble */ 
 		if(ens.last_integrator() != this) 
 		{ 
 			ens.set_last_integrator(this); 
 			load_ensemble(ens);
+
+			// check if called integrate(ens,0.) to initialize integrator without integrating
+			// TODO: Change the way dT and stop time are handeled
+			//			if(dT == 0.) { return; }
+			if(stop_time == 0.) { return; }
 		}
 
-		_destination_time = dT;
+		// TODO: Change the way dT and stop time are handeled
+		_destination_time = stop_time;
+		// advance_time_end_all(dT);
+		// set_time_end_all(stop_time);
 
 		// flush CPU/GPU output logs
 		log::flush(log::memory | log::if_full);
 
-		launch_integrator();
+		for(unsigned int l=0;l<_max_kernel_calls_per_integrate_call;++l)
+		  {
+		    launch_integrator();
+
+		    // flush CPU/GPU output logs
+		    log::flush(log::memory | log::if_full);
+
+		    unsigned int num_systems_active = count_unfinished(ens,stop_time);
+
+		    if(num_systems_active<=0)
+		      break;
+		  }
 
 		// flush CPU/GPU output logs
 		log::flush(log::memory);
@@ -62,43 +162,50 @@ class integrator : public swarm::integrator {
 
 	virtual void launch_integrator() = 0;
 
-	dim3 gridDim(){
+	int thread_per_system() const {
 		const int nbod = _ens->nbod();
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
-		const int thread_per_system = std::max( body_comp, pair_count) ;
-		const int system_per_block = _threads_per_block / thread_per_system;
-		const int nblocks = ( _ens->nsys() + system_per_block ) / system_per_block;
+		// WARNING:  Maximum of 11 bodies w/ 64 threads/block and 1 thread per pair
+		// WARNING:  Maximum of 21 bodies w/ 64 threada/block and 1 threada per component
+		// TODO: Maybe impose a maximum number of threads per system (but would require loops to make sure all work gets done
+		// TODO: Or at least provide a run-time check that someone doesn't integrate a system with too small a block size for their nbod.
+		const int threads_per_system = std::max( body_comp, pair_count) ;
+		return threads_per_system;
+	}
+
+	int  system_per_block() const {
+		return  _threads_per_block / thread_per_system();
+	}
+
+	dim3 gridDim()  const {
+		const int threads_per_system = thread_per_system();
+		const int systems_per_block = system_per_block();
+		// TODO: Saleh, please checkk that my replacement is correct
+		// const int nblocks = ( _ens->nsys() + systems_per_block ) / systems_per_block;
+		const int nblocks = ( _ens->nsys() / systems_per_block ) +  ( (_ens->nsys() % systems_per_block != 0 ) ? 1 : 0 );
+
 
 		dim3 gD;
 		gD.z = 1;
 		find_best_factorization(gD.x,gD.y,nblocks);
 		return gD;
 	}
-	dim3 threadDim(){
-		const int nbod = _ens->nbod();
-		const int body_comp = nbod * 3;
-		const int pair_count = nbod * (nbod - 1) / 2;
-		const int thread_per_system = std::max( body_comp, pair_count) ;
-		const int system_per_block = _threads_per_block / thread_per_system;
-
+	dim3 threadDim() const {
+	        const int threads_per_system = thread_per_system();
+	  	const int systems_per_block = system_per_block();
 		dim3 tD;
-		tD.y = thread_per_system;
-		tD.x = system_per_block;
+		tD.x = threads_per_system;
+		tD.y = systems_per_block;
 		return tD;
 	}
-	int  system_per_block() {
+	int  shmemSize() const {
 		const int nbod = _ens->nbod();
-		const int body_comp = nbod * 3;
-		const int pair_count = nbod * (nbod - 1) / 2;
-		const int thread_per_system = std::max( body_comp, pair_count) ;
-		return  _threads_per_block / thread_per_system;
-	}
-	int  shmemSize(){
-		const int nbod = _ens->nbod();
-		return system_per_block() * shmem_per_system(nbod);
+		const int systems_per_block = system_per_block();
+		return systems_per_block * shmem_per_system(nbod);
 	}
 
+        // TODO: Warn at run time if request system larger than can fit in shmem
 	static __device__ __host__ inline int shmem_per_system(int nbod) {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * 2 * sizeof(double);
@@ -125,6 +232,12 @@ void launch_template(implementation* integ, implementation* gpu_integ, T a)
 
 }
 
+
+
+#if 0 // Would this be a good way to return values from device?  E.g., the number of unfinished systems, so we don't keep calling the kernel when there's nothing left to do
+template<class implementation, class resultT>
+void launch_templatized_integrator(implementation* integ, resultT* result){
+#endif
 template<class implementation>
 void launch_templatized_integrator(implementation* integ){
 
@@ -133,7 +246,20 @@ void launch_templatized_integrator(implementation* integ){
 		cudaMalloc(&gpu_integ,sizeof(implementation));
 		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
 
-		launch_template(integ,gpu_integ,params_t<3>());
+		params_t<3> gpu_integ_param;
+
+#if 0  // Would this be a good way to return values from device?  E.g., the number of unfinished systems, so we don't keep calling the kernel when there's nothing left to do
+		__device__ resultT d_result;
+#endif
+		launch_template(integ,gpu_integ,gpu_integ_param);
+#if 0  // Would this be a good way to return values from device?  E.g., the number of unfinished systems, so we don't keep calling the kernel when there's nothing left to do
+		if(sizeof(d_result)>0)
+		  {
+		    resultT h_result;
+		    cudaMemcpyFromSymbol(&h_result,"d_result",sizeof(h_result),0,cudaMemcpyDeviceToHost);
+		    *result = h_result;
+		  }
+#endif
 
 		cudaFree(integ);
 	} else {

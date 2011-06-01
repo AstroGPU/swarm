@@ -391,8 +391,9 @@ bool cux_init()
 {
 	if(cuda_initialized) { return true; }
 
+#if 1
 	// get requested device from environment
-	int dev;
+	int dev = 0;
 	const char *devStr = getenv("CUDA_DEVICE");
 	bool autoselect = devStr == NULL;
 
@@ -414,6 +415,32 @@ bool cux_init()
 			cuxErrCheck( cudaSetDevice(dev) );
 		}
 	}
+#endif
+
+#if 1
+    {
+    int deviceCount = 0;
+        if (cudaGetDeviceCount(&deviceCount) != cudaSuccess) {
+                std::cerr << "cudaGetDeviceCount FAILED CUDA Driver and Runtime version may be mismatched.\n";
+                std::cerr << "\nFAILED\n";
+       		return 255; 
+	}
+	else { std:: cerr << "# cudaGetDeviceCount: " << deviceCount << "\n";  }
+#endif
+
+#if 1
+	//    int dev = 0 ;
+        int driverVersion = 0, runtimeVersion = 0;     
+        cudaDeviceProp deviceProp;
+        cudaGetDeviceProperties(&deviceProp, dev);
+	printf("\n# Device %d: \"%s\"\n", dev, deviceProp.name);
+
+        void *tmp;
+        if( cudaMalloc(&tmp, 1024) != cudaSuccess) std::cerr << "# Error in cudaMalloc\n";
+        if( cudaFree(tmp) != cudaSuccess) std::cerr << "# Error in cudaFree\n";
+    }
+
+#endif
 
 #if !__DEVICE_EMULATION__
 	// ensure a CUDA context is created and fetch the active
@@ -438,6 +465,7 @@ bool cux_init()
 
 #if !__DEVICE_EMULATION__
 	// Memory info
+	//	unsigned int free = 0, total = 0;
 	size_t free = 0, total = 0;
 	cuxErrCheck( (cudaError)cuMemGetInfo(&free, &total) );
 //	MLOG(verb2) << "Device memory (free, total): " << free / (1<<20) << "M, " << total / (1<<20) << "M" << "\n";
@@ -448,3 +476,4 @@ bool cux_init()
 
 	return true;
 }
+

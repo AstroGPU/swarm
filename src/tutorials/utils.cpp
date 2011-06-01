@@ -44,18 +44,77 @@ void generate_ensemble(config& cfg, cpu_ensemble& ens)  {
 	}
 }
 
-double find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& reference_ensemble ) {
+std::pair<double,double> find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& reference_ensemble ) {
 	std::vector<double> energy_init(reference_ensemble.nsys());
+#if 1
+	// Shift into center-of-mass frame
+	for(unsigned int i=0; i<reference_ensemble.nsys() ; ++i)
+	  {
+	    double cx=0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., msum=0.;
+	    for(unsigned int j=0; j<reference_ensemble.nbod(); ++j)
+	      {
+		msum += reference_ensemble.mass(i,j);
+		cx   += reference_ensemble.mass(i,j) * reference_ensemble.x(i,j);
+		cy   += reference_ensemble.mass(i,j) * reference_ensemble.y(i,j);
+		cz   += reference_ensemble.mass(i,j) * reference_ensemble.z(i,j);
+		cvx   += reference_ensemble.mass(i,j) * reference_ensemble.vx(i,j);
+		cvy   += reference_ensemble.mass(i,j) * reference_ensemble.vy(i,j);
+		cvz   += reference_ensemble.mass(i,j) * reference_ensemble.vz(i,j);
+	      }
+	    cx /= msum; cy /= msum; cz /= msum; cvx /= msum; cvy /= msum; cvz /= msum;
+	    for(unsigned int j=0; j<reference_ensemble.nbod(); ++j)
+	      {
+		reference_ensemble.x(i,j) -= cx;
+		reference_ensemble.y(i,j) -= cy;
+		reference_ensemble.z(i,j) -= cz;
+		reference_ensemble.vx(i,j) -= cvx;
+		reference_ensemble.vy(i,j) -= cvy;
+		reference_ensemble.vz(i,j) -= cvz;
+	      }
+	  }
+#endif
 	reference_ensemble.calc_total_energy(&energy_init[0]);
 	std::vector<double> energy_final(ens.nsys());
+#if 1
+	// Shift into center-of-mass frame
+	for(unsigned int i=0; i<ens.nsys() ; ++i)
+	  {
+	    double cx=0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., msum=0.;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		msum += ens.mass(i,j);
+		cx   += ens.mass(i,j) * ens.x(i,j);
+		cy   += ens.mass(i,j) * ens.y(i,j);
+		cz   += ens.mass(i,j) * ens.z(i,j);
+		cvx   += ens.mass(i,j) * ens.vx(i,j);
+		cvy   += ens.mass(i,j) * ens.vy(i,j);
+		cvz   += ens.mass(i,j) * ens.vz(i,j);
+	      }
+	    cx /= msum; cy /= msum; cz /= msum; cvx /= msum; cvy /= msum; cvz /= msum;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		ens.x(i,j) -= cx;
+		ens.y(i,j) -= cy;
+		ens.z(i,j) -= cz;
+		ens.vx(i,j) -= cvx;
+		ens.vy(i,j) -= cvy;
+		ens.vz(i,j) -= cvz;
+	      }
+	  }
+#endif
 	ens.calc_total_energy(&energy_final[0]);
-	double max_deltaE = 0.;
+	std::vector<double> deltaE(energy_final.size());
+	//	double max_deltaE = 0.;
 	for(int sysid=0;sysid<ens.nsys();++sysid)
 	{
-		double deltaE = (energy_final[sysid]-energy_init[sysid])/energy_init[sysid];
-		max_deltaE = max(deltaE, max_deltaE);
+	  deltaE[sysid] = fabs((energy_final[sysid]-energy_init[sysid])/energy_init[sysid]);
+	  // max_deltaE = max(deltaE, max_deltaE);
 	}
-	return max_deltaE;
+	double max_deltaE = *(max_element(deltaE.begin(), deltaE.end()));
+	int med_index = deltaE.size()/2;
+	nth_element(deltaE.begin(), deltaE.begin()+med_index, deltaE.end());
+	double med_deltaE = deltaE[med_index];
+	return std::make_pair(max_deltaE,med_deltaE);
 }
 
 bool validate_configuration(config& cfg){

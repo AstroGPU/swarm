@@ -76,12 +76,13 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
   swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 
   DEBUG_OUTPUT(2, "Check energy conservation" );
-  double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
+  std::pair<double,double> max_med_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
 
   /// CSV output for use in spreadsheet software 
   std::cout << param << ", ";
   std::cout << value << ",     ";
-  std::cout << max_deltaE << ",    " ;
+  std::cout << max_med_deltaE.first << ", " ;
+  std::cout << max_med_deltaE.second << ",    " ;
   std::cout << swatch_kernel_gpu.getTime()*1000. << ",    ";
   std::cout << swatch_temps_gpu.getTime()*1000. << ", ";
   std::cout << swatch_init_gpu.getTime()*1000. << ", ";

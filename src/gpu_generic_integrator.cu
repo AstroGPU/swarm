@@ -289,7 +289,8 @@ void gpu_generic_integrator<stopper_t, propagator_t>::integrate(gpu_ensemble &en
 		log::flush(log::memory | log::if_full);
 
 		retval_t retval;
-		retval_gpu.get(&retval);
+//		retval_gpu.get(&retval);
+		retval_gpu.download(&retval,1);
 		if(nactive0 == -1) { nactive0 = retval.nrunning; }
 
 		// check if we should compactify or stop

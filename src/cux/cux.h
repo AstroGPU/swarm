@@ -239,11 +239,11 @@ template<typename T, int dim = 1, int align = 128>
 		{
 			size_t size = lastdim;
 			if(dim == 1) return size*sizeof(T);
-
+			else {
 			for(int i = 0; i != dim-1; i++)
 			{
 				size *= this->extent[i];
-			}
+			} }
 			return size;
 		}
 	public:
@@ -316,14 +316,19 @@ template<typename T, int dim = 1, int align = 128>
 			this->free();
 		}
 		operator T*() const { return this->ptr; }
+#if 1
 		void get(T* val, int n = 1)
 		{
-			assert(dim == 1); // TODO: implement for higher-D arrays
-			memcpyToHost(val, this->ptr, n);
+		  //			assert(dim == 1); // TODO: implement for higher-D arrays
+		  //                      memcpyToHost(val, this->ptr, n);		}
+		  cuxErrCheck( cudaGetLastError() );
+		  cuxErrCheck( cudaMemcpy(val,  this->ptr, sizeof(T)*n, cudaMemcpyDeviceToHost) );
 		}
+
+#endif
 		void memset(int val, int n = 1)
 		{
-			assert(dim == 1); // TODO: implement for higher-D arrays
+		  //			assert(dim == 1); // TODO: implement for higher-D arrays
 			cudaMemset(this->ptr, val, sizeof(T)*n);
 		}
 	};

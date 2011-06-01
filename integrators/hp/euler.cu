@@ -77,7 +77,9 @@ class euler: public integrator {
 
 		// Set up times
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		// TODO: Change the way stopping is done
+		double t_end = min(_destination_time,sys.time_end());
+//		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc = 0, jerk = 0;
@@ -108,6 +110,7 @@ class euler: public integrator {
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;
 
+		        __syncthreads();
 			// Test if we need output
 			if(thr == 0) 
 				if(log::needs_output(*_gpu_ens, t, sysid()))

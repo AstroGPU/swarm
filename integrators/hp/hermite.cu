@@ -69,7 +69,11 @@ class hermite: public integrator {
 		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
 
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		// TODO: Change the way stopping is done
+		double t_end = min(_destination_time,sys.time_end());
+//		double t_end = min(t_start + _destination_time,sys.time_end());
+
+
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
@@ -83,11 +87,15 @@ class hermite: public integrator {
 		Gravitation<nbod> calcForces(sys,system_shmem);
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-		while(t < t_end){
-			double h = min(_time_step, t_end - t);
-
+		unsigned int iter=0;     // Make sure don't get stuck in infinite loop
+		bool skip_loop = ( t + _time_step > t_end );
+		while(!skip_loop)
+		   {
+//			double h = min(_time_step, t_end - t);
+			double h = _time_step;
 			
 			// Initial Evaluation
+			// WARNING:  Reusing results from call at end of loop
 			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
@@ -117,22 +125,30 @@ class hermite: public integrator {
 
 			// Finalize the step
 			t += h;
+                        if( (t+h>t_end) || (iter>=_max_itterations_per_kernel_call) ) 
+			   skip_loop = true;
 
+			// Need to write these, so visible to calcForces next itteration (and upon exit)
 			if( body_component_grid )
 				sys[b].p(c) = pos, sys[b].v(c) = vel;
 
-			if(thr == 0) 
-				if(log::needs_output(*_gpu_ens, t, sysid()))
-				{
-					sys.set_time(t);
-					log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
-				}
+                        // WARNING: If needs_output were to read pos and vel from _gpu_ens, then it would need to call syncthreads itself
+                        const bool sys_needs_output = (thr==0) ? log::needs_output(*_gpu_ens, t, sysid()) : 0;
 
+                        if(sys_needs_output) // implicit if (thr == 0) 
+                           {
+		  	   sys.set_time(t);  // Only write to time if going to output
+                           }
+                        __syncthreads();   // Since need other threads within block to have completed writing to sys[b].p/v(c) before calling output_system 
+                        if(sys_needs_output) // implicity if (thr == 0) 
+		 	    {
+			    log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
+			    }
 		}
 
 		if(thr == 0) 
 			sys.set_time(t);
-
+	     	++iter;	
 	}
 
 };

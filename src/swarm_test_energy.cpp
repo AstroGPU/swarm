@@ -78,6 +78,33 @@ int main(int argc, char **argv)
 	snaps.next(ens);
 	unsigned int nprint = std::min(2, ens.nsys());
 
+#if 1
+	// Shift into center-of-mass frame
+	for(unsigned int i=0; i<ens.nsys() ; ++i)
+	  {
+	    double cx=0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., msum=0.;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		msum += ens.mass(i,j);
+		cx   += ens.mass(i,j) * ens.x(i,j);
+		cy   += ens.mass(i,j) * ens.y(i,j);
+		cz   += ens.mass(i,j) * ens.z(i,j);
+		cvx   += ens.mass(i,j) * ens.vx(i,j);
+		cvy   += ens.mass(i,j) * ens.vy(i,j);
+		cvz   += ens.mass(i,j) * ens.vz(i,j);
+	      }
+	    cx /= msum; cy /= msum; cz /= msum; cvx /= msum; cvy /= msum; cvz /= msum;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		ens.x(i,j) -= cx;
+		ens.y(i,j) -= cy;
+		ens.z(i,j) -= cz;
+		ens.vx(i,j) -= cvx;
+		ens.vy(i,j) -= cvy;
+		ens.vz(i,j) -= cvz;
+	      }
+	  }
+#endif
 	// Calculate energy at beginning of integration
 	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
 	calc_total_energy(ens, Einit);
@@ -89,6 +116,34 @@ int main(int argc, char **argv)
 	// find the final snapshot
 	int cnt = 0;
 	while(snaps.next(ens)) { cnt++; }
+
+#if 1
+	// Shift into center-of-mass frame
+	for(unsigned int i=0; i<ens.nsys() ; ++i)
+	  {
+	    double cx=0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., msum=0.;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		msum += ens.mass(i,j);
+		cx   += ens.mass(i,j) * ens.x(i,j);
+		cy   += ens.mass(i,j) * ens.y(i,j);
+		cz   += ens.mass(i,j) * ens.z(i,j);
+		cvx  += ens.mass(i,j) * ens.vx(i,j);
+		cvy  += ens.mass(i,j) * ens.vy(i,j);
+		cvz  += ens.mass(i,j) * ens.vz(i,j);
+	      }
+	    cx /= msum; cy /= msum; cz /= msum; cvx /= msum; cvy /= msum; cvz /= msum;
+	    for(unsigned int j=0; j<ens.nbod(); ++j)
+	      {
+		ens.x(i,j) -= cx;
+		ens.y(i,j) -= cy;
+		ens.z(i,j) -= cz;
+		ens.vx(i,j) -= cvx;
+		ens.vy(i,j) -= cvy;
+		ens.vz(i,j) -= cvz;
+	      }
+	  }
+#endif
 
 	// Calculate energy at end of integration
 	calc_total_energy(ens, Efinal);
