@@ -8,6 +8,37 @@
 using std::max;
 using namespace swarm;
 
+hp::ensemble generate_ensemble(config& cfg)  {
+	double duration = atof(cfg["duration"].c_str());
+	int nsys = atoi(cfg["nsys"].c_str());
+	int nbod = atoi(cfg["nbod"].c_str());
+
+	hp::ensemble ens = hp::ensemble::createOnHostMemory( nbod, nsys );
+
+
+	for(unsigned int sys=0;sys<ens.nsys();++sys)
+	{
+		// set sun to unit mass and at origin
+		double mass_sun = 1.;
+		double x=0, y=0, z=0, vx=0, vy=0, vz=0;
+		ens.set_body(sys, 0, mass_sun, x, y, z, vx, vy, vz);
+
+		// add near-Jupiter-mass planets on nearly circular orbits
+		for(unsigned int bod=1;bod<ens.nbod();++bod)
+		{
+			float mass_planet = 0.001; // approximately (mass of Jupiter)/(mass of sun)
+			double rmag = pow(1.4,bod-1);  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
+			double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
+			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
+			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
+			vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
+
+			// assign body a mass, position and velocity
+			ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
+		}
+	}
+	return ens;
+}
 void generate_ensemble(config& cfg, cpu_ensemble& ens)  {
 
 	double duration = atof(cfg["duration"].c_str());
@@ -42,6 +73,21 @@ void generate_ensemble(config& cfg, cpu_ensemble& ens)  {
 			ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
 		}
 	}
+}
+
+double find_max_energy_conservation_error(hp::ensemble& ens, hp::ensemble& reference_ensemble ) {
+	std::vector<double> energy_init(reference_ensemble.nsys());
+	reference_ensemble.calc_total_energy(&energy_init[0]);
+	std::vector<double> energy_final(ens.nsys());
+	ens.calc_total_energy(&energy_final[0]);
+	double max_deltaE = 0.;
+	for(int sysid=0;sysid<ens.nsys();++sysid)
+	{
+	
+		double deltaE = fabs ((energy_final[sysid]-energy_init[sysid])/energy_init[sysid] ) ;
+		max_deltaE = max(deltaE, max_deltaE);
+	}
+	return max_deltaE;
 }
 
 double find_max_energy_conservation_error(cpu_ensemble& ens, cpu_ensemble& reference_ensemble ) {

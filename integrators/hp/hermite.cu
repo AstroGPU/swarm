@@ -16,9 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "hp.hpp"
+#include "hp/hp.hpp"
+#include "hp/helpers.hpp"
 #include "swarmlog.h"
-
+#include "hp/gravitation.hpp"
 
 namespace swarm {
 namespace hp {
@@ -49,38 +50,40 @@ class hermite: public integrator {
 
 		/////////////// FETCH LOCAL VARIABLES ///////////////////
 
+
+		if(sysid() >= _gpu_ens.nsys()) { return; }
+		ensemble::SystemRef sys ( _gpu_ens[sysid()] );
+
 		int thr = thread_in_system();
-
-		if(sysid() >= _gpu_ens->nsys()) { return; }
-		ensemble::systemref sys ( (*_gpu_ens)[sysid()] );
-
 		// Body/Component Grid
 		// Body number
-		int b = thr / 3 ;
+		int b = thread_body_idx(nbod);
 		// Component number
-		int c = thr % 3 ;
-		bool body_component_grid = b < nbod;
+		int c = thread_component_idx(nbod);
+		bool body_component_grid = (b < nbod) && (c < 3);
 
 		// i,j pairs Grid
 		int ij = thr;
 
+		typedef Gravitation<nbod, SHMEM_WARPSIZE> Grav;
 		// shared memory allocation
 		extern __shared__ char shared_mem[];
-		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
+		CoalescedStructArray< typename Grav::shared_data, double, SHMEM_WARPSIZE> 
+			shared_grav( (typename Grav::shared_data* ) shared_mem, 0 );
+		Grav calcForces(sys,shared_grav[sysid_in_block()]);
 
 		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
+		double t_end = t_start + _destination_time;
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
 		if( body_component_grid )
-			pos = sys[b].p(c), vel = sys[b].v(c);
+			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
-		Gravitation<nbod> calcForces(sys,system_shmem);
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 		while(t < t_end){
@@ -119,19 +122,11 @@ class hermite: public integrator {
 			t += h;
 
 			if( body_component_grid )
-				sys[b].p(c) = pos, sys[b].v(c) = vel;
+				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 
-			if(thr == 0) 
-				if(log::needs_output(*_gpu_ens, t, sysid()))
-				{
-					sys.set_time(t);
-					log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
-				}
+			sys.time() = t;
 
 		}
-
-		if(thr == 0) 
-			sys.set_time(t);
 
 	}
 

@@ -15,19 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#include "hp.hpp"
+#include "datatypes.hpp"
 
 namespace swarm {
 namespace hp {
 
-inline __device__ int sysid(){
-	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y;
-}
-inline __device__ int sysid_in_block(){
-	return threadIdx.y;
-}
-inline __device__ int thread_in_system() {
-	return threadIdx.x;
-}
 
 /*! 
  * templatized Class to calculate acceleration and jerk in parallel
@@ -45,17 +38,15 @@ inline __device__ int thread_in_system() {
  * data and calculates the acc/jerk for each body.
  *
  */
-template<int nbod>
+template<int nbod, int WARPSIZE = SHMEM_WARPSIZE>
 class Gravitation {
 	public:
 	const static int pair_count = (nbod*(nbod-1))/2;
-	struct shared_data {
-		double acc[3][pair_count];
-		double jerk[3][pair_count];
-	} ;
+
+	typedef GravitationScalars<WARPSIZE> shared_data [pair_count][3];
 
 	private:
-	ensemble::systemref& sys;
+	ensemble::SystemRef& sys;
 	shared_data &shared;
 
 	inline __device__ static double inner_product(const double a[3],const double b[3]){
@@ -82,19 +73,15 @@ class Gravitation {
 
 	public:
 
-	__device__ Gravitation(ensemble::systemref& sys,shared_data &shared):sys(sys),shared(shared){	}
-
-	__device__ Gravitation(ensemble::systemref& sys,char * system_shmem):sys(sys)
-		,shared(*( (struct shared_data*)  system_shmem ) )
-	{}
+	__device__ Gravitation(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
 	__device__ void calc_pair(int ij)const{
 		int i = first( ij );
 		int j = second( ij );
 		if(i != j){
 
-			double dx[3] =  { sys[j].p(0)- sys[i].p(0),sys[j].p(1)- sys[i].p(1), sys[j].p(2)- sys[i].p(2) };
-			double dv[3] =  { sys[j].v(0)- sys[i].v(0),sys[j].v(1)- sys[i].v(1), sys[j].v(2)- sys[i].v(2) };
+			double dx[3] =  { sys[j][0].pos()- sys[i][0].pos(),sys[j][1].pos()- sys[i][1].pos(), sys[j][2].pos()- sys[i][2].pos() };
+			double dv[3] =  { sys[j][0].vel()- sys[i][0].vel(),sys[j][1].vel()- sys[i][1].vel(), sys[j][2].vel()- sys[i][2].vel() };
 			double r2 =  dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2];
 			double jerk_mag =  inner_product(dx,dv) * 3. / r2;
 			double acc_mag =  rsqrt(r2) / r2;
@@ -102,30 +89,14 @@ class Gravitation {
 #pragma unroll
 			for(int c = 0; c < 3; c ++)
 			{
-				shared.acc[c][ij] = dx[c]* acc_mag;
-				shared.jerk[c][ij] = (dv[c] - dx[c] * jerk_mag ) * acc_mag;
+				shared[ij][c].acc() = dx[c]* acc_mag;
+				shared[ij][c].jerk() = (dv[c] - dx[c] * jerk_mag ) * acc_mag;
 			}
 		}
 
 	}
 
-	__device__ void calc_pair_acc(int ij)const{
-		int i = first( ij );
-		int j = second( ij );
-		if(i != j){
-
-			double dx[3] =  { sys[j].p(0)- sys[i].p(0),sys[j].p(1)- sys[i].p(1), sys[j].p(2)- sys[i].p(2) };
-			double r2 =  dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2];
-			double acc_mag =  rsqrt(r2) / r2;
-
-#pragma unroll
-			for(int c = 0; c < 3; c ++)
-				shared.acc[c][ij] = dx[c]* acc_mag;
-		}
-
-	}
-
-	__device__ double sum_values(double (&values)[3][pair_count] , int b,int c)const{
+	__device__ double sum_acc(int b,int c)const{
 		double total = 0;
 		double from_sun = 0;
 
@@ -136,46 +107,65 @@ class Gravitation {
 
 			if(x == b){
 				if(y == 0)
-					from_sun += values[c][d]* sys[y].mass();
+					from_sun += shared[d][c].acc() * sys[y].mass();
 				else
-					total += values[c][d]* sys[y].mass();
+					total += shared[d][c].acc() * sys[y].mass();
 			}else if(y == b){
 				if(x == 0)
-					from_sun -= values[c][d]* sys[x].mass();
+					from_sun -= shared[d][c].acc() * sys[x].mass();
 				else
-					total -= values[c][d]* sys[x].mass();
+					total -= shared[d][c].acc() * sys[x].mass();
 			}
 		}
 
 		return from_sun + total;
 	}
 
+	__device__ void sum(int b,int c,double& acc, double & jerk)const{
+		double total_a = 0;
+		double from_sun_a = 0;
+		double total_j = 0;
+		double from_sun_j = 0;
 
-	__device__ double acc(int ij,int b,int c,double& pos,double& vel)const{
-		// Write positions to shared (global) memory
-		if(b < nbod)
-			sys[b].p(c) = pos, sys[b].v(c) = vel;
-		__syncthreads();
-		if(ij < pair_count)
-			calc_pair_acc(ij);
-		__syncthreads();
-		if(b < nbod)
-			return sum_values(shared.acc,b,c);
-		else
-			return 0;
+		/// Find the contribution from/to Sun first
+#pragma unroll
+		for(int d = 0; d < pair_count; d++){
+			int x = first(d), y= second(d);
+
+			if(x == b){
+				if(y == 0) {
+					from_sun_a += shared[d][c].acc() * sys[y].mass();
+					from_sun_j += shared[d][c].jerk() * sys[y].mass();
+				} else {
+					total_a += shared[d][c].acc() * sys[y].mass();
+					total_j += shared[d][c].jerk() * sys[y].mass();
+				}
+			}else if(y == b){
+				if(x == 0) {
+					from_sun_a -= shared[d][c].acc() * sys[x].mass();
+					from_sun_j -= shared[d][c].jerk() * sys[x].mass();
+				} else {
+					total_a -= shared[d][c].acc() * sys[x].mass();
+					total_j -= shared[d][c].jerk() * sys[x].mass();
+				}
+			}
+		}
+
+		acc = from_sun_a + total_a;
+		jerk = from_sun_j + total_j;
 	}
+
 
 	__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc,double& jerk)const{
 		// Write positions to shared (global) memory
-		if(b < nbod)
-			sys[b].p(c) = pos, sys[b].v(c) = vel;
+		if(b < nbod && c < 3)
+			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		__syncthreads();
 		if(ij < pair_count)
 			calc_pair(ij);
 		__syncthreads();
-		if(b < nbod){
-			acc =  sum_values(shared.acc,b,c);
-			jerk = sum_values(shared.jerk,b,c);
+		if(b < nbod && c < 3){
+			sum(b,c,acc,jerk);
 		}
 	}
 

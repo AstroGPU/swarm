@@ -4,6 +4,7 @@
  *
  */
 #include "swarm.h"
+#include "hp/datatypes.hpp"
 
 #define $_(x) (std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << #x <<  " = " << (x) << std::endl)
 //#define $$ (std::cerr << __FUNCTION__ << ":" << __LINE__ << ": @ here " << std::endl)
@@ -14,3 +15,5 @@
 void generate_ensemble(swarm::config& cfg, swarm::cpu_ensemble& ens)  ;
 double find_max_energy_conservation_error(swarm::cpu_ensemble& ens, swarm::cpu_ensemble& reference_ensemble ) ;
 bool validate_configuration(swarm::config& cfg);
+double find_max_energy_conservation_error(swarm::hp::ensemble& ens, swarm::hp::ensemble& reference_ensemble ) ;
+swarm::hp::ensemble generate_ensemble(swarm::config& cfg)  ;

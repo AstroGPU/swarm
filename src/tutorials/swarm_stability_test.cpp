@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"
+#include "hp/hp.hpp"
 
 using namespace swarm;
 using namespace std;
@@ -37,11 +38,10 @@ void stability_test(config& cfg){
 
 	// Initialize ensemble on host to be used with GPU integration.
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
-	cpu_ensemble reference_ensemble;
-	generate_ensemble(cfg,reference_ensemble);
+	hp::ensemble reference_ensemble = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
-	cpu_ensemble ens(reference_ensemble); // Make a copy of the CPU ensemble for comparison
+	hp::ensemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
 
 
 	// performance stopwatches
@@ -56,23 +56,16 @@ void stability_test(config& cfg){
 	// Start GPU timers for initialization
 	swatch_init_gpu.start();
 
-	std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
+	std::auto_ptr<hp::integrator> integ_gpu((hp::integrator*)integrator::create(cfg));
 	cudaThreadSynchronize();  // Block until CUDA call completes
 	swatch_init_gpu.stop();   // Stop timer for cpu initialization
 
 	DEBUG_OUTPUT(1, "Upload ensemble to GPU" );
 	cudaThreadSynchronize();   // Block until CUDA call completes
 	swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
-	gpu_ensemble gpu_ens(ens); // Initialize GPU ensemble, incl. copying data from CPU
+	integ_gpu->load_ensemble(ens);
 	cudaThreadSynchronize();   // Block until CUDA call completes
 	swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
-
-	DEBUG_OUTPUT(1, "Set-up integrator data structors" );
-	swatch_temps_gpu.start();  // Start timer for 0th step on GPU
-	integ_gpu->set_default_log();
-	integ_gpu->integrate(gpu_ens, 0.);  // a 0th step of dT=0 results in initialization of the integrator only
-	cudaThreadSynchronize();   // Block until CUDA call completes
-	swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU
 
 	std::cout << "Time, Energy Conservation Error " << std::endl;
 
@@ -81,16 +74,17 @@ void stability_test(config& cfg){
 		if((logarithmic > 1) && (time > 0)) interval = time * (logarithmic - 1);
 
 		double step_size = min(interval, duration - time );
+		integ_gpu->set_duration ( step_size  );
 
 		DEBUG_OUTPUT(1, "Integrator ensemble on GPU" );
 		swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
-		integ_gpu->integrate(gpu_ens, step_size);  // Actually do the integration w/ GPU!			
+		integ_gpu->launch_integrator();  // Actually do the integration w/ GPU!			
 		cudaThreadSynchronize();  // Block until CUDA call completes
 		swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
 
 		DEBUG_OUTPUT(1, "Download data to host" );
 		swatch_download_gpu.start();  // Start timer for downloading data from GPU
-		ens.copy_from(gpu_ens);	// Download data from GPU to CPU		
+		integ_gpu->download_ensemble();	// Download data from GPU to CPU		
 		cudaThreadSynchronize();      // Block until CUDA call completes
 		swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 

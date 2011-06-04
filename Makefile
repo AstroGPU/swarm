@@ -37,7 +37,7 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ####
 #### Integrator pieces of libswarm
 ####
-include integrators/*/Makefile.mk
+-include integrators/Makefile.mk
 
 ###
 ### Applications
@@ -149,10 +149,10 @@ src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
 	@ echo " */" >> $@
 	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
-src/autogen_dont_edit.o: src/autogen_dont_edit.cu_o
-	$(GENUI) cp src/autogen_dont_edit.cu_o src/autogen_dont_edit.o
+LIBSWARM_CUDASOURCES += src/autogen_dont_edit.cu
 
-bin/libswarm.so: src/autogen_dont_edit.o $(LIBSWARM_OBJECTS)
+
+bin/libswarm.so: $(LIBSWARM_OBJECTS)
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
 
 #
@@ -204,7 +204,7 @@ benchmark: bin/swarm_tutorial_benchmark
 	@ echo "# Thank you for your patience" | tee -a run/benchmark.out
 
 clean: clean-test
-	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so src/autogen_dont_edit.* bin/Makefile.d
+	$(CLEANUI) rm -f *.linkinfo $(OBJECTS) $(EXE) $(OBJECTS:.o=.d) bin/libswarm.so bin/Makefile.d
 
 tidy: clean
 	$(TIDYUI) rm -f *~ .*~ src/*~ src/astro/*~ src/cux/*~ integrators/*/*~ docs/*~ DEADJOE run/data.* run/observeTimes.dat run/*~ run/*.bin run/*.idx feedback.* run/benchmark.out
@@ -245,9 +245,6 @@ bin/Makefile.d: Makefile
 -include bin/Makefile.d
 
 # CUDA object files
-%.cu_o:%.cu
-	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
-
 %_cu.o:%.cu
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC -c $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< -o $@ 2>&1 | ./scripts/silence_nvcc_warnings.sh
 
@@ -269,12 +266,12 @@ bin/Makefile.d: Makefile
 %.d: %.cpp
 	$(DEPUI) $(CXX) -M -MT "$@ $(subst .cpp,.o,$<)" $(CXXFLAGS) $< > $@
 
-# The 1st sed adds cu_d file as a target to be remade if any of the deps change
+# The 1st sed adds _cu.d file as a target to be remade if any of the deps change
 # The 2nd sed is a workaround for nvcc 2.3 (or gcc?) bug where the file directory is listed as a dependency
 # The 3rd sed fixes a problem where multiple slashes (i.e. //) may be present in the target, because $(dir $<) leaves the trailing slash, and nvcc -odir expects there to be none
-%.cu_d: %.cu
+%_cu.d: %.cu
 	$(DEPUI) $(CCUDA) -M -odir $(dir $<) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) $< \
-		| sed 's,\($$*\)\.o[ :]*,\1.cu_o $@ : ,g' \
+		| sed 's,\($$*\)\.o[ :]*,\1_cu.o $@ : ,g' \
 		| sed 's,.*/ \\,    \\,g' \
 		| sed 's,//,/,g' \
 		 > $@
@@ -291,7 +288,7 @@ bin/Makefile.d: Makefile
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),tidy)
 -include $(subst .cpp,.d,$(SOURCES))
--include src/autogen_dont_edit.cu_d
+-include $(subst .cu,_cu.d,$(LIBSWARM_CUDASOURCES))
 endif
 endif
 
