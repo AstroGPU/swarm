@@ -38,10 +38,10 @@ void stability_test(config& cfg){
 
 	// Initialize ensemble on host to be used with GPU integration.
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
-	hp::hostEnsemble reference_ensemble = generate_ensemble(cfg);
+	hp::defaultEnsemble reference_ensemble = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
-	hp::hostEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
+	hp::defaultEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
 
 
 	// performance stopwatches
@@ -63,7 +63,7 @@ void stability_test(config& cfg){
 	DEBUG_OUTPUT(1, "Upload ensemble to GPU" );
 	cudaThreadSynchronize();   // Block until CUDA call completes
 	swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
-	integ_gpu->load_ensemble(ens);
+	integ_gpu->set_ensemble(ens);
 	cudaThreadSynchronize();   // Block until CUDA call completes
 	swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
 
@@ -78,15 +78,9 @@ void stability_test(config& cfg){
 
 		DEBUG_OUTPUT(1, "Integrator ensemble on GPU" );
 		swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
-		integ_gpu->launch_integrator();  // Actually do the integration w/ GPU!			
+		integ_gpu->integrate();  // Actually do the integration w/ GPU!			
 		cudaThreadSynchronize();  // Block until CUDA call completes
 		swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
-
-		DEBUG_OUTPUT(1, "Download data to host" );
-		swatch_download_gpu.start();  // Start timer for downloading data from GPU
-		integ_gpu->download_ensemble();	// Download data from GPU to CPU		
-		cudaThreadSynchronize();      // Block until CUDA call completes
-		swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );

@@ -96,7 +96,7 @@ CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?=-g -O0 -I $(CUDAPATH)/include -I ./src -I .
+CXXFLAGS?= -O4 -I $(CUDAPATH)/include -I ./src -I .
 LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64 -L /usr/lib/nvidia-current/
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0

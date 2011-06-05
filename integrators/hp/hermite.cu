@@ -16,18 +16,22 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "hp/hp.hpp"
+#include "hp/bppt.hpp"
 #include "hp/helpers.hpp"
-#include "swarmlog.h"
 #include "hp/gravitation.hpp"
+
 
 namespace swarm {
 namespace hp {
+
+namespace gpu {
+namespace bppt {
 
 class hermite: public integrator {
 	typedef integrator base;
 	private:
 	double _time_step;
+	int _iteration_count;
 
 	public:
 	hermite(const config& cfg): base(cfg),_time_step(0.001) {
@@ -36,44 +40,32 @@ class hermite: public integrator {
 	}
 
 	virtual void launch_integrator() {
+		_iteration_count = _destination_time / _time_step;
 		launch_templatized_integrator(this);
 	}
 
-	/*! Integrator Kernel to be run on GPU
-	 *  
-	 *
-	 */
-	 template<class T >
-	__device__ void kernel(T a)  {
 
+	template<class T>
+	__device__ void kernel(T a){
+		// References to Ensemble and Shared Memory
+		ensemble::SystemRef sys = _dens[sysid()];
+		extern __shared__ char shared_mem[];
+		CoalescedStructArray< typename Gravitation<T::n>::shared_data
+			, double, SHMEM_WARPSIZE > 
+			grav_shared((typename Gravitation<T::n>::shared_data*) shared_mem,0);
+		Gravitation<T::n> calcForces(sys,grav_shared[sysid_in_block()]);
+
+		// Local variables
 		const int nbod = T::n;
-
-		/////////////// FETCH LOCAL VARIABLES ///////////////////
-
-
-		if(sysid() >= _dens.nsys()) { return; }
-		ensemble::SystemRef sys ( _dens[sysid()] );
-
-		int thr = thread_in_system();
-		// Body/Component Grid
 		// Body number
 		int b = thread_body_idx(nbod);
 		// Component number
 		int c = thread_component_idx(nbod);
+		int ij = thread_in_system();
 		bool body_component_grid = (b < nbod) && (c < 3);
 
-		// i,j pairs Grid
-		int ij = thr;
-
-		typedef Gravitation<nbod, SHMEM_WARPSIZE> Grav;
-		// shared memory allocation
-		extern __shared__ char shared_mem[];
-		CoalescedStructArray< typename Grav::shared_data, double, SHMEM_WARPSIZE> 
-			shared_grav( (typename Grav::shared_data* ) shared_mem, 0 );
-		Grav calcForces(sys,shared_grav[sysid_in_block()]);
-
-		double t_start = sys.time(), t = t_start;
-		double t_end = t_start + _destination_time;
+		double t = sys.time(); 
+		double t_end = sys.time() + _destination_time;
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
@@ -86,7 +78,7 @@ class hermite: public integrator {
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-		while(t < t_end){
+		for(int iter = 0 ; iter < _iteration_count; iter ++ ) {
 			double h = min(_time_step, t_end - t);
 
 			
@@ -121,14 +113,11 @@ class hermite: public integrator {
 			// Finalize the step
 			t += h;
 
-			if( body_component_grid )
-				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-
-			sys.time() = t;
 
 		}
-
+		sys.time() = t;
 	}
+
 
 };
 
@@ -146,4 +135,5 @@ extern "C" integrator *create_hp_hermite(const config &cfg)
 
 }
 }
-
+}
+}

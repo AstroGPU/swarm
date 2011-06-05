@@ -18,11 +18,13 @@
 #include "hp.hpp"
 #include "datatypes.hpp"
 
-const int SHMEM_WARPSIZE = 16;
 
 namespace swarm {
 namespace hp {
+namespace gpu {
+namespace bppt {
 
+const int SHMEM_WARPSIZE = 16;
 
 template<int W>
 struct GravitationScalars {
@@ -188,5 +190,7 @@ class Gravitation {
 
 };
 
+}
+}
 }
 }

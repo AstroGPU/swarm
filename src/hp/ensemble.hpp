@@ -234,6 +234,7 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 
 typedef EnsembleBase< ENSEMBLE_WARPSIZE > ensemble;
 
+typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > defaultEnsemble;
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > hostEnsemble;
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DeviceAllocator > deviceEnsemble;
 
