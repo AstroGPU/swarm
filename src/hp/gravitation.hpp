@@ -18,8 +18,24 @@
 #include "hp.hpp"
 #include "datatypes.hpp"
 
+const int SHMEM_WARPSIZE = 16;
+
 namespace swarm {
 namespace hp {
+
+
+template<int W>
+struct GravitationScalars {
+	static const int WARPSIZE = W;
+	typedef double scalar_t; 
+
+	double _acc[WARPSIZE];
+	double _jerk[WARPSIZE];
+
+	// Accessors
+	GPUAPI double& acc() { return _acc[0];  }
+	GPUAPI double& jerk() { return _jerk[0];  }
+};
 
 
 /*! 

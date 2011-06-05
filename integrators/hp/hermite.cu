@@ -51,8 +51,8 @@ class hermite: public integrator {
 		/////////////// FETCH LOCAL VARIABLES ///////////////////
 
 
-		if(sysid() >= _gpu_ens.nsys()) { return; }
-		ensemble::SystemRef sys ( _gpu_ens[sysid()] );
+		if(sysid() >= _dens.nsys()) { return; }
+		ensemble::SystemRef sys ( _dens[sysid()] );
 
 		int thr = thread_in_system();
 		// Body/Component Grid

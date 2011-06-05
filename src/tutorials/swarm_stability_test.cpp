@@ -38,10 +38,10 @@ void stability_test(config& cfg){
 
 	// Initialize ensemble on host to be used with GPU integration.
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
-	hp::ensemble reference_ensemble = generate_ensemble(cfg);
+	hp::hostEnsemble reference_ensemble = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
-	hp::ensemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
+	hp::hostEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
 
 
 	// performance stopwatches

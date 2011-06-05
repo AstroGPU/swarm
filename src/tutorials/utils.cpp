@@ -8,12 +8,12 @@
 using std::max;
 using namespace swarm;
 
-hp::ensemble generate_ensemble(config& cfg)  {
+swarm::hp::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	double duration = atof(cfg["duration"].c_str());
 	int nsys = atoi(cfg["nsys"].c_str());
 	int nbod = atoi(cfg["nbod"].c_str());
 
-	hp::ensemble ens = hp::ensemble::createOnHostMemory( nbod, nsys );
+	hp::hostEnsemble ens = hp::hostEnsemble::create( nbod, nsys );
 
 
 	for(unsigned int sys=0;sys<ens.nsys();++sys)
