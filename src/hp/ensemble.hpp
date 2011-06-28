@@ -26,6 +26,7 @@ namespace hp {
 
 const int ENSEMBLE_WARPSIZE = 16;
 
+typedef long double_int;
 
 /**
  *
@@ -42,16 +43,23 @@ class EnsembleBase {
 			double _vel[WARPSIZE];
 			GPUAPI double& pos() { return _pos[0]; } 
 			GPUAPI double& vel() { return _vel[0]; } 
+			GPUAPI const double& pos() const { return _pos[0]; } 
+			GPUAPI const double& vel() const { return _vel[0]; } 
 		} component[3];
 
 		double _mass[WARPSIZE];
-		double _time[WARPSIZE];
 
 		// Accessors 
 		GPUAPI double& mass() { return _mass[0];  }
-		GPUAPI double& time() { return _time[0];  }
 		GPUAPI Component& operator[] (const int & i) { return component[i]; };
 		GPUAPI const Component& operator[] (const int & i) const { return component[i]; };
+	};
+
+	struct Sys {
+		double _time[WARPSIZE];
+		double_int _active[WARPSIZE];
+		GPUAPI double& time() { return _time[0];  }
+		GPUAPI double_int& active() { return _active[0];  }
 	};
 
 
@@ -59,31 +67,50 @@ class EnsembleBase {
 	struct SystemRef {
 		const int _nbod;
 		Body* _body;
+		Sys* _sys;
 
 		// Constructor
-		GPUAPI SystemRef(const int& nbod,Body* body):_nbod(nbod),_body(body){}
+		GPUAPI SystemRef(const int& nbod,Body* body,Sys* sys):_nbod(nbod),_body(body),_sys(sys){}
 
 		// Accessor
 		GPUAPI Body& operator[](const int & i ) { return _body[i]; };
-		GPUAPI double& time() { return _body[0].time(); }
+		GPUAPI double& time() { return _sys[0].time(); }
+		GPUAPI double_int& active() { return _sys[0].active(); }
 		GPUAPI const int& nbod()const{ return _nbod;	}
+
+		GPUAPI double distance_squared_between(const int& i , const int & j ) {
+			const Body& b1 = _body[i], & b2 = _body[j];
+			return sqr(b1[0].pos()-b2[0].pos())
+				+ sqr(b1[1].pos()-b2[1].pos())
+				+ sqr(b1[2].pos()-b2[2].pos());
+		}
 	};
 
-	typedef Body element_type;
-	GPUAPI static size_t element_count(const int& nbod,const int& nsys){
+	GPUAPI static size_t body_element_count(const int& nbod,const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE * nbod ;
+	}
+
+	GPUAPI static size_t sys_element_count(const int& nsys){
+		return (nsys + WARPSIZE) / WARPSIZE ;
 	}
 
 	protected:
 	int _nbod;
 	int _nsys;
 	CoalescedStructArray< Body, double, WARPSIZE> _body;
+	CoalescedStructArray< Sys, double, WARPSIZE> _sys;
+
+	public:
+	CoalescedStructArray< Body, double, WARPSIZE> &
+		bodies() { return _body; }
+	CoalescedStructArray< Sys, double, WARPSIZE> &
+		systems() { return _sys; }
 
 
 	public:
 	// Constructors
-	GPUAPI EnsembleBase():_nbod(0),_nsys(0),_body(0,0) {};
-	GPUAPI explicit EnsembleBase(const int& nbod, const int& nsys,Body* array):_nbod(nbod),_nsys(nsys),_body(array,element_count(nbod,nsys)){}
+	GPUAPI EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
+	GPUAPI explicit EnsembleBase(const int& nbod, const int& nsys,Body* body_array, Sys* sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
 	~EnsembleBase() { 
 		// TODO: We need reference counting before using this:
 		// release();
@@ -108,7 +135,7 @@ class EnsembleBase {
 		const int sysinblock= i % WARPSIZE;
 		const int blockid = i / WARPSIZE;
 		const int idx = blockid * _nbod * WARPSIZE +  sysinblock;
-		return SystemRef(_nbod,&_body[idx]) ;
+		return SystemRef(_nbod,&_body[idx], &_sys[i] ) ;
 	};
 
 	GPUAPI void set_time( const int& sys, const double& time ) {
@@ -149,26 +176,7 @@ class EnsembleBase {
 		m = s[bod].mass();
 	}
 
-	GPUAPI Body* get() {
-		return _body.get();
-	}
 
-	GPUAPI Body* begin() {
-		return _body.begin();
-	}
-
-	GPUAPI Body* end() {
-		return _body.end();
-	}
-
-
-	GPUAPI size_t size_in_bytes() {
-		return element_count(_nbod,_nsys) * sizeof(element_type);
-	}
-
-	GPUAPI static size_t size_in_bytes(const int& nbod,const int& nsys){
-		return element_count(nbod,nsys) * sizeof(element_type);
-	}
 
 	GPUAPI double calc_total_energy( int sys ) {
 		double E = 0.;
@@ -202,16 +210,20 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 	typedef EnsembleBase<W> Base;
 	typedef EnsembleAlloc Self;
 	typedef typename Base::Body Body;
-	typedef _Allocator<Body> Allocator;
+	typedef typename Base::Sys Sys;
+	typedef _Allocator<Body> BodyAllocator;
+	typedef _Allocator<Sys> SysAllocator;
 
 	EnsembleAlloc clone() {
-		Body* b = Allocator::clone(Base::begin(),Base::end());
-		return EnsembleAlloc(Base::nbod(),Base::nsys(),b);
+		Body* b = BodyAllocator::clone(Base::bodies().begin(),Base::bodies().end());
+		Sys* s = SysAllocator::clone(Base::systems().begin(),Base::systems().end());
+		return EnsembleAlloc(Base::nbod(),Base::nsys(),b,s);
 	}
 
 	static EnsembleAlloc create(const int& nbod, const int& nsys) {
-		Body* b = Allocator::alloc( Base::element_count(nbod,nsys) );
-		return EnsembleAlloc(nbod,nsys,b);
+		Body* b = BodyAllocator::alloc( Base::body_element_count(nbod,nsys) );
+		Sys* s = SysAllocator::alloc( Base::sys_element_count(nsys) );
+		return EnsembleAlloc(nbod,nsys,b,s);
 	}
 
 	template< class Other > 
@@ -224,12 +236,13 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 	template< class Other > 
 	void copyTo(Other& o){
 		assert(o.nsys() == Base::nsys() && o.nbod() == Base::nbod());
-		alloc_copy(Allocator(),typename Other::Allocator(),Base::begin(),Base::end(),o.begin());
+		alloc_copy(BodyAllocator(),typename Other::BodyAllocator(),Base::bodies().begin(),Base::bodies().end(),o.bodies().begin());
+		alloc_copy(SysAllocator(),typename Other::SysAllocator(),Base::systems().begin(),Base::systems().end(),o.systems().begin());
 	}
 
 	EnsembleAlloc(){}
 	private:
-	EnsembleAlloc(const int& nbod,const int& nsys, Body* b):Base(nbod,nsys,b){}
+	EnsembleAlloc(const int& nbod,const int& nsys, Body* b, Sys* s):Base(nbod,nsys,b,s){}
 };
 
 typedef EnsembleBase< ENSEMBLE_WARPSIZE > ensemble;

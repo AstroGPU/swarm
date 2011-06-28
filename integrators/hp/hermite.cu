@@ -19,6 +19,7 @@
 #include "hp/bppt.hpp"
 #include "hp/helpers.hpp"
 #include "hp/gravitation.hpp"
+#include "stop_on_ejection.hpp"
 
 
 namespace swarm {
@@ -27,14 +28,17 @@ namespace hp {
 namespace gpu {
 namespace bppt {
 
+template< class _Stopper >
 class hermite: public integrator {
 	typedef integrator base;
+	typedef  _Stopper stopper_t;
 	private:
 	double _time_step;
 	int _iteration_count;
+	stopper_t _stopper;
 
 	public:
-	hermite(const config& cfg): base(cfg),_time_step(0.001) {
+	hermite(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
@@ -49,11 +53,8 @@ class hermite: public integrator {
 	__device__ void kernel(T a){
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		extern __shared__ char shared_mem[];
-		CoalescedStructArray< typename Gravitation<T::n>::shared_data
-			, double, SHMEM_WARPSIZE > 
-			grav_shared((typename Gravitation<T::n>::shared_data*) shared_mem,0);
-		Gravitation<T::n> calcForces(sys,grav_shared[sysid_in_block()]);
+		typedef typename Gravitation<T::n>::shared_data grav_t;
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -63,9 +64,11 @@ class hermite: public integrator {
 		int c = thread_component_idx(nbod);
 		int ij = thread_in_system();
 		bool body_component_grid = (b < nbod) && (c < 3);
+		bool first_thread_in_system = thread_in_system() == 0;
 
-		double t = sys.time(); 
-		double t_end = sys.time() + _destination_time;
+
+		// local variables
+		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys) ;
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
@@ -78,8 +81,10 @@ class hermite: public integrator {
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-		for(int iter = 0 ; iter < _iteration_count; iter ++ ) {
-			double h = min(_time_step, t_end - t);
+		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+			double h = _time_step;
+			// can't use this one because t might go past t_end
+			// double h = min(_time_step, t_end - t);
 
 			
 			// Initial Evaluation
@@ -111,11 +116,19 @@ class hermite: public integrator {
 			acc0 = acc1, jerk0 = jerk1;
 
 			// Finalize the step
-			t += h;
+			if( body_component_grid )
+				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+			if( first_thread_in_system ) 
+				sys.time() += h;
+
+			if( first_thread_in_system ) 
+				sys.active() = ! stopper_tester() ;
+
+			__syncthreads();
 
 
 		}
-		sys.time() = t;
+
 	}
 
 
@@ -130,7 +143,7 @@ class hermite: public integrator {
  */
 extern "C" integrator *create_hp_hermite(const config &cfg)
 {
-	return new hermite(cfg);
+	return new hermite< stop_on_ejection >(cfg);
 }
 
 }

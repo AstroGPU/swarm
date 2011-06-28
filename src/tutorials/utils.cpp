@@ -36,6 +36,8 @@ swarm::hp::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 			// assign body a mass, position and velocity
 			ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
 		}
+		ens[sys].active() = true;
+		ens[sys].time() = 0;
 	}
 	return ens;
 }

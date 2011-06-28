@@ -15,55 +15,50 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-
 #pragma once
 
-#include <cuda_runtime_api.h>
+#include <limits>
+#include "hp/ensemble.hpp"
 
 namespace swarm {
 namespace hp {
 
-template<class N>
-GPUAPI N sqr(const N& x) { return x*x; }
 
-template<int i>
-struct params_t {
-	const static int n = i;
-};
+class stop_on_ejection {
+	double _rmax_squared;
 
-template<class implementation,class T>
-__global__ void generic_kernel(implementation* integ,T a) {
-	integ->kernel(a);
-}
+	public: 
+	class tester {
+		const double & _rmax_squared;
+		ensemble::SystemRef& _sys;
 
+		public:
 
-template< class implementation, class T>
-void launch_template(implementation* integ, implementation* gpu_integ, T a)
-{
-	if(integ->get_ensemble().nbod() == T::n) 
-		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
+		GPUAPI tester(const float& rmax_squared, ensemble::SystemRef& sys)
+			:_rmax_squared(rmax_squared),_sys(sys){}
 
-}
+		GPUAPI bool operator () () { 
+			for(int b = 1 ; b < _sys.nbod(); b ++ ){
+				if(_sys.distance_squared_between(b,0) > _rmax_squared )
+					return true;
+			}
+			return false; 
+		}
+	};
 
-template<class implementation>
-void launch_templatized_integrator(implementation* integ){
-
-	if(integ->get_ensemble().nbod() <= 3){
-		implementation* gpu_integ;
-		cudaMalloc(&gpu_integ,sizeof(implementation));
-		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
-
-		launch_template(integ,gpu_integ,params_t<3>());
-
-		cudaFree(integ);
-	} else {
-		// How do we get an error message out of here?
-		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+	stop_on_ejection(const config &cfg)
+	{
+		if(!cfg.count("rmax"))
+			_rmax_squared = std::numeric_limits<float>::max();
+		else
+			_rmax_squared = sqr (atof(cfg.at("rmax").c_str()) ); 
 	}
 
-}
-
-
+	GPUAPI tester get_tester(ensemble::SystemRef& sys){
+		return tester(_rmax_squared,sys);
+	}
 	
+};
+
 }
 }

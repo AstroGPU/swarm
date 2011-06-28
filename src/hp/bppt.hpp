@@ -26,6 +26,25 @@ namespace hp {
 namespace gpu {
 namespace bppt {
 
+static const int SHMEM_WARPSIZE = 16;
+
+inline __device__ int sysid(){
+	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
+}
+inline __device__ int sysid_in_block(){
+	return threadIdx.x;
+}
+inline __device__ int thread_in_system() {
+	return threadIdx.y;
+}
+
+inline __device__ int thread_component_idx(int nbod) {
+	return thread_in_system() / nbod;
+}
+inline __device__ int thread_body_idx(int nbod) {
+	return thread_in_system() % nbod;
+}
+
 class integrator : public gpu::integrator  {
 	typedef gpu::integrator Base;
 	protected:
@@ -73,24 +92,19 @@ class integrator : public gpu::integrator  {
 		return pair_count * 3  * 2 * sizeof(double);
 	}
 
+	template< class T> 
+	static __device__ void * system_shared_data_pointer(T a) {
+		extern __shared__ char shared_mem[];
+		int b = sysid_in_block() / SHMEM_WARPSIZE ;
+		int i = sysid_in_block() % SHMEM_WARPSIZE ;
+		int idx = i * sizeof(double) 
+			+ b * SHMEM_WARPSIZE 
+			* shmem_per_system(T::n);
+		return &shared_mem[idx];
+	}
+
 };
 
-inline __device__ int sysid(){
-	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-}
-inline __device__ int sysid_in_block(){
-	return threadIdx.x;
-}
-inline __device__ int thread_in_system() {
-	return threadIdx.y;
-}
-
-inline __device__ int thread_component_idx(int nbod) {
-	return thread_in_system() / nbod;
-}
-inline __device__ int thread_body_idx(int nbod) {
-	return thread_in_system() % nbod;
-}
 	
 }
 }

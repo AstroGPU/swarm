@@ -63,8 +63,8 @@ class integrator {
 				_hens[i][j][1].vel() = ens[i][j].v(1);
 				_hens[i][j][2].vel() = ens[i][j].v(2);
 				_hens[i][j].mass() = ens[i][j].mass();
-				_hens[i][j].time() = ens[i].time();
 			}
+			_hens[i].time() = ens[i].time();
 		}
 
 		return _hens;
