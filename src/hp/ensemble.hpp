@@ -51,6 +51,7 @@ class EnsembleBase {
 
 		// Accessors 
 		GPUAPI double& mass() { return _mass[0];  }
+		GPUAPI const double& mass() const { return _mass[0];  }
 		GPUAPI Component& operator[] (const int & i) { return component[i]; };
 		GPUAPI const Component& operator[] (const int & i) const { return component[i]; };
 	};
@@ -64,6 +65,7 @@ class EnsembleBase {
 
 
 
+
 	struct SystemRef {
 		const int _nbod;
 		Body* _body;
@@ -73,9 +75,9 @@ class EnsembleBase {
 		GPUAPI SystemRef(const int& nbod,Body* body,Sys* sys):_nbod(nbod),_body(body),_sys(sys){}
 
 		// Accessor
-		GPUAPI Body& operator[](const int & i ) { return _body[i]; };
-		GPUAPI double& time() { return _sys[0].time(); }
-		GPUAPI double_int& active() { return _sys[0].active(); }
+		GPUAPI Body& operator[](const int & i ) const { return _body[i]; };
+		GPUAPI double& time() const { return _sys[0].time(); }
+		GPUAPI double_int& active() const { return _sys[0].active(); }
 		GPUAPI const int& nbod()const{ return _nbod;	}
 
 		GPUAPI double distance_squared_between(const int& i , const int & j ) {
@@ -84,6 +86,21 @@ class EnsembleBase {
 				+ sqr(b1[1].pos()-b2[1].pos())
 				+ sqr(b1[2].pos()-b2[2].pos());
 		}
+	};
+
+	//! Constant encapsulation of SystemRef
+	struct SystemRefConst {
+		SystemRef _ref;
+
+		// Constructor
+		GPUAPI SystemRefConst(const SystemRef& ref):_ref(ref){}
+
+		// Accessor
+		GPUAPI const Body& operator[](const int & i ) const { return _ref[i]; }
+		GPUAPI const double& time() { return _ref.time(); }
+		GPUAPI const double_int& active() { return _ref.active(); }
+		GPUAPI const int& nbod()const{ return _ref.nbod();	}
+		GPUAPI double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 	};
 
 	GPUAPI static size_t body_element_count(const int& nbod,const int& nsys){
@@ -138,9 +155,108 @@ class EnsembleBase {
 		return SystemRef(_nbod,&_body[idx], &_sys[i] ) ;
 	};
 
+	GPUAPI const SystemRefConst operator[] (const int & i) const { 
+		return SystemRefConst( const_cast<EnsembleBase*>(this)->operator[](i) ) ;
+	};
+
+	//// COMPATIBILITY ACCESSORS
+	
+	GPUAPI double& mass(const int& sys, const int & bod){
+		return operator[] ( sys )[bod].mass();
+	}
+
+	GPUAPI double& p(const int& sys, const int & bod, const int& c){
+		return operator[] ( sys )[bod][c].pos();
+	}
+
+	GPUAPI double& v(const int& sys, const int & bod, const int& c){
+		return operator[] ( sys )[bod][c].pos();
+	}
+
+	GPUAPI double& x(const int& sys, const int& bod ) { return p(sys,bod,0); }
+	GPUAPI double& y(const int& sys, const int& bod ) { return p(sys,bod,1); }
+	GPUAPI double& z(const int& sys, const int& bod ) { return p(sys,bod,2); }
+
+	GPUAPI double& vx(const int& sys, const int& bod ) { return v(sys,bod,0); }
+	GPUAPI double& vy(const int& sys, const int& bod ) { return v(sys,bod,1); }
+	GPUAPI double& vz(const int& sys, const int& bod ) { return v(sys,bod,2); }
+
+	GPUAPI double& time( const int & sys ) {
+		return operator[] ( sys ).time();
+	}
+
+	//! should not be used
+	GPUAPI double& time_end( const int & sys ) {
+		return time(sys);
+	}
+
+	//! should not be used
+	GPUAPI double& time_output( const int & sys , const int & k) {
+		double x = time(sys);
+		return x;
+	}
+
+	GPUAPI int& flags(const int& sys){
+		return operator[] ( sys ).active();
+	}
+
+	//// Const Versions
+	
+	GPUAPI const double& mass(const int& sys, const int & bod)const{
+		return operator[] ( sys )[bod].mass();
+	}
+
+	GPUAPI const double& p(const int& sys, const int & bod, const int& c)const{
+		return operator[] ( sys )[bod][c].pos();
+	}
+
+	GPUAPI const double& v(const int& sys, const int & bod, const int& c)const{
+		return operator[] ( sys )[bod][c].pos();
+	}
+
+	GPUAPI const double& x(const int& sys, const int& bod )const { return p(sys,bod,0); }
+	GPUAPI const double& y(const int& sys, const int& bod )const { return p(sys,bod,1); }
+	GPUAPI const double& z(const int& sys, const int& bod )const { return p(sys,bod,2); }
+
+	GPUAPI const double& vx(const int& sys, const int& bod ) const { return v(sys,bod,0); }
+	GPUAPI const double& vy(const int& sys, const int& bod ) const { return v(sys,bod,1); }
+	GPUAPI const double& vz(const int& sys, const int& bod ) const { return v(sys,bod,2); }
+
+	GPUAPI const double& time( const int & sys ) const {
+		return operator[] ( sys ).time();
+	}
+
+	//! should not be used
+	GPUAPI const double& time_end( const int & sys )const  {
+		return time(sys);
+	}
+
+	//! should not be used
+	GPUAPI const double& time_output( const int & sys , const int & k) const {
+		double x = time(sys);
+		return x;
+	}
+
+	GPUAPI const int& flags(const int& sys)const {
+		return operator[] ( sys ).active();
+	}
+
 	GPUAPI void set_time( const int& sys, const double& time ) {
 		SystemRef s = operator[] ( sys );
 		s.time() = time;	
+	}
+
+	GPUAPI bool is_active(const int& sys) const { 
+		return operator[] ( sys ).active();
+	}
+	GPUAPI bool is_inactive(const int& sys) const { 
+		return ! operator[] ( sys ).active();
+	}
+	GPUAPI void set_active(const int& sys) { 
+		operator[] ( sys ).active() = true;
+	}
+	GPUAPI void set_inactive(const int& sys) { 
+		operator[] ( sys ).active() = false;
 	}
 
 
@@ -162,8 +278,8 @@ class EnsembleBase {
 	
 	GPUAPI void get_body(const int & sys, const int &  bod, double &  m
 			, double& x, double & y, double& z
-			, double&  vx, double&  vy, double&  vz) {
-		SystemRef s = operator[] ( sys );
+			, double&  vx, double&  vy, double&  vz) const {
+		SystemRefConst s = operator[] ( sys );
 
 		x = s[bod][0].pos();
 		y = s[bod][1].pos();
@@ -177,6 +293,56 @@ class EnsembleBase {
 	}
 
 
+	// Utilities
+	//
+	
+	GPUAPI void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = 1000) const 
+	{
+
+		x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;
+		double mass_sum = 0.;
+		for(int bod=0;bod<=min(nbod()-1,max_body_id);++bod)
+		{
+			double m = mass(sys,bod);
+			x  += m* this->x(sys,bod);
+			y  += m* this->y(sys,bod);
+			z  += m* this->z(sys,bod);
+			vx += m* this->vx(sys,bod);
+			vy += m* this->vy(sys,bod);
+			vz += m* this->vz(sys,bod);
+			mass_sum += m;
+		}
+		x  /= mass_sum;
+		y  /= mass_sum;
+		z  /= mass_sum;
+		vx /= mass_sum;
+		vy /= mass_sum;
+		vz /= mass_sum;
+	};
+
+	GPUAPI void   set_time_all(const double tend) 
+	{
+		for(int sys=0;sys<nsys();++sys)
+			time(sys) = tend;
+	}
+	/// set all systems destination time 
+	GPUAPI void   set_time_end_all(const double tend) 
+	{
+		for(int sys=0;sys<nsys();++sys)
+			time_end(sys) = tend;
+	}
+	/// advance all systems time 
+	GPUAPI void   advance_time_end_all(const double dur) 
+	{
+		for(int sys=0;sys<nsys();++sys)
+			time_end(sys) += dur;
+	}
+	/// ... 
+	GPUAPI void   set_time_output_all(int k, const double tout) 
+	{ 
+		for(int sys=0;sys<nsys();++sys)
+			time_output(sys,k) = tout;
+	}
 
 	GPUAPI double calc_total_energy( int sys ) {
 		double E = 0.;

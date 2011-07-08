@@ -20,6 +20,7 @@
 #include "hp/helpers.hpp"
 #include "hp/gravitation.hpp"
 #include "stop_on_ejection.hpp"
+#include "hp/log.hpp"
 
 
 namespace swarm {
@@ -68,7 +69,8 @@ class hermite: public integrator {
 
 
 		// local variables
-		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys) ;
+		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
+
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
@@ -124,6 +126,9 @@ class hermite: public integrator {
 			if( first_thread_in_system ) 
 				sys.active() = ! stopper_tester() ;
 
+//			if( first_thread_in_system )
+
+
 			__syncthreads();
 
 
@@ -143,7 +148,7 @@ class hermite: public integrator {
  */
 extern "C" integrator *create_hp_hermite(const config &cfg)
 {
-	return new hermite< stop_on_ejection >(cfg);
+	return new hermite< stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
 }

@@ -22,6 +22,7 @@
 #include "swarm.h"
 #include "datatypes.hpp"
 #include "ensemble.hpp"
+#include "log.hpp"
 
 
 namespace swarm {
@@ -80,6 +81,8 @@ class integrator : public hp::integrator {
 	//TODO: use cux auto ptr to make sure we don't have memory leaks
 	deviceEnsemble _dens;
 
+	gpulog::device_log* _log;
+
 	public: 
 
 	integrator(const config &cfg): Base(cfg), _hens(Base::_ens) {}
@@ -89,6 +92,13 @@ class integrator : public hp::integrator {
 		launch_integrator();
 		download_ensemble();
 	}
+
+	void set_default_log () {
+		void* dlog;
+		cudaGetSymbolAddress(&dlog,"dlog");
+		set_log((gpulog::device_log*)dlog);
+	}
+	void set_log(gpulog::device_log* log) { _log = log; }
 
 	void set_ensemble(defaultEnsemble& ens) {
 		_hens = ens;

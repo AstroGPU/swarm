@@ -24,6 +24,7 @@ namespace swarm {
 namespace hp {
 
 
+template<class log_t>
 class stop_on_ejection {
 	double _rmax_squared;
 
@@ -31,11 +32,12 @@ class stop_on_ejection {
 	class tester {
 		const double & _rmax_squared;
 		ensemble::SystemRef& _sys;
+		log_t& _log;
 
 		public:
 
-		GPUAPI tester(const float& rmax_squared, ensemble::SystemRef& sys)
-			:_rmax_squared(rmax_squared),_sys(sys){}
+		GPUAPI tester(const float& rmax_squared, ensemble::SystemRef& sys,log_t& log)
+			:_rmax_squared(rmax_squared),_sys(sys),_log(log){}
 
 		GPUAPI bool operator () () { 
 			for(int b = 1 ; b < _sys.nbod(); b ++ ){
@@ -54,8 +56,8 @@ class stop_on_ejection {
 			_rmax_squared = sqr (atof(cfg.at("rmax").c_str()) ); 
 	}
 
-	GPUAPI tester get_tester(ensemble::SystemRef& sys){
-		return tester(_rmax_squared,sys);
+	GPUAPI tester get_tester(ensemble::SystemRef& sys,log_t& l){
+		return tester(_rmax_squared,sys,l);
 	}
 	
 };
