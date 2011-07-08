@@ -18,11 +18,10 @@
 
 #pragma once
 
-#include "hp.hpp"
+#include "integrator.hpp"
 
 
 namespace swarm {
-namespace hp {
 namespace gpu {
 namespace bppt {
 
@@ -87,7 +86,7 @@ class integrator : public gpu::integrator  {
 		return system_per_block() * shmem_per_system(nbod);
 	}
 
-	static GPUAPI int shmem_per_system(int nbod) {
+	static GENERIC int shmem_per_system(int nbod) {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * 2 * sizeof(double);
 	}
@@ -106,7 +105,6 @@ class integrator : public gpu::integrator  {
 };
 
 	
-}
 }
 }
 }

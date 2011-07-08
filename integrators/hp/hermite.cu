@@ -16,15 +16,13 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "hp/bppt.hpp"
-#include "hp/helpers.hpp"
-#include "hp/gravitation.hpp"
+#include "bppt.hpp"
+#include "helpers.hpp"
+#include "gravitation.hpp"
 #include "stop_on_ejection.hpp"
-#include "hp/log.hpp"
 
 
 namespace swarm {
-namespace hp {
 
 namespace gpu {
 namespace bppt {
@@ -151,7 +149,6 @@ extern "C" integrator *create_hp_hermite(const config &cfg)
 	return new hermite< stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
-}
 }
 }
 }

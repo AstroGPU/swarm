@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -16,50 +16,52 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file gpu_ensemble.cu 
- *  \brief cuda code for gpu_kernel. 
- *  TODO: This ic currently all commented out by a preprocessor directive!
-*/
+#pragma once
 
-#include "swarm.h"
-#include <cux/cux.h>
-#include <astro/util.h>
-#include <cassert>
+#include <cuda_runtime_api.h>
 
 namespace swarm {
 
-#if 0
+template<class N>
+GENERIC N sqr(const N& x) { return x*x; }
 
-TODO: Need to dynamically compute grid size for this to work properly.
-      Do not enable until this is done.
-int gpu_ensemble::get_nactive() const
-{
-        if(nactive_gpu)
-        {
-                cudaMalloc((void**)&nactive_gpu, sizeof(*nactive_gpu));
-        }
+template<int i>
+struct params_t {
+	const static int n = i;
+};
 
-        cudaMemset(nactive_gpu, 0, sizeof(*nactive_gpu));
-        get_nactive_kernel<<<60, 64>>>(nactive_gpu, *this);
-
-        // fetch the result
-        int nrunning;
-        memcpyToHost(&nrunning, nactive_gpu, 1);
-        return nrunning;
-}
-#endif
-
-#if 0  // compiler says not allowed, need to figure out
-__device__ void gpu_ensemble::set_time_end_all_kernel(const real_time tend)
-{
-int sys = threadId();
-if(sys>= nsys()) { return; }
-time_end(sys) = tend;
+template<class implementation,class T>
+__global__ void generic_kernel(implementation* integ,T a) {
+	integ->kernel(a);
 }
 
-void gpu_ensemble::set_time_end_all(const real_time tend)
+
+template< class implementation, class T>
+void launch_template(implementation* integ, implementation* gpu_integ, T a)
 {
-  set_time_end_all_kernel<<<60, 64>>>(tend);
+	if(integ->get_ensemble().nbod() == T::n) 
+		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
+
 }
-#endif
+
+template<class implementation>
+void launch_templatized_integrator(implementation* integ){
+
+	if(integ->get_ensemble().nbod() <= 3){
+		implementation* gpu_integ;
+		cudaMalloc(&gpu_integ,sizeof(implementation));
+		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
+
+		launch_template(integ,gpu_integ,params_t<3>());
+
+		cudaFree(integ);
+	} else {
+		// How do we get an error message out of here?
+		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+	}
+
+}
+
+
+	
 }

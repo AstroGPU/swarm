@@ -19,14 +19,17 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
-#include "swarm.h"
 #include "datatypes.hpp"
 #include "ensemble.hpp"
 #include "log.hpp"
 
 
 namespace swarm {
-namespace hp {
+
+typedef std::map<std::string, std::string> config;
+class integrator;
+typedef integrator *(*integratorFactory_t)(const config &cfg);
+
 
 class integrator {	
 	protected:
@@ -48,34 +51,15 @@ class integrator {
 	virtual void set_duration(const double& duration) {
 		_destination_time = duration;
 	}
+	static integrator* create(const config &cfg);
 
 };
-
-	defaultEnsemble convert_ensemble(cpu_ensemble& ens){
-		hostEnsemble _hens = hostEnsemble::create(ens.nbod(),ens.nsys());
-
-		// Copy all
-		for(int i= 0; i < ens.nsys() ; i++){
-			for(int j = 0; j < ens.nbod(); j++) {
-				_hens[i][j][0].pos() = ens[i][j].p(0);
-				_hens[i][j][1].pos() = ens[i][j].p(1);
-				_hens[i][j][2].pos() = ens[i][j].p(2);
-				_hens[i][j][0].vel() = ens[i][j].v(0);
-				_hens[i][j][1].vel() = ens[i][j].v(1);
-				_hens[i][j][2].vel() = ens[i][j].v(2);
-				_hens[i][j].mass() = ens[i][j].mass();
-			}
-			_hens[i].time() = ens[i].time();
-		}
-
-		return _hens;
-	}
 
 namespace gpu {
 
 
-class integrator : public hp::integrator {
-	typedef hp::integrator Base;
+class integrator : public swarm::integrator {
+	typedef swarm::integrator Base;
 	protected:
 	hostEnsemble& _hens;
 	//TODO: use cux auto ptr to make sure we don't have memory leaks
@@ -93,11 +77,7 @@ class integrator : public hp::integrator {
 		download_ensemble();
 	}
 
-	void set_default_log () {
-		void* dlog;
-		cudaGetSymbolAddress(&dlog,"dlog");
-		set_log((gpulog::device_log*)dlog);
-	}
+	void set_default_log ();
 	void set_log(gpulog::device_log* log) { _log = log; }
 
 	void set_ensemble(defaultEnsemble& ens) {
@@ -120,6 +100,6 @@ class integrator : public hp::integrator {
 	virtual int  shmemSize() = 0;
 };
 
-}
+
 }
 }

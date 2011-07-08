@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
+#include <algorithm>
 
 
 template< class T >
@@ -43,9 +44,9 @@ struct DeviceAllocator {
 	typedef T Elem;
 	static void free(T * p) { cudaFree(p); }
 	static T *  alloc(size_t s) {  
-		T* p;
+		void* p;
 		cudaMalloc(&p, s * sizeof(T) );
-		return p;
+		return (T*)p;
 	}
 
 	static void copy( T* begin, T* end, T* dst ) {

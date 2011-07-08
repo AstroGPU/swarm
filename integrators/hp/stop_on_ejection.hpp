@@ -18,10 +18,8 @@
 #pragma once
 
 #include <limits>
-#include "hp/ensemble.hpp"
 
 namespace swarm {
-namespace hp {
 
 
 template<class log_t>
@@ -33,17 +31,23 @@ class stop_on_ejection {
 		const double & _rmax_squared;
 		ensemble::SystemRef& _sys;
 		log_t& _log;
+		int counter;
 
 		public:
 
 		GPUAPI tester(const float& rmax_squared, ensemble::SystemRef& sys,log_t& log)
-			:_rmax_squared(rmax_squared),_sys(sys),_log(log){}
+			:_rmax_squared(rmax_squared),_sys(sys),_log(log),counter(0){}
 
 		GPUAPI bool operator () () { 
 			for(int b = 1 ; b < _sys.nbod(); b ++ ){
 				if(_sys.distance_squared_between(b,0) > _rmax_squared )
 					return true;
 			}
+			if(counter % 1000 == 0)
+				lprintf(_log,"Hello %g\n", _sys.time() );
+
+			counter++;
+
 			return false; 
 		}
 	};
@@ -62,5 +66,4 @@ class stop_on_ejection {
 	
 };
 
-}
 }

@@ -15,12 +15,10 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "hp.hpp"
 #include "datatypes.hpp"
 
 
 namespace swarm {
-namespace hp {
 namespace gpu {
 namespace bppt {
 
@@ -34,8 +32,8 @@ struct GravitationScalars {
 	double _jerk[WARPSIZE];
 
 	// Accessors
-	GPUAPI double& acc() { return _acc[0];  }
-	GPUAPI double& jerk() { return _jerk[0];  }
+	GENERIC double& acc() { return _acc[0];  }
+	GENERIC double& jerk() { return _jerk[0];  }
 };
 
 
@@ -189,7 +187,6 @@ class Gravitation {
 
 };
 
-}
 }
 }
 }

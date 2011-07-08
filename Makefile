@@ -25,8 +25,9 @@
 ###
 ### libswarm library
 ###
-LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/cpu_ensemble.cpp src/gpu_ensemble.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/swarmlog.cpp src/swarmio.cpp src/cux/cux.cpp
-LIBSWARM_CUDA=src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu src/stopper.cu
+LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/log.cpp src/io.cpp src/cux/cux.cpp
+LIBSWARM_CUDA=
+#src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu src/stopper.cu
 
 ###
 ### documentation in asciidoc format
@@ -42,44 +43,44 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ###
 ### Applications
 ###
-APPS+=swarm 
-swarm_SOURCES=src/swarm.cpp
+####APPS+=swarm 
+####swarm_SOURCES=src/swarm.cpp
 
-APPS+=swarmquery
-swarmquery_SOURCES=src/swarmquery.cpp
+####APPS+=swarmquery
+####swarmquery_SOURCES=src/swarmquery.cpp
 
-APPS+=swarmquerykeplerian
-swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
+####APPS+=swarmquerykeplerian
+####swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
 
-APPS+=swarm_test_energy
-swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
+####APPS+=swarm_test_energy
+####swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
 
-APPS+=swarm_tutorial_cpu
-swarm_tutorial_cpu_SOURCES=src/tutorials/swarm_tutorial_cpu.cpp 
+####APPS+=swarm_tutorial_cpu
+####swarm_tutorial_cpu_SOURCES=src/tutorials/swarm_tutorial_cpu.cpp 
 
-APPS+=swarm_tutorial_gpu 
-swarm_tutorial_gpu_SOURCES=src/tutorials/swarm_tutorial_gpu.cpp 
+####APPS+=swarm_tutorial_gpu 
+####swarm_tutorial_gpu_SOURCES=src/tutorials/swarm_tutorial_gpu.cpp 
 
-APPS+=swarm_tutorial_compare 
-swarm_tutorial_compare_SOURCES=src/tutorials/swarm_tutorial_compare.cpp 
+####APPS+=swarm_tutorial_compare 
+####swarm_tutorial_compare_SOURCES=src/tutorials/swarm_tutorial_compare.cpp 
 
-APPS+=swarm_tutorial_benchmark
-swarm_tutorial_benchmark_SOURCES=src/tutorials/swarm_tutorial_benchmark.cpp 
+####APPS+=swarm_tutorial_benchmark
+####swarm_tutorial_benchmark_SOURCES=src/tutorials/swarm_tutorial_benchmark.cpp 
 
-APPS+=swarm_benchmark
-swarm_benchmark_SOURCES=src/tutorials/swarm_benchmark.cpp src/tutorials/utils.cpp
+####APPS+=swarm_benchmark
+####swarm_benchmark_SOURCES=src/tutorials/swarm_benchmark.cpp src/tutorials/utils.cpp
 
-APPS+=swarm_stability_test
-swarm_stability_test_SOURCES=src/tutorials/swarm_stability_test.cpp  src/tutorials/utils.cpp
+APPS+=stability_test
+stability_test_SOURCES=utils/stability_test.cpp  utils/utils.cpp
 
-APPS+=swarm_tutorial_montecarlo
-swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp 
+####APPS+=swarm_tutorial_montecarlo
+####swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp 
 
-# APPS+=swarm_tutorial_montecarlo_rv
-# swarm_tutorial_montecarlo_rv_SOURCES=src/tutorials/swarm_tutorial_montecarlo_rv.cpp 
+##### APPS+=swarm_tutorial_montecarlo_rv
+##### swarm_tutorial_montecarlo_rv_SOURCES=src/tutorials/swarm_tutorial_montecarlo_rv.cpp 
 
-APPS+=swarm_scatter_demo
-swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
+####APPS+=swarm_scatter_demo
+####swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 
 ##########################################################
 #
@@ -149,7 +150,7 @@ src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
 	@ echo " */" >> $@
 	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
 
-LIBSWARM_CUDASOURCES += src/autogen_dont_edit.cu
+#LIBSWARM_CUDASOURCES += src/autogen_dont_edit.cu
 
 
 bin/libswarm.so: $(LIBSWARM_OBJECTS)

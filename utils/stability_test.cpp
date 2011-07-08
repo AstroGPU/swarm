@@ -4,11 +4,10 @@
  *
  */
 #include <iostream>
-#include "swarm.h"
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"
-#include "hp/hp.hpp"
+#include "integrator.hpp"
 
 using namespace swarm;
 using namespace std;
@@ -38,10 +37,10 @@ void stability_test(config& cfg){
 
 	// Initialize ensemble on host to be used with GPU integration.
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
-	hp::defaultEnsemble reference_ensemble = generate_ensemble(cfg);
+	defaultEnsemble reference_ensemble = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
-	hp::defaultEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
+	defaultEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
 
 
 	// performance stopwatches
@@ -56,8 +55,9 @@ void stability_test(config& cfg){
 	// Start GPU timers for initialization
 	swatch_init_gpu.start();
 
-	std::auto_ptr<hp::integrator> integ_gpu((hp::integrator*)integrator::create(cfg));
+	std::auto_ptr<gpu::integrator> integ_gpu((gpu::integrator*)integrator::create(cfg));
 	cudaThreadSynchronize();  // Block until CUDA call completes
+	integ_gpu->set_default_log();
 	swatch_init_gpu.stop();   // Stop timer for cpu initialization
 
 	DEBUG_OUTPUT(1, "Upload ensemble to GPU" );
@@ -81,6 +81,8 @@ void stability_test(config& cfg){
 		integ_gpu->integrate();  // Actually do the integration w/ GPU!			
 		cudaThreadSynchronize();  // Block until CUDA call completes
 		swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
+
+		log::flush();
 
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );

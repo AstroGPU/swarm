@@ -7,7 +7,7 @@
 #define swarmio_h__
 
 #include "swarm.h"
-#include "swarmlog.h"
+#include "log.hpp"
 #include <astro/binarystream.h>
 #include <astro/memorymap.h>
 #include <fstream>

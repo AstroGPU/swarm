@@ -18,52 +18,51 @@
 
 #pragma once
 
-#include <cuda_runtime_api.h>
+#define GENERIC inline __device__ __host__
+#define GPUAPI inline __device__
+
 
 namespace swarm {
-namespace hp {
 
-template<class N>
-GPUAPI N sqr(const N& x) { return x*x; }
+/**
+ * Array of structures with coalecsed access.
+ * The Item should provide WARPSIZE and scalar_t
+ * for offset calculation
+ */
+template<class Item, typename _Scalar = typename Item::scalar_t, int _WARPSIZE = Item::WARPSIZE >
+struct CoalescedStructArray {
+	Item * _array;
+	size_t _block_count;
+	static const int WARPSIZE = _WARPSIZE;
+	typedef _Scalar scalar_t;
 
-template<int i>
-struct params_t {
-	const static int n = i;
-};
-
-template<class implementation,class T>
-__global__ void generic_kernel(implementation* integ,T a) {
-	integ->kernel(a);
-}
-
-
-template< class implementation, class T>
-void launch_template(implementation* integ, implementation* gpu_integ, T a)
-{
-	if(integ->get_ensemble().nbod() == T::n) 
-		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
-
-}
-
-template<class implementation>
-void launch_templatized_integrator(implementation* integ){
-
-	if(integ->get_ensemble().nbod() <= 3){
-		implementation* gpu_integ;
-		cudaMalloc(&gpu_integ,sizeof(implementation));
-		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
-
-		launch_template(integ,gpu_integ,params_t<3>());
-
-		cudaFree(integ);
-	} else {
-		// How do we get an error message out of here?
-		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+	GENERIC CoalescedStructArray () {};
+	GENERIC CoalescedStructArray(Item * array, size_t block_count)
+		:_array(array),_block_count(block_count){}
+	GENERIC Item& operator[] ( const int & i ) {
+		size_t block_idx = i / WARPSIZE;
+		size_t idx = i % WARPSIZE;
+		scalar_t * blockaddr = (scalar_t*) (_array + block_idx);
+		return * (Item *) ( blockaddr + idx );
+	}
+	GENERIC int block_count()const{
+		return _block_count ;
+	}
+	GENERIC int size()const{
+		return _block_count * WARPSIZE;
+	}
+	GENERIC Item * get() {
+		return _array;
 	}
 
-}
+	GENERIC Item * begin() {
+		return _array;
+	}
+
+	GENERIC Item * end() {
+		return _array + _block_count;
+	}
+};
 
 
-	
-}
 }

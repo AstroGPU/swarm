@@ -39,10 +39,8 @@
 #include <cuda_runtime.h>
 #include <cux/cux.h>
 
-#include "ensemble.h"
-#include "cpu_ensemble.h"
-#include "gpu_ensemble.h"
-#include "integrator.h"
+#include "ensemble.hpp"
+#include "integrator.hpp"
 #include "writer.h"
 #include "stopwatch.h"
 //#include "stopper.h"
@@ -67,7 +65,6 @@ namespace swarm {
 //class integrator;
 //class writer;
 //class gpu_ensemble;
-class cpu_ensemble;
 
 typedef std::map<std::string, std::string> config;
 typedef double real_time;

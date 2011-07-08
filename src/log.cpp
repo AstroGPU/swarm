@@ -21,7 +21,7 @@
  *
 */
 
-#include "swarmlog.h"
+#include "log.hpp"
 #include <iostream>
 #include <astro/binarystream.h>
 #include <astro/memorymap.h>
@@ -31,6 +31,8 @@
 #include <limits>
 #include <boost/shared_ptr.hpp>
 
+gpulog::device_log* pdlog;
+gpulog::host_log hlog;
 
 extern "C" void debug_hook()
 {
@@ -55,7 +57,7 @@ void swarm::log::init(const std::string &writer_cfg, int host_buffer_size, int d
 
 	// log memory allocation
 	hlog.alloc(host_buffer_size);
-	gpulog::alloc_device_log("dlog", device_buffer_size);
+	pdlog = gpulog::alloc_device_log(device_buffer_size);
 }
 
 void swarm::log::shutdown()
@@ -79,7 +81,7 @@ void swarm::log::flush(int flags)
 	replay_printf(std::cerr, hlog);
 	log_writer->process(hlog.internal_buffer(), hlog.size());
 
-	copy(hlog, "dlog", gpulog::LOG_DEVCLEAR);
+	copy(hlog, pdlog, gpulog::LOG_DEVCLEAR);
 	replay_printf(std::cerr, hlog);
 	log_writer->process(hlog.internal_buffer(), hlog.size());
 

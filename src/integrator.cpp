@@ -27,7 +27,7 @@
 #include <iostream>
 #include <dlfcn.h>
 #include <fstream>
-#include "swarm.h"
+#include "integrator.hpp"
 
 namespace swarm {
 
@@ -71,5 +71,9 @@ integrator *integrator::create(const config &cfg)
         return integ.release();
 }
 
+void gpu::integrator::set_default_log() 
+{
+	set_log(::pdlog);
+}
 
 }

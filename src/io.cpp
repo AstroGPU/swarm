@@ -10,14 +10,14 @@
 //
 //
 
-/*! \file swarmio.cpp
+/*! \file io.cpp
  *  \brief declares swarm_header, null_writer, binary_writer
  *
 */
 
 
-#include "swarmlog.h"
-#include "swarmio.h"
+#include "log.hpp"
+#include "io.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -380,7 +380,7 @@ namespace swarm
 		if(!systems.size()) { return false; }
 
 		// pack everything to cpu_ensemble structure
-		ens.reset(sysmax+1, nbod);
+		ens = cpu_ensemble::create(sysmax+1, nbod);
 		// initially, mark everything as inactive
 		for(int sys = 0; sys != ens.nsys(); sys++)
 		{
@@ -401,7 +401,7 @@ namespace swarm
 			{
 				const body &b = si.bodies[bod];
 #if NEW
-				ens.set_body(si.sys, bod,  b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+				ens.set_body(si.sys, bod,  b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 #else
                                ens.set_body(si.sys, bod,  b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 #endif

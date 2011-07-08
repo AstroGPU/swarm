@@ -33,7 +33,7 @@
 #include <sstream>
 #include <fstream>
 #include <valarray>
-#include "swarmio.h"
+#include "io.hpp"
 #include "cux/cux.h"
 //
 // Utilities
@@ -232,7 +232,7 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 		if(nbod == -1)
 		{
 			nbod = nbod1;
-			ens.reset(nsys, nbod);
+			ens = cpu_ensemble::create(nsys,nbod);
 		}
 		else if(nbod != nbod1)
 		{
@@ -245,13 +245,6 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 		// load the start and end times of the integration
 		double T;
 		ens.time(i)     = (iss >> T) ? T : 0.;
-		ens.time_end(i) = (iss >> T) ? T : std::numeric_limits<double>::infinity();
-
-		// set default output times (never) and interval (0)
-		// this will be overridden by programs that use swarm::log output, and for those
-		// that don't, this will effectivelly turn it off.
-		ens.time_output(i, 0) = ens.time_end(i) * 1.1;
-		ens.time_output(i, 1) = 0.;
 
 		// load the planets
 		double m, x, y, z, vx, vy, vz;

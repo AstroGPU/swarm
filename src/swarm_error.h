@@ -20,6 +20,8 @@
  *   \brief Declares swarm error class
  *
 */
+#include <stdexcept>
+#include <string>
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {

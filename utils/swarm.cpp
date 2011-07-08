@@ -22,7 +22,7 @@
 */
 
 #include "swarm.h" 
-#include "swarmlog.h"
+#include "log.hpp"
 #include <memory>
 #include <iostream>
 

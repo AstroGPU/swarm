@@ -258,6 +258,13 @@ namespace gpulog
 
 	// Download the pointers from symbol 'name' to device_log structure
 	// on the host
+	inline void download_device_log(device_log &log, device_log* dlog)
+	{
+		cudaMemcpy(&log, dlog, sizeof(log), cudaMemcpyDeviceToHost);
+	}
+
+	// Download the pointers from symbol 'name' to device_log structure
+	// on the host
 	inline void download_device_log(device_log &log, const char *name)
 	{
 		cudaMemcpyFromSymbol(&log, name, sizeof(log), 0, cudaMemcpyDeviceToHost);
@@ -268,6 +275,15 @@ namespace gpulog
 	inline void upload_device_log(const char *name, device_log &log)
 	{
 		cudaMemcpyToSymbol(name, &log, sizeof(log), 0, cudaMemcpyHostToDevice);
+	}
+
+	// Uplaod the pointers from device_log structure on the host to a new buffer
+	inline device_log* upload_device_log(device_log &log)
+	{
+		void* pdlog;
+		cudaMalloc(&pdlog, sizeof(log));
+		cudaMemcpy(pdlog, &log, sizeof(log), cudaMemcpyHostToDevice);
+		return (device_log*) pdlog;
 	}
 
 	//
@@ -317,6 +333,19 @@ namespace gpulog
 	}
 
 	//
+	// Copy device log buffers and metadata from object stored
+	// in device symbol 'symbol', to host_log to.
+	//
+	// If (flags & LOG_DEVCLEAR) reset the device log afterwards
+	//
+	inline void copy(host_log &to, device_log *from, int flags = 0)
+	{
+		device_log dlog;
+		download_device_log(dlog, from);
+		copy(to, dlog, flags);
+	}
+
+	//
 	// Setup a new log object in device symbol 'symbol'
 	//
 	inline device_log alloc_device_log(const char *symbol, size_t len)
@@ -325,6 +354,16 @@ namespace gpulog
 		dlog.alloc(len);
 		upload_device_log(symbol, dlog);
 		return dlog;
+	}
+
+	//
+	// Setup a new log object and return the device pointer
+	//
+	inline device_log* alloc_device_log(size_t len)
+	{
+		device_log dlog;
+		dlog.alloc(len);
+		return upload_device_log(dlog);
 	}
 
 	//

@@ -20,9 +20,11 @@
 
 #include "allocators.hpp"
 #include "datatypes.hpp"
+#include <cassert>
+#include <math.h>
+#include "swarm_error.h"
 
 namespace swarm {
-namespace hp {
 
 const int ENSEMBLE_WARPSIZE = 16;
 
@@ -41,26 +43,26 @@ class EnsembleBase {
 		struct Component {
 			double _pos[WARPSIZE];
 			double _vel[WARPSIZE];
-			GPUAPI double& pos() { return _pos[0]; } 
-			GPUAPI double& vel() { return _vel[0]; } 
-			GPUAPI const double& pos() const { return _pos[0]; } 
-			GPUAPI const double& vel() const { return _vel[0]; } 
+			GENERIC double& pos() { return _pos[0]; } 
+			GENERIC double& vel() { return _vel[0]; } 
+			GENERIC const double& pos() const { return _pos[0]; } 
+			GENERIC const double& vel() const { return _vel[0]; } 
 		} component[3];
 
 		double _mass[WARPSIZE];
 
 		// Accessors 
-		GPUAPI double& mass() { return _mass[0];  }
-		GPUAPI const double& mass() const { return _mass[0];  }
-		GPUAPI Component& operator[] (const int & i) { return component[i]; };
-		GPUAPI const Component& operator[] (const int & i) const { return component[i]; };
+		GENERIC double& mass() { return _mass[0];  }
+		GENERIC const double& mass() const { return _mass[0];  }
+		GENERIC Component& operator[] (const int & i) { return component[i]; };
+		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 	};
 
 	struct Sys {
 		double _time[WARPSIZE];
 		double_int _active[WARPSIZE];
-		GPUAPI double& time() { return _time[0];  }
-		GPUAPI double_int& active() { return _active[0];  }
+		GENERIC double& time() { return _time[0];  }
+		GENERIC double_int& active() { return _active[0];  }
 	};
 
 
@@ -68,19 +70,21 @@ class EnsembleBase {
 
 	struct SystemRef {
 		const int _nbod;
+		const int _number;
 		Body* _body;
 		Sys* _sys;
 
 		// Constructor
-		GPUAPI SystemRef(const int& nbod,Body* body,Sys* sys):_nbod(nbod),_body(body),_sys(sys){}
+		GENERIC SystemRef(const int& nbod,const int& number,Body* body,Sys* sys):_nbod(nbod),_number(number),_body(body),_sys(sys){}
 
 		// Accessor
-		GPUAPI Body& operator[](const int & i ) const { return _body[i]; };
-		GPUAPI double& time() const { return _sys[0].time(); }
-		GPUAPI double_int& active() const { return _sys[0].active(); }
-		GPUAPI const int& nbod()const{ return _nbod;	}
+		GENERIC Body& operator[](const int & i ) const { return _body[i]; };
+		GENERIC double& time() const { return _sys[0].time(); }
+		GENERIC double_int& active() const { return _sys[0].active(); }
+		GENERIC const int& nbod()const{ return _nbod;	}
+		GENERIC const int& number()const{ return _number;	}
 
-		GPUAPI double distance_squared_between(const int& i , const int & j ) {
+		GENERIC double distance_squared_between(const int& i , const int & j ) {
 			const Body& b1 = _body[i], & b2 = _body[j];
 			return sqr(b1[0].pos()-b2[0].pos())
 				+ sqr(b1[1].pos()-b2[1].pos())
@@ -93,21 +97,21 @@ class EnsembleBase {
 		SystemRef _ref;
 
 		// Constructor
-		GPUAPI SystemRefConst(const SystemRef& ref):_ref(ref){}
+		GENERIC SystemRefConst(const SystemRef& ref):_ref(ref){}
 
 		// Accessor
-		GPUAPI const Body& operator[](const int & i ) const { return _ref[i]; }
-		GPUAPI const double& time() { return _ref.time(); }
-		GPUAPI const double_int& active() { return _ref.active(); }
-		GPUAPI const int& nbod()const{ return _ref.nbod();	}
-		GPUAPI double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
+		GENERIC const Body& operator[](const int & i ) const { return _ref[i]; }
+		GENERIC const double& time() { return _ref.time(); }
+		GENERIC const double_int& active() { return _ref.active(); }
+		GENERIC const int& nbod()const{ return _ref.nbod();	}
+		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 	};
 
-	GPUAPI static size_t body_element_count(const int& nbod,const int& nsys){
+	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE * nbod ;
 	}
 
-	GPUAPI static size_t sys_element_count(const int& nsys){
+	GENERIC static size_t sys_element_count(const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE ;
 	}
 
@@ -126,15 +130,15 @@ class EnsembleBase {
 
 	public:
 	// Constructors
-	GPUAPI EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
-	GPUAPI explicit EnsembleBase(const int& nbod, const int& nsys,Body* body_array, Sys* sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
+	GENERIC EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
+	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,Body* body_array, Sys* sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
 	~EnsembleBase() { 
 		// TODO: We need reference counting before using this:
 		// release();
 	}
 	// Accessors
-	GPUAPI const int& nbod()const{ return _nbod;	}
-	GPUAPI const int& nsys()const{ return _nsys;	}
+	GENERIC const int& nbod()const{ return _nbod;	}
+	GENERIC const int& nsys()const{ return _nsys;	}
 
 
 	/** 
@@ -148,119 +152,119 @@ class EnsembleBase {
 	 *    provide efficient dynamic addressing.
 	 *
 	 */
-	GPUAPI SystemRef operator[] (const int & i) { 
+	GENERIC SystemRef operator[] (const int & i) { 
 		const int sysinblock= i % WARPSIZE;
 		const int blockid = i / WARPSIZE;
 		const int idx = blockid * _nbod * WARPSIZE +  sysinblock;
-		return SystemRef(_nbod,&_body[idx], &_sys[i] ) ;
+		return SystemRef(_nbod,i,&_body[idx], &_sys[i] ) ;
 	};
 
-	GPUAPI const SystemRefConst operator[] (const int & i) const { 
+	GENERIC const SystemRefConst operator[] (const int & i) const { 
 		return SystemRefConst( const_cast<EnsembleBase*>(this)->operator[](i) ) ;
 	};
 
 	//// COMPATIBILITY ACCESSORS
 	
-	GPUAPI double& mass(const int& sys, const int & bod){
+	GENERIC double& mass(const int& sys, const int & bod){
 		return operator[] ( sys )[bod].mass();
 	}
 
-	GPUAPI double& p(const int& sys, const int & bod, const int& c){
+	GENERIC double& p(const int& sys, const int & bod, const int& c){
 		return operator[] ( sys )[bod][c].pos();
 	}
 
-	GPUAPI double& v(const int& sys, const int & bod, const int& c){
+	GENERIC double& v(const int& sys, const int & bod, const int& c){
 		return operator[] ( sys )[bod][c].pos();
 	}
 
-	GPUAPI double& x(const int& sys, const int& bod ) { return p(sys,bod,0); }
-	GPUAPI double& y(const int& sys, const int& bod ) { return p(sys,bod,1); }
-	GPUAPI double& z(const int& sys, const int& bod ) { return p(sys,bod,2); }
+	GENERIC double& x(const int& sys, const int& bod ) { return p(sys,bod,0); }
+	GENERIC double& y(const int& sys, const int& bod ) { return p(sys,bod,1); }
+	GENERIC double& z(const int& sys, const int& bod ) { return p(sys,bod,2); }
 
-	GPUAPI double& vx(const int& sys, const int& bod ) { return v(sys,bod,0); }
-	GPUAPI double& vy(const int& sys, const int& bod ) { return v(sys,bod,1); }
-	GPUAPI double& vz(const int& sys, const int& bod ) { return v(sys,bod,2); }
+	GENERIC double& vx(const int& sys, const int& bod ) { return v(sys,bod,0); }
+	GENERIC double& vy(const int& sys, const int& bod ) { return v(sys,bod,1); }
+	GENERIC double& vz(const int& sys, const int& bod ) { return v(sys,bod,2); }
 
-	GPUAPI double& time( const int & sys ) {
+	GENERIC double& time( const int & sys ) {
 		return operator[] ( sys ).time();
 	}
 
 	//! should not be used
-	GPUAPI double& time_end( const int & sys ) {
+	GENERIC double& time_end( const int & sys ) {
 		return time(sys);
 	}
 
 	//! should not be used
-	GPUAPI double& time_output( const int & sys , const int & k) {
+	GENERIC double& time_output( const int & sys , const int & k) {
 		double x = time(sys);
 		return x;
 	}
 
-	GPUAPI int& flags(const int& sys){
+	GENERIC long& flags(const int& sys){
 		return operator[] ( sys ).active();
 	}
 
 	//// Const Versions
 	
-	GPUAPI const double& mass(const int& sys, const int & bod)const{
+	GENERIC const double& mass(const int& sys, const int & bod)const{
 		return operator[] ( sys )[bod].mass();
 	}
 
-	GPUAPI const double& p(const int& sys, const int & bod, const int& c)const{
+	GENERIC const double& p(const int& sys, const int & bod, const int& c)const{
 		return operator[] ( sys )[bod][c].pos();
 	}
 
-	GPUAPI const double& v(const int& sys, const int & bod, const int& c)const{
+	GENERIC const double& v(const int& sys, const int & bod, const int& c)const{
 		return operator[] ( sys )[bod][c].pos();
 	}
 
-	GPUAPI const double& x(const int& sys, const int& bod )const { return p(sys,bod,0); }
-	GPUAPI const double& y(const int& sys, const int& bod )const { return p(sys,bod,1); }
-	GPUAPI const double& z(const int& sys, const int& bod )const { return p(sys,bod,2); }
+	GENERIC const double& x(const int& sys, const int& bod )const { return p(sys,bod,0); }
+	GENERIC const double& y(const int& sys, const int& bod )const { return p(sys,bod,1); }
+	GENERIC const double& z(const int& sys, const int& bod )const { return p(sys,bod,2); }
 
-	GPUAPI const double& vx(const int& sys, const int& bod ) const { return v(sys,bod,0); }
-	GPUAPI const double& vy(const int& sys, const int& bod ) const { return v(sys,bod,1); }
-	GPUAPI const double& vz(const int& sys, const int& bod ) const { return v(sys,bod,2); }
+	GENERIC const double& vx(const int& sys, const int& bod ) const { return v(sys,bod,0); }
+	GENERIC const double& vy(const int& sys, const int& bod ) const { return v(sys,bod,1); }
+	GENERIC const double& vz(const int& sys, const int& bod ) const { return v(sys,bod,2); }
 
-	GPUAPI const double& time( const int & sys ) const {
+	GENERIC const double& time( const int & sys ) const {
 		return operator[] ( sys ).time();
 	}
 
 	//! should not be used
-	GPUAPI const double& time_end( const int & sys )const  {
+	GENERIC const double& time_end( const int & sys )const  {
 		return time(sys);
 	}
 
 	//! should not be used
-	GPUAPI const double& time_output( const int & sys , const int & k) const {
+	GENERIC const double& time_output( const int & sys , const int & k) const {
 		double x = time(sys);
 		return x;
 	}
 
-	GPUAPI const int& flags(const int& sys)const {
+	GENERIC const int& flags(const int& sys)const {
 		return operator[] ( sys ).active();
 	}
 
-	GPUAPI void set_time( const int& sys, const double& time ) {
+	GENERIC void set_time( const int& sys, const double& time ) {
 		SystemRef s = operator[] ( sys );
 		s.time() = time;	
 	}
 
-	GPUAPI bool is_active(const int& sys) const { 
+	GENERIC bool is_active(const int& sys) const { 
 		return operator[] ( sys ).active();
 	}
-	GPUAPI bool is_inactive(const int& sys) const { 
+	GENERIC bool is_inactive(const int& sys) const { 
 		return ! operator[] ( sys ).active();
 	}
-	GPUAPI void set_active(const int& sys) { 
+	GENERIC void set_active(const int& sys) { 
 		operator[] ( sys ).active() = true;
 	}
-	GPUAPI void set_inactive(const int& sys) { 
+	GENERIC void set_inactive(const int& sys) { 
 		operator[] ( sys ).active() = false;
 	}
 
 
-	GPUAPI void set_body( const int& sys, const int& bod, const double& mass_planet
+	GENERIC void set_body( const int& sys, const int& bod, const double& mass_planet
 			, const double& x, const double & y, const double& z
 			, const double&  vx, const double&  vy, const double&  vz) {
 		SystemRef s = operator[] ( sys );
@@ -276,7 +280,7 @@ class EnsembleBase {
 
 	}
 	
-	GPUAPI void get_body(const int & sys, const int &  bod, double &  m
+	GENERIC void get_body(const int & sys, const int &  bod, double &  m
 			, double& x, double & y, double& z
 			, double&  vx, double&  vy, double&  vz) const {
 		SystemRefConst s = operator[] ( sys );
@@ -296,7 +300,7 @@ class EnsembleBase {
 	// Utilities
 	//
 	
-	GPUAPI void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = 1000) const 
+	GENERIC void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = 1000) const 
 	{
 
 		x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;
@@ -320,31 +324,31 @@ class EnsembleBase {
 		vz /= mass_sum;
 	};
 
-	GPUAPI void   set_time_all(const double tend) 
+	GENERIC void   set_time_all(const double tend) 
 	{
 		for(int sys=0;sys<nsys();++sys)
 			time(sys) = tend;
 	}
 	/// set all systems destination time 
-	GPUAPI void   set_time_end_all(const double tend) 
+	GENERIC void   set_time_end_all(const double tend) 
 	{
 		for(int sys=0;sys<nsys();++sys)
 			time_end(sys) = tend;
 	}
 	/// advance all systems time 
-	GPUAPI void   advance_time_end_all(const double dur) 
+	GENERIC void   advance_time_end_all(const double dur) 
 	{
 		for(int sys=0;sys<nsys();++sys)
 			time_end(sys) += dur;
 	}
 	/// ... 
-	GPUAPI void   set_time_output_all(int k, const double tout) 
+	GENERIC void   set_time_output_all(int k, const double tout) 
 	{ 
 		for(int sys=0;sys<nsys();++sys)
 			time_output(sys,k) = tout;
 	}
 
-	GPUAPI double calc_total_energy( int sys ) {
+	GENERIC double calc_total_energy( int sys ) const {
 		double E = 0.;
 		for (int bod1 = 0; bod1 != nbod(); bod1++)
 		{
@@ -364,7 +368,7 @@ class EnsembleBase {
 		return E;
 	}
 
-	GPUAPI void calc_total_energy(double* E){
+	GENERIC void calc_total_energy(double* E) const {
 		for (int sys = 0; sys != nsys(); sys++)
 			E[sys] = calc_total_energy(sys);
 	}
@@ -417,5 +421,7 @@ typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > defaultEnsemble;
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > hostEnsemble;
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DeviceAllocator > deviceEnsemble;
 
-}
+typedef hostEnsemble cpu_ensemble;
+typedef deviceEnsemble gpu_ensemble;
+
 }
