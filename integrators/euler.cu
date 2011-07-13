@@ -16,123 +16,109 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "hp.hpp"
-#include "static_accjerk.hpp"
-#include "swarmlog.h"
+#include "bppt.hpp"
+#include "helpers.hpp"
+#include "gravitation.hpp"
+#include "stop_on_ejection.hpp"
 
 
 namespace swarm {
-namespace hp {
 
-/** Simple degree 3 euler integrator
- *
- *
- *
- */
+namespace gpu {
+namespace bppt {
 
+template< class _Stopper >
 class euler: public integrator {
 	typedef integrator base;
+	typedef  _Stopper stopper_t;
 	private:
 	double _time_step;
+	int _iteration_count;
+	stopper_t _stopper;
 
 	public:
-	euler(const config& cfg): base(cfg),_time_step(0.001) {
+	euler(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_euler requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
 	virtual void launch_integrator() {
+		_iteration_count = _destination_time / _time_step;
 		launch_templatized_integrator(this);
 	}
 
-	/*! Integrator Kernel to be run on GPU
-	 *  
-	 *
-	 */
-	 template<class T >
-	__device__ void kernel(T a)  {
 
+	template<class T>
+	__device__ void kernel(T a){
+
+		if(sysid()>=_dens.nsys()) return;
+		// References to Ensemble and Shared Memory
+		ensemble::SystemRef sys = _dens[sysid()];
+		typedef typename Gravitation<T::n>::shared_data grav_t;
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
+
+		// Local variables
 		const int nbod = T::n;
-
-		/////////////// FETCH LOCAL VARIABLES ///////////////////
-
-		int thr = thread_in_system();
-
-		if(sysid() >= _gpu_ens->nsys()) { return; }
-		ensemble::systemref sys ( (*_gpu_ens)[sysid()] );
-
-		// Body/Component Grid
 		// Body number
-		int b = thr / 3 ;
+		int b = thread_body_idx(nbod);
 		// Component number
-		int c = thr % 3 ;
-		bool body_component_grid = b < nbod;
+		int c = thread_component_idx(nbod);
+		int ij = thread_in_system();
+		bool body_component_grid = (b < nbod) && (c < 3);
+		bool first_thread_in_system = thread_in_system() == 0;
 
-		// i,j pairs Grid
-		int ij = thr;
 
-		// shared memory allocation
-		extern __shared__ char shared_mem[];
-		char*  system_shmem =( shared_mem + sysid_in_block() * integrator::shmem_per_system(nbod) );
+		// local variables
+		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
 
-		// Set up times
-		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
 
 		// local information per component per body
 		double pos = 0, vel = 0 , acc = 0, jerk = 0;
 		if( body_component_grid )
-			pos = sys[b].p(c), vel = sys[b].v(c);
+			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		////////// INTEGRATION //////////////////////
 
-		// Calculate acceleration and jerk
-		Gravitation<nbod> calcForces(sys,system_shmem);
+		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+			double h = _time_step;
 
-		while(t < t_end){
-			double h = min(_time_step, t_end - t);
-
-			// Calculate forces
 			calcForces(ij,b,c,pos,vel,acc,jerk);
-
 			// Integratore
 			pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.)*jerk));
 			vel = vel +  h*(acc+(h*0.5)*jerk);
 
-			// Step time
-
-			t += h;
-
-			// Update pos,vel in global memory
+			// Finalize the step
 			if( body_component_grid )
-				sys[b].p(c) = pos, sys[b].v(c) = vel;
+				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+			if( first_thread_in_system ) 
+				sys.time() += h;
 
-			// Test if we need output
-			if(thr == 0) 
-				if(log::needs_output(*_gpu_ens, t, sysid()))
-				{
-					sys.set_time(t);
-					log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
-				}
+			if( first_thread_in_system ) 
+				sys.active() = ! stopper_tester() ;
+
+			__syncthreads();
+
 
 		}
 
-		//////////////// Finalize ////////////////////
-
-		// Set final time
-		if(thr == 0) 
-			sys.set_time(t);
-
 	}
+
 
 };
 
-extern "C" integrator *create_hp_euler(const config &cfg)
+/*!
+ * \brief Factory to create double/single/mixed euler gpu integrator based on precision
+ *
+ * @param[in] cfg configuration class
+ *
+ * @return        pointer to integrator cast to integrator*
+ */
+extern "C" integrator *create_euler(const config &cfg)
 {
-	return new euler(cfg);
+	return new euler< stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
 }
 }
-
+}

@@ -52,6 +52,7 @@ class integrator {
 		_destination_time = duration;
 	}
 	static integrator* create(const config &cfg);
+	virtual void set_default_log () = 0;
 
 };
 

@@ -16,13 +16,16 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "hp.hpp"
-#include "static_accjerk.hpp"
-#include "swarmlog.h"
+#include "bppt.hpp"
+#include "helpers.hpp"
+#include "gravitation.hpp"
+#include "stop_on_ejection.hpp"
 
 
 namespace swarm {
-namespace hp {
+
+namespace gpu {
+namespace bppt {
 
 struct FixedTimeStep {
 	const static bool adaptive_time_step = false;
@@ -34,43 +37,36 @@ struct AdaptiveTimeStep {
 	const static bool conditional_accept_step = true;
 };
 
-template < class AdaptationStyle >
+template< class AdaptationStyle, class _Stopper >
 class rkck: public integrator {
 	typedef integrator base;
+	typedef  _Stopper stopper_t;
 	private:
 	double _min_time_step;
 	double _max_time_step;
 	double _error_tolerance;
+	int _iteration_count;
+	stopper_t _stopper;
 
 	public:
-
-	/*! Public constructor to configure the integrator
-	 *  Read the configuration provided and set-up integrator variables
-	 *
-	 */
-	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1) {
-		if(!cfg.count("min time step")) ERROR("Integrator hp_rkck requires a min timestep ('min time step' keyword in the config file).");
+	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _stopper(cfg) {
+		if(!cfg.count("min time step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
 		_min_time_step = atof(cfg.at("min time step").c_str());
-		if(!cfg.count("max time step")) ERROR("Integrator hp_rkck requires a max timestep ('max time step' keyword in the config file).");
+		if(!cfg.count("max time step")) ERROR("Integrator rkck requires a max timestep ('max time step' keyword in the config file).");
 		_max_time_step = atof(cfg.at("max time step").c_str());
 
-		if(!cfg.count("error tolerance")) ERROR("Integrator hp_rkck requires a error tolerance ('error tolerance' keyword in the config file).");
+		if(!cfg.count("error tolerance")) ERROR("Integrator rkck requires a error tolerance ('error tolerance' keyword in the config file).");
 		_error_tolerance = atof(cfg.at("error tolerance").c_str());
 	}
 
-
 	virtual void launch_integrator() {
+		_iteration_count = _destination_time / _max_time_step;
 		launch_templatized_integrator(this);
 	}
 
-	/*! Integrator Kernel to be run on GPU
-	 *  
-	 *
-	 */
-	 template<class T >
-	__device__ void kernel(T a)  {
 
-		const int nbod = T::n;
+	template<class T>
+	__device__ void kernel(T a){
 
 ////////////////////// RKCK Constants /////////////////////////////
 	// Cash-Karp constants From GSL
@@ -89,49 +85,45 @@ class rkck: public integrator {
 	// Error estimation coefficients
 	const double ecc[] = { 37.0 / 378.0 - 2825.0 / 27648.0, 0.0, 250.0 / 621.0 - 18575.0 / 48384.0, 125.0 / 594.0 - 13525.0 / 55296.0, -277.00 / 14336.0, 512.0 / 1771.0 - 0.25 };
 
+		if(sysid()>=_dens.nsys()) return;
+		// References to Ensemble and Shared Memory
+		ensemble::SystemRef sys = _dens[sysid()];
+		typedef typename Gravitation<T::n>::shared_data grav_t;
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
 
-		/////////////// FETCH LOCAL VARIABLES ///////////////////
-
-		int thr = thread_in_system();
-
-		if(sysid() >= _gpu_ens->nsys()) { return; }
-		ensemble::systemref sys ( (*_gpu_ens)[sysid()] );
-
-		// Body/Component Grid
+		// Local variables
+		const int nbod = T::n;
 		// Body number
-		int b = thr / 3 ;
+		int b = thread_body_idx(nbod);
 		// Component number
-		int c = thr % 3 ;
-		bool body_component_grid = b < nbod;
+		int c = thread_component_idx(nbod);
+		int ij = thread_in_system();
+		bool body_component_grid = (b < nbod) && (c < 3);
+		bool first_thread_in_system = thread_in_system() == 0;
 
-		// i,j pairs Grid
-		int ij = thr;
 
-		// shared memory allocation
+		// local variables
+		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
+
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
 
+		// TODO: used Coalesced array structure
 		double (&shared_mag)[2][nbod][3] = * (double (*)[2][nbod][3]) system_shmem;
 
-		double t_start = sys.time(), t = t_start;
-		double t_end = min(t_start + _destination_time,sys.time_end());
 		double time_step = _max_time_step;
 
 		// local information per component per body
-		double pos = 0, vel = 0;
+		double pos = 0, vel = 0 ;
 		if( body_component_grid )
-			pos = sys[b].p(c), vel = sys[b].v(c);
+			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		////////// INTEGRATION //////////////////////
 
-		// Calculate acceleration and jerk
-		Gravitation<nbod> calcForces(sys,system_shmem);
+		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
 
-		while(t < t_end){
-			double h = min(time_step, t_end - t);
-
-
+			double h = time_step;
 
 			//// RKCK   integrate system  ////////////////////////////////////////////////////////////////
 			double p0 = pos, v0 = vel;
@@ -203,7 +195,7 @@ class rkck: public integrator {
 				//  Calculate the error estimate
 				if( body_component_grid ) {
 
-					sys[b].p(c) = p6 * p6 , sys[b].v(c) = v6 * v6;
+					sys[b][c].pos() = p6 * p6 , sys[b][c].vel() = v6 * v6;
 					shared_mag[0][b][c] = pos_error * pos_error;
 					shared_mag[1][b][c] = vel_error * vel_error;
 
@@ -213,11 +205,11 @@ class rkck: public integrator {
 						double max_error = 0;
 						for(int i = 0; i < nbod ; i++){
 							double pos_error_mag = shared_mag[0][i][0] + shared_mag[0][i][1] + shared_mag[0][i][2];
-							double pos_mag = sys[i].p(0) + sys[i].p(1) + sys[i].p(2);
+							double pos_mag = sys[i][0].pos() + sys[i][1].pos() + sys[i][2].pos();
 							double pe = pos_error_mag / pos_mag ;
 
 							double vel_error_mag = shared_mag[1][i][0] + shared_mag[1][i][1] + shared_mag[1][i][2];
-							double vel_mag = sys[i].v(0) + sys[i].v(1) + sys[i].v(2);
+							double vel_mag = sys[i][0].vel() + sys[i][1].vel() + sys[i][2].vel();
 							double ve = vel_error_mag / vel_mag ;
 
 							max_error = max ( max( pe, ve) , max_error );
@@ -253,48 +245,38 @@ class rkck: public integrator {
 
 
 			if ( accept_step ) {
-
 				// Set the new positions and velocities and time
 				pos = p6;
 				vel = v6;
-				t += h;
 
+				// Finalize the step
 				if( body_component_grid )
-					sys[b].p(c) = pos, sys[b].v(c) = vel;
+					sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+				if( first_thread_in_system ) 
+					sys.time() += h;
 
-				if(thr == 0) 
-					if(log::needs_output(*_gpu_ens, t, sysid()))
-					{
-						sys.set_time(t);
-						log::output_system(*_gpu_log, *_gpu_ens, t, sysid());
-					}
+				if( first_thread_in_system ) 
+					sys.active() = ! stopper_tester() ;
 			}
+
+			__syncthreads();
 
 		}
 
-		if(thr == 0) 
-			sys.set_time(t);
 	}
+
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed rkck gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_hp_rkck_fixed(const config &cfg)
+extern "C" integrator *create_rkck_fixed(const config &cfg)
 {
-	return new rkck< FixedTimeStep> (cfg);
+	return new rkck< FixedTimeStep, stop_on_ejection<gpulog::device_log> >(cfg);
 }
-
 extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
 {
-	return new rkck< AdaptiveTimeStep> (cfg);
+	return new rkck< AdaptiveTimeStep, stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
 }
 }
-
+}

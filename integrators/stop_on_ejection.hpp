@@ -43,8 +43,8 @@ class stop_on_ejection {
 				if(_sys.distance_squared_between(b,0) > _rmax_squared )
 					return true;
 			}
-			if(counter % 1000 == 0)
-				lprintf(_log,"Hello %g\n", _sys.time() );
+		//	if(counter % 1000 == 0)
+		//		lprintf(_log,"Hello %g\n", _sys.time() );
 
 			counter++;
 

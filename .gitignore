@@ -5,9 +5,7 @@ scripts/ic/data*
 scripts/ic/observeTimes.dat
 tarballs
 Makefile.user
-integrators/*/*.o
-src/*.o
-src/*/*.o
+*.o
 run/output.bin
 run/*.bin
 run/*.idx

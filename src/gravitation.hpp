@@ -184,6 +184,20 @@ class Gravitation {
 		}
 	}
 
+	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
+		// Write positions to shared (global) memory
+		if(b < nbod && c < 3)
+			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+		__syncthreads();
+		if(ij < pair_count)
+			calc_pair(ij);
+		__syncthreads();
+		if(b < nbod && c < 3){
+			return sum_acc(b,c);
+		}else
+			return 0;
+	}
+
 
 };
 

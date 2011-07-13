@@ -15,7 +15,6 @@ using namespace std;
 int DEBUG_LEVEL  = 0;
 const int LOGARITHMIC_BASE = 2;
 
-#define SYNC cudaThreadSynchronize()
 
 void stability_test(config& cfg){
 	if(!validate_configuration(cfg) ) {
@@ -36,26 +35,37 @@ void stability_test(config& cfg){
 		return;
 	}
 
-	DEBUG_OUTPUT(1,"Initialize swarm library ");
-	swarm::init(cfg);
-
+	// Initialize ensemble on host to be used with GPU integration.
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
 	defaultEnsemble reference_ensemble = generate_ensemble(cfg);
 
-	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
-	defaultEnsemble ens = reference_ensemble.clone() ;
+	DEBUG_OUTPUT(3, "Make a copy of ensemble" );
+	defaultEnsemble ens = reference_ensemble.clone() ; // Make a copy of the CPU ensemble for comparison
+
 
 	// performance stopwatches
+	stopwatch swatch_kernel_gpu, swatch_upload_gpu, swatch_download_gpu, swatch_temps_gpu, swatch_init_gpu;
 	stopwatch swatch_all;
+
 	swatch_all.start(); // Start timer for entire program
 	srand(42u);    // Seed random number generator, so output is reproducible
 
-	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	SYNC;
-	integ->set_default_log();
 
-	integ->set_ensemble(ens);
-	SYNC;
+
+	// Start GPU timers for initialization
+	swatch_init_gpu.start();
+
+	std::auto_ptr<gpu::integrator> integ_gpu((gpu::integrator*)integrator::create(cfg));
+	cudaThreadSynchronize();  // Block until CUDA call completes
+	integ_gpu->set_default_log();
+	swatch_init_gpu.stop();   // Stop timer for cpu initialization
+
+	DEBUG_OUTPUT(3, "Upload ensemble to GPU" );
+	cudaThreadSynchronize();   // Block until CUDA call completes
+	swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
+	integ_gpu->set_ensemble(ens);
+	cudaThreadSynchronize();   // Block until CUDA call completes
+	swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
 
 	std::cout << "Time, Energy Conservation Error " << std::endl;
 
@@ -64,14 +74,34 @@ void stability_test(config& cfg){
 		if((logarithmic > 1) && (time > 0)) interval = time * (logarithmic - 1);
 
 		double step_size = min(interval, duration - time );
-		integ->set_duration ( step_size  );
+		integ_gpu->set_duration ( step_size  );
 
-		DEBUG_OUTPUT(2, "Integrator ensemble on GPU" );
-		integ->integrate();
+		DEBUG_OUTPUT(3, "Upload ensemble to GPU" );
+		{
+			cudaThreadSynchronize();   // Block until CUDA call completes
+			swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
+			integ_gpu->upload_ensemble();
+			cudaThreadSynchronize();   // Block until CUDA call completes
+			swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
+		}
+		DEBUG_OUTPUT(3, "Integrator ensemble on GPU" );
+		{
+			swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
+			integ_gpu->launch_integrator();  // Actually do the integration w/ GPU!			
+			cudaThreadSynchronize();  // Block until CUDA call completes
+			swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
+		}
 
 		log::flush();
+		DEBUG_OUTPUT(3  ,"Downloading Ensemble from GPU");
+		{
+			cudaThreadSynchronize();   // Block until CUDA call completes
+			swatch_download_gpu.start(); // Start timer for copyg initial conditions to GPU
+			integ_gpu->download_ensemble();
+			cudaThreadSynchronize();   // Block until CUDA call completes
+			swatch_download_gpu.stop();  // Stop timer for copyg initial conditions to GPU
+		}
 
-		SYNC;
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
 
@@ -81,12 +111,16 @@ void stability_test(config& cfg){
 
 	}
 
-	SYNC;
-	swatch_all.stop();
-
 	/// CSV output for use in spreadsheet software 
-	std::cout << "\n# Integration CPU/GPU time: "
-		<< swatch_all.getTime()*1000. << " ms " << std::endl;
+	std::cout << "\n# Benchmarking times \n" 
+		<< "Integration (ms), Integrator initialize (ms), "
+		<< " Initialize (ms), GPU upload (ms), Download from GPU (ms) \n"
+		<< swatch_kernel_gpu.getTime()*1000. << ",    "
+		<< swatch_temps_gpu.getTime()*1000. << ", "
+		<< swatch_init_gpu.getTime()*1000. << ", "
+		<< swatch_upload_gpu.getTime()*1000. << ", "
+		<< swatch_download_gpu.getTime()*1000. << ", "
+		<< std::endl;
 
 }
 
@@ -94,6 +128,7 @@ void stability_test(config& cfg){
 int main(int argc,  char **argv)
 {
 	namespace po = boost::program_options;
+
 
 	// Parse command line arguements (making it easy to compare)
 	po::positional_options_description pos;
@@ -160,5 +195,11 @@ int main(int argc,  char **argv)
 		cfg["logarithmic"] = vm["logarithmic"].as<std::string>();
 	}
 
+	////////////// STABILITY TEST /////// 
+	DEBUG_OUTPUT(1,"Initialize swarm library ");
+	swarm::init(cfg);         // Initialize the library
+
 	stability_test(cfg);
+
+
 }

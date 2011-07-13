@@ -28,7 +28,7 @@ namespace gpu {
 namespace bppt {
 
 template< class _Stopper >
-class hermite: public integrator {
+class midpoint: public integrator {
 	typedef integrator base;
 	typedef  _Stopper stopper_t;
 	private:
@@ -37,8 +37,8 @@ class hermite: public integrator {
 	stopper_t _stopper;
 
 	public:
-	hermite(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
+	midpoint(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
+		if(!cfg.count("time step")) ERROR("Integrator gpu_midpoint requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -50,6 +50,8 @@ class hermite: public integrator {
 
 	template<class T>
 	__device__ void kernel(T a){
+
+		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
@@ -82,50 +84,54 @@ class hermite: public integrator {
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
-			double h = _time_step;
-			// can't use this one because t might go past t_end
-			// double h = min(_time_step, t_end - t);
+			double H = _time_step;
 
-			
-			// Initial Evaluation
-			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
+			/// Modified midpoint method integrator with n substeps
+			const int n = 4;
+			double h = H / n;
 
-			// Predict 
-			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.)*jerk0));
-			vel = vel +  h*(acc0+(h*0.5)*jerk0);
+			double p_i , p_im1, p_im2;
+			double v_i,  v_im1, v_im2;
+			double a_im1;
 
-			double pre_pos = pos, pre_vel = vel;
+			// Step 0
+			p_i = pos;
+			v_i = vel;
 
-			double acc1,jerk1;
-			{
-				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+			// Step 1
+			p_im1 = p_i;
+			v_im1 = v_i;
 
-				// Correct
-				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
+			a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+			p_i = p_im1 + h * v_im1;
+			v_i = v_im1 + h * a_im1;
+
+			// Step 2 .. n
+			for(int i = 2; i <= n; i++){
+				p_im2 = p_im1;
+				p_im1 = p_i;
+				v_im2 = v_im1;
+				v_im1 = v_i;
+
+				a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+				p_i = p_im2 + 2 * h * v_im1;
+				v_i = v_im2 + 2 * h * a_im1;
 			}
-			{
-				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+			double a_i = calcForces.acc(ij,b,c,p_i,v_i);
 
-				// Correct
-				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
-			}
-			acc0 = acc1, jerk0 = jerk1;
+			pos = ( p_i + p_im1 + h * v_i ) / 2;
+			vel = ( v_i + v_im1 + h * a_i ) / 2;
 
 			// Finalize the step
 			if( body_component_grid )
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( first_thread_in_system ) 
-				sys.time() += h;
+				sys.time() += H;
 
 			if( first_thread_in_system ) 
 				sys.active() = ! stopper_tester() ;
-
-//			if( first_thread_in_system )
-
 
 			__syncthreads();
 
@@ -138,15 +144,15 @@ class hermite: public integrator {
 };
 
 /*!
- * \brief Factory to create double/single/mixed hermite gpu integrator based on precision
+ * \brief Factory to create double/single/mixed midpoint gpu integrator based on precision
  *
  * @param[in] cfg configuration class
  *
  * @return        pointer to integrator cast to integrator*
  */
-extern "C" integrator *create_hp_hermite(const config &cfg)
+extern "C" integrator *create_midpoint(const config &cfg)
 {
-	return new hermite< stop_on_ejection<gpulog::device_log> >(cfg);
+	return new midpoint< stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
 }
