@@ -43,8 +43,8 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ###
 ### Applications
 ###
-####APPS+=swarm 
-####swarm_SOURCES=src/swarm.cpp
+APPS+=swarm 
+swarm_SOURCES=utils/swarm.cpp utils/utils.cpp
 
 ####APPS+=swarmquery
 ####swarmquery_SOURCES=src/swarmquery.cpp
@@ -52,8 +52,8 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ####APPS+=swarmquerykeplerian
 ####swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
 
-####APPS+=swarm_test_energy
-####swarm_test_energy_SOURCES=src/swarm_test_energy.cpp
+APPS+=test_energy
+test_energy_SOURCES=utils/test_energy.cpp
 
 ####APPS+=swarm_tutorial_cpu
 ####swarm_tutorial_cpu_SOURCES=src/tutorials/swarm_tutorial_cpu.cpp 

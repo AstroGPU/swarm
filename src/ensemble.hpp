@@ -62,7 +62,9 @@ class EnsembleBase {
 		double _time[WARPSIZE];
 		double_int _active[WARPSIZE];
 		GENERIC double& time() { return _time[0];  }
+		GENERIC const double& time() const { return _time[0];  }
 		GENERIC double_int& active() { return _active[0];  }
+		GENERIC const double_int& active()const { return _active[0];  }
 	};
 
 
@@ -81,6 +83,7 @@ class EnsembleBase {
 		GENERIC Body& operator[](const int & i ) const { return _body[i]; };
 		GENERIC double& time() const { return _sys[0].time(); }
 		GENERIC double_int& active() const { return _sys[0].active(); }
+		GENERIC double_int& flags() const { return _sys[0].active(); }
 		GENERIC const int& nbod()const{ return _nbod;	}
 		GENERIC const int& number()const{ return _number;	}
 
@@ -102,7 +105,9 @@ class EnsembleBase {
 		// Accessor
 		GENERIC const Body& operator[](const int & i ) const { return _ref[i]; }
 		GENERIC const double& time() { return _ref.time(); }
+		GENERIC const int& number() { return _ref.number(); }
 		GENERIC const double_int& active() { return _ref.active(); }
+		GENERIC const double_int& flags() { return _ref.active(); }
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 	};
@@ -159,7 +164,7 @@ class EnsembleBase {
 		return SystemRef(_nbod,i,&_body[idx], &_sys[i] ) ;
 	};
 
-	GENERIC const SystemRefConst operator[] (const int & i) const { 
+	GENERIC SystemRefConst operator[] (const int & i) const { 
 		return SystemRefConst( const_cast<EnsembleBase*>(this)->operator[](i) ) ;
 	};
 
@@ -241,7 +246,7 @@ class EnsembleBase {
 		return x;
 	}
 
-	GENERIC const int& flags(const int& sys)const {
+	GENERIC const long& flags(const int& sys)const {
 		return operator[] ( sys ).active();
 	}
 

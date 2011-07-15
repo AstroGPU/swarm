@@ -326,7 +326,8 @@ namespace swarm
 
 	struct sysinfo
 	{
-		int sys, flags;
+		int sys;
+		long flags;
 		const body *bodies;
 
 		bool operator <(const sysinfo &a) const
@@ -380,7 +381,7 @@ namespace swarm
 		if(!systems.size()) { return false; }
 
 		// pack everything to cpu_ensemble structure
-		ens = cpu_ensemble::create(sysmax+1, nbod);
+		ens = cpu_ensemble::create(nbod, sysmax+1);
 		// initially, mark everything as inactive
 		for(int sys = 0; sys != ens.nsys(); sys++)
 		{
@@ -400,11 +401,7 @@ namespace swarm
 			for(int bod = 0; bod != nbod; bod++)
 			{
 				const body &b = si.bodies[bod];
-#if NEW
 				ens.set_body(si.sys, bod,  b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz);
-#else
-                               ens.set_body(si.sys, bod,  b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
-#endif
 				ens.time(si.sys) = Tsnapend;
 			}
 		}

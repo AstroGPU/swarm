@@ -163,9 +163,9 @@ GENERIC PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int
 			Store a snapshot of the entire system (EVT_SNAPSHOT).
 		*/
 		template<typename L>
-		GENERIC void system(L &l, const ensemble::SystemRef sys)
+		GENERIC void system(L &l, ensemble::SystemRefConst sys)
 		{
-			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, sys.time(), sys.number() , sys.active() , sys.nbod(), gpulog::array<body>(sys.nbod()));
+			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, sys.time(), sys.number() , sys.flags() , sys.nbod(), gpulog::array<body>(sys.nbod()));
 			if(bodies != NULL) // buffer overflow hasn't happened
 			{
 				for(int bod=0; bod != sys.nbod(); bod++)
@@ -190,9 +190,9 @@ GENERIC PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int
 		template<typename L>
 		GENERIC void ensemble(L &l, const swarm::ensemble &ens)
 		{
-			for(int sys = 0; sys != ens.nsys(); sys++)
+			for(int sys = 0; sys < ens.nsys(); sys++)
 			{
-				system(l, ens, sys, ens.time(sys));
+				system(l, ens[sys]);
 			}
 		}
 

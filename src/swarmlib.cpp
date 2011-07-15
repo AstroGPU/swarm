@@ -232,7 +232,7 @@ void load_ensemble(const std::string &name, cpu_ensemble &ens)
 		if(nbod == -1)
 		{
 			nbod = nbod1;
-			ens = cpu_ensemble::create(nsys,nbod);
+			ens = cpu_ensemble::create(nbod,nsys);
 		}
 		else if(nbod != nbod1)
 		{

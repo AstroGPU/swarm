@@ -17,8 +17,8 @@
 */
 
 #include "swarm.h"
-#include "swarmio.h"
-#include "swarmlog.h"
+#include "io.hpp"
+#include "log.hpp"
 #include <fstream>
 #include <astro/memorymap.h>
 
@@ -53,7 +53,7 @@ void write_output(const swarm::cpu_ensemble &ens, const int sys, std::valarray<d
 {
 	for (int bod = 0; bod != ens.nbod(); bod++)
 	{
-		float m; double x[3], v[3];
+		double m; double x[3], v[3];
 		ens.get_body(sys, bod, m, x[0], x[1], x[2], v[0], v[1], v[2]);
 
 		double dEoverE = (Enew[sys] - Eold[sys]) / Eold[sys];

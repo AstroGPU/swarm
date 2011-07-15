@@ -23,12 +23,14 @@
 
 #include "swarm.h" 
 #include "log.hpp"
+#include "utils.hpp"
 #include <memory>
 #include <iostream>
 
 #define SWATCH_STOP(s)  { cudaThreadSynchronize(); (s).stop(); }
 #define SWATCH_START(s) { (s).start(); }
 
+int DEBUG_LEVEL = 0;
 
 int main(int argc, const char **argv)
 {
@@ -38,7 +40,6 @@ int main(int argc, const char **argv)
 		return -1;
 	}
 	std::string icfgfn = argv[1];
-	std::cerr << "Configuration                   : " << icfgfn << "\n";
 
 	// performance swatches
 	stopwatch swatch_kernel, swatch_mem, swatch_temps, swatch_all;
@@ -48,86 +49,100 @@ int main(int argc, const char **argv)
 	swarm::config cfg;
 	swarm::load_config(cfg, icfgfn);
 
+	double duration = (cfg["duration"] != "") ? atof(cfg["duration"].c_str()) : 10 * M_PI ;        
+	double interval = (cfg["interval"] != "") ? atof(cfg["interval"].c_str()) : (duration / 10 ) ; 
+	double logarithmic = (cfg["logarithmic"] != "") ? atof(cfg["logarithmic"].c_str()) : 0 ; 
+
+	if(interval < 1e-02 ) {
+		std::cerr << "Interval is too small : " << interval << std::endl;
+		return -1;
+	}
+	if(duration < interval ) {
+		std::cerr << "Duration should be larger than interval : " << duration << std::endl;
+		return -1;
+	}
+
+
+	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
+	bool ongpu;
+	if(runon == "gpu") { ongpu = true; }
+	else if(runon == "cpu") { ongpu = false; }
+	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'");  return -1; }
+
+//	outputConfigSummary(std::cout,cfg);
+
 	// load the ensemble
 	std::string ensprefix;
 	swarm::get_config(ensprefix, cfg, "initial conditions");
-	swarm::cpu_ensemble ens;
+	swarm::hostEnsemble ens;
 	swarm::load_ensemble(ensprefix, ens);
-	std::cerr << "Ensemble                        : " << ensprefix << " (" << ens.nsys() << " systems, " << ens.nbod() << " bodies each).\n";
+	std::cout << "#Ensemble: \n#\tData Prefix: " << ensprefix 
+		<< "\n#\tNo. Systems: " << ens.nsys() 
+		<< "\n#\tNo. Bodies: " << ens.nbod() << std::endl;
+
+	for(int i = 0; i < ens.nsys(); i++)
+		ens.set_active(i);
 
 	// initialize swarm -- this is required before calling any (non-utility) swarm library function
 	swarm::init(cfg);
 
 	// select the integrator to use
 	std::auto_ptr<swarm::integrator> integ(swarm::integrator::create(cfg));
-	std::string runon = cfg.count("runon") ? cfg["runon"] : "gpu";
-	bool ongpu;
-	     if(runon == "gpu") { ongpu = true; }
-	else if(runon == "cpu") { ongpu = false; }
-	else { ERROR("The 'runon' configuration file parameter must be one of 'gpu' or 'cpu'"); }
-	std::cerr << "Integrator                      : " << cfg["integrator"] << ", executing on the " << (ongpu ? "GPU" : "CPU") << "\n";
 
-	// set end times of integration, first output time, and snapshot interval
-	double Tend, Toutputstep;
-	swarm::get_config(Tend, cfg, "integration end");
-	swarm::get_config(Toutputstep, cfg, "output interval");
-	for(int sys = 0; sys != ens.nsys(); sys++)
-	{
-		ens.time_end(sys) = Tend;
-		ens.time_output(sys, 0) = ens.time(sys);	// output immediately on start
-		ens.time_output(sys, 1) = Toutputstep;		// output interval
-	}
+	DEBUG_OUTPUT(2,"Initializing integrator... ");
+	SWATCH_START(swatch_temps);
+	integ->set_default_log();
+	integ->set_ensemble(ens);
+	integ->set_duration(duration);
 
 	// log initial conditions
-	swarm::log::output_systems_needing_output(hlog, ens);
+	swarm::log::ensemble(hlog, ens);
 
-	// perform the integration
+	swarm::log::flush();
+
+	SWATCH_STOP(swatch_temps);
+
 	if(ongpu)
 	{
-		$$("Uploading to GPU... ");
+		swarm::gpu::integrator* integ_gpu = (swarm::gpu::integrator*) integ.get();
+		DEBUG_OUTPUT(2,"Uploading to GPU... ");
 		SWATCH_START(swatch_mem);
-		swarm::gpu_ensemble gpu_ens(ens);			// upload to GPU
+		integ_gpu->upload_ensemble();
 		SWATCH_STOP(swatch_mem);
 
 
-		$$("Initializing integrator... ");
-		SWATCH_START(swatch_temps);
-		void* dlog;
-		cudaGetSymbolAddress(&dlog,"dlog");
-		integ->set_log((gpulog::device_log*)dlog);
-		integ->integrate(gpu_ens, 0.0);				// initialize internal data structures
-		SWATCH_STOP(swatch_temps);
-
-		$$("Integrating... ");
+		DEBUG_OUTPUT(2,"Integrating... ");
 		SWATCH_START(swatch_kernel);
-		integ->integrate(gpu_ens, Tend);			// integrate
+		integ_gpu->launch_integrator();
 		SWATCH_STOP(swatch_kernel);
 
-		$$("Downloading data... ");
+		DEBUG_OUTPUT(2,"Downloading data... ");
 		SWATCH_START(swatch_mem);
-		ens.copy_from(gpu_ens);					// download to host
+		integ_gpu->download_ensemble();
 		SWATCH_STOP(swatch_mem);
 	}
 	else
 	{
-		SWATCH_START(swatch_temps);
-		integ->integrate(ens, 0.);				// initialize internal data structures
-		SWATCH_STOP(swatch_temps);
-
 		SWATCH_START(swatch_kernel);
-		integ->integrate(ens, Tend);				// integrate
+		integ->integrate();				// integrate
 		SWATCH_STOP(swatch_kernel);
 	}
+	for(int i =0; i < 20; i++){
+		int sys = rand()%ens.nsys();
+	}
+
+	swarm::log::ensemble(hlog, ens);
+	swarm::log::flush();
 	SWATCH_STOP(swatch_all);
-	std::cerr << "# Done.\n\n";
+	DEBUG_OUTPUT(1,"Integration Complete");
 
 	// print out timings
 	double us_per_sys_all = (swatch_all.getTime() / ens.nsys()) * 1000000.0;
 	double us_per_sys_kernel = (swatch_kernel.getTime() / ens.nsys()) * 1000000.0;
-	std::cerr << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
-	std::cerr << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
-	std::cerr << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000.0 << " ms.\n";
-	std::cerr << "# Internal state initialization   : " << swatch_temps.getTime()*1000.0 << " ms.\n";
+	std::cout << "# Time per system (integration)   : " << us_per_sys_kernel << " us.\n";
+	std::cout << "# Time per system (setup+integr.) : " << us_per_sys_all << " us.\n";
+	std::cout << "# GPU/CPU memcpy time             : " << swatch_mem.getTime()*1000.0 << " ms.\n";
+	std::cout << "# Internal state initialization   : " << swatch_temps.getTime()*1000.0 << " ms.\n";
 
 	return 0;
 }

@@ -126,9 +126,6 @@ class hermite: public integrator {
 			if( first_thread_in_system ) 
 				sys.active() = ! stopper_tester() ;
 
-//			if( first_thread_in_system )
-
-
 			__syncthreads();
 
 
