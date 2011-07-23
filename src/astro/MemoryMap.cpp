@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #include <iostream>
-#include "swarm.h"
+#include "swarm/swarm.h"
 
 using namespace std;
 

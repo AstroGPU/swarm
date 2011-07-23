@@ -16,9 +16,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "bppt.hpp"
-#include "helpers.hpp"
-#include "gravitation.hpp"
+#include "swarm/bppt.hpp"
+#include "swarm/helpers.hpp"
+#include "swarm/gravitation.hpp"
 #include "stop_on_ejection.hpp"
 
 

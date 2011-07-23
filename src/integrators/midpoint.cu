@@ -16,9 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "bppt.hpp"
-#include "helpers.hpp"
-#include "gravitation.hpp"
+#include "swarm/bppt.hpp"
+#include "swarm/helpers.hpp"
+#include "swarm/gravitation.hpp"
+
 #include "stop_on_ejection.hpp"
 
 
@@ -28,7 +29,7 @@ namespace gpu {
 namespace bppt {
 
 template< class _Stopper >
-class euler: public integrator {
+class midpoint: public integrator {
 	typedef integrator base;
 	typedef  _Stopper stopper_t;
 	private:
@@ -37,8 +38,8 @@ class euler: public integrator {
 	stopper_t _stopper;
 
 	public:
-	euler(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_euler requires a timestep ('time step' keyword in the config file).");
+	midpoint(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
+		if(!cfg.count("time step")) ERROR("Integrator gpu_midpoint requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -73,26 +74,62 @@ class euler: public integrator {
 
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc = 0, jerk = 0;
+		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		////////// INTEGRATION //////////////////////
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
-			double h = _time_step;
+		// Calculate acceleration and jerk
+		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-			calcForces(ij,b,c,pos,vel,acc,jerk);
-			// Integratore
-			pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.)*jerk));
-			vel = vel +  h*(acc+(h*0.5)*jerk);
+		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+			double H = _time_step;
+
+			/// Modified midpoint method integrator with n substeps
+			const int n = 4;
+			double h = H / n;
+
+			double p_i , p_im1, p_im2;
+			double v_i,  v_im1, v_im2;
+			double a_im1;
+
+			// Step 0
+			p_i = pos;
+			v_i = vel;
+
+			// Step 1
+			p_im1 = p_i;
+			v_im1 = v_i;
+
+			a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+			p_i = p_im1 + h * v_im1;
+			v_i = v_im1 + h * a_im1;
+
+			// Step 2 .. n
+			for(int i = 2; i <= n; i++){
+				p_im2 = p_im1;
+				p_im1 = p_i;
+				v_im2 = v_im1;
+				v_im1 = v_i;
+
+				a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+				p_i = p_im2 + 2 * h * v_im1;
+				v_i = v_im2 + 2 * h * a_im1;
+			}
+			double a_i = calcForces.acc(ij,b,c,p_i,v_i);
+
+			pos = ( p_i + p_im1 + h * v_i ) / 2;
+			vel = ( v_i + v_im1 + h * a_i ) / 2;
 
 			// Finalize the step
 			if( body_component_grid )
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( first_thread_in_system ) 
-				sys.time() += h;
+				sys.time() += H;
 
 			if( first_thread_in_system ) 
 				sys.active() = ! stopper_tester() ;
@@ -108,15 +145,15 @@ class euler: public integrator {
 };
 
 /*!
- * \brief Factory to create double/single/mixed euler gpu integrator based on precision
+ * \brief Factory to create double/single/mixed midpoint gpu integrator based on precision
  *
  * @param[in] cfg configuration class
  *
  * @return        pointer to integrator cast to integrator*
  */
-extern "C" integrator *create_euler(const config &cfg)
+extern "C" integrator *create_midpoint(const config &cfg)
 {
-	return new euler< stop_on_ejection<gpulog::device_log> >(cfg);
+	return new midpoint< stop_on_ejection<gpulog::device_log> >(cfg);
 }
 
 }

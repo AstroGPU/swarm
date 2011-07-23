@@ -21,8 +21,8 @@
     Swarm assumes that N is small (3-10) and systems evolve Newtonian Gravity 
 */
 
-#include "swarm.h" 
-#include "log.hpp"
+#include "swarm/swarm.h" 
+#include "swarm/log.hpp"
 #include "utils.hpp"
 #include <memory>
 #include <iostream>

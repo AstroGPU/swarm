@@ -27,10 +27,6 @@
  *
 */
 
-#define ASTROCENTRIC 1
-#define BARRYCENTRIC 0 // Not implemented
-#define JACOBI 0       // Not implemented
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -38,8 +34,7 @@
 #include <boost/regex.hpp>
 #include <dlfcn.h>
 
-#include "swarmio.h"
-#include "tutorials/kepler.h"
+#include "swarm/io.hpp"
 
 // using namespace boost;
 // using namespace boost::program_options;
@@ -96,12 +91,11 @@ namespace swarm
 			}
 		} else {
 #if BOOST_VERSION  < 104200
-                        throw validation_error("invalid value");
+			throw validation_error("invalid value");
 #else
-                        throw validation_error(validation_error::invalid_option_value);
-                        //invalid_option_value iov("invalid value");
-                        //throw validation_error(iov);
+			throw validation_error(validation_error::invalid_option_value);
 #endif
+
 		}
 	}
 
@@ -150,87 +144,19 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	const swarm::body *bodies;
 	lr >> T >> sys >> flags >> nbod >> bodies;
 
-	// arrays with Keplerian orbital elements of body's >=1
-	std::vector<double> a(nbod), e(nbod), i(nbod), w(nbod), O(nbod), M(nbod);
-
-	// coordinates of center for each orbit (changes per body in Jacobi)
-#if ASTROCENTRIC
-	const swarm::body &bstar = bodies[0];
-	double cx = bstar.x();
-	double cy = bstar.y();
-	double cz = bstar.z();
-	double cvx = bstar.vx();
-	double cvy = bstar.vy();
-	double cvz = bstar.vz();
-	double cmass = bstar.mass();
-#else
-#if BARRYCENTRIC
-	double cx = 0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., cmass=0.;
+        size_t bufsize = 1000;
+	char buf[bufsize];
 	for(int bod = 0; bod != nbod; bod++)
 	{
-	  const swarm::body &b = bodies[bod];
-	  cx += b.mass()*b.x();
-	  cy += b.mass()*b.y();
-	  cz += b.mass()*b.z();
-	  cvx += b.mass()*b.vx();
-	  cvy += b.mass()*b.vy();
-	  cvz += b.mass()*b.vz();
-	  cmass += b.mass();
-	}
-	cx  /= cmass;
-	cy  /= cmass;
-	cz  /= cmass;
-	cvx /= cmass;
-	cvy /= cmass;
-	cvz /= cmass;
-#else
-#if JACOBI
-	double cx = 0., cy=0., cz=0., cvx=0., cvy=0., cvz=0.;
-	double cmass=bstar.mass();
-#else
-	#error "You have to use some coordinate system!";
-#endif
-#endif
-#endif
-	
-	for(int bod = 1; bod != nbod; bod++)  // Skip star since printing orbits
-	{
-	  double x, y, z, vx, vy, vz, mass;
-	  const swarm::body &b = bodies[bod];
-#if JACOBI
-	  cx += b.mass()*b.x();
-	  cy += b.mass()*b.y();
-	  cz += b.mass()*b.z();
-	  cvx += b.mass()*b.vx();
-	  cvy += b.mass()*b.vy();
-	  cvz += b.mass()*b.vz();
-	  cmass += b.mass();
+		const swarm::body &b = bodies[bod];
 
-	  y = b.x()-cx/cmass;
-	  y = b.y()-cy/cmass;
-	  z = b.z()-cz/cmass;
-	  vx = b.vx()-cx/cmass;
-	  vy = b.vy()-cy/cmass;
-	  vz = b.vz()-cz/cmass;
+		if(bod != 0) { out << "\n"; }
+#if NEW
+			snprintf(buf, bufsize,"%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
 #else
-	  x = b.x()-cx;
-	  y = b.y()-cy;
-	  z = b.z()-cz;
-	  vx = b.vx()-cvx;
-	  vy = b.vy()-cvy;
-	  vz = b.vz()-cvz;
-	  cmass = bstar.mass() + b.mass();
+               snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
 #endif
-	  calc_keplerian_for_cartesian(a[bod], e[bod], i[bod], O[bod], w[bod], M[bod], x, y, z, vx, vy, vz, cmass);
-
-          const double rad2deg = 180./M_PI;
-
-        size_t bufsize = 1000;
-        char buf[bufsize];
-	  snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), a[bod], e[bod], i[bod]*rad2deg, O[bod]*rad2deg, w[bod]*rad2deg, M[bod]*rad2deg, flags);
-	  out << buf;
-	  // don't write new line after last line
-	  if(bod<nbod-1)     out << "\n";
+		out << buf;
 	}
 	return out;
 }
@@ -245,7 +171,11 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 
         size_t bufsize = 1000;
         char buf[bufsize];
-	snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+#if NEW
+     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+#else
+     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
+#endif
 	out << buf;
 
 	return out;

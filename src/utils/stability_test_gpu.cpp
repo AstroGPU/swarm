@@ -7,7 +7,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"
-#include "integrator.hpp"
+#include "swarm/integrator.hpp"
 
 using namespace swarm;
 using namespace std;

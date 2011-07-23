@@ -25,9 +25,11 @@
 ###
 ### libswarm library
 ###
-LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp src/astro/Util.cpp src/integrator.cpp src/writer.cpp src/swarmlib.cpp src/log.cpp src/io.cpp src/cux/cux.cpp
+LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp \
+				 src/astro/Util.cpp src/swarm/integrator.cpp \
+				 src/swarm/writer.cpp src/swarm/swarmlib.cpp \
+				 src/swarm/log.cpp src/swarm/io.cpp src/cux/cux.cpp
 LIBSWARM_CUDA=
-#src/swarmlib.cu src/gpu_generic_integrator.cu src/gpu_ensemble.cu src/stopper.cu
 
 ###
 ### documentation in asciidoc format
@@ -37,50 +39,12 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 
 ####
 #### Integrator pieces of libswarm
-####
--include integrators/Makefile.mk
+-include src/integrators/Makefile.mk
+#### Commandline utilities
+-include src/utils/Makefile.mk
+#### Tutorials
+-include src/tutorials/Makefile.mk
 
-###
-### Applications
-###
-APPS+=swarm 
-swarm_SOURCES=utils/swarm.cpp utils/utils.cpp
-
-####APPS+=swarmquery
-####swarmquery_SOURCES=src/swarmquery.cpp
-
-####APPS+=swarmquerykeplerian
-####swarmquerykeplerian_SOURCES=src/swarmquerykeplerian.cpp
-
-APPS+=test_energy
-test_energy_SOURCES=utils/test_energy.cpp
-
-####APPS+=swarm_tutorial_cpu
-####swarm_tutorial_cpu_SOURCES=src/tutorials/swarm_tutorial_cpu.cpp 
-
-####APPS+=swarm_tutorial_gpu 
-####swarm_tutorial_gpu_SOURCES=src/tutorials/swarm_tutorial_gpu.cpp 
-
-####APPS+=swarm_tutorial_compare 
-####swarm_tutorial_compare_SOURCES=src/tutorials/swarm_tutorial_compare.cpp 
-
-####APPS+=swarm_tutorial_benchmark
-####swarm_tutorial_benchmark_SOURCES=src/tutorials/swarm_tutorial_benchmark.cpp 
-
-####APPS+=swarm_benchmark
-####swarm_benchmark_SOURCES=src/tutorials/swarm_benchmark.cpp src/tutorials/utils.cpp
-
-APPS+=stability_test
-stability_test_SOURCES=utils/stability_test.cpp  utils/utils.cpp
-
-####APPS+=swarm_tutorial_montecarlo
-####swarm_tutorial_montecarlo_SOURCES=src/tutorials/swarm_tutorial_montecarlo.cpp 
-
-##### APPS+=swarm_tutorial_montecarlo_rv
-##### swarm_tutorial_montecarlo_rv_SOURCES=src/tutorials/swarm_tutorial_montecarlo_rv.cpp 
-
-####APPS+=swarm_scatter_demo
-####swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 
 ##########################################################
 #
@@ -97,7 +61,7 @@ CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?= -O4 -I $(CUDAPATH)/include -I ./src -I .
+CXXFLAGS?= -O4 -I $(CUDAPATH)/include -I ./src 
 LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64 -L /usr/lib/nvidia-current/
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
@@ -141,18 +105,6 @@ all: $(APPS)
 #
 # rules for libswarm.so
 #
-
-src/autogen_dont_edit.cu: $(LIBSWARM_CUDA)
-	@ echo "/*! \file autogen_dont_edit.cu" > $@
-	@ echo " *  \brief merged cu files for nvcc" >> $@
-	@ echo " * " >> $@
-	@ echo " * AUTO-GENERATED FILE. DO NOT EDIT BY HAND!!!" >> $@
-	@ echo " */" >> $@
-	$(GENUI) ./scripts/combine_cu_files.sh $(LIBSWARM_CUDA) >> $@
-
-#LIBSWARM_CUDASOURCES += src/autogen_dont_edit.cu
-
-
 bin/libswarm.so: $(LIBSWARM_OBJECTS)
 	$(NVCCUI) $(CCUDA) -Xcompiler -fPIC $(DEVEMU) $(CCUDADIAGFLAGS) $(CCUDAFLAGS) $(CXXFLAGS) $(DEBUG) -shared -o $@ $^
 

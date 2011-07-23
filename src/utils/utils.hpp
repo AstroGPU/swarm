@@ -3,8 +3,8 @@
  *
  *
  */
-#include "swarm.h"
-#include "ensemble.hpp"
+#include "swarm/swarm.h"
+#include "swarm/ensemble.hpp"
 
 #define $__(x,line) (std::cerr << __FUNCTION__ << ":" << line << ": " << #x <<  " = " << (x) << std::endl)
 #define DEBUG_OUTPUT(level,message) ( (DEBUG_LEVEL >= level) ? (std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << (message) << std::endl) : std::cerr )

@@ -4,7 +4,7 @@
  *
  */
 #include <iostream>
-#include "swarm.h"
+#include "swarm/swarm.h"
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"

@@ -16,9 +16,9 @@
  *
 */
 
-#include "swarm.h"
-#include "io.hpp"
-#include "log.hpp"
+#include "swarm/swarm.h"
+#include "swarm/io.hpp"
+#include "swarm/log.hpp"
 #include <fstream>
 #include <astro/memorymap.h>
 
