@@ -46,7 +46,9 @@ class snapshot {
 	struct writefileexception : public exception {};
 
 	static defaultEnsemble load(const string& filename) throw (readfileexception);
+	static defaultEnsemble load_text(const string& filename) throw (readfileexception);
 	static void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
+	static void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
 
 };
 

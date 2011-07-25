@@ -65,6 +65,31 @@ defaultEnsemble snapshot::load(const string& filename) throw (readfileexception)
 	return ens;
 }
 
+
+defaultEnsemble snapshot::load_text(const string& filename) throw (readfileexception){
+	FILE* f = fopen(filename.c_str(),"r");
+
+	header h; sys s; body b;
+
+	fscanf(f,"%i %i",&h.nbod,&h.nsys);
+	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
+
+	for(int i = 0; i < h.nsys; i++){
+		ensemble::SystemRef sr = ens[i];
+
+
+		fscanf(f,"%lg %li", &sr.time(), &sr.active());
+
+		for(int j = 0; j < h.nbod; j++){
+			fscanf(f,"%lg", &sr[j].mass() );
+			fscanf(f,"%lg %lg %lg", &sr[j][0].pos(), &sr[j][1].pos(), &sr[j][2].pos());
+			fscanf(f,"%lg %lg %lg", &sr[j][0].vel(), &sr[j][1].vel(), &sr[j][2].vel());
+		}
+	}
+	fclose(f);
+	return ens;
+}
+
 void snapshot::save(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
 	FILE* f = fopen(filename.c_str(),"wb");
 
@@ -97,6 +122,33 @@ void snapshot::save(defaultEnsemble& ens, const string& filename)  throw (writef
 	fclose(f);
 }
 
+void snapshot::save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
+	FILE* f = fopen(filename.c_str(),"w");
+
+	fprintf(f,"%i %i\n\n\n", ens.nsys(), ens.nbod() );
+
+	for(int i = 0; i < ens.nsys(); i++){
+
+		ensemble::SystemRef sr = ens[i];
+		fprintf(f,"%lg %ld\n", sr.time(), sr.active()); 
+
+		for(int j = 0; j < ens.nbod(); j++){
+			fprintf(f,"\t%lg\n\t%lg %lg %lg\n\t%lg %lg %lg\n\n",
+					sr[j].mass(),
+					sr[j][0].pos(),
+					sr[j][1].pos(),
+					sr[j][2].pos(),
+					sr[j][0].vel(),
+					sr[j][1].vel(),
+					sr[j][2].vel()
+				   );
+		}
+
+		fprintf(f,"\n");
+
+	}
+	fclose(f);
+}
 
 
 }
