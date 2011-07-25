@@ -17,3 +17,5 @@
 ####APPS+=swarm_scatter_demo
 ####swarm_scatter_demo_SOURCES=src/scatter_demo/swarm_scatter_demo.cpp
 
+APPS+=simple
+simple_SOURCES=src/tutorials/simple.cpp src/utils/utils.cpp

@@ -26,9 +26,10 @@
 ### libswarm library
 ###
 LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp \
-				 src/astro/Util.cpp src/swarm/integrator.cpp \
+				 src/astro/Util.cpp src/cux/cux.cpp \
+				 src/swarm/snapshot.cpp src/swarm/integrator.cpp \
 				 src/swarm/writer.cpp src/swarm/swarmlib.cpp \
-				 src/swarm/log.cpp src/swarm/io.cpp src/cux/cux.cpp
+				 src/swarm/log.cpp src/swarm/io.cpp 
 LIBSWARM_CUDA=
 
 ###
@@ -61,7 +62,7 @@ CXX?=g++
 CCUDAFLAGS?=
 CCUDADIAGFLAGS?=-Xcudafe --diag_suppress=subscript_out_of_range -Xcudafe --diag_suppress=partial_override  -Xcudafe --diag_suppress=initialization_not_reachable
 DEVEMU?=
-CXXFLAGS?= -O4 -I $(CUDAPATH)/include -I ./src 
+CXXFLAGS?= -g -I $(CUDAPATH)/include -I ./src 
 LDFLAGS?=-L $(CUDAPATH)/lib64  -L /usr/lib64 -L /usr/lib/nvidia-current/
 INTEGRATORCFG?=integrator.cfg
 VERBOSE?=0
