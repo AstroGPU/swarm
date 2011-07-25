@@ -52,7 +52,6 @@ void stability_test(config& cfg){
 
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
 	SYNC;
-	integ->set_default_log();
 
 	integ->set_ensemble(ens);
 	SYNC;
@@ -68,8 +67,6 @@ void stability_test(config& cfg){
 
 		DEBUG_OUTPUT(2, "Integrator ensemble on GPU" );
 		integ->integrate();
-
-		log::flush();
 
 		SYNC;
 		DEBUG_OUTPUT(2, "Check energy conservation" );

@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 
 	// Calculate energy at beginning of integration
 	std::valarray<double> Einit(ens.nsys()), Efinal(ens.nsys());
-	calc_total_energy(ens, Einit);
+	ens.calc_total_energy(&Einit[0]);
 
 	printf("Snapshot #0 (initial conditions):\n");
 	for (unsigned int i = 0;i < nprint;++i)
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	while(snaps.next(ens)) { cnt++; }
 
 	// Calculate energy at end of integration
-	calc_total_energy(ens, Efinal);
+	ens.calc_total_energy(&Efinal[0]);
 
 	// write output
 	printf("\nSnapshot #%d (end of simulation)\n", cnt);

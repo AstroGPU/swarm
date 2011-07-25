@@ -22,7 +22,8 @@
 */
 
 #include "swarm/swarm.h" 
-#include "swarm/log.hpp"
+#include "swarm/logmanager.hpp"
+#include "swarm/snapshot.hpp"
 #include "utils.hpp"
 #include <memory>
 #include <iostream>
@@ -74,8 +75,7 @@ int main(int argc, const char **argv)
 	// load the ensemble
 	std::string ensprefix;
 	swarm::get_config(ensprefix, cfg, "initial conditions");
-	swarm::hostEnsemble ens;
-	swarm::load_ensemble(ensprefix, ens);
+	swarm::hostEnsemble ens = swarm::snapshot::load(ensprefix);
 	std::cout << "#Ensemble: \n#\tData Prefix: " << ensprefix 
 		<< "\n#\tNo. Systems: " << ens.nsys() 
 		<< "\n#\tNo. Bodies: " << ens.nbod() << std::endl;
@@ -85,26 +85,28 @@ int main(int argc, const char **argv)
 
 	// initialize swarm -- this is required before calling any (non-utility) swarm library function
 	swarm::init(cfg);
+	swarm::log::manager logman;
+	logman.init("log.bin");
 
 	// select the integrator to use
 	std::auto_ptr<swarm::integrator> integ(swarm::integrator::create(cfg));
 
 	DEBUG_OUTPUT(2,"Initializing integrator... ");
 	SWATCH_START(swatch_temps);
-	integ->set_default_log();
 	integ->set_ensemble(ens);
 	integ->set_duration(duration);
 
 	// log initial conditions
-	swarm::log::ensemble(hlog, ens);
+	swarm::log::ensemble(logman.get_hostlog(), ens);
 
-	swarm::log::flush();
+	logman.flush();
 
 	SWATCH_STOP(swatch_temps);
 
 	if(ongpu)
 	{
 		swarm::gpu::integrator* integ_gpu = (swarm::gpu::integrator*) integ.get();
+		integ_gpu->set_log(logman.get_gpulog());
 		DEBUG_OUTPUT(2,"Uploading to GPU... ");
 		SWATCH_START(swatch_mem);
 		integ_gpu->upload_ensemble();
@@ -131,8 +133,8 @@ int main(int argc, const char **argv)
 		int sys = rand()%ens.nsys();
 	}
 
-	swarm::log::ensemble(hlog, ens);
-	swarm::log::flush();
+	swarm::log::ensemble(logman.get_hostlog(), ens);
+	logman.flush();
 	SWATCH_STOP(swatch_all);
 	DEBUG_OUTPUT(1,"Integration Complete");
 

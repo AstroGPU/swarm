@@ -145,10 +145,6 @@ void init(const config &cfg)
         // Initialize appropriate GPU
         cux_init();
 
-        // initialize the output log (default: null)
-        std::string wcfg = cfg.count("output") ? cfg.at("output") : "null";
-        swarm::log::init(wcfg);
-
         swarm_initialized = true;
 }
 
@@ -185,93 +181,4 @@ void load_config(config &cfg, const std::string &fn)
 
 //----------------------------------------------------------------------------
 
-/*!
-   \brief Ensemble loading support
-
-  @param[in] name string name
-  @param[out] ens cpu_ensemble
-*/
-void load_ensemble(const std::string &name, cpu_ensemble &ens)
-{
-	// Assume filenames are of the form "$name.xx" where xx is a sequence of
-	// numbers 0..(NSYS-1).
-	//
-	// Initial conditions file format:
-	// <nbod> [Tbegin [Tend]]
-	// <m1> <x1> <y1> <z1> <vx1> <vy1> <vz1>
-	// <m2> <x2> <y2> <z2> <vx2> <vy2> <vz2>
-	// ... (through nbod) ..
-	//
-	// Tbegin is the initial time for this system; T=0 if not given
-	// Tend is the end-of-integration time for this system; T=+inf if not given
-
-	// determine the number of systems
-	int nsys;
-	for(nsys = 0; true; nsys++)
-	{
-		std::ostringstream ss; ss << nsys;
-		std::string fn = name + "." + ss.str();
-		if(access(fn.c_str(), R_OK) != 0) { break; }
-	}
-	if(nsys == 0) ERROR("Failed to find the datafiles for ensemble " + name + " (cannot access " + name + ".0)");
-
-	int nbod = -1;
-	for(int i = 0; i != nsys; i++)
-	{
-		std::ostringstream ss; ss << i;
-		std::string fn = name + "." + ss.str();
-		std::ifstream in(fn.c_str());
-
-		std::string line;
-		std::getline(in, line);
-		std::istringstream iss(line);
-
-		// load the number of bodies
-		int nbod1;
-		iss >> nbod1;
-		if(nbod == -1)
-		{
-			nbod = nbod1;
-			ens = cpu_ensemble::create(nbod,nsys);
-		}
-		else if(nbod != nbod1)
-		{
-			std::ostringstream err;
-			err << "The number of bodies must be the same for all systems. Found nbod=" << nbod1 << " in " << fn
-			    << " while expecting nbod=" << nbod << ".";
-			ERROR(err.str());
-		}
-
-		// load the start and end times of the integration
-		double T;
-		ens.time(i)     = (iss >> T) ? T : 0.;
-
-		// load the planets
-		double m, x, y, z, vx, vy, vz;
-		for(int j = 0; j != nbod; j++)
-		{
-			if(!(in >> m >> x >> y >> z >> vx >> vy >> vz))
-			{
-				ERROR("Error loading bodies from " + fn + ".");
-			}
-			ens.set_body(i, j, m, x, y, z, vx, vy, vz);
-		}
-	}
 }
-
-//----------------------------------------------------------------------------
-
-/*!
-   \brief Calculate totoal energy
-
-   compute the total energy of each system in the ensemble and return it as valarray
-  @param[in] ens cpu_ensemble
-  @param[out] E total energy
-*/
-void calc_total_energy(const cpu_ensemble &ens, std::valarray<double> &E)
-{
-        E.resize(ens.nsys());
-        ens.calc_total_energy(&E[0]);
-}
-
-} // end namespace swarm

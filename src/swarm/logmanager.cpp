@@ -21,7 +21,7 @@
  *
 */
 
-#include "log.hpp"
+#include "logmanager.hpp"
 #include <iostream>
 #include <astro/binarystream.h>
 #include <astro/memorymap.h>
@@ -31,9 +31,6 @@
 #include <limits>
 #include <boost/shared_ptr.hpp>
 
-gpulog::device_log* pdlog;
-gpulog::host_log hlog;
-
 extern "C" void debug_hook()
 {
 	// a hook into which to place a breakpoint when the debugger
@@ -41,17 +38,8 @@ extern "C" void debug_hook()
 	std::cerr << "";
 }
 
-// global pointer to log output writer
-namespace swarm
-{
 
-	namespace log
-	{
-		std::auto_ptr<writer> log_writer;
-	}
-}
-
-void swarm::log::init(const std::string &writer_cfg, int host_buffer_size, int device_buffer_size)
+void swarm::log::manager::init(const std::string &writer_cfg, int host_buffer_size, int device_buffer_size)
 {
 	log_writer.reset(writer::create(writer_cfg));
 
@@ -60,12 +48,12 @@ void swarm::log::init(const std::string &writer_cfg, int host_buffer_size, int d
 	pdlog = gpulog::alloc_device_log(device_buffer_size);
 }
 
-void swarm::log::shutdown()
+void swarm::log::manager::shutdown()
 {
-	swarm::log::init("null");
+	swarm::log::manager::init("null");
 }
 
-void swarm::log::flush(int flags)
+void swarm::log::manager::flush(int flags)
 {
 	// TODO: Implement flushing of writer as well
 	assert(flags & memory);

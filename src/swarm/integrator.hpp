@@ -52,7 +52,6 @@ class integrator {
 		_destination_time = duration;
 	}
 	static integrator* create(const config &cfg);
-	virtual void set_default_log () = 0;
 
 };
 
@@ -78,7 +77,6 @@ class integrator : public swarm::integrator {
 		download_ensemble();
 	}
 
-	void set_default_log ();
 	void set_log(gpulog::device_log* log) { _log = log; }
 
 	void set_ensemble(defaultEnsemble& ens) {

@@ -28,14 +28,9 @@
 
 #include "swarm.h"
 
-#define NEW 1
-
-extern gpulog::host_log hlog;
-extern gpulog::device_log* pdlog;
-
-
 namespace swarm
 {
+
 	// for on-GPU state logging of bodies
 	// TODO: Move this to swarm.h
 	// NOTE: I've written out the datatypes _explicitly_, because
@@ -104,11 +99,6 @@ namespace swarm
 		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
 		static const int EVT_EJECTION		= 2;	// marks an ejection event
 
-		enum { memory = 0x01, if_full = 0x02 };
-
-		void init(const std::string &writer_cfg, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
-		void flush(int flags = memory);
-		void shutdown();
 
 		template<typename L, typename T1>
 GENERIC PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)
