@@ -1,0 +1,1 @@
+LIBSWARM_CUDASOURCES+=src/propagators/hermite_propagator.cu

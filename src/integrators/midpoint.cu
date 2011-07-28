@@ -20,7 +20,7 @@
 #include "swarm/helpers.hpp"
 #include "swarm/gravitation.hpp"
 
-#include "stop_on_ejection.hpp"
+#include "stoppers/stop_on_ejection.hpp"
 
 
 namespace swarm {

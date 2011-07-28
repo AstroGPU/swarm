@@ -41,6 +41,7 @@ MAN_INPUT=docs/swarm_tutorial_cpu.man docs/swarm_tutorial_gpu.man docs/swarm_tut
 ####
 #### Integrator pieces of libswarm
 -include src/integrators/Makefile.mk
+-include src/propagators/Makefile.mk
 #### Commandline utilities
 -include src/utils/Makefile.mk
 #### Tutorials

@@ -16,10 +16,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "swarm/bppt.hpp"
-#include "swarm/helpers.hpp"
-#include "swarm/gravitation.hpp"
-#include "stoppers/stop_on_ejection.hpp"
+#include "bppt.hpp"
+#include "helpers.hpp"
+#include "gravitation.hpp"
 
 
 namespace swarm {
@@ -27,18 +26,20 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< class _Stopper >
-class verlet: public integrator {
+template< template<class T> class Propagator, class _Stopper >
+class generic: public integrator {
 	typedef integrator base;
 	typedef  _Stopper stopper_t;
+	typedef  typename Propagator<params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
 	stopper_t _stopper;
+	prop_params_t _prop_params;
 
 	public:
-	verlet(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet requires a timestep ('time step' keyword in the config file).");
+	generic(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg),_prop_params(cfg) {
+		if(!cfg.count("time step")) ERROR("Integrator gpu_generic requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -50,8 +51,8 @@ class verlet: public integrator {
 
 	template<class T>
 	__device__ void kernel(T a){
-
 		if(sysid()>=_dens.nsys()) return;
+
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
@@ -70,64 +71,26 @@ class verlet: public integrator {
 
 		// local variables
 		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
-
-
-		// local information per component per body
-		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
-		if( body_component_grid )
-			pos = sys[b][c].pos() , vel = sys[b][c].vel();
-
-		double &t = sys.time();
+		Propagator<T> prop(_prop_params,sys,calcForces);
+		prop.b = b;
+		prop.c = c;
+		prop.ij = ij;
+		prop.body_component_grid = body_component_grid;
+		prop.first_thread_in_system = first_thread_in_system;
 
 		////////// INTEGRATION //////////////////////
+		//
+		prop.init();
 
-		// Calculate acceleration and jerk
-		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
-			double h = _time_step;
 
-			///////// INTEGRATION STEP /////////////////
-
-			double h_first_half = h / 2 ;
-
-			// First half step for positions
-			pos = pos + h_first_half * vel;
-
-			// Calculate acceleration in the middle
-			double acc = calcForces.acc(ij,b,c,pos,vel);
-
-			// First half step for velocities
-			vel = vel + h_first_half * acc;
-
-			// Step time to the middle of the step
-			t  +=  h_first_half;
-
-			// TODO: change half time step based on acc
-			double h_second_half = h_first_half;
-
-			// Second half step for positions and velocities
-			vel = vel + h_second_half * acc;
-			pos = pos + h_second_half * vel;
-
-			// Step time to the end of the step
-			t  +=  h_second_half;
-
-			//////////////// END of Integration Step /////////////////
-
-
-			// Finalize the step
-			if( body_component_grid )
-				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-			if( first_thread_in_system ) 
-				t += h;
+			prop.advance();
 
 			if( first_thread_in_system ) 
 				sys.active() = ! stopper_tester() ;
 
 			__syncthreads();
-
-
 		}
 
 	}
@@ -135,17 +98,6 @@ class verlet: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed verlet gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_verlet(const config &cfg)
-{
-	return new verlet< stop_on_ejection<gpulog::device_log> >(cfg);
-}
 
 }
 }
