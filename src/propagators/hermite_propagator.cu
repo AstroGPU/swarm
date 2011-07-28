@@ -104,7 +104,7 @@ struct HermitePropagator {
 
 extern "C" integrator *create_hermite_prop(const config &cfg)
 {
-	return new generic< HermitePropagator, stop_on_ejection<gpulog::device_log> >(cfg);
+	return new generic< HermitePropagator, stop_on_ejection >(cfg);
 }
 
 

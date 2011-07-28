@@ -19,6 +19,7 @@
 #include "bppt.hpp"
 #include "helpers.hpp"
 #include "gravitation.hpp"
+#include "log.hpp"
 
 
 namespace swarm {
@@ -26,19 +27,19 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< template<class T> class Propagator, class _Stopper >
+template< template<class T> class Propagator, template<class L> class Stopper >
 class generic: public integrator {
 	typedef integrator base;
-	typedef  _Stopper stopper_t;
-	typedef  typename Propagator<params_t<3> >::params prop_params_t;
+	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
+	typedef  typename Propagator< params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
-	stopper_t _stopper;
+	stop_params_t _stop_params;
 	prop_params_t _prop_params;
 
 	public:
-	generic(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg),_prop_params(cfg) {
+	generic(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg),_prop_params(cfg) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_generic requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
@@ -70,7 +71,7 @@ class generic: public integrator {
 
 
 		// local variables
-		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
+		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
 		Propagator<T> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;
@@ -88,7 +89,7 @@ class generic: public integrator {
 			prop.advance();
 
 			if( first_thread_in_system ) 
-				sys.active() = ! stopper_tester() ;
+				sys.active() = ! stoptest() ;
 
 			__syncthreads();
 		}

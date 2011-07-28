@@ -27,17 +27,17 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< class _Stopper >
+template< template<class L> class Stopper >
 class verlet: public integrator {
 	typedef integrator base;
-	typedef  _Stopper stopper_t;
+	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
-	stopper_t _stopper;
+	stop_params_t _stop_params;
 
 	public:
-	verlet(const config& cfg): base(cfg),_time_step(0.001), _stopper(cfg) {
+	verlet(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_verlet requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
@@ -69,7 +69,7 @@ class verlet: public integrator {
 
 
 		// local variables
-		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
+		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
 
 
 		// local information per component per body
@@ -123,7 +123,7 @@ class verlet: public integrator {
 				t += h;
 
 			if( first_thread_in_system ) 
-				sys.active() = ! stopper_tester() ;
+				sys.active() = ! stoptest() ;
 
 			__syncthreads();
 
@@ -144,7 +144,7 @@ class verlet: public integrator {
  */
 extern "C" integrator *create_verlet(const config &cfg)
 {
-	return new verlet< stop_on_ejection<gpulog::device_log> >(cfg);
+	return new verlet< stop_on_ejection>(cfg);
 }
 
 }

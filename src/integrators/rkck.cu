@@ -39,19 +39,19 @@ struct AdaptiveTimeStep {
 	const static bool conditional_accept_step = true;
 };
 
-template< class AdaptationStyle, class _Stopper >
+template< class AdaptationStyle, template<class L> class Stopper >
 class rkck: public integrator {
 	typedef integrator base;
-	typedef  _Stopper stopper_t;
+	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
 	private:
 	double _min_time_step;
 	double _max_time_step;
 	double _error_tolerance;
 	int _iteration_count;
-	stopper_t _stopper;
+	stop_params_t _stop_params;
 
 	public:
-	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _stopper(cfg) {
+	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _stop_params(cfg) {
 		if(!cfg.count("min time step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
 		_min_time_step = atof(cfg.at("min time step").c_str());
 		if(!cfg.count("max time step")) ERROR("Integrator rkck requires a max timestep ('max time step' keyword in the config file).");
@@ -105,7 +105,7 @@ class rkck: public integrator {
 
 
 		// local variables
-		typename stopper_t::tester stopper_tester = _stopper.get_tester(sys,*_log) ;
+		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
 
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
@@ -258,7 +258,7 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system ) 
-					sys.active() = ! stopper_tester() ;
+					sys.active() = ! stoptest() ;
 			}
 
 			__syncthreads();
@@ -272,11 +272,11 @@ class rkck: public integrator {
 
 extern "C" integrator *create_rkck_fixed(const config &cfg)
 {
-	return new rkck< FixedTimeStep, stop_on_ejection<gpulog::device_log> >(cfg);
+	return new rkck< FixedTimeStep, stop_on_ejection>(cfg);
 }
 extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
 {
-	return new rkck< AdaptiveTimeStep, stop_on_ejection<gpulog::device_log> >(cfg);
+	return new rkck< AdaptiveTimeStep, stop_on_ejection>(cfg);
 }
 
 }

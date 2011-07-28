@@ -56,6 +56,28 @@ class EnsembleBase {
 		GENERIC const double& mass() const { return _mass[0];  }
 		GENERIC Component& operator[] (const int & i) { return component[i]; };
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
+
+		GENERIC double radius() { 
+			return sqr(operator[](0).pos()) 
+				+ sqr(operator[](1).pos()) 
+				+ sqr(operator[](2).pos());
+		}
+		GENERIC double speed() {
+			return sqr(operator[](0).vel()) 
+				+ sqr(operator[](1).vel()) 
+				+ sqr(operator[](2).vel());
+		}
+
+		GENERIC void get(double& x,double & y, double & z
+				, double & vx, double & vy, double & vz) {
+			x = operator[](0).pos();
+			y = operator[](1).pos();
+			z = operator[](2).pos();
+			vx = operator[](0).vel();
+			vy = operator[](1).vel();
+			vz = operator[](2).vel();
+		}
+
 	};
 
 	struct Sys {
@@ -87,6 +109,9 @@ class EnsembleBase {
 		GENERIC const int& nbod()const{ return _nbod;	}
 		GENERIC const int& number()const{ return _number;	}
 
+		GENERIC double distance_between(const int& i , const int & j ) {
+			return sqrt(distance_squared_between(i,j));
+		}
 		GENERIC double distance_squared_between(const int& i , const int & j ) {
 			const Body& b1 = _body[i], & b2 = _body[j];
 			return sqr(b1[0].pos()-b2[0].pos())
@@ -110,6 +135,7 @@ class EnsembleBase {
 		GENERIC const double_int& flags() { return _ref.active(); }
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
+		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 	};
 
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
@@ -194,17 +220,6 @@ class EnsembleBase {
 		return operator[] ( sys ).time();
 	}
 
-	//! should not be used
-	GENERIC double& time_end( const int & sys ) {
-		return time(sys);
-	}
-
-	//! should not be used
-	GENERIC double& time_output( const int & sys , const int & k) {
-		double x = time(sys);
-		return x;
-	}
-
 	GENERIC long& flags(const int& sys){
 		return operator[] ( sys ).active();
 	}
@@ -233,17 +248,6 @@ class EnsembleBase {
 
 	GENERIC const double& time( const int & sys ) const {
 		return operator[] ( sys ).time();
-	}
-
-	//! should not be used
-	GENERIC const double& time_end( const int & sys )const  {
-		return time(sys);
-	}
-
-	//! should not be used
-	GENERIC const double& time_output( const int & sys , const int & k) const {
-		double x = time(sys);
-		return x;
 	}
 
 	GENERIC const long& flags(const int& sys)const {
@@ -329,29 +333,6 @@ class EnsembleBase {
 		vz /= mass_sum;
 	};
 
-	GENERIC void   set_time_all(const double tend) 
-	{
-		for(int sys=0;sys<nsys();++sys)
-			time(sys) = tend;
-	}
-	/// set all systems destination time 
-	GENERIC void   set_time_end_all(const double tend) 
-	{
-		for(int sys=0;sys<nsys();++sys)
-			time_end(sys) = tend;
-	}
-	/// advance all systems time 
-	GENERIC void   advance_time_end_all(const double dur) 
-	{
-		for(int sys=0;sys<nsys();++sys)
-			time_end(sys) += dur;
-	}
-	/// ... 
-	GENERIC void   set_time_output_all(int k, const double tout) 
-	{ 
-		for(int sys=0;sys<nsys();++sys)
-			time_output(sys,k) = tout;
-	}
 
 	GENERIC double calc_total_energy( int sys ) const {
 		double E = 0.;
