@@ -16,30 +16,20 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file swarmlib.cpp
- *  \brief provides several functions for public interface for swarm libaray
+/*! \file utilities.cpp
+ *  \brief provides several utility  functions for public interface for swarm libaray
  *
- *  If you want to use the swarm library and have questions about what the 
- *  functions do, this is a great plae to start looking.
 */
 
-#include <cuda_runtime_api.h>
-#include "swarm.h"
-#include <vector>
-#include <algorithm> // for swap
-#include <memory>
+#include "utilities.hpp"
 #include <iostream>
-#include <dlfcn.h>
-#include <sstream>
 #include <fstream>
-#include <valarray>
+#include <algorithm>
 #include "io.hpp"
-#include "cux/cux.h"
 //
 // Utilities
 //
 
-static bool swarm_initialized = false;
 
 namespace swarm {
 
@@ -79,28 +69,9 @@ bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShm
         find_best_factorization(gridDim.x, gridDim.y, nblocks);
         gridDim.z = 1;
 
-/* Commenting out since never gets executed right now -- CW 8/9/10
- * #if 0
- *      std::cerr << "+ Grid configuration =========================\n";
- *      std::cerr << "      Threads requested = " << nthreads << " with shmem/thread = " << dynShmemPerThread << " and shmem/blk = " << staticShmemPerBlock << "\n";
- *      std::cerr << "      Grid configured as (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") array of blocks with " << threadsPerBlock << " threads per block.\n";
- *      std::cerr << "      Total threads to execute = " << nthreadsEx << "\n";
- *      std::cerr << "- Grid configuration =========================\n";
- * #else
- *      //std::cerr << "Kernel exec. config: (" << gridDim.x << ", " << gridDim.y << ", " << gridDim.z <<") x " << threadsPerBlock << " thr/blk (" << nthreadsEx << " thr total; " << nthreads << " thr needed)\n";
- * #endif
- */
         return true;
 }
 
-//----------------------------------------------------------------------------
-
-void debugger_stop()
-{
-        std::cerr << "Block for debugger here!\n";
-}
-
-//----------------------------------------------------------------------------
 
 /*!
    \brief Find best factorization
@@ -130,25 +101,6 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
         if(bx == -1) { std::cerr << "Unfactorizable?!\n"; exit(-1); }
 }
 
-//----------------------------------------------------------------------------
-
-/*!
-   \brief Initialize the swarm library.
-
-   This function must be called before any other.
-   @param[in] cfg configuration class
-*/
-void init(const config &cfg)
-{
-        if(swarm_initialized) { return; }
-
-        // Initialize appropriate GPU
-        cux_init();
-
-        swarm_initialized = true;
-}
-
-//----------------------------------------------------------------------------
 
 /*!
    \brief  load a configuration file
@@ -179,6 +131,5 @@ void load_config(config &cfg, const std::string &fn)
 	}
 }
 
-//----------------------------------------------------------------------------
 
 }

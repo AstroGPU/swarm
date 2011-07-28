@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2010 by Mario Juric  and the Swarm-NG Development Team  *
+ * Copyright (C) 2008-2011 by Saleh Dindar & Swarm-NG Development Team   *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -16,33 +16,24 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file swarm_error.h
- *   \brief Declares swarm error class
+/*! \file utilities.cpp
+ *  \brief provides several utility  functions for public interface for swarm libaray
  *
 */
 #pragma once
-#include <stdexcept>
-#include <string>
 
-/// The main namespace for the Swarm-NG library
+
+#include <cuda_runtime_api.h>
+#include "config.hpp"
+#include "common.hpp"
+
+
 namespace swarm {
 
-/**
-        \brief Unrecoverable error exception.
+	bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock);
 
-        Throw an instance of this class to indicate an unrecoverable error
-        was encountered. Do not throw it directly, but through the use of ERROR() macro.
-*/
-class swarm_error : public std::runtime_error
-{
-public:
-        swarm_error(const std::string &msg) : std::runtime_error(msg) {}
-        virtual ~swarm_error() throw() {};
-};
 
-#ifndef THROW_IS_ABORT
-        #define ERROR(msg) throw swarm::swarm_error(msg);
-#else
-        #define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
-#endif
+	void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks);
+
+	void load_config(config &cfg, const std::string &fn);
 }

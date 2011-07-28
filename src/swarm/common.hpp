@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2010 by Mario Juric  and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -16,33 +16,40 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file swarm_error.h
- *   \brief Declares swarm error class
+/*! \file common.hpp
+ *   \brief Common library headers between all files
  *
 */
 #pragma once
+
 #include <stdexcept>
 #include <string>
+#include <cstring>
+#include <map>
+#include <cassert>
+#include <cmath>
+#include <vector>
 
-/// The main namespace for the Swarm-NG library
-namespace swarm {
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <cux/cux.h>
 
-/**
-        \brief Unrecoverable error exception.
-
-        Throw an instance of this class to indicate an unrecoverable error
-        was encountered. Do not throw it directly, but through the use of ERROR() macro.
-*/
-class swarm_error : public std::runtime_error
-{
-public:
-        swarm_error(const std::string &msg) : std::runtime_error(msg) {}
-        virtual ~swarm_error() throw() {};
-};
-
-#ifndef THROW_IS_ABORT
-        #define ERROR(msg) throw swarm::swarm_error(msg);
-#else
-        #define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
+#ifdef THROW_IS_ABORT
+	#include <cassert>
+	#include <cstring>
+        #include <cstdio>
 #endif
-}
+
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
+	#include <sstream>
+        #include <valarray>
+#endif
+
+#define CUDADEVICETOUSE 1
+
+#include <iostream>
+#define $$(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " |> " << (x) << std::endl)
+#define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
+#define $$$ (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " @@ " << std::endl)
+
+#include "swarm/swarm_error.h"

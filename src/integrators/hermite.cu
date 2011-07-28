@@ -39,7 +39,7 @@ class hermite: public integrator {
 
 	public:
 	hermite(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
+		if(!cfg.count("time step")) ERROR("Integrator hermite requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
 
@@ -144,9 +144,13 @@ class hermite: public integrator {
  *
  * @return        pointer to integrator cast to integrator*
  */
-extern "C" integrator *create_hermite(const config &cfg)
+extern "C" integrator *create_hermite_cross(const config &cfg)
 {
 	return new hermite< stop_on_crossing_orbit_or_close_approach >(cfg);
+}
+extern "C" integrator *create_hermite(const config &cfg)
+{
+	return new hermite< stop_on_ejection >(cfg);
 }
 
 }

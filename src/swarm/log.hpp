@@ -25,8 +25,9 @@
 
 #include "gpulog/gpulog.h"
 #include "gpulog/lprintf.h"
-
-#include "swarm.h"
+#include "common.hpp"
+#include "datatypes.hpp"
+#include "ensemble.hpp"
 
 namespace swarm
 {

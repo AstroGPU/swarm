@@ -21,20 +21,24 @@
 #include <cuda_runtime_api.h>
 #include "datatypes.hpp"
 #include "ensemble.hpp"
+#include "config.hpp"
 #include "log.hpp"
 
 
 namespace swarm {
 
-typedef std::map<std::string, std::string> config;
 class integrator;
 typedef integrator *(*integratorFactory_t)(const config &cfg);
 
+namespace log {
+	struct manager;
+}
 
 class integrator {	
 	protected:
 	defaultEnsemble _ens;
 	double _destination_time;
+	gpulog::host_log* _log;
 
 	public:
 	integrator(const config &cfg){}
@@ -52,6 +56,8 @@ class integrator {
 		_destination_time = duration;
 	}
 	static integrator* create(const config &cfg);
+
+	virtual void set_log_manager(swarm::log::manager& l);
 
 };
 
@@ -76,6 +82,8 @@ class integrator : public swarm::integrator {
 		launch_integrator();
 		download_ensemble();
 	}
+
+	virtual void set_log_manager(log::manager& l);
 
 	void set_log(gpulog::device_log* log) { _log = log; }
 

@@ -8,6 +8,7 @@
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"
 #include "swarm/integrator.hpp"
+#include "swarm/stopwatch.h"
 
 using namespace swarm;
 using namespace std;

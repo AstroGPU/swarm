@@ -22,8 +22,7 @@
 #include <astro/memorymap.h>
 #include <boost/shared_ptr.hpp>
 #include "log.hpp"
-
-#include "swarm.h"
+#include "writer.h"
 
 namespace swarm { namespace log {
 
@@ -40,7 +39,7 @@ namespace swarm { namespace log {
 		void shutdown();
 
 		gpulog::device_log* get_gpulog() { return pdlog; }
-		gpulog::host_log& get_hostlog() { return hlog; }
+		gpulog::host_log* get_hostlog() { return &hlog; }
 
 	};
 

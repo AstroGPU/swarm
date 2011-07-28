@@ -24,6 +24,7 @@
 #include "swarm/swarm.h" 
 #include "swarm/logmanager.hpp"
 #include "swarm/snapshot.hpp"
+#include "swarm/stopwatch.h"
 #include "utils.hpp"
 #include <memory>
 #include <iostream>
@@ -95,9 +96,10 @@ int main(int argc, const char **argv)
 	SWATCH_START(swatch_temps);
 	integ->set_ensemble(ens);
 	integ->set_duration(duration);
+	integ->set_log_manager(logman);
 
 	// log initial conditions
-	swarm::log::ensemble(logman.get_hostlog(), ens);
+	swarm::log::ensemble(*logman.get_hostlog(), ens);
 
 	logman.flush();
 
@@ -106,7 +108,6 @@ int main(int argc, const char **argv)
 	if(ongpu)
 	{
 		swarm::gpu::integrator* integ_gpu = (swarm::gpu::integrator*) integ.get();
-		integ_gpu->set_log(logman.get_gpulog());
 		DEBUG_OUTPUT(2,"Uploading to GPU... ");
 		SWATCH_START(swatch_mem);
 		integ_gpu->upload_ensemble();
@@ -133,7 +134,7 @@ int main(int argc, const char **argv)
 		int sys = rand()%ens.nsys();
 	}
 
-	swarm::log::ensemble(logman.get_hostlog(), ens);
+	swarm::log::ensemble(*logman.get_hostlog(), ens);
 	logman.flush();
 	SWATCH_STOP(swatch_all);
 	DEBUG_OUTPUT(1,"Integration Complete");

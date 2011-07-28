@@ -20,6 +20,7 @@
  *   \brief Declares writer class
  *
 */
+#pragma once
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {

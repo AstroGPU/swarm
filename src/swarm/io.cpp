@@ -18,6 +18,7 @@
 
 #include "log.hpp"
 #include "io.hpp"
+#include "writer.h"
 
 #include <iostream>
 #include <fstream>

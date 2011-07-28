@@ -29,6 +29,7 @@
 #include <dlfcn.h>
 #include <fstream>
 #include "swarm.h"
+#include "writer.h"
 #include "io.hpp"
 
 namespace swarm {

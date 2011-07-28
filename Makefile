@@ -28,7 +28,7 @@
 LIBSWARM_SOURCES=src/astro/BinaryStream.cpp src/astro/MemoryMap.cpp \
 				 src/astro/Util.cpp src/cux/cux.cpp \
 				 src/swarm/snapshot.cpp src/swarm/integrator.cpp \
-				 src/swarm/writer.cpp src/swarm/swarmlib.cpp \
+				 src/swarm/writer.cpp src/swarm/utilities.cpp \
 				 src/swarm/io.cpp   src/swarm/logmanager.cpp
 LIBSWARM_CUDA=
 

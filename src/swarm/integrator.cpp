@@ -28,8 +28,16 @@
 #include <dlfcn.h>
 #include <fstream>
 #include "integrator.hpp"
+#include "logmanager.hpp"
 
 namespace swarm {
+
+	void integrator::set_log_manager(log::manager& l){
+		_log = l.get_hostlog();
+	}
+	void gpu::integrator::set_log_manager(log::manager& l){
+		set_log(l.get_gpulog());
+	}
 
 /*!
    \brief Integrator instantiation support
