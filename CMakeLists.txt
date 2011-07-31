@@ -1,0 +1,27 @@
+PROJECT(Swarm_NG)
+
+# Basic Settings
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+
+# Set CUDA Flags and options
+SET(CUDA_VERBOSE_BUILD 0)
+SET(CUDA_NVCC_FLAGS 
+	-gencode arch=compute_20,code=sm_20;
+	-gencode arch=compute_13,code=sm_13;
+	-Xcudafe --diag_suppress=subscript_out_of_range;
+	-Xcudafe --diag_suppress=partial_override;
+	-Xcudafe --diag_suppress=initialization_not_reachable
+	)
+
+# Find the libraries and packages
+FIND_PACKAGE(CUDA)
+FIND_PACKAGE(Boost 1.4 COMPONENTS program_options)
+SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so)
+
+
+# Include src
+ADD_SUBDIRECTORY(src)
+
