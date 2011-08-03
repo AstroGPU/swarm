@@ -17,6 +17,8 @@
 
 #define ERROR(msg) throw MemoryMapError(msg)
 
+
+
 using namespace std;
 
 const int MemoryMap::pagesize = getpagesize();

@@ -532,14 +532,20 @@ namespace swarm
 
 		// check for existence
 		if(access(filename.c_str(), R_OK) != 0) { return false; }
+
 		
+
 		// check for modification timestamp and size
 		h.mm.open(filename.c_str(), filetype);
 		uint64_t timestamp, filesize;
 		get_file_info(timestamp, filesize, datafile);
+
+		//TODO: this quick fix is only for fake memory mapping
+		timestamp = h.mm.hdr().timestamp;
+
 		if(h.mm.hdr().datafile_size != filesize || h.mm.hdr().timestamp != timestamp)
 		{
-			// std::cerr << "Index " << filename << " not up to date. Will regenerate.\n";
+			std::cerr << "Index " << filename << " not up to date. Will regenerate.\n";
 			return false;
 		}
 	
