@@ -111,6 +111,7 @@ namespace util {
 			throw demangling_error(ti.name());
 		return name;
 	}
+
 #endif
 
 	/// type-name demangler
