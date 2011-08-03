@@ -18,11 +18,12 @@
 #pragma once
 #include "gpulog/gpulog.h"
 #include "gpulog/lprintf.h"
-#include <astro/binarystream.h>
-#include <astro/memorymap.h>
-#include <boost/shared_ptr.hpp>
+//#include "peyton/binarystream.hpp"
+//#include "peyton/memorymap.hpp"
 #include "log.hpp"
 #include "writer.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace swarm { namespace log {
 

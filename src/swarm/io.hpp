@@ -8,8 +8,9 @@
 
 #include "swarm.h"
 #include "log.hpp"
-#include <astro/binarystream.h>
-#include <astro/memorymap.h>
+#include "peyton/binarystream.hpp"
+#include "peyton/memorymap.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <limits>

@@ -19,8 +19,8 @@
 #include "swarm/swarm.h"
 #include "swarm/io.hpp"
 #include "swarm/log.hpp"
+
 #include <fstream>
-#include <astro/memorymap.h>
 
 // aux class to sort indices by energy error (biggest first)
 struct energy_sorter

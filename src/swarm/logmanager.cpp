@@ -22,9 +22,8 @@
 */
 
 #include "logmanager.hpp"
+
 #include <iostream>
-#include <astro/binarystream.h>
-#include <astro/memorymap.h>
 #include <fstream>
 #include <sstream>
 #include <memory>

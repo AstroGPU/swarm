@@ -21,9 +21,10 @@
 #ifndef _astro_util_h
 #define _astro_util_h
 
-#include <astro/macros.h>
-#include <astro/types.h>
-#include <astro/constants.h>
+#include "macros.h"
+#include "types.hpp"
+#include "constants.hpp"
+
 #include <cmath>
 #include <string>
 #include <cstdlib>

@@ -4,8 +4,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 
-#include <astro/memorymap.h>
-#include <astro/util.h>
+#include "memorymap.hpp"
+#include "util.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,7 +13,9 @@
 #include <unistd.h>
 
 #include <iostream>
-#include "swarm/swarm.h"
+#include <cassert>
+
+#define ERROR(msg) throw MemoryMapError(msg)
 
 using namespace std;
 

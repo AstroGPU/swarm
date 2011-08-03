@@ -1,0 +1,4 @@
+# Put all your extra options to CMake in here
+
+# SET(CUDAPATH,'/usr/local/cuda')
+

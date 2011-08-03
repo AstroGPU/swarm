@@ -18,12 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-//#include "config.h"
  
 #define HAVE_BOOST_IOSTREAMS
 #ifdef HAVE_BOOST_IOSTREAMS
 
-#include <astro/binarystream.h>
+#include "binarystream.hpp"
 
 #include <iomanip>
 

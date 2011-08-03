@@ -16,6 +16,8 @@ SET(CUDA_NVCC_FLAGS
 	-Xcudafe --diag_suppress=initialization_not_reachable
 	)
 
+include(CMakeUserConfig.txt)
+
 # Find the libraries and packages
 FIND_PACKAGE(CUDA)
 FIND_PACKAGE(Boost 1.4 COMPONENTS program_options)

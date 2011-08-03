@@ -30,6 +30,7 @@
 #include <list>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 
 namespace peyton {
 
@@ -105,6 +106,12 @@ public:
 	size_t size() const { return siz; }
 	size_t allocated() { return length / sizeof(T); }
 };
+
+struct MemoryMapError : public std::runtime_error {
+	MemoryMapError(const std::string &msg): std::runtime_error(msg) {};
+	virtual ~MemoryMapError() throw() {};
+};
+
 
 } // namespace system
 } // namespace peyton

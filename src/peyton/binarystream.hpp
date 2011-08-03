@@ -32,7 +32,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "util.h"
+#include "util.hpp"
 
 #include <boost/type_traits.hpp>
 

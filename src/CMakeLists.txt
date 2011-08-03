@@ -8,8 +8,7 @@ ADD_SUBDIRECTORY(propagators)
 # Build swarm
 CUDA_ADD_LIBRARY(swarm SHARED 
 	${SWARM_INTEGRATORS}
-	cux/cux.cpp 
-	astro/BinaryStream.cpp astro/MemoryMap.cpp astro/Util.cpp 
+	peyton/binarystream.cpp peyton/memorymap.cpp peyton/util.cpp 
 	swarm/snapshot.cpp swarm/integrator.cpp swarm/writer.cpp 
 	swarm/utilities.cpp swarm/io.cpp   swarm/logmanager.cpp)
 TARGET_LINK_LIBRARIES(swarm ${CUDA_CUDA_LIBRARY})
