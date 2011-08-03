@@ -12,6 +12,8 @@ CUDA_ADD_LIBRARY(swarm SHARED
 	peyton/memorymap.cpp peyton/fakemmap.cpp
 	swarm/snapshot.cpp swarm/integrator.cpp swarm/writer.cpp 
 	swarm/utilities.cpp swarm/io.cpp   swarm/logmanager.cpp)
+SET(COMPILE_FLAGS /MP)
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 TARGET_LINK_LIBRARIES(swarm ${CUDA_CUDA_LIBRARY})
 
 

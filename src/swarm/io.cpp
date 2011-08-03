@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <time.h>
 
 swarm::range_special swarm::ALL;
 swarm::range_MIN swarm::MIN;
@@ -187,8 +187,11 @@ namespace swarm
 		{
 			ERROR(strerror(errno));
 		}
-
+#ifdef _WIN32
+		timestamp = sb.st_mtime;
+#else
 		timestamp = (uint64_t(sb.st_mtim.tv_sec) << 32) + uint64_t(sb.st_mtim.tv_nsec);
+#endif
 		filesize = sb.st_size;
 		
 		return true;

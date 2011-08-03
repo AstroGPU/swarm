@@ -20,14 +20,14 @@
 #ifndef __astro_system_memorymap_h
 #define __astro_system_memorymap_h
 
-#ifdef __linux__
-#include <sys/mman.h>
-#else
-#warning "Using fake memory mapping"
+#ifdef _WIN32
+#pragma warning "Using fake memory mapping"
 #include "fakemmap.h"
 #define mmap fakemmap
 #define munmap fakemunmap
 #define msync fakemsync
+#else
+#include <sys/mman.h>
 #endif
 
 #include <fcntl.h>
