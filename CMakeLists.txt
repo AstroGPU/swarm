@@ -20,7 +20,7 @@ include(CMakeUserConfig.txt)
 
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
-FIND_PACKAGE(Boost 1.4 REQUIRED COMPONENTS program_options)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options)
 
 
 # Include src

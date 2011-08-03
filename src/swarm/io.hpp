@@ -55,7 +55,7 @@ namespace swarm {
 	protected:
 		Header *fh;
 		char *m_data;
-		int m_size;
+		size_t m_size;
 
 	public:
 		mmapped_file_with_header(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true);

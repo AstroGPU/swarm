@@ -222,6 +222,7 @@ namespace swarm
 			// write header
 			swarm::swarm_index_header fh(filetype, timestamp, filesize);
 			out.write((char*)&fh, sizeof(fh));
+			return true;
 		}
 		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr)
 		{
@@ -231,6 +232,7 @@ namespace swarm
 			out.write((const char *)&ie, sizeof(ie));
 
 			nentries++;
+			return true;
 		}
 		virtual bool finish()
 		{
@@ -251,6 +253,7 @@ namespace swarm
 				assert(ok);
 			}
 		#endif
+			return true;
 		}
 	};
 
@@ -480,7 +483,7 @@ namespace swarm
 
 	void swarmdb::open(const std::string &datafile)
 	{
-		if(access(datafile.c_str(), R_OK) != 0)
+		if(access(datafile.c_str(), 04) != 0)
 		{
 			ERROR("Cannot open output file '" + datafile + "'");
 		}
@@ -534,7 +537,7 @@ namespace swarm
 		std::string filename = datafile + suffix;
 
 		// check for existence
-		if(access(filename.c_str(), R_OK) != 0) { return false; }
+		if(access(filename.c_str(), 04) != 0) { return false; }
 
 		
 
