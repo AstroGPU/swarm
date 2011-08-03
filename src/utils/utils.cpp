@@ -28,7 +28,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
 			float mass_planet = 0.001; // approximately (mass of Jupiter)/(mass of sun)
-			double rmag = pow(1.4,bod-1);  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
+			double rmag = pow(1.4,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 			double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
 			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
 			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;

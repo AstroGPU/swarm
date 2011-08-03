@@ -31,7 +31,7 @@
 #include <memory.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <cxxabi.h>
+
 
 #ifndef NULL
 #define NULL 0
@@ -86,27 +86,28 @@ namespace util {
 	}
 	#endif
 
-	/// type-name demangler
-	inline std::string type_name(const std::type_info &ti)
-	{
-		std::string tmp;
-		int status;
-	
-		char *name = abi::__cxa_demangle(ti.name(), 0, 0, &status);
-		if(status != 0)
-		{
-			// TODO: thrown an exception here? If so, make sure to free(name) first!
-			tmp = "demangling error (status code = ";
-			tmp += str(status);
-		}
-		else
-		{
-			tmp = name;
-		}
-		free(name);
+	struct demangling_error : public std::runtime_error {
+		demangling_error(const char* s): std::runtime_error(("While demangling " + std::string(s)).c_str()) {}
+	};
 
-		return tmp;
+#ifdef _WIN32
+	inline std::string type_name(const std::type_info &ti){
+		// TODO: find out how to do demangling in Windows
+		return ti.name();
 	}
+#else
+	#include <cxxabi.h>
+
+	inline std::string type_name(const std::type_info &ti){
+		int status = 0;
+		char * tmp = abi::__cxa_demangle(ti.name(), 0, 0, &status);
+		std::string name = tmp;
+		free(tmp);
+		if(status != 0)
+			throw demangling_exception(s);
+		return name;
+	}
+#endif
 
 	/// type-name demangler
 	template<typename T>

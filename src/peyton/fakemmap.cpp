@@ -1,5 +1,4 @@
 #include "fakemmap.h"
-#include <unistd.h>
 #include <map>
 #include <assert.h>
 #include <algorithm>

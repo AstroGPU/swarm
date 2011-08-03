@@ -248,8 +248,13 @@ namespace io {
 	// Operator declaration macros
 	//
 
+#ifdef _MSC_VER
+	#define BOSTREAM2(...) peyton::io::obstream& operator<<(peyton::io::obstream &out, __VA_ARGS__)
+	#define BISTREAM2(...) peyton::io::ibstream& operator>>(peyton::io::ibstream &in,  __VA_ARGS__)
+#else
 	#define BOSTREAM2(T...) peyton::io::obstream& operator<<(peyton::io::obstream &out, T)
 	#define BISTREAM2(T...) peyton::io::ibstream& operator>>(peyton::io::ibstream &in,  T)
+#endif
 	
 	//
 	// Generic POD input/output operators

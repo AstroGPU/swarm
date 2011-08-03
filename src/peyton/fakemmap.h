@@ -3,6 +3,17 @@
 //
 
 #include <stdlib.h>
+
+#ifdef _WIN32
+#include <wchar.h>
+#include <io.h>
+#include <fcntl.h>
+int getpagesize() { return 4096; }
+#else
+#include <unistd.h>
+#endif
+
+
 void *fakemmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int fakemunmap(void *addr, size_t length);
 int fakemsync(void *addr, size_t length, int flags);

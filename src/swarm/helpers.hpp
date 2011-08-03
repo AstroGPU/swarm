@@ -19,7 +19,6 @@
 #pragma once
 
 #include <cuda_runtime_api.h>
-#include <boost/bind.hpp>
 
 template<int Begin, int End, int Step = 1>
 struct Unroller {

@@ -85,12 +85,13 @@ class hermite_cpu : public integrator {
 
 	void integrate_system(ensemble::SystemRef sys){
 		const int nbod = sys.nbod();
-		double pre_pos[nbod][3];
-		double pre_vel[nbod][3];
-		double acc0[nbod][3];
-		double acc1[nbod][3];
-		double jerk0[nbod][3];
-		double jerk1[nbod][3];
+		const int nbod_max = 10;
+		double pre_pos[nbod_max][3];
+		double pre_vel[nbod_max][3];
+		double acc0[nbod_max][3];
+		double acc1[nbod_max][3];
+		double jerk0[nbod_max][3];
+		double jerk1[nbod_max][3];
 
 		calcForces(sys,acc0,jerk0);
 
