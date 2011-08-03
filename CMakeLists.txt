@@ -19,9 +19,8 @@ SET(CUDA_NVCC_FLAGS
 include(CMakeUserConfig.txt)
 
 # Find the libraries and packages
-FIND_PACKAGE(CUDA)
-FIND_PACKAGE(Boost 1.4 COMPONENTS program_options)
-SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so)
+FIND_PACKAGE(CUDA REQUIRED)
+FIND_PACKAGE(Boost 1.4 REQUIRED COMPONENTS program_options)
 
 
 # Include src

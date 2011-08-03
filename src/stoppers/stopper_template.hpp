@@ -45,7 +45,7 @@ class stopper_template {
 		return false; 
 	}
 
-	stopper_template(const params& p,ensemble::SystemRef& s,log_t& l)
+	GPUAPI stopper_template(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l){}
 	
 };

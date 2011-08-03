@@ -60,7 +60,7 @@ class stop_on_ejection {
 		return false; 
 	}
 
-	stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
+	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l),_counter(0){}
 	
 };

@@ -143,7 +143,7 @@ class stop_on_crossing_orbit_or_close_approach {
 		return stopit;
 	}
 
-	stop_on_crossing_orbit_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
+	GPUAPI stop_on_crossing_orbit_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
 	
 };
