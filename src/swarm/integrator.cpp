@@ -25,10 +25,10 @@
 #include <algorithm> // for swap
 #include <memory>
 #include <iostream>
-#include <dlfcn.h>
 #include <fstream>
 #include "integrator.hpp"
 #include "logmanager.hpp"
+#include "plugins.hpp"
 
 namespace swarm {
 
@@ -54,27 +54,16 @@ integrator *integrator::create(const config &cfg)
 {
         std::auto_ptr<integrator> integ;
 
-        // try loading using a factory function
-        void *me = dlopen(NULL, RTLD_LAZY);
-        if(me == NULL)
-        {
-                ERROR(dlerror());
-        }
-
         if(!cfg.count("integrator")) ERROR("Integrator type has to be chosen with 'integrator=xxx' keyword");
 
         std::string name = cfg.at("integrator");
-        std::string factory_name = "create_" + name;
+        std::string plugin_name = "integrator_" + name;
 
-        integratorFactory_t factory = (integratorFactory_t)dlsym(me, factory_name.c_str());
-        if(factory)
-        {
-                integ.reset(factory(cfg));
-        }
-        else
-        {
-                ERROR("Integrator " + name + " unknown (" + dlerror() + ").");
-        }
+		try {
+			integ.reset( (integrator*) instance_plugin(plugin_name,cfg) );
+		}catch(plugin_not_found& e){
+			ERROR("Integrator " + name + " not found.");
+		}
 
         return integ.release();
 }

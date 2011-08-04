@@ -35,7 +35,7 @@ namespace swarm { namespace log {
 
 		enum { memory = 0x01, if_full = 0x02 };
 
-		void init(const std::string &writer_cfg, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
+		void init(const config&, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
 		void flush(int flags = memory);
 		void shutdown();
 

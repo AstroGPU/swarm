@@ -279,6 +279,12 @@ extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
 	return new rkck< AdaptiveTimeStep, stop_on_ejection>(cfg);
 }
 
+integrator_plugin_initializer<rkck< AdaptiveTimeStep, stop_on_ejection> >
+	rkck_adaptive_plugin("rkck_adaptive");
+
+integrator_plugin_initializer<rkck< FixedTimeStep, stop_on_ejection> >
+	rkck_Fixed_plugin("rkck_fixed");
+
 }
 }
 }

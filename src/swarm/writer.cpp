@@ -26,11 +26,11 @@
 #include <algorithm> // for swap
 #include <memory>
 #include <iostream>
-#include <dlfcn.h>
 #include <fstream>
 #include "swarm.h"
 #include "writer.h"
 #include "io.hpp"
+#include "plugins.hpp"
 
 namespace swarm {
 
@@ -47,35 +47,18 @@ namespace swarm {
  * compile time
  */
 
-writer *writer::create(const std::string &cfg)
+writer *writer::create(const config& cfg)
 {
         std::auto_ptr<writer> w;
 
-        // try loading using a factory function
-        void *me = dlopen(NULL, RTLD_LAZY);
-        if(me == NULL)
-        {
-                ERROR(dlerror());
-        }
+		std::string name = cfg.at("log writer");
+		std::string plugin_name = "writer_" + name;
 
-        std::string name;
-        std::istringstream ss(cfg);
-        if(!(ss >> name))
-                ERROR("Empty value for 'output' keyword in config file.");
-        std::string factory_name = "create_writer_" + name;
-
-        writerFactory_t factory = (writerFactory_t)dlsym(me, factory_name.c_str());
-        if(factory)
-        {
-                std::string wcfg;
-                getline(ss, wcfg);
-                wcfg = trim(wcfg);
-                w.reset(factory(wcfg));
-        }
-        else
-        {
-                ERROR("Writer " + name + " unknown (" + dlerror() + ").");
-        }
+		try {
+			w.reset( (writer*) (get_plugin(plugin_name)->create(cfg)) );
+		}catch(plugin_not_found& e){
+			ERROR("Log writer " + name + " not found.");
+		}
 
         return w.release();
 }

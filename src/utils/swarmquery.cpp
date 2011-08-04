@@ -32,7 +32,6 @@
 #include <sstream>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-#include <dlfcn.h>
 
 #include "swarm/io.hpp"
 
@@ -182,25 +181,15 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 }
 
 typedef std::ostream& (*record_output_function_t)(std::ostream &out, gpulog::logrecord &lr);
+record_output_function_t record_output_function_pointers[] = { 0, record_output_1, record_output_2 };
+
 std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr)
 {
 	int evtid = lr.msgid();
 
-	static std::map<int, record_output_function_t> cache;
-	if(!cache.count(evtid))
-	{
-		void *me = dlopen(NULL, RTLD_LAZY);
-		if(me == NULL) { ERROR(dlerror()); }
+	record_output_function_t fun = record_output_function_pointers[evtid];
+	fun = fun ? fun : record_output_default;
 
-		std::ostringstream ss;
-		ss << "record_output_" << evtid;
-		std::string fnname = ss.str();
-
-		record_output_function_t fun = (record_output_function_t)dlsym(me, fnname.c_str());
-		cache[evtid] = fun ? fun : record_output_default;
-	}
-
-	record_output_function_t fun = cache.at(evtid);
 	return fun(out, lr);
 }
 

@@ -5,6 +5,7 @@
 #include "swarm/integrator.hpp"
 #include "swarm/snapshot.hpp"
 #include "swarm/logmanager.hpp"
+#include "swarm/plugins.hpp"
 #define SYNC cudaThreadSynchronize()
 
 using namespace swarm;
@@ -30,8 +31,9 @@ void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 		("duration,d", po::value<std::string>() , "Duration of the integration")
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>(), "Output file")
-		("help,h", "produce help message")
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+		("help,h", "produce help message")
+		("plugins,p", "list all of the plugins")
 		;
 
 	po::variables_map vm;
@@ -42,6 +44,15 @@ void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 	//// Respond to switches 
 	//
 	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
+
+	if (vm.count("plugins")) {
+		vector<swarm::plugin*> ps = swarm::get_all_plugins();
+		cout << "Found " << ps.size() << " plugins " << endl;
+		for(int i = 0; i < ps.size(); i++){
+			cout << ps[i]->id() << "\t" << ps[i]->description() << endl;
+		}
+		exit(0);
+	}
 
 	if(vm.count("cfg")){
 		std::string icfgfn =  vm["cfg"].as<std::string>();
@@ -78,7 +89,7 @@ int main(int argc, char* argv[]){
 	// Initialize Swarm
 	swarm::init(cfg);
 	swarm::log::manager logman;
-	logman.init(cfg["log output"]!="" ? cfg["log output"] : "null");
+	logman.init(cfg);
 
 	// Initialize Integrator
 	std::auto_ptr<integrator> integ(integrator::create(cfg));

@@ -20,6 +20,7 @@
 
 #include "integrator.hpp"
 #include "utilities.hpp"
+#include "plugins.hpp"
 
 
 namespace swarm {

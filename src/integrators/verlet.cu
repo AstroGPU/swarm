@@ -146,6 +146,8 @@ extern "C" integrator *create_verlet(const config &cfg)
 {
 	return new verlet< stop_on_ejection>(cfg);
 }
+integrator_plugin_initializer<verlet< stop_on_ejection > >
+	verlet_plugin("verlet");
 
 }
 }

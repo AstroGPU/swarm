@@ -153,6 +153,9 @@ extern "C" integrator *create_hermite(const config &cfg)
 	return new hermite< stop_on_ejection >(cfg);
 }
 
+integrator_plugin_initializer<hermite< stop_on_ejection > >
+	hermite_plugin("hermite");
+
 }
 }
 }

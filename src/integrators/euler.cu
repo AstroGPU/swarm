@@ -119,6 +119,9 @@ extern "C" integrator *create_euler(const config &cfg)
 	return new euler< stop_on_ejection >(cfg);
 }
 
+integrator_plugin_initializer< euler< stop_on_ejection > >
+	euler_plugin("euler");
+
 }
 }
 }

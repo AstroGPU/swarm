@@ -38,9 +38,9 @@ extern "C" void debug_hook()
 }
 
 
-void swarm::log::manager::init(const std::string &writer_cfg, int host_buffer_size, int device_buffer_size)
+void swarm::log::manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
 {
-	log_writer.reset(writer::create(writer_cfg));
+	log_writer.reset(writer::create(cfg));
 
 	// log memory allocation
 	hlog.alloc(host_buffer_size);
@@ -49,7 +49,8 @@ void swarm::log::manager::init(const std::string &writer_cfg, int host_buffer_si
 
 void swarm::log::manager::shutdown()
 {
-	swarm::log::manager::init("null");
+	config cfg; cfg["log writer"] = "null";
+	swarm::log::manager::init(cfg);
 }
 
 void swarm::log::manager::flush(int flags)

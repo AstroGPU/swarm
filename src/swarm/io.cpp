@@ -19,6 +19,7 @@
 #include "log.hpp"
 #include "io.hpp"
 #include "writer.h"
+#include "plugins.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -565,17 +566,23 @@ namespace swarm
 //
 // Default null-writer (does nothing)
 //
+using swarm::config;
+using swarm::writer_plugin_initializer;
 
 class null_writer : public swarm::writer
 {
 public:
+	null_writer(const config& cfg){}
 	virtual void process(const char *log_data, size_t length) {}
 };
 
-extern "C" swarm::writer *create_writer_null(const std::string &cfg)
+extern "C" swarm::writer *create_writer_null(const config &cfg)
 {
-	return new null_writer();
+	return new null_writer(cfg);
 }
+
+writer_plugin_initializer< null_writer >
+	null_writer_plugin("null", "This is the dummy writer");
 
 //
 // Binary writer
@@ -588,22 +595,24 @@ protected:
 	std::string rawfn, binfn;
 
 public:
-	binary_writer(const std::string &cfg);
+	binary_writer(const config& cfg);
 	virtual void process(const char *log_data, size_t length);
 	~binary_writer();
 };
 
-extern "C" swarm::writer *create_writer_binary(const std::string &cfg)
+extern "C" swarm::writer *create_writer_binary(const config &cfg)
 {
 	return new binary_writer(cfg);
 }
 
-binary_writer::binary_writer(const std::string &cfg)
+writer_plugin_initializer< binary_writer >
+	binary_writer_plugin("binary", "This is the binary writer");
+
+binary_writer::binary_writer(const config &cfg)
 {
-	std::string output_fn;
-	std::istringstream ss(cfg);
-	if(!(ss >> binfn))
-		ERROR("Expected 'binary <filename.bin>' form of configuration for writer.")
+	binfn = cfg.at("log output");
+	if(binfn=="")
+		ERROR("Expected filename for writer.")
 	rawfn = binfn + ".raw";
 
 	output.reset(new std::ofstream(rawfn.c_str()));

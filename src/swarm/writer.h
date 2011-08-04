@@ -21,6 +21,7 @@
  *
 */
 #pragma once
+#include "config.hpp"
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {
@@ -40,11 +41,11 @@ class writer
 
         public:
                 /// Integrator factory functions (and supporting typedefs)
-                static writer *create(const std::string &cfg);
+                static writer *create(const config &cfg);
 
         protected:
                 writer() {};            //!< hide the constructor.and force integrator instantiation with integrator::create
 };
-typedef writer *(*writerFactory_t)(const std::string &cfg);
+typedef writer *(*writerFactory_t)(const config &cfg);
 
 }
