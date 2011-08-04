@@ -16,6 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/integrator.hpp"
+#include "swarm/plugin.hpp"
 
 
 namespace swarm {
@@ -148,9 +149,8 @@ class hermite_cpu : public integrator {
 	}
 };
 
-extern "C" integrator *create_hermite_cpu(const config &cfg)
-{
-	return new hermite_cpu(cfg);
-}
+
+integrator_plugin_initializer< hermite_cpu >
+	hermite_cpu_plugin("hermite_cpu");
 
 }

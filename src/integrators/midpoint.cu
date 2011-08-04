@@ -144,18 +144,6 @@ class midpoint: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed midpoint gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_midpoint(const config &cfg)
-{
-	return new midpoint< stop_on_ejection >(cfg);
-}
-
 integrator_plugin_initializer<midpoint< stop_on_ejection > >
 	midpoint_plugin("midpoint");
 

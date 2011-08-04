@@ -270,15 +270,6 @@ class rkck: public integrator {
 
 };
 
-extern "C" integrator *create_rkck_fixed(const config &cfg)
-{
-	return new rkck< FixedTimeStep, stop_on_ejection>(cfg);
-}
-extern "C" integrator *create_hp_rkck_adaptive(const config &cfg)
-{
-	return new rkck< AdaptiveTimeStep, stop_on_ejection>(cfg);
-}
-
 integrator_plugin_initializer<rkck< AdaptiveTimeStep, stop_on_ejection> >
 	rkck_adaptive_plugin("rkck_adaptive");
 

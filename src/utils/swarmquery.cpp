@@ -135,7 +135,7 @@ std::ostream& record_output_default(std::ostream &out, gpulog::logrecord &lr)
 }
 
 // EVT_SNAPSHOT
-extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr)
+std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr)
 {
 	double T;
 	int nbod, sys, flags;
@@ -155,7 +155,7 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 }
 
 // EVT_EJECTION
-extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr)
+std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr)
 {
 	double T;
 	int sys;
