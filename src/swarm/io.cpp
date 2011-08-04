@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include "fileformat.hpp"
 
 swarm::range_special swarm::ALL;
 swarm::range_MIN swarm::MIN;
@@ -40,87 +41,7 @@ swarm::range_MAX swarm::MAX;
 
 namespace swarm
 {
-	// Note: the header _MUST_ be padded to 16-byte boundary
-	struct ALIGN(16) swarm_header
-	{
-		char magic[6];		// Magic string to quickly verify this is a swarm file (== 'SWARM\0')
-		char version[2];	// File format version
-		char m_type[76];	// user-defined file content ID/description
-		uint32_t flags;		// user-defined flags
-		uint64_t datalen;	// length of data in the file (0xFFFFFFFFFFFFFFFF for unknown)
 
-		static const uint64_t npos = 0xFFFFFFFFFFFFFFFFLL;
-
-		swarm_header(const std::string &type, int flags_ = 0, uint64_t datalen_ = npos)
-		{
-			strcpy(magic, "SWARM");
-			strcpy(version, "0");
-
-			strncpy(this->m_type, type.c_str(), sizeof(this->m_type));
-			this->m_type[sizeof(this->m_type)-1] = '\0';
-
-			flags = flags_;
-			datalen = datalen_;
-		}
-
-		std::string type() const
-		{
-			const char *c = strstr(m_type, "//");
-			if(!c) { return trim(m_type); }
-			return trim(std::string(m_type, c - m_type));
-		}
-
-		bool is_compatible(const swarm_header &a)
-		{
-			bool ffver_ok = memcmp(magic, a.magic, 8) == 0;
-			std::string t = type();
-			bool type_ok = t.empty() || (t == a.type());
-			return ffver_ok && type_ok;
-		}
-	};
-
-	struct ALIGN(16) swarm_index_header : public swarm_header
-	{
-		uint64_t	timestamp;	// datafile timestamp (mtime)
-		uint64_t	datafile_size;	// datafile file size
-
-		swarm_index_header(const std::string &type, uint64_t timestamp_, uint64_t datafile_size_, uint64_t datalen_ = npos)
-			: swarm_header(type, 0, datalen_), timestamp(timestamp_), datafile_size(datafile_size_)
-		{
-		}
-	};
-
-	template<typename Header>
-	mmapped_file_with_header<Header>::mmapped_file_with_header(const std::string &filename, const std::string &type, int mode, bool validate)
-		: fh(NULL), m_data(NULL)
-	{
-		if(!filename.empty())
-		{
-			open(filename, type, mode, validate);
-		}
-	}
-
-	template<typename Header>
-	void mmapped_file_with_header<Header>::open(const std::string &filename, const std::string &type, int mode, bool validate)
-	{
-		MemoryMap::open(filename.c_str(), 0, 0, mode, shared);
-
-		// read/check header
-		fh = (Header *)map;
-		swarm_header ref_ver(type);
-		if(validate && !ref_ver.is_compatible(*fh))
-		{
-			std::cerr << "Expecting: " << ref_ver.type() << "\n";
-			std::cerr << "Got      : " << fh->type() << "\n";
-			ERROR("Input file corrupted or incompatible with this version of swarm");
-		}
-
-		// get the pointer to data
-		m_data = (char *)&fh[1];
-		
-		// data size
-		m_size = length - sizeof(Header);
-	}
 
 	void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 	{
@@ -561,83 +482,4 @@ namespace swarm
 		
 		return true;
 	}
-}
-
-//
-// Default null-writer (does nothing)
-//
-using swarm::config;
-using swarm::writer_plugin_initializer;
-
-class null_writer : public swarm::writer
-{
-public:
-	null_writer(const config& cfg){}
-	virtual void process(const char *log_data, size_t length) {}
-};
-
-extern "C" swarm::writer *create_writer_null(const config &cfg)
-{
-	return new null_writer(cfg);
-}
-
-writer_plugin_initializer< null_writer >
-	null_writer_plugin("null", "This is the dummy writer");
-
-//
-// Binary writer
-//
-
-class binary_writer : public swarm::writer
-{
-protected:
-	std::auto_ptr<std::ostream> output;
-	std::string rawfn, binfn;
-
-public:
-	binary_writer(const config& cfg);
-	virtual void process(const char *log_data, size_t length);
-	~binary_writer();
-};
-
-extern "C" swarm::writer *create_writer_binary(const config &cfg)
-{
-	return new binary_writer(cfg);
-}
-
-writer_plugin_initializer< binary_writer >
-	binary_writer_plugin("binary", "This is the binary writer");
-
-binary_writer::binary_writer(const config &cfg)
-{
-	binfn = cfg.at("log output");
-	if(binfn=="")
-		ERROR("Expected filename for writer.")
-	rawfn = binfn + ".raw";
-
-	output.reset(new std::ofstream(rawfn.c_str()));
-	if(!*output)
-		ERROR("Could not open '" + rawfn + "' for writing");
-
-	// write header
-	swarm::swarm_header fh("unsorted_output // Unsorted output file");
-	output->write((char*)&fh, sizeof(fh));
-}
-
-binary_writer::~binary_writer()
-{
-	output.reset(NULL);
-	if(swarm::sort_binary_log_file(binfn, rawfn))
-	{
-		unlink(rawfn.c_str());
-
-		// just touch it to auto-generate the indices
-		swarm::swarmdb db(binfn);
-	}
-}
-
-void binary_writer::process(const char *log_data, size_t length)
-{
-	// TODO: filter out the printfs
-	output->write(log_data, length);
 }

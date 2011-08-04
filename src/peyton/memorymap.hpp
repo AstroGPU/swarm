@@ -125,6 +125,53 @@ struct MemoryMapError : public std::runtime_error {
 } // namespace system
 } // namespace peyton
 
+template<typename Header>
+struct mmapped_file_with_header : public peyton::system::MemoryMap
+{
+	protected:
+		Header *fh;
+		char *m_data;
+		size_t m_size;
+
+	public:
+		mmapped_file_with_header(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true) 
+			: fh(NULL), m_data(NULL)
+		{
+			if(!filename.empty())
+			{
+				open(filename, type, mode, validate);
+			}
+		}
+
+		void open(const std::string &filename, const std::string &type, int mode = ro, bool validate = true)
+		{
+			MemoryMap::open(filename.c_str(), 0, 0, mode, shared);
+
+			// read/check header
+			fh = (Header *)map;
+			Header ref_ver(type);
+			if(validate && !ref_ver.is_compatible(*fh))
+			{
+				std::cerr << "Expecting: " << ref_ver.type() << "\n";
+				std::cerr << "Got      : " << fh->type() << "\n";
+				throw peyton::system::MemoryMapError("Input file corrupted or incompatible with this version of swarm");
+			}
+
+			// get the pointer to data
+			m_data = (char *)&fh[1];
+
+			// data size
+			m_size = length - sizeof(Header);
+		}
+
+		// override MemoryMap::size() to return the length of the data without the header
+		size_t size() const { return m_size; }
+
+		// accessors
+		char *data() const { return m_data; }
+		Header &hdr() const { return *fh; }
+};
+
 using namespace peyton::system;
 
 #define __peyton_system peyton::system

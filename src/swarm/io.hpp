@@ -1,4 +1,4 @@
-/*! \file swarmio.h
+/*! \file io.hpp
  *  \brief declares swarmdb and range
  *
 */
@@ -14,7 +14,7 @@
 #include <fstream>
 #include <sstream>
 #include <limits>
-
+#include "fileformat.hpp"
 namespace swarm {
 
 	extern struct range_special { } ALL;
@@ -49,28 +49,7 @@ namespace swarm {
 	typedef range<int> sys_range_t;
 	typedef range<double> time_range_t;
 
-	template<typename Header>
-	struct mmapped_file_with_header : public MemoryMap
-	{
-	protected:
-		Header *fh;
-		char *m_data;
-		size_t m_size;
 
-	public:
-		mmapped_file_with_header(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true);
-		void open(const std::string &filename, const std::string &type, int mode = ro, bool validate = true);
-		
-		// override MemoryMap::size() to return the length of the data without the header
-		size_t size() const { return m_size; }
-
-		// accessors
-		char *data() const { return m_data; }
-		Header &hdr() const { return *fh; }
-	};
-
-	struct swarm_header;
-	struct swarm_index_header;
 	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
 	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
 
@@ -144,6 +123,7 @@ namespace swarm {
 		}
 	};
 
+	bool sort_binary_log_file(const std::string &outfn, const std::string &infn);
 
 } // end namespace swarm
 
