@@ -4,16 +4,20 @@
  *
  */
 #include <iostream>
-#include "swarm/swarm.h"
+#include "swarm/integrator.hpp"
+#include "swarm/stopwatch.h"
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "utils.hpp"
+#include "swarm/logmanager.hpp"
 
 using namespace swarm;
 using namespace std;
 
 int DEBUG_LEVEL  = 0;
+#define SYNC cudaThreadSynchronize()
 
+swarm::log::manager logman;
 
 void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string& param, const string& value) {
 	cfg[param] = value;
@@ -34,45 +38,43 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
 
   if( (param == "nsys") || (param == "nbod") ) {
 	  DEBUG_OUTPUT(3, "Regenerating reference ensemble" );
-	  generate_ensemble(cfg,reference_ensemble);
+	  reference_ensemble = generate_ensemble(cfg);
   }
 
   DEBUG_OUTPUT(3, "Make a copy of ensemble" );
-  cpu_ensemble ens(reference_ensemble); // Make a copy of the CPU ensemble for comparison
+  defaultEnsemble ens = reference_ensemble.clone() ;
 
 
   // Start GPU timers for initialization
   swatch_init_gpu.start();
 
-  std::auto_ptr<integrator> integ_gpu(integrator::create(cfg));
-  cudaThreadSynchronize();  // Block until CUDA call completes
+  std::auto_ptr<gpu::integrator> integ_gpu((gpu::integrator*) integrator::create(cfg));
+  integ_gpu->set_ensemble(ens);
+  integ_gpu->set_duration ( duration );
+  integ_gpu->set_log_manager( logman );
+  SYNC;  // Block until CUDA call completes
   swatch_init_gpu.stop();   // Stop timer for cpu initialization
 
   DEBUG_OUTPUT(1, "Upload ensemble to GPU" );
-  cudaThreadSynchronize();   // Block until CUDA call completes
+  SYNC;   // Block until CUDA call completes
   swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
-  gpu_ensemble gpu_ens(ens); // Initialize GPU ensemble, incl. copying data from CPU
-  cudaThreadSynchronize();   // Block until CUDA call completes
+  integ_gpu->upload_ensemble();
+  SYNC;   // Block until CUDA call completes
   swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
-
-  DEBUG_OUTPUT(1, "Set-up integrator data structors" );
-  swatch_temps_gpu.start();  // Start timer for 0th step on GPU
-  integ_gpu->set_default_log();
-  integ_gpu->integrate(gpu_ens, 0.);  // a 0th step of dT=0 results in initialization of the integrator only
-  cudaThreadSynchronize();   // Block until CUDA call completes
-  swatch_temps_gpu.stop();   // Stop timer for 0th step on GPU
 
   DEBUG_OUTPUT(1, "Integrator ensemble on GPU" );
 
   swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
-  integ_gpu->integrate(gpu_ens, duration);  // Actually do the integration w/ GPU!			
-  cudaThreadSynchronize();  // Block until CUDA call completes
+  integ_gpu->launch_integrator();  // Actually do the integration w/ GPU!			
+  SYNC;  // Block until CUDA call completes
   swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
+
+  logman.flush();
 
   DEBUG_OUTPUT(1, "Download data to host" );
   swatch_download_gpu.start();  // Start timer for downloading data from GPU
-  ens.copy_from(gpu_ens);	// Download data from GPU to CPU		
-  cudaThreadSynchronize();      // Block until CUDA call completes
+  integ_gpu->download_ensemble();
+  SYNC;      // Block until CUDA call completes
   swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 
   DEBUG_OUTPUT(2, "Check energy conservation" );
@@ -152,15 +154,14 @@ int main(int argc,  char **argv)
 
 	// Default configuration
 	{
-		cfg["integrator"] = "hp_hermite"; // Set to use a GPU integrator
+		cfg["integrator"] = "hermite"; // Set to use a GPU integrator
 		cfg["runon"]      = "gpu";         // Set to runon GPU
 		cfg["time step"] = "0.0005";       // time step
 		cfg["precision"] = "1";
-		cfg["threads per block"] = "126";
-		cfg["duration"] =  "12.56";
+		cfg["duration"] = "31.41592";
 		cfg["nbod"] = "3";
 		cfg["nsys"] = "960";
-		cfg["blocksize"] = "126";
+		cfg["blocksize"] = "16";
 	}
 
 	if(vm.count("cfg")){
@@ -171,27 +172,25 @@ int main(int argc,  char **argv)
 	if( ( cfg["blocksize"] != "" )  && (cfg["threads per block"] == "" )) 
 		cfg["threads per block"] = cfg["blocksize"];
 
-	std::cout << "# Base configuration \n"
-		<< "# Integrator\t" << cfg["integrator"] << "\n"
-		<< "# Time step\t" << cfg["time step"] << "\n"
-		<< "# Min time step\t" << cfg["min time step"] << "\n"
-		<< "# Max time step\t" << cfg["max time step"] << "\n"
-		<< "# No. Systems\t" << cfg["nsys"] << "\n"
-		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
-		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
-		<< std::endl;
 
+	outputConfigSummary(std::cout,cfg);
 
 	//////////////////////// BENCHMARKING /////////////////////// 
 
 	// Initialize ensemble on host to be used with GPU integration.
-	cpu_ensemble ens;
+	defaultEnsemble ens;
 
 	DEBUG_OUTPUT(1,"Initialize swarm library ");
 	swarm::init(cfg);         // Initialize the library
 
+	DEBUG_OUTPUT(2,"Initialize logging system to null output ");
+	{
+		config logcfg; logcfg["log writer"] = "null";
+		logman.init(logcfg);
+	}
+
 	DEBUG_OUTPUT(1,"Generate initial conditions and save it into ensemble");
-	generate_ensemble(cfg,ens);
+	ens = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(1, "Column headers for CSV output ");
 	std::cout << "Parameter, Value, Energy Conservation Error,  Integration (ms),";

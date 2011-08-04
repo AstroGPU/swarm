@@ -1,9 +1,10 @@
 INCLUDE_DIRECTORIES(.)
 
-# Include all integrators
-ADD_SUBDIRECTORY(integrators)
-ADD_SUBDIRECTORY(propagators)
 
+# Include all plugins
+INCLUDE(plugins.cmake)
+#ADD_SUBDIRECTORY(integrators)
+#ADD_SUBDIRECTORY(propagators)
 
 # Build swarm
 CUDA_ADD_LIBRARY(swarm SHARED 
@@ -14,9 +15,7 @@ CUDA_ADD_LIBRARY(swarm SHARED
 	swarm/utilities.cpp swarm/io.cpp   swarm/logmanager.cpp
 	${SWARM_INTEGRATORS})
 
-SET(COMPILE_FLAGS /MP)
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-TARGET_LINK_LIBRARIES(swarm ${CUDA_CUDA_LIBRARY})
+
 
 
 # Build the command line utilities

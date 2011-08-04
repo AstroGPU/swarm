@@ -95,11 +95,9 @@ namespace swarm
 			}
 		} else {
 #if BOOST_VERSION  < 104200
-                        throw validation_error("invalid value");
+			throw validation_error("invalid value");
 #else
-                        throw validation_error(validation_error::invalid_option_value);
-                        //invalid_option_value iov("invalid value");
-                        //throw validation_error(iov);
+			throw validation_error(validation_error::invalid_option_value);
 #endif
 		}
 	}
@@ -149,32 +147,34 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	const swarm::body *bodies;
 	lr >> T >> sys >> flags >> nbod >> bodies;
 
+	size_t bufsize = 1000;
+	char buf[bufsize];
 	// arrays with Keplerian orbital elements of body's >=1
 	std::vector<double> a(nbod), e(nbod), i(nbod), w(nbod), O(nbod), M(nbod);
 
 	// coordinates of center for each orbit (changes per body in Jacobi)
 #if ASTROCENTRIC
 	const swarm::body &bstar = bodies[0];
-	double cx = bstar.x();
-	double cy = bstar.y();
-	double cz = bstar.z();
-	double cvx = bstar.vx();
-	double cvy = bstar.vy();
-	double cvz = bstar.vz();
-	double cmass = bstar.mass();
+	double cx = bstar.x;
+	double cy = bstar.y;
+	double cz = bstar.z;
+	double cvx = bstar.vx;
+	double cvy = bstar.vy;
+	double cvz = bstar.vz;
+	double cmass = bstar.mass;
 #else
 #if BARRYCENTRIC
 	double cx = 0., cy=0., cz=0., cvx=0., cvy=0., cvz=0., cmass=0.;
 	for(int bod = 0; bod != nbod; bod++)
 	{
-	  const swarm::body &b = bodies[bod];
-	  cx += b.mass()*b.x();
-	  cy += b.mass()*b.y();
-	  cz += b.mass()*b.z();
-	  cvx += b.mass()*b.vx();
-	  cvy += b.mass()*b.vy();
-	  cvz += b.mass()*b.vz();
-	  cmass += b.mass();
+		const swarm::body &b = bodies[bod];
+	  cx += b.mass*b.x;
+	  cy += b.mass*b.y;
+	  cz += b.mass*b.z;
+	  cvx += b.mass*b.vx;
+	  cvy += b.mass*b.vy;
+	  cvz += b.mass*b.vz;
+	  cmass += b.mass;
 	}
 	cx  /= cmass;
 	cy  /= cmass;
@@ -185,7 +185,7 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 #else
 #if JACOBI
 	double cx = 0., cy=0., cz=0., cvx=0., cvy=0., cvz=0.;
-	double cmass=bstar.mass();
+	double cmass=bstar.mass;
 #else
 	#error "You have to use some coordinate system!";
 #endif
@@ -197,39 +197,36 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	  double x, y, z, vx, vy, vz, mass;
 	  const swarm::body &b = bodies[bod];
 #if JACOBI
-	  cx += b.mass()*b.x();
-	  cy += b.mass()*b.y();
-	  cz += b.mass()*b.z();
-	  cvx += b.mass()*b.vx();
-	  cvy += b.mass()*b.vy();
-	  cvz += b.mass()*b.vz();
-	  cmass += b.mass();
+	  cx += b.mass*b.x;
+	  cy += b.mass*b.y;
+	  cz += b.mass*b.z;
+	  cvx += b.mass*b.vx;
+	  cvy += b.mass*b.vy;
+	  cvz += b.mass*b.vz;
+	  cmass += b.mass;
 
-	  y = b.x()-cx/cmass;
-	  y = b.y()-cy/cmass;
-	  z = b.z()-cz/cmass;
-	  vx = b.vx()-cx/cmass;
-	  vy = b.vy()-cy/cmass;
-	  vz = b.vz()-cz/cmass;
+	  y = b.x-cx/cmass;
+	  y = b.y-cy/cmass;
+	  z = b.z-cz/cmass;
+	  vx = b.vx-cx/cmass;
+	  vy = b.vy-cy/cmass;
+	  vz = b.vz-cz/cmass;
 #else
-	  x = b.x()-cx;
-	  y = b.y()-cy;
-	  z = b.z()-cz;
-	  vx = b.vx()-cvx;
-	  vy = b.vy()-cvy;
-	  vz = b.vz()-cvz;
-	  cmass = bstar.mass() + b.mass();
+	  x = b.x-cx;
+	  y = b.y-cy;
+	  z = b.z-cz;
+	  vx = b.vx-cvx;
+	  vy = b.vy-cvy;
+	  vz = b.vz-cvz;
+	  cmass = bstar.mass + b.mass;
 #endif
 	  calc_keplerian_for_cartesian(a[bod], e[bod], i[bod], O[bod], w[bod], M[bod], x, y, z, vx, vy, vz, cmass);
 
-          const double rad2deg = 180./M_PI;
+	  const double rad2deg = 180./M_PI;
 
-        size_t bufsize = 1000;
-        char buf[bufsize];
-	  snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), a[bod], e[bod], i[bod]*rad2deg, O[bod]*rad2deg, w[bod]*rad2deg, M[bod]*rad2deg, flags);
+	  if(bod != 0) { out << "\n"; }
+	  snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass, a[bod], e[bod], i[bod]*rad2deg, O[bod]*rad2deg, w[bod]*rad2deg, M[bod]*rad2deg, flags);
 	  out << buf;
-	  // don't write new line after last line
-	  if(bod<nbod-1)     out << "\n";
 	}
 	return out;
 }
@@ -244,7 +241,7 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 
         size_t bufsize = 1000;
         char buf[bufsize];
-	snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
+     snprintf(buf, bufsize, "%10d %g  %5d %5ld  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 	out << buf;
 
 	return out;

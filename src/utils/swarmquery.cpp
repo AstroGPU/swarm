@@ -94,7 +94,6 @@ namespace swarm
 #else
 			throw validation_error(validation_error::invalid_option_value);
 #endif
-
 		}
 	}
 
@@ -143,18 +142,13 @@ extern "C" std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &l
 	const swarm::body *bodies;
 	lr >> T >> sys >> flags >> nbod >> bodies;
 
-        size_t bufsize = 1000;
+	size_t bufsize = 1000;
 	char buf[bufsize];
 	for(int bod = 0; bod != nbod; bod++)
 	{
 		const swarm::body &b = bodies[bod];
-
 		if(bod != 0) { out << "\n"; }
-#if NEW
-			snprintf(buf, bufsize,"%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz(), flags);
-#else
-               snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
-#endif
+		snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f  %d", lr.msgid(), T, sys, bod, b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
 		out << buf;
 	}
 	return out;
@@ -170,11 +164,7 @@ extern "C" std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &l
 
         size_t bufsize = 1000;
         char buf[bufsize];
-#if NEW
-     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod(), b.mass(), b.x(), b.y(), b.z(), b.vx(), b.vy(), b.vz());
-#else
-     snprintf(buf, bufsize, "%10d %g  %5d %5d  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.m, b.x, b.y, b.z, b.vx, b.vy, b.vz);
-#endif
+     snprintf(buf, bufsize, "%10d %g  %5d %5ld  %g  % 9.5f % 9.5f % 9.5f  % 9.5f % 9.5f % 9.5f", lr.msgid(), T, sys, b.bod, b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz);
 	out << buf;
 
 	return out;
