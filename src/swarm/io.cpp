@@ -19,7 +19,7 @@
 #include "log.hpp"
 #include "io.hpp"
 #include "writer.h"
-#include "plugins.hpp"
+#include "plugin_manager.hpp"
 
 #include <iostream>
 #include <fstream>

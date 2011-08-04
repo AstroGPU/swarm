@@ -1,4 +1,4 @@
-#include "plugins.hpp"
+#include "plugin_manager.hpp"
 #include <map>
 #include <string>
 
@@ -38,5 +38,14 @@ vector<plugin*> get_all_plugins() {
 }
 
 
+plugin_help_message_t plugin_help_message;
+
+ostream& operator << (ostream& out, const plugin_help_message_t&){
+	vector<plugin*> ps = get_all_plugins();
+	out << "Found " << ps.size() << " plugins " << endl;
+	for(int i = 0; i < ps.size(); i++){
+		out << ps[i]->id() << "\t" << ps[i]->description() << endl;
+	}
+}
 
 }

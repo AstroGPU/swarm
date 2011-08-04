@@ -30,7 +30,7 @@
 #include "swarm.h"
 #include "writer.h"
 #include "io.hpp"
-#include "plugins.hpp"
+#include "plugin_manager.hpp"
 
 namespace swarm {
 

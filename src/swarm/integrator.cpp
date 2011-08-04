@@ -28,7 +28,7 @@
 #include <fstream>
 #include "integrator.hpp"
 #include "logmanager.hpp"
-#include "plugins.hpp"
+#include "plugin_manager.hpp"
 
 namespace swarm {
 

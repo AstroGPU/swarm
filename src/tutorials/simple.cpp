@@ -5,7 +5,7 @@
 #include "swarm/integrator.hpp"
 #include "swarm/snapshot.hpp"
 #include "swarm/logmanager.hpp"
-#include "swarm/plugins.hpp"
+#include "swarm/plugin_manager.hpp"
 #define SYNC cudaThreadSynchronize()
 
 using namespace swarm;
@@ -46,11 +46,7 @@ void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
 
 	if (vm.count("plugins")) {
-		vector<swarm::plugin*> ps = swarm::get_all_plugins();
-		cout << "Found " << ps.size() << " plugins " << endl;
-		for(int i = 0; i < ps.size(); i++){
-			cout << ps[i]->id() << "\t" << ps[i]->description() << endl;
-		}
+		cout << swarm::plugin_help_message;
 		exit(0);
 	}
 

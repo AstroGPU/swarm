@@ -1,5 +1,4 @@
 #include "config.hpp"
-#include <vector>
 
 namespace swarm {
 
@@ -9,20 +8,6 @@ struct plugin {
 	virtual std::string id() = 0;
 };
 
-void add_plugin(plugin* p);
-plugin* get_plugin(const std::string& name);
-void* instance_plugin(const std::string& name, const config& cfg);
-std::vector<plugin*> get_all_plugins();
-
-struct plugin_not_found : std::exception {
-	std::string _name;
-	plugin_not_found(std::string name) : _name(name) {}
-	virtual ~plugin_not_found() throw(){}
-
-	virtual const char * what() const throw() { 
-		return ("Plugin " + _name + " was not found ").c_str(); 
-	}
-};
 
 template<class T> 
 struct basic_plugin : public plugin {

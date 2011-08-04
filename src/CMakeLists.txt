@@ -6,7 +6,7 @@ INCLUDE(plugins.cmake)
 
 # Build swarm
 CUDA_ADD_LIBRARY(swarm SHARED 
-	swarm/plugins.cpp
+	swarm/plugin_manager.cpp
 	peyton/binarystream.cpp peyton/util.cpp 
 	peyton/memorymap.cpp peyton/fakemmap.cpp
 	swarm/snapshot.cpp swarm/integrator.cpp 
