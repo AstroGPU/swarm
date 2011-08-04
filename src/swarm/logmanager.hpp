@@ -18,8 +18,6 @@
 #pragma once
 #include "gpulog/gpulog.h"
 #include "gpulog/lprintf.h"
-//#include "peyton/binarystream.hpp"
-//#include "peyton/memorymap.hpp"
 #include "log.hpp"
 #include "writer.h"
 

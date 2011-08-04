@@ -31,7 +31,7 @@ class integrator;
 typedef integrator *(*integratorFactory_t)(const config &cfg);
 
 namespace log {
-	struct manager;
+	class manager;
 }
 
 class integrator {	

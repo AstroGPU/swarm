@@ -8,7 +8,7 @@
 #include <wchar.h>
 #include <io.h>
 #include <fcntl.h>
-int getpagesize() { return 4096; }
+inline int getpagesize() { return 4096; }
 #else
 #include <unistd.h>
 #endif

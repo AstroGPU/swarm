@@ -21,6 +21,8 @@ struct basic_plugin : public plugin {
 	virtual std::string description() { return _description; }
 };
 
+void add_plugin(plugin*);
+
 template<class T> 
 struct plugin_initializer {
 	T t;

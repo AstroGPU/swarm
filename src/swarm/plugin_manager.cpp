@@ -46,6 +46,7 @@ ostream& operator << (ostream& out, const plugin_help_message_t&){
 	for(int i = 0; i < ps.size(); i++){
 		out << ps[i]->id() << "\t" << ps[i]->description() << endl;
 	}
+	return out;
 }
 
 }

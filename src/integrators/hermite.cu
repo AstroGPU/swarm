@@ -137,24 +137,12 @@ class hermite: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed hermite gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_hermite_cross(const config &cfg)
-{
-	return new hermite< stop_on_crossing_orbit_or_close_approach >(cfg);
-}
-extern "C" integrator *create_hermite(const config &cfg)
-{
-	return new hermite< stop_on_ejection >(cfg);
-}
 
 integrator_plugin_initializer<hermite< stop_on_ejection > >
 	hermite_plugin("hermite");
+
+integrator_plugin_initializer<hermite<  stop_on_crossing_orbit_or_close_approach > >
+	hermite_cross_plugin("hermite_cross");
 
 }
 }

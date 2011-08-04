@@ -135,17 +135,6 @@ class verlet: public integrator {
 
 };
 
-/*!
- * \brief Factory to create double/single/mixed verlet gpu integrator based on precision
- *
- * @param[in] cfg configuration class
- *
- * @return        pointer to integrator cast to integrator*
- */
-extern "C" integrator *create_verlet(const config &cfg)
-{
-	return new verlet< stop_on_ejection>(cfg);
-}
 integrator_plugin_initializer<verlet< stop_on_ejection > >
 	verlet_plugin("verlet");
 

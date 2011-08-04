@@ -102,11 +102,6 @@ struct HermitePropagator {
 	}
 };
 
-extern "C" integrator *create_hermite_prop(const config &cfg)
-{
-	return new generic< HermitePropagator, stop_on_ejection >(cfg);
-}
-
 integrator_plugin_initializer< generic< HermitePropagator, stop_on_ejection > >
 	hermite_prop_plugin("hermite_prop"
 			,"This is the integrator based on hermite propagator");

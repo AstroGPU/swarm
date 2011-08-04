@@ -13,6 +13,7 @@ CUDA_ADD_LIBRARY(swarm SHARED
 	swarm/writer.cpp swarm/null_writer.cpp swarm/binary_writer.cpp 
 	swarm/utilities.cpp swarm/io.cpp swarm/logmanager.cpp
 	${SWARM_PLUGINS})
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 
 
