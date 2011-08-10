@@ -76,8 +76,8 @@ void launch_templatized_integrator(implementation* integ){
 
 	if(integ->get_ensemble().nbod() <= 3){
 		implementation* gpu_integ;
-		cudaMalloc(&gpu_integ,sizeof(implementation));
-		cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice);
+		cudaErrCheck ( cudaMalloc(&gpu_integ,sizeof(implementation)) );
+		cudaErrCheck ( cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice) );
 
 		launch_template(integ,gpu_integ,params_t<3>());
 

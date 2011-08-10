@@ -18,6 +18,8 @@ SET(CUDA_NVCC_FLAGS
 
 include(CMakeUserConfig.txt)
 
+SET(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda CACHE PATH "Path to CUDA SDK directory")
+
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)

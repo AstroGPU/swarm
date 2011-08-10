@@ -14,11 +14,12 @@ using namespace std;
 config default_config() {
 	config cfg;
 	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
-	cfg["time step"] = "0.0005";       // time step
+	cfg["time step"] = "0.001";       // time step
 	cfg["duration"] = "31.41592";
 	cfg["nbod"] = "3";
-	cfg["nsys"] = "960";
+	cfg["nsys"] = "16";
 	cfg["blocksize"] = "16";
+	cfg["log writer"] = "null";
 	return cfg;
 }
 

@@ -36,4 +36,7 @@ public:
 writer_plugin_initializer< null_writer >
 	null_writer_plugin("null", "This is the dummy writer");
 
+writer_plugin_initializer< null_writer >
+	default_writer_plugin("", "This is the dummy writer set as default writer plugin");
+
 }

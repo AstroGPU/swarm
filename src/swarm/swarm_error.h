@@ -23,6 +23,7 @@
 #pragma once
 #include <stdexcept>
 #include <string>
+#include <cuda_runtime_api.h>
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {
@@ -46,3 +47,19 @@ public:
         #define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
 #endif
 }
+
+struct cudaException : public std::runtime_error
+{
+	cudaException(cudaError err) : std::runtime_error( cudaGetErrorString(err) ) {}
+
+	static void check(cudaError err, const char *fun, const char *file, const int line) {
+		if(err != cudaSuccess)
+			throw cudaException(err);
+	}
+};
+/**
+ *	cudaErrCheck macro -- aborts with message if the enclosed call returns != cudaSuccess
+ */
+#define cudaErrCheck(expr) \
+	cudaException::check(expr, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+
