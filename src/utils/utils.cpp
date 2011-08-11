@@ -65,11 +65,8 @@ bool validate_configuration(config& cfg){
   int nbodyspersystem = atoi(cfg["nbod"].c_str());
   double dT = atof(cfg["duration"].c_str());
   int bs = atoi(cfg["blocksize"].c_str()) ;
-  int prec = atoi(cfg["precision"].c_str()) ;
-
 
   // Check that parameters from command line are ok
-  if(!((prec==1)||(prec==2)||(prec==3))) valid =false;
   if((bs<8)||(bs>512)) valid =false;
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
   if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
@@ -114,4 +111,17 @@ void parse_cmd(int argc, char* argv[], string& ifn, string& ofn){
 	ifn = vm["input"].as<string>();
 	ofn = vm["output"].as<string>();
 
+}
+config default_config() {
+	config cfg;
+	cfg["nsys"] = 16;
+	cfg["nbod"] = 3;
+	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+	cfg["time step"] = "0.001";       // time step
+	cfg["duration"] = "31.41592";
+	cfg["nbod"] = "3";
+	cfg["nsys"] = "16";
+	cfg["blocksize"] = "16";
+	cfg["log writer"] = "null";
+	return cfg;
 }

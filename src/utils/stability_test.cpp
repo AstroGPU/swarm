@@ -1,6 +1,7 @@
 /*************
- *  Author : Saleh Dindar
+ *  Author : Saleh Dindar <saleh@cise.ufl.edu>, (c) 2011
  *
+ * Copyright: See COPYING file that comes with this distribution
  *
  */
 #include <iostream>
@@ -116,19 +117,7 @@ int main(int argc,  char **argv)
 
 	if (vm.count("verbose") ) DEBUG_LEVEL = vm["verbose"].as<int>();
 
-	config cfg;
-
-	// Default configuration
-	{
-		cfg["integrator"] = "hermite"; // Set to use a GPU integrator
-		cfg["runon"]      = "gpu";         // Set to runon GPU
-		cfg["time step"] = "0.0005";       // time step
-		cfg["precision"] = "1";
-		cfg["duration"] = "31.41592";
-		cfg["nbod"] = "3";
-		cfg["nsys"] = "960";
-		cfg["blocksize"] = "16";
-	}
+	config cfg = default_config();
 
 	if(vm.count("cfg")){
 		std::string icfgfn =  vm["cfg"].as<std::string>();

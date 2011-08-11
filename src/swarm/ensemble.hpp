@@ -23,6 +23,7 @@
 #include <cassert>
 #include <math.h>
 #include "swarm_error.h"
+#include <boost/shared_ptr.hpp>
 
 namespace swarm {
 
@@ -146,23 +147,25 @@ class EnsembleBase {
 		return (nsys + WARPSIZE) / WARPSIZE ;
 	}
 
+	typedef CoalescedStructArray< Body, double, WARPSIZE> BodyArray;
+	typedef CoalescedStructArray< Sys, double, WARPSIZE> SysArray;
+	typedef typename BodyArray::PItem PBody;
+	typedef typename SysArray::PItem PSys;
+
 	protected:
 	int _nbod;
 	int _nsys;
-	CoalescedStructArray< Body, double, WARPSIZE> _body;
-	CoalescedStructArray< Sys, double, WARPSIZE> _sys;
+	BodyArray _body;
+	SysArray _sys;
 
 	public:
-	CoalescedStructArray< Body, double, WARPSIZE> &
-		bodies() { return _body; }
-	CoalescedStructArray< Sys, double, WARPSIZE> &
-		systems() { return _sys; }
+
 
 
 	public:
 	// Constructors
 	GENERIC EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
-	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,Body* body_array, Sys* sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
+	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,PBody body_array, PSys sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
 	~EnsembleBase() { 
 		// TODO: We need reference counting before using this:
 		// release();
@@ -170,6 +173,8 @@ class EnsembleBase {
 	// Accessors
 	GENERIC const int& nbod()const{ return _nbod;	}
 	GENERIC const int& nsys()const{ return _nsys;	}
+	BodyArray& bodies() { return _body; }
+	SysArray& systems() { return _sys; }
 
 
 	/** 
@@ -370,15 +375,16 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 	typedef _Allocator<Body> BodyAllocator;
 	typedef _Allocator<Sys> SysAllocator;
 
+	typedef boost::shared_ptr<Body> PBody;
+	typedef boost::shared_ptr<Sys> PSys;
+
 	EnsembleAlloc clone() {
-		Body* b = BodyAllocator::clone(Base::bodies().begin(),Base::bodies().end());
-		Sys* s = SysAllocator::clone(Base::systems().begin(),Base::systems().end());
-		return EnsembleAlloc(Base::nbod(),Base::nsys(),b,s);
+		return cloneTo<EnsembleAlloc>();
 	}
 
 	static EnsembleAlloc create(const int& nbod, const int& nsys) {
-		Body* b = BodyAllocator::alloc( Base::body_element_count(nbod,nsys) );
-		Sys* s = SysAllocator::alloc( Base::sys_element_count(nsys) );
+		PBody b ( BodyAllocator::alloc( Base::body_element_count(nbod,nsys) ), &BodyAllocator::free );
+		PSys s ( SysAllocator::alloc( Base::sys_element_count(nsys) ), &SysAllocator::free );
 		return EnsembleAlloc(nbod,nsys,b,s);
 	}
 
@@ -398,7 +404,12 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 
 	EnsembleAlloc(){}
 	private:
-	EnsembleAlloc(const int& nbod,const int& nsys, Body* b, Sys* s):Base(nbod,nsys,b,s){}
+	EnsembleAlloc(const int& nbod,const int& nsys, PBody b, PSys s):
+		Base(nbod,nsys,b.get(),s.get())
+		,_body(b),_sys(s){}
+
+	PSys _sys;
+	PBody _body;
 };
 
 typedef EnsembleBase< ENSEMBLE_WARPSIZE > ensemble;

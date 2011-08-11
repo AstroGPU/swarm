@@ -11,18 +11,6 @@
 using namespace swarm;
 using namespace std;
 
-config default_config() {
-	config cfg;
-	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
-	cfg["time step"] = "0.001";       // time step
-	cfg["duration"] = "31.41592";
-	cfg["nbod"] = "3";
-	cfg["nsys"] = "16";
-	cfg["blocksize"] = "16";
-	cfg["log writer"] = "null";
-	return cfg;
-}
-
 void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 	namespace po = boost::program_options;
 	po::positional_options_description pos;
@@ -85,23 +73,15 @@ int main(int argc, char* argv[]){
 
 	// Initialize Swarm
 	swarm::init(cfg);
-	swarm::log::manager logman;
-	logman.init(cfg);
 
 	// Initialize Integrator
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	// TODO: detect gpu integrators
-	{
-		swarm::gpu::integrator* integ_gpu = (swarm::gpu::integrator*) integ.get();
-		integ_gpu->set_log(logman.get_gpulog());
-	}
 	integ->set_ensemble(ens);
 	integ->set_duration ( duration  );
 	SYNC;
 
 	// Integrate
 	integ->integrate();
-	logman.flush();
 	SYNC;
 
 	/// Energy conservation error

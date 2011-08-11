@@ -40,6 +40,8 @@ namespace swarm { namespace log {
 		gpulog::device_log* get_gpulog() { return pdlog; }
 		gpulog::host_log* get_hostlog() { return &hlog; }
 
+		static manager& default_log();
+
 	};
 
 }}

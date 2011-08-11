@@ -1,7 +1,6 @@
 /*************
- *  Author : Saleh Dindar <saleh@cise.ufl.edu>, (c) 2011
+ *  Author : Saleh Dindar
  *
- * Copyright: See COPYING file that comes with this distribution
  *
  */
 #include <iostream>
@@ -23,14 +22,15 @@ swarm::log::manager logman;
 void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string& param, const string& value) {
 	cfg[param] = value;
 	if(!validate_configuration(cfg) ) {
-		DEBUG_OUTPUT(0, "Invalid configuration");
+		std::cerr << "Invalid configuration" << std::endl;
 		return;
 	}
 
   double duration = atof(cfg["duration"].c_str());
 
   // performance stopwatches
-  stopwatch swatch_init, swatch_integrate, swatch_all;
+  stopwatch swatch_kernel_gpu, swatch_upload_gpu, swatch_download_gpu, swatch_temps_gpu, swatch_init_gpu;
+  stopwatch swatch_all;
 
   swatch_all.start(); // Start timer for entire program
   srand(42u);    // Seed random number generator, so output is reproducible
@@ -44,44 +44,51 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
   DEBUG_OUTPUT(3, "Make a copy of ensemble" );
   defaultEnsemble ens = reference_ensemble.clone() ;
 
-  std::auto_ptr<integrator> integ;
 
-  DEBUG_OUTPUT(3, "Intitialize ensemble " );
-  // Calculate initialize time
-  swatch_init.start();
-	{
-		integ.reset( integrator::create(cfg) );
-		integ->set_ensemble(ens);
-		integ->set_duration ( duration );
-		integ->set_log_manager( logman );
-		SYNC;  // Block until CUDA call completes
-	}
-  swatch_init.stop(); 
+  // Start GPU timers for initialization
+  swatch_init_gpu.start();
 
-  DEBUG_OUTPUT(1, "Integrator ensemble " );
+  std::auto_ptr<gpu::integrator> integ_gpu((gpu::integrator*) integrator::create(cfg));
+  integ_gpu->set_ensemble(ens);
+  integ_gpu->set_duration ( duration );
+  integ_gpu->set_log_manager( logman );
+  SYNC;  // Block until CUDA call completes
+  swatch_init_gpu.stop();   // Stop timer for cpu initialization
 
-  swatch_integrate.start(); // Start timer for GPU integration kernel
-  {
-	  integ->integrate();  // Actually do the integration w/ GPU!			
-	  SYNC;  // Block until CUDA call completes
-  }
-  swatch_integrate.stop(); // Stop timer for GPU integration kernel  
+  DEBUG_OUTPUT(1, "Upload ensemble to GPU" );
+  SYNC;   // Block until CUDA call completes
+  swatch_upload_gpu.start(); // Start timer for copyg initial conditions to GPU
+  integ_gpu->upload_ensemble();
+  SYNC;   // Block until CUDA call completes
+  swatch_upload_gpu.stop();  // Stop timer for copyg initial conditions to GPU
+
+  DEBUG_OUTPUT(1, "Integrator ensemble on GPU" );
+
+  swatch_kernel_gpu.start(); // Start timer for GPU integration kernel
+  integ_gpu->launch_integrator();  // Actually do the integration w/ GPU!			
+  SYNC;  // Block until CUDA call completes
+  swatch_kernel_gpu.stop(); // Stop timer for GPU integration kernel  
 
   logman.flush();
 
+  DEBUG_OUTPUT(1, "Download data to host" );
+  swatch_download_gpu.start();  // Start timer for downloading data from GPU
+  integ_gpu->download_ensemble();
+  SYNC;      // Block until CUDA call completes
+  swatch_download_gpu.stop();   // Stop timer for downloading data from GPU
 
   DEBUG_OUTPUT(2, "Check energy conservation" );
   double max_deltaE = find_max_energy_conservation_error(ens, reference_ensemble );
-
-  swatch_all.stop();
 
   /// CSV output for use in spreadsheet software 
   std::cout << param << ", ";
   std::cout << value << ",     ";
   std::cout << max_deltaE << ",    " ;
-  std::cout << swatch_integrate.getTime()*1000. << ",    ";
-  std::cout << swatch_init.getTime()*1000. << ", ";
-  std::cout << swatch_all.getTime()*1000. << ", ";
+  std::cout << swatch_kernel_gpu.getTime()*1000. << ",    ";
+  std::cout << swatch_temps_gpu.getTime()*1000. << ", ";
+  std::cout << swatch_init_gpu.getTime()*1000. << ", ";
+  std::cout << swatch_upload_gpu.getTime()*1000. << ", ";
+  std::cout << swatch_download_gpu.getTime()*1000. << ", ";
   std::cout << std::endl;
 
 }
@@ -148,6 +155,7 @@ int main(int argc,  char **argv)
 	// Default configuration
 	{
 		cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+		cfg["runon"]      = "gpu";         // Set to runon GPU
 		cfg["time step"] = "0.0005";       // time step
 		cfg["precision"] = "1";
 		cfg["duration"] = "31.41592";
@@ -185,8 +193,9 @@ int main(int argc,  char **argv)
 	ens = generate_ensemble(cfg);
 
 	DEBUG_OUTPUT(1, "Column headers for CSV output ");
-	std::cout << "Parameter, Value, Energy Conservation Error"
-			     ", Integration (ms), Integrator initialize (ms), Overall (ms) \n";
+	std::cout << "Parameter, Value, Energy Conservation Error,  Integration (ms),";
+	std::cout << " Integrator initialize (ms), Initialize (ms), GPU upload (ms), Download from GPU (ms)";
+	std::cout << std::endl;
 
 	if((vm.count("parameter") > 0) && (vm.count("value") > 0)) {
 
