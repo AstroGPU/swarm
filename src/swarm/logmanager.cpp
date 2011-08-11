@@ -37,6 +37,15 @@ extern "C" void debug_hook()
 	std::cerr << "";
 }
 
+swarm::log::manager& swarm::log::manager::default_log() {
+	static swarm::log::manager default_manager;
+	static bool is_initialized = false;
+	if( !is_initialized ){
+		config cfg; cfg["log writer"] = "null";
+		default_manager.init(cfg);
+	}
+	return default_manager;
+}
 
 void swarm::log::manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
 {

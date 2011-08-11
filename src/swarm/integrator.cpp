@@ -39,6 +39,15 @@ namespace swarm {
 		set_log(l.get_gpulog());
 	}
 
+	integrator::integrator(const config &cfg){
+		set_log_manager(log::manager::default_log());
+	}
+
+	gpu::integrator::integrator(const config &cfg)
+		: Base(cfg), _hens(Base::_ens) {
+		set_log_manager(log::manager::default_log());
+	}
+
 /*!
    \brief Integrator instantiation support
 

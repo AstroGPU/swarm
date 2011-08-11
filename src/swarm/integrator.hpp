@@ -41,7 +41,7 @@ class integrator {
 	gpulog::host_log* _log;
 
 	public:
-	integrator(const config &cfg){}
+	integrator(const config &cfg);
 	virtual void integrate() = 0 ;
 
 	virtual defaultEnsemble& get_ensemble() {
@@ -75,7 +75,7 @@ class integrator : public swarm::integrator {
 
 	public: 
 
-	integrator(const config &cfg): Base(cfg), _hens(Base::_ens) {}
+	integrator(const config &cfg);
 
 	void integrate() {
 		upload_ensemble();

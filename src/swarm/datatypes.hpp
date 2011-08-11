@@ -18,8 +18,13 @@
 
 #pragma once
 
+#ifdef __CUDACC__
 #define GENERIC inline __device__ __host__
 #define GPUAPI inline __device__
+#else
+#define GENERIC inline
+#define GPUAPI inline 
+#endif 
 
 
 namespace swarm {
@@ -31,18 +36,23 @@ namespace swarm {
  */
 template<class Item, typename _Scalar = typename Item::scalar_t, int _WARPSIZE = Item::WARPSIZE >
 struct CoalescedStructArray {
-	Item * _array;
-	size_t _block_count;
+public:
 	static const int WARPSIZE = _WARPSIZE;
+	typedef Item* PItem;
 	typedef _Scalar scalar_t;
 
+private:
+	PItem _array;
+	size_t _block_count;
+
+public:
 	GENERIC CoalescedStructArray () {};
-	GENERIC CoalescedStructArray(Item * array, size_t block_count)
+	GENERIC CoalescedStructArray(PItem array, size_t block_count)
 		:_array(array),_block_count(block_count){}
 	GENERIC Item& operator[] ( const int & i ) {
 		size_t block_idx = i / WARPSIZE;
 		size_t idx = i % WARPSIZE;
-		scalar_t * blockaddr = (scalar_t*) (_array + block_idx);
+		scalar_t * blockaddr = (scalar_t*) (get() + block_idx);
 		return * (Item *) ( blockaddr + idx );
 	}
 	GENERIC int block_count()const{
@@ -56,11 +66,11 @@ struct CoalescedStructArray {
 	}
 
 	GENERIC Item * begin() {
-		return _array;
+		return get();
 	}
 
 	GENERIC Item * end() {
-		return _array + _block_count;
+		return get() + _block_count;
 	}
 };
 

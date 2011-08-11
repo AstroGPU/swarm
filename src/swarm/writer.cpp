@@ -21,13 +21,12 @@
  *
 */
 
-#include <cuda_runtime_api.h>
+#include "common.hpp"
 #include <vector>
 #include <algorithm> // for swap
 #include <memory>
 #include <iostream>
 #include <fstream>
-#include "swarm.h"
 #include "writer.h"
 #include "io.hpp"
 #include "plugin_manager.hpp"

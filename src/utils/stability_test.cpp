@@ -1,6 +1,7 @@
 /*************
- *  Author : Saleh Dindar
+ *  Author : Saleh Dindar <saleh@cise.ufl.edu>, (c) 2011
  *
+ * Copyright: See COPYING file that comes with this distribution
  *
  */
 #include <iostream>

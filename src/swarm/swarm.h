@@ -31,13 +31,16 @@
 #include "config.hpp"
 #include "utilities.hpp"
 #include "integrator.hpp"
+#include "logmanager.hpp"
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {
 
 /* Initialize the swarm library.  This function must be called before
  * any other */
-inline void init(const config &cfg) { }
+inline void init(const config &cfg) { 
+	swarm::log::manager::default_log().init(cfg);
+}
 
 
 } // end namespace swarm
