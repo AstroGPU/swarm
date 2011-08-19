@@ -28,7 +28,7 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 MACRO(SWARM_ADD_EXECUTABLE target)
 	ADD_EXECUTABLE(${target} ${ARGN})
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-	TARGET_LINK_LIBRARIES(${target} swarm ${Boost_LIBRARIES})
+	TARGET_LINK_LIBRARIES(${target} swarmng ${Boost_LIBRARIES})
 ENDMACRO(SWARM_ADD_EXECUTABLE target)
 
 # add a target to generate API documentation with Doxygen

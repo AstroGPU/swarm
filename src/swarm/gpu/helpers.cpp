@@ -16,49 +16,21 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file integrator.cpp
- *  \brief class integrator
+/*! \file utilities.cpp
+ *  \brief provides several utility  functions for public interface for swarm libaray
  *
 */
 
-#include "common.hpp"
-#include <vector>
-#include <algorithm> // for swap
-#include <memory>
-#include <iostream>
-#include <fstream>
-#include "writer.h"
-#include "io.hpp"
-#include "plugin_manager.hpp"
+#include "../common.hpp"
+#include "../types/coalescedstructarray.hpp"
+#include "helpers.hpp"
+//
+// Utilities
+//
+
 
 namespace swarm {
 
-/*!
-   \brief Writer instantiation support
 
-  @param[in] cfg configuration class
-  @return writer
-*/
 
-/* Must use factory class to dynamically load integrator subclass
- * instead of using constructor. Done so that users can define their
- * own writers that the swarm code does not need to know about at
- * compile time
- */
-
-writer *writer::create(const config& cfg)
-{
-        std::auto_ptr<writer> w;
-
-		std::string name = cfg.at("log writer");
-		std::string plugin_name = "writer_" + name;
-
-		try {
-			w.reset( (writer*) (get_plugin(plugin_name)->create(cfg)) );
-		}catch(plugin_not_found& e){
-			ERROR("Log writer " + name + " not found.");
-		}
-
-        return w.release();
-}
 }

@@ -1,8 +1,6 @@
-#include "plugin_manager.hpp"
-#include <map>
-#include <string>
+#include "common.hpp"
+#include "plugin.hpp"
 
-#include <iostream>
 using namespace std;
 
 namespace swarm {
@@ -15,21 +13,21 @@ plugins_map_t& plugins_map() {
 	return pmap;
 }
 
-void add_plugin(plugin* p){
+void plugin::add(plugin* p){
 	plugins_map()[p->id()] = p;
 }
 
-plugin* get_plugin(const std::string& name){
+plugin* plugin::find(const std::string& name){
 	plugin* p = plugins_map()[name];
 	if(p==0)
 		throw plugin_not_found(name);
 	return p;
 }
-void* instance_plugin(const std::string& name,const config& cfg){
-	return get_plugin(name)->create(cfg);
+void* plugin::instance(const std::string& name,const config& cfg){
+	return plugin::find(name)->create(cfg);
 }
 
-vector<plugin*> get_all_plugins() {
+vector<plugin*> plugin::all() {
 	vector<plugin*> v;
 	for(plugins_map_t::iterator i = plugins_map().begin(); i != plugins_map().end(); i++) {
 		v.push_back(i->second);
@@ -38,10 +36,10 @@ vector<plugin*> get_all_plugins() {
 }
 
 
-plugin_help_message_t plugin_help_message;
+plugin::help_t plugin::help;
 
-ostream& operator << (ostream& out, const plugin_help_message_t&){
-	vector<plugin*> ps = get_all_plugins();
+ostream& operator << (ostream& out, const plugin::help_t&){
+	vector<plugin*> ps = plugin::all();
 	out << "Found " << ps.size() << " plugins " << endl;
 	for(int i = 0; i < ps.size(); i++){
 		out << ps[i]->id() << "\t" << ps[i]->description() << endl;

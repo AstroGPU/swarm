@@ -27,6 +27,17 @@ namespace gpulog
 	namespace internal
 	{
 
+#ifdef __CUDACC__
+		__device__ static inline int global_atomicAdd(int *x, int add) {
+			return atomicAdd(x,add);
+		}
+#else
+		__host__ static inline int global_atomicAdd(int *x, int add) {
+			assert(0); // this must not be called from host code.
+			return 0;
+		}
+#endif
+
 	// device internals encapsulation for log_base<> template
 	struct dev_internals
 	{
@@ -65,18 +76,15 @@ namespace gpulog
 		#endif
 		}
 
-                #ifdef __CUDACC__
-		__device__ static inline int atomicAdd(int *x, int add)
-                #else
-                __host__ static inline int atomicAdd(int *x, int add)
-                #endif
-		{
-		#ifdef __CUDACC__
-			return ::atomicAdd(x, add);
-		#else
-			assert(0); // this must not be called from host code.
-		#endif
+#ifdef __CUDACC__
+        __device__ static inline int atomicAdd(int *x, int add) {
+			return global_atomicAdd(x, add);
 		}
+#else
+        __host__ static inline int atomicAdd(int *x, int add) {
+			return global_atomicAdd(x, add);
+		}
+#endif
 	};
 
 	// host internals encapsulation for log_base<> template

@@ -18,11 +18,9 @@
 
 #pragma once
 
-#include <cuda_runtime_api.h>
-#include "datatypes.hpp"
-#include "ensemble.hpp"
-#include "config.hpp"
-#include "log.hpp"
+#include "types/ensemble.hpp"
+#include "types/config.hpp"
+#include "log/log.hpp"
 
 
 namespace swarm {

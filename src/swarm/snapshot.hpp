@@ -17,11 +17,9 @@
  ************************************************************************/
 #pragma once
 
-#include "ensemble.hpp"
+#include "common.hpp"
+#include "types/ensemble.hpp"
 
-#include <string>
-#include <exception>
-using std::exception;
 using std::string;
 
 namespace swarm {
@@ -42,8 +40,8 @@ class snapshot {
 	};
 
 	public:
-	struct readfileexception : public exception {};
-	struct writefileexception : public exception {};
+	struct readfileexception : public std::exception {};
+	struct writefileexception : public std::exception {};
 
 	static defaultEnsemble load(const string& filename) throw (readfileexception);
 	static defaultEnsemble load_text(const string& filename) throw (readfileexception);

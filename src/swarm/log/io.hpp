@@ -6,15 +6,12 @@
 #ifndef swarmio_h__
 #define swarmio_h__
 
-#include "swarm.h"
-#include "log.hpp"
-#include "peyton/binarystream.hpp"
-#include "peyton/memorymap.hpp"
+#include "../peyton/binarystream.hpp"
+#include "../peyton/memorymap.hpp"
 
-#include <fstream>
-#include <sstream>
-#include <limits>
 #include "fileformat.hpp"
+#include "log.hpp"
+
 namespace swarm {
 
 	extern struct range_special { } ALL;

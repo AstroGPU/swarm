@@ -23,11 +23,12 @@
 
 #pragma once
 
+#include "../common.hpp"
+
 #include "gpulog/gpulog.h"
 #include "gpulog/lprintf.h"
-#include "common.hpp"
-#include "datatypes.hpp"
-#include "ensemble.hpp"
+
+#include "../types/ensemble.hpp"
 
 namespace swarm
 {

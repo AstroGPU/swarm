@@ -11,29 +11,13 @@
 //
 
 /*! \file io.cpp
- *  \brief declares swarm_header, null_writer, binary_writer
+ *  \brief declares swarm_header
  *
 */
 
-
-#include "log.hpp"
+#include "../common.hpp"
 #include "io.hpp"
-#include "writer.h"
-#include "plugin_manager.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <memory>
-#include <limits>
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
-
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-#include "fileformat.hpp"
 
 swarm::range_special swarm::ALL;
 swarm::range_MIN swarm::MIN;

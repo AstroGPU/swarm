@@ -21,7 +21,7 @@
  *
 */
 #pragma once
-#include "config.hpp"
+#include "../types/config.hpp"
 
 /// The main namespace for the Swarm-NG library
 namespace swarm {

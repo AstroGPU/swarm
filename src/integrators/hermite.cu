@@ -16,11 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "swarm/bppt.hpp"
-#include "swarm/helpers.hpp"
-#include "swarm/gravitation.hpp"
-#include "stoppers/stop_on_ejection.hpp"
-#include "stoppers/stop_on_crossing_orbit_or_close_approach.hpp"
+#include "swarm/common.hpp"
+#include "swarm/gpu/bppt.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "monitors/stop_on_crossing_orbit_or_close_approach.hpp"
 
 
 namespace swarm {
@@ -39,8 +38,7 @@ class hermite: public integrator {
 
 	public:
 	hermite(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator hermite requires a timestep ('time step' keyword in the config file).");
-		_time_step = atof(cfg.at("time step").c_str());
+		_time_step =  cfg.require("time step", 0.0);
 	}
 
 	virtual void launch_integrator() {

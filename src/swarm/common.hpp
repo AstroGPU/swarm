@@ -22,32 +22,64 @@
 */
 #pragma once
 
-#include <stdexcept>
-#include <string>
-#include <cstring>
-#include <map>
+// Standard C++ Library
 #include <cassert>
 #include <cmath>
-#include <vector>
+#include <stdint.h>
+#include <cstring>
+#include <cstdio>
 
+// STL
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <stdexcept>
+#include <map>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <limits>
+#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
+#include <sstream>
+#include <valarray>
+#endif
+
+// Boost Libraries
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+
+// CUDA libraries
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <cux/cux.h>
 
-#ifdef THROW_IS_ABORT
-	#include <cassert>
-	#include <cstring>
-        #include <cstdio>
+
+// POSIX headers
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+
+//
+// Struct alignment is handled differently between the CUDA compiler and other
+// compilers (e.g. GCC, MS Visual C++ .NET)
+//
+#ifdef __CUDACC__
+	#define ALIGN(x)  __align__(x)
+#else
+	#if defined(_MSC_VER) && (_MSC_VER >= 1300)
+		// Visual C++ .NET and later
+		#define ALIGN(x) __declspec(align(x))
+	#else
+		#if defined(__GNUC__)
+			// GCC
+			#define ALIGN(x)  __attribute__ ((aligned (x)))
+		#else
+		// all other compilers
+			#define ALIGN(x)
+		#endif
+	#endif
 #endif
 
-#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
-	#include <sstream>
-        #include <valarray>
-#endif
-
-#define CUDADEVICETOUSE 1
-
-#include <iostream>
 #define $$(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " |> " << (x) << std::endl)
 #define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
 #define $$$ (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " @@ " << std::endl)

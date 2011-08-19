@@ -17,9 +17,6 @@
  ************************************************************************/
 
 #include "bppt.hpp"
-#include "helpers.hpp"
-#include "gravitation.hpp"
-#include "log.hpp"
 
 
 namespace swarm {

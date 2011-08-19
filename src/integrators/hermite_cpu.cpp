@@ -15,6 +15,7 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#include "swarm/common.hpp"
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
 
@@ -29,8 +30,7 @@ class hermite_cpu : public integrator {
 
 	public:
 	hermite_cpu(const config& cfg): base(cfg),_time_step(0.001) {
-		if(!cfg.count("time step")) ERROR("Integrator hermite_cpu requires a timestep ('time step' keyword in the config file).");
-		_time_step = atof(cfg.at("time step").c_str());
+		_time_step =  cfg.require("time step", 0.0);
 	}
 
 	virtual void integrate() {

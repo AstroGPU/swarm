@@ -17,7 +17,6 @@
  ************************************************************************/
 
 #include "snapshot.hpp"
-#include <stdio.h>
 
 namespace swarm {
 

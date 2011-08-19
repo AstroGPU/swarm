@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -15,33 +15,45 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#pragma once
-#include "gpulog/gpulog.h"
-#include "gpulog/lprintf.h"
-#include "log.hpp"
+
+/*! \file integrator.cpp
+ *  \brief class integrator
+ *
+*/
+
+#include "../common.hpp"
+#include "../plugin.hpp"
+
 #include "writer.h"
 
-#include <boost/shared_ptr.hpp>
+namespace swarm {
 
-namespace swarm { namespace log {
+/*!
+   \brief Writer instantiation support
 
-	class manager {
-		gpulog::host_log hlog;
-		gpulog::device_log* pdlog;
-		std::auto_ptr<writer> log_writer;
-		public:
+  @param[in] cfg configuration class
+  @return writer
+*/
 
-		enum { memory = 0x01, if_full = 0x02 };
+/* Must use factory class to dynamically load integrator subclass
+ * instead of using constructor. Done so that users can define their
+ * own writers that the swarm code does not need to know about at
+ * compile time
+ */
 
-		void init(const config&, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
-		void flush(int flags = memory);
-		void shutdown();
+writer *writer::create(const config& cfg)
+{
+        std::auto_ptr<writer> w;
 
-		gpulog::device_log* get_gpulog() { return pdlog; }
-		gpulog::host_log* get_hostlog() { return &hlog; }
+		std::string name = cfg.at("log writer");
+		std::string plugin_name = "writer_" + name;
 
-		static manager& default_log();
+		try {
+			w.reset( (writer*) (plugin::instance(plugin_name,cfg)) );
+		}catch(plugin_not_found& e){
+			ERROR("Log writer " + name + " not found.");
+		}
 
-	};
-
-}}
+        return w.release();
+}
+}

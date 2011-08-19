@@ -19,11 +19,7 @@
 #pragma once
 
 #include "allocators.hpp"
-#include "datatypes.hpp"
-#include <cassert>
-#include <math.h>
-#include "swarm_error.h"
-#include <boost/shared_ptr.hpp>
+#include "coalescedstructarray.hpp"
 
 namespace swarm {
 

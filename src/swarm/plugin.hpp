@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "types/config.hpp"
 
 namespace swarm {
 
@@ -6,6 +6,15 @@ struct plugin {
 	virtual void* create(const config& cfg) = 0;
 	virtual std::string description() { return ""; }
 	virtual std::string id() = 0;
+
+	static void    add(plugin* p);
+	static plugin* find(const std::string& name);
+	static void*   instance(const std::string& name, const config& cfg);
+	static std::vector<plugin*> all();
+
+	struct help_t{};
+	static help_t help;
+
 };
 
 
@@ -21,13 +30,11 @@ struct basic_plugin : public plugin {
 	virtual std::string description() { return _description; }
 };
 
-void add_plugin(plugin*);
-
 template<class T> 
 struct plugin_initializer {
 	T t;
 	plugin_initializer() {
-		add_plugin(&t);
+		plugin::add(&t);
 	}
 };
 
@@ -38,7 +45,7 @@ struct basic_plugin_initializer {
 	basic_plugin_initializer(const std::string& id
 			, const std::string& description = std::string() ) 
 		: t(id,description) {
-		add_plugin(&t);
+			plugin::add(&t);
 	}
 };
 
@@ -56,5 +63,17 @@ struct writer_plugin_initializer : public basic_plugin_initializer<T> {
 			, const std::string& description = std::string() ) 
 		: basic_plugin_initializer<T>("writer_" + id,description) {}
 };
+
+struct plugin_not_found : std::exception {
+	std::string _name;
+	plugin_not_found(std::string name) : _name(name) {}
+	virtual ~plugin_not_found() throw(){}
+
+	virtual const char * what() const throw() { 
+		return ("Plugin " + _name + " was not found ").c_str(); 
+	}
+};
+
+std::ostream& operator << (std::ostream&, const plugin::help_t&);
 
 }

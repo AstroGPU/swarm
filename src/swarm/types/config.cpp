@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2008-2011 by Saleh Dindar & Swarm-NG Development Team   *
+ * Copyright (C) 2008-2010 by Mario Juric & Swarm-NG Development Team    *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -16,24 +16,55 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file utilities.cpp
+/*! \file config.cpp
  *  \brief provides several utility  functions for public interface for swarm libaray
  *
 */
-#pragma once
 
+#include "../common.hpp"
+#include "../peyton/util.hpp"
 
-#include <cuda_runtime_api.h>
 #include "config.hpp"
-#include "common.hpp"
+//
+// Utilities
+//
+using peyton::util::trim;
 
 
 namespace swarm {
 
-	bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock);
 
 
-	void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks);
+/*!
+   \brief  load a configuration file
 
-	void load_config(config &cfg, const std::string &fn);
+   @param[out] cfg configuration class
+   @param[in] fn file name sting
+ */
+config config::load(const std::string &fn)
+{
+	config cfg;
+	std::ifstream in(fn.c_str());
+	if(!in) ERROR("Cannot open configuration file '" + fn + "'.");
+
+	std::string line;
+	int iline = 0;
+	while(std::getline(in, line))
+	{
+		iline++;
+		line = trim(line);
+		if(line.empty()) { continue; }
+		if(line[0] == '#') { continue; }
+
+		size_t eqpos = line.find('=');
+		if(eqpos == std::string::npos) ERROR("Error on line " + line + ": '=' sign expected.");
+
+		std::string key = trim(line.substr(0, eqpos)), val = trim(line.substr(eqpos+1));
+
+		cfg[key] = val;
+	}
+	return cfg;
+}
+
+
 }

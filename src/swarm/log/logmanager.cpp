@@ -23,13 +23,6 @@
 
 #include "logmanager.hpp"
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <memory>
-#include <limits>
-#include <boost/shared_ptr.hpp>
-
 extern "C" void debug_hook()
 {
 	// a hook into which to place a breakpoint when the debugger

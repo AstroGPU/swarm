@@ -18,10 +18,6 @@
 
 #pragma once
 
-#include <cuda_runtime_api.h>
-#include <algorithm>
-
-
 template< class T >
 struct DefaultAllocator {
 	typedef T Elem;

@@ -18,16 +18,20 @@
 
 #pragma once
 
-#include "integrator.hpp"
-#include "utilities.hpp"
-#include "plugin.hpp"
+#include "../integrator.hpp"
+#include "../log/log.hpp"
+#include "../plugin.hpp"
+
+static const int SHMEM_WARPSIZE = 16;
+
+#include "helpers.hpp"
+#include "gravitation.hpp"
 
 
 namespace swarm {
 namespace gpu {
 namespace bppt {
 
-static const int SHMEM_WARPSIZE = 16;
 
 inline __device__ int sysid(){
 	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;

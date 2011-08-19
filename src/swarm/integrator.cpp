@@ -21,14 +21,10 @@
  *
 */
 
-#include <cuda_runtime_api.h>
-#include <algorithm> // for swap
-#include <memory>
-#include <iostream>
-#include <fstream>
+#include "common.hpp"
 #include "integrator.hpp"
-#include "logmanager.hpp"
-#include "plugin_manager.hpp"
+#include "log/logmanager.hpp"
+#include "plugin.hpp"
 
 namespace swarm {
 
@@ -69,7 +65,7 @@ integrator *integrator::create(const config &cfg)
         std::string plugin_name = "integrator_" + name;
 
 		try {
-			integ.reset( (integrator*) instance_plugin(plugin_name,cfg) );
+			integ.reset( (integrator*) plugin::instance(plugin_name,cfg) );
 		}catch(plugin_not_found& e){
 			ERROR("Integrator " + name + " not found.");
 		}
