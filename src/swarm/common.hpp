@@ -59,6 +59,8 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include "swarm/runtime_error.hpp"
+
 //
 // Struct alignment is handled differently between the CUDA compiler and other
 // compilers (e.g. GCC, MS Visual C++ .NET)
@@ -83,5 +85,5 @@
 #define $$(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " |> " << (x) << std::endl)
 #define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
 #define $$$ (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " @@ " << std::endl)
+#define SYNC cudaThreadSynchronize()
 
-#include "swarm/runtime_error.hpp"

@@ -56,7 +56,7 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
 		integ->set_log_manager( logman );
 		SYNC;  // Block until CUDA call completes
 	}
-  swatch_init.stop(); 
+  swatch_init.start();
 
   DEBUG_OUTPUT(1, "Integrator ensemble " );
 
@@ -65,7 +65,7 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
 	  integ->integrate();  // Actually do the integration w/ GPU!			
 	  SYNC;  // Block until CUDA call completes
   }
-  swatch_integrate.stop(); // Stop timer for GPU integration kernel  
+  swatch_integrate.start(); // Start timer for GPU integration kernel
 
   logman.flush();
 
@@ -76,13 +76,13 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
   swatch_all.stop();
 
   /// CSV output for use in spreadsheet software 
-  std::cout << param << ", ";
-  std::cout << value << ",     ";
-  std::cout << max_deltaE << ",    " ;
-  std::cout << swatch_integrate.getTime()*1000. << ",    ";
-  std::cout << swatch_init.getTime()*1000. << ", ";
-  std::cout << swatch_all.getTime()*1000. << ", ";
-  std::cout << std::endl;
+  std::cout << param << ", "
+            << value << ",     "
+            << max_deltaE << ",    " 
+            << swatch_integrate.getTime()*1000. << ",    "
+            << swatch_init.getTime()*1000. << ", "
+            << swatch_all.getTime()*1000. 
+            << std::endl;
 
 }
 

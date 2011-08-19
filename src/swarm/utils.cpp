@@ -63,14 +63,12 @@ bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
   int nsystems = cfg.require("nsys",0);
   int nbodypersystem = cfg.require("nbod",0);
-  double dT = cfg.require("destination time",0);
   int bs = cfg.optional("block size",16);
 
   // Check that parameters from command line are ok
   if((bs<8)||(bs>32)) valid =false;
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
   if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
-  if(!(dT>0.)||!(dT<=2.*M_PI*1000000.+1.)) valid = false;
 
   return valid;
 }
@@ -93,7 +91,6 @@ config default_config() {
 	cfg["nbod"] = 3;
 	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
 	cfg["time step"] = "0.001";       // time step
-	cfg["destination time"] = "31.41592";
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
 	cfg["blocksize"] = "16";
@@ -101,5 +98,8 @@ config default_config() {
 	return cfg;
 }
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
-	return o << r.average << "[" << (r.min-r.average) << "," << (r.max-r.average) << "] ";
+	if(r.min-r.max < 1e-11) 
+		return o << r.average;
+	else
+		return o << r.average << "[" << (r.min-r.average) << "," << (r.max-r.average) << "] ";
 }

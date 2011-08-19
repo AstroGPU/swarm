@@ -128,4 +128,14 @@ private:
 	}
 };
 
+template< class T >
+double watch_time(const T& a){
+	stopwatch s;
+	s.start();
+	a();
+	SYNC;
+	s.stop();
+	return s.getTime()*1000.;
+}
+
 #endif // stopwatch_h__

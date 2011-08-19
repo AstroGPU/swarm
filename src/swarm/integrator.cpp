@@ -62,6 +62,7 @@ namespace swarm {
 	}
 
 	void integrator::integrate() {
+		activate_all_systems(_ens);
 		for(int i = 0; i < _max_attempts; i++){
 			launch_integrator();
 			if( number_of_active_systems(_ens) == 0 )

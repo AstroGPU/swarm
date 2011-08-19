@@ -20,7 +20,7 @@ namespace swarm {
 		static bool valid_value(const std::string& v, double) {
 			double d = 0;
 			int r = sscanf(v.c_str(),"%lg", &d);
-			return r;
+			return r == 1;
 		}
 		static double parse(const std::string& v, double) {
 			double d = 0;
@@ -30,7 +30,7 @@ namespace swarm {
 		static bool valid_value(const std::string& v, int) {
 			int d = 0;
 			int r = sscanf(v.c_str(),"%i", &d);
-			return r;
+			return r == 1;
 		}
 		static int parse(const std::string& v, int) {
 			int d = 0;
