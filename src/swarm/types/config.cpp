@@ -41,9 +41,8 @@ namespace swarm {
    @param[out] cfg configuration class
    @param[in] fn file name sting
  */
-config config::load(const std::string &fn)
+config config::load(const std::string &fn, config cfg)
 {
-	config cfg;
 	std::ifstream in(fn.c_str());
 	if(!in) ERROR("Cannot open configuration file '" + fn + "'.");
 

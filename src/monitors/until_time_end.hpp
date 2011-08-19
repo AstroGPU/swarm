@@ -22,45 +22,36 @@
 namespace swarm {
 
 
-struct stop_on_ejection_params {
-	double rmax_squared;
-	stop_on_ejection_params(const config &cfg)
+struct until_time_end_params {
+	double time_end;
+	until_time_end_params(const config &cfg)
 	{
-		double rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
-		rmax_squared = rmax * rmax;
+		time_end = cfg.require("time end", 0.0);
 	}
 };
 
 template<class log_t>
-class stop_on_ejection {
+class until_time_end {
 	public:
-	typedef stop_on_ejection_params params;
+	typedef until_time_end_params params;
 
 	private:
 	params _params;
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-	int _counter;
 
 	public:
 
 	GPUAPI bool operator () () { 
-		for(int b = 1 ; b < _sys.nbod(); b ++ ){
-			if(_sys.distance_squared_between(b,0) > _params.rmax_squared )
-				return true;
-		}
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-
-		_counter++;
-
-		return false; 
+		return _sys.time() > _params.time_end; 
 	}
 
-	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_params(p),_sys(s),_log(l),_counter(0){}
+	GPUAPI until_time_end(const params& p,ensemble::SystemRef& s,log_t& l)
+		:_params(p),_sys(s),_log(l){}
 	
 };
 
 }
+
+

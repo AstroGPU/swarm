@@ -18,23 +18,28 @@
 #include "swarm/common.hpp"
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
+#include "monitors/until_time_end.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "monitors/combine.hpp"
 
 
 namespace swarm {
 
+template< template<class L> class Monitor >
 class hermite_cpu : public integrator {
 	typedef integrator base;
+	typedef Monitor<gpulog::host_log> monitor_t;
+	typedef typename monitor_t::params mon_params_t;
 	private:
 	double _time_step;
-	int _iteration_count;
+	mon_params_t _mon_params;
 
 	public:
-	hermite_cpu(const config& cfg): base(cfg),_time_step(0.001) {
+	hermite_cpu(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time step", 0.0);
 	}
 
-	virtual void integrate() {
-		_iteration_count = _destination_time / _time_step;
+	virtual void launch_integrator() {
 		for(int i = 0; i < _ens.nsys(); i++){
 			integrate_system(_ens[i]);
 		}
@@ -96,7 +101,9 @@ class hermite_cpu : public integrator {
 
 		calcForces(sys,acc0,jerk0);
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+		monitor_t montest (_mon_params,sys,*_log);
+
+		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
 			double h = _time_step;
 
 			// Predict
@@ -145,12 +152,14 @@ class hermite_cpu : public integrator {
 				acc0[b][c] = acc1[b][c], jerk0[b][c] = jerk1[b][c];
 			
 			sys.time() += h;
+
+			sys.active() = (! montest()) && (sys.time() < _destination_time );
 		}
 	}
 };
 
 
-integrator_plugin_initializer< hermite_cpu >
+integrator_plugin_initializer< hermite_cpu< stop_on_ejection > >
 	hermite_cpu_plugin("hermite_cpu");
 
 }

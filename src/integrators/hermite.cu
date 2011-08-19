@@ -19,7 +19,6 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
-#include "monitors/stop_on_crossing_orbit_or_close_approach.hpp"
 
 
 namespace swarm {
@@ -27,22 +26,21 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< template<class L> class Stopper >
+template< template<class L> class Monitor >
 class hermite: public integrator {
 	typedef integrator base;
-	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
+	typedef Monitor<gpulog::device_log> monitor_t;
+	typedef typename monitor_t::params mon_params_t;
 	private:
 	double _time_step;
-	int _iteration_count;
-	stop_params_t _stop_params;
+	mon_params_t _mon_params;
 
 	public:
-	hermite(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg) {
+	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time step", 0.0);
 	}
 
 	virtual void launch_integrator() {
-		_iteration_count = _destination_time / _time_step;
 		launch_templatized_integrator(this);
 	}
 
@@ -68,7 +66,7 @@ class hermite: public integrator {
 
 
 		// local variables
-		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
+		monitor_t montest(_mon_params,sys,*_log) ;
 
 
 		// local information per component per body
@@ -82,7 +80,7 @@ class hermite: public integrator {
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
 			double h = _time_step;
 			// can't use this one because t might go past t_end
 			// double h = min(_time_step, t_end - t);
@@ -123,7 +121,7 @@ class hermite: public integrator {
 				sys.time() += h;
 
 			if( first_thread_in_system ) 
-				sys.active() = ! stoptest() ;
+			sys.active() = (! montest()) && (sys.time() < _destination_time );
 
 			__syncthreads();
 
@@ -139,8 +137,6 @@ class hermite: public integrator {
 integrator_plugin_initializer<hermite< stop_on_ejection > >
 	hermite_plugin("hermite");
 
-integrator_plugin_initializer<hermite<  stop_on_crossing_orbit_or_close_approach > >
-	hermite_cross_plugin("hermite_cross");
 
 }
 }

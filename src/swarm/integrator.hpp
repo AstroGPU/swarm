@@ -37,10 +37,16 @@ class integrator {
 	defaultEnsemble _ens;
 	double _destination_time;
 	gpulog::host_log* _log;
+	const static int _default_max_iterations;
+	const static int _default_max_attempts;
+	int _max_iterations;
+	int _max_attempts;
 
 	public:
 	integrator(const config &cfg);
-	virtual void integrate() = 0 ;
+	virtual void launch_integrator() = 0 ;
+
+	virtual void integrate();
 
 	virtual defaultEnsemble& get_ensemble() {
 		return _ens;
@@ -50,8 +56,8 @@ class integrator {
 		_ens = ens;
 	}
 
-	virtual void set_duration(const double& duration) {
-		_destination_time = duration;
+	virtual void set_destination_time(const double& destination_time) {
+		_destination_time = destination_time;
 	}
 	static integrator* create(const config &cfg);
 
@@ -75,11 +81,7 @@ class integrator : public swarm::integrator {
 
 	integrator(const config &cfg);
 
-	void integrate() {
-		upload_ensemble();
-		launch_integrator();
-		download_ensemble();
-	}
+	virtual void integrate();
 
 	virtual void set_log_manager(log::manager& l);
 
@@ -97,8 +99,6 @@ class integrator : public swarm::integrator {
 	void download_ensemble() {
 		_dens.copyTo( _hens );
 	}
-
-	virtual void launch_integrator() = 0;
 
 	virtual dim3 gridDim() = 0;
 	virtual dim3 threadDim() = 0;

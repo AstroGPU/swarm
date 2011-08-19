@@ -16,11 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-#include "swarm/bppt.hpp"
-#include "swarm/helpers.hpp"
-#include "swarm/gravitation.hpp"
-
-
+#include "swarm/common.hpp"
+#include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
 
 
@@ -39,19 +36,20 @@ struct AdaptiveTimeStep {
 	const static bool conditional_accept_step = true;
 };
 
-template< class AdaptationStyle, template<class L> class Stopper >
+template< class AdaptationStyle, template<class L> class Monitor >
 class rkck: public integrator {
 	typedef integrator base;
-	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
+	typedef  Monitor<gpulog::device_log> monitor_t;
+	typedef  typename monitor_t::params mon_params_t;
 	private:
 	double _min_time_step;
 	double _max_time_step;
 	double _error_tolerance;
 	int _iteration_count;
-	stop_params_t _stop_params;
+	mon_params_t _mon_params;
 
 	public:
-	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _stop_params(cfg) {
+	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _mon_params(cfg) {
 		if(!cfg.count("min time step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
 		_min_time_step = atof(cfg.at("min time step").c_str());
 		if(!cfg.count("max time step")) ERROR("Integrator rkck requires a max timestep ('max time step' keyword in the config file).");
@@ -105,7 +103,7 @@ class rkck: public integrator {
 
 
 		// local variables
-		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
+		monitor_t montest(_mon_params,sys,*_log) ;
 
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
@@ -258,7 +256,7 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system ) 
-					sys.active() = ! stoptest() ;
+					sys.active() = (! montest()) && (sys.time() < _destination_time );
 			}
 
 			__syncthreads();

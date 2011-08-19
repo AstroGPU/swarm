@@ -25,8 +25,12 @@
 #include "integrator.hpp"
 #include "log/logmanager.hpp"
 #include "plugin.hpp"
+#include "gpu/utilities.hpp"
 
 namespace swarm {
+
+	const int integrator::_default_max_iterations = 100000;
+	const int integrator::_default_max_attempts = 100;
 
 	void integrator::set_log_manager(log::manager& l){
 		_log = l.get_hostlog();
@@ -37,12 +41,45 @@ namespace swarm {
 
 	integrator::integrator(const config &cfg){
 		set_log_manager(log::manager::default_log());
+		_max_iterations = cfg.optional("max iterations", _default_max_iterations );
+		_max_attempts = cfg.optional("max attempts", _default_max_attempts );
 	}
 
 	gpu::integrator::integrator(const config &cfg)
 		: Base(cfg), _hens(Base::_ens) {
 		set_log_manager(log::manager::default_log());
 	}
+
+	int number_of_active_systems(defaultEnsemble ens) {
+		int count_running = 0;
+		for(int i = 0; i < ens.nsys() ; i++)
+			if( ens[i].active() ) count_running++;
+		return count_running;
+	}
+	void activate_all_systems(defaultEnsemble ens) {
+		for(int i = 0; i < ens.nsys() ; i++)
+			ens[i].active() = true;
+	}
+
+	void integrator::integrate() {
+		for(int i = 0; i < _max_attempts; i++){
+			launch_integrator();
+			if( number_of_active_systems(_ens) == 0 )
+				break;
+		}
+	};
+
+	void gpu::integrator::integrate() {
+		activate_all_systems(_ens);
+		upload_ensemble();
+		for(int i = 0; i < _max_attempts; i++){
+			launch_integrator();
+			if( number_of_active_systems(_dens) == 0 )
+				break;
+		}
+		download_ensemble();
+	};
+
 
 /*!
    \brief Integrator instantiation support

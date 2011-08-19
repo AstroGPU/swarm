@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file swarm_error.h
+/*! \file runtime_error.h
  *   \brief Declares swarm error class
  *
 */
@@ -34,23 +34,23 @@ namespace swarm {
         Throw an instance of this class to indicate an unrecoverable error
         was encountered. Do not throw it directly, but through the use of ERROR() macro.
 */
-class swarm_error : public std::runtime_error
+class runtime_error : public std::runtime_error
 {
 public:
-        swarm_error(const std::string &msg) : std::runtime_error(msg) {}
-        virtual ~swarm_error() throw() {};
+        runtime_error(const std::string &msg) : std::runtime_error(msg) {}
+        virtual ~runtime_error() throw() {};
 };
 
 #ifndef THROW_IS_ABORT
-        #define ERROR(msg) throw swarm::swarm_error(msg);
+        #define ERROR(msg) throw swarm::runtime_error(msg);
 #else
         #define ERROR(msg) { fprintf(stderr, "%s\n", std::string(msg).c_str()); abort(); }
 #endif
 }
 
-struct cudaException : public std::runtime_error
+struct cudaException : public swarm::runtime_error
 {
-	cudaException(cudaError err) : std::runtime_error( cudaGetErrorString(err) ) {}
+	cudaException(cudaError err) : swarm::runtime_error( cudaGetErrorString(err) ) {}
 
 	static void check(cudaError err, const char *fun, const char *file, const int line) {
 		if(err != cudaSuccess)

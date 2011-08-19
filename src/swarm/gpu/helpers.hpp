@@ -48,8 +48,6 @@ B choose(int n, P x){
 
 namespace swarm {
 
-template<class N>
-GENERIC N sqr(const N& x) { return x*x; }
 
 template<int i>
 struct params_t {
@@ -88,73 +86,6 @@ void launch_templatized_integrator(implementation* integ){
 
 }
 
-
-/*!
-   \brief Find best factorization
-
-   Find the dimensions (bx,by) of a 2D grid of blocks that has as close to nblocks blocks as possible
-  @param[out] bx
-  @param[out] by
-  @param[in] nblocks
-*/
-inline void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
-{
-        bx = -1;
-        int best_r = 100000;
-        for(int bytmp = 1; bytmp != 65536; bytmp++)
-        {
-                int r  = nblocks % bytmp;
-                if(r < best_r && nblocks / bytmp < 65535)
-                {
-                        by = bytmp;
-                        bx = nblocks / bytmp;
-                        best_r = r;
-
-                        if(r == 0) { break; }
-                        bx++;
-                }
-        }
-        if(bx == -1) { std::cerr << "Unfactorizable?!\n"; exit(-1); }
-}
-
-/*!
-   \brief Configur grid
-
-   Given a total number of threads, their memory requirements, and the
-   number of threadsPerBlock, compute the optimal allowable grid dimensions.
-   Returns false if the requested number of threads are impossible to fit to
-   shared memory.
-
-  @param[out] gridDim
-  @param[in] threadsPerBlock
-  @param[in] nthreads
-  @param[in] dynShmemPerThread
-  @param[in] staticShmemPerBlcok
-  @return boolean
- */
-inline bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock)
-{
-        const int shmemPerMP =  16384;
-
-        int dyn_shared_mem_required = dynShmemPerThread*threadsPerBlock;
-        int shared_mem_required = staticShmemPerBlock + dyn_shared_mem_required;
-        if(shared_mem_required > shmemPerMP) { return false; }
-
-        // calculate the total number of threads
-        int nthreadsEx = nthreads;
-        int over = nthreads % threadsPerBlock;
-        if(over) { nthreadsEx += threadsPerBlock - over; } // round up to multiple of threadsPerBlock
-
-        // calculate the number of blocks
-        int nblocks = nthreadsEx / threadsPerBlock;
-        if(nthreadsEx % threadsPerBlock) { nblocks++; }
-
-        // calculate block dimensions so that there are as close to nblocks blocks as possible
-        find_best_factorization(gridDim.x, gridDim.y, nblocks);
-        gridDim.z = 1;
-
-        return true;
-}
 
 	
 }

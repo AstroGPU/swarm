@@ -11,9 +11,8 @@ using namespace swarm;
 using std::string;
 
 swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
-	double duration = atof(cfg["duration"].c_str());
-	int nsys = atoi(cfg["nsys"].c_str());
-	int nbod = atoi(cfg["nbod"].c_str());
+	int nsys = cfg.require("nsys",0);
+	int nbod = cfg.require("nbod",0);
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
 
@@ -62,22 +61,24 @@ double find_max_energy_conservation_error(ensemble& ens, ensemble& reference_ens
 
 bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
-  int nsystems = atoi(cfg["nsys"].c_str());
-  int nbodyspersystem = atoi(cfg["nbod"].c_str());
-  double dT = atof(cfg["duration"].c_str());
-  int bs = atoi(cfg["blocksize"].c_str()) ;
+  int nsystems = cfg.require("nsys",0);
+  int nbodypersystem = cfg.require("nbod",0);
+  double dT = cfg.require("destination time",0);
+  int bs = cfg.optional("block size",16);
 
   // Check that parameters from command line are ok
-  if((bs<8)||(bs>512)) valid =false;
+  if((bs<8)||(bs>32)) valid =false;
   if(!(nsystems>=1)||!(nsystems<=32720)) valid = false;
-  if(!(nbodyspersystem>=3)||!(nbodyspersystem<=10)) valid = false;
+  if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
   if(!(dT>0.)||!(dT<=2.*M_PI*1000000.+1.)) valid = false;
 
   return valid;
 }
+
 void outputConfigSummary(std::ostream& o,swarm::config& cfg) {
 	o << "# Integrator:\t" << cfg["integrator"] << "\n"
 		<< "# Time step\t" << cfg["time step"] << "\n"
+		<< "# Destination time\t" << cfg["destination time"] << "\n"
 		<< "# Min time step\t" << cfg["min time step"] << "\n"
 		<< "# Max time step\t" << cfg["max time step"] << "\n"
 		<< "# No. Systems\t" << cfg["nsys"] << "\n"
@@ -92,10 +93,13 @@ config default_config() {
 	cfg["nbod"] = 3;
 	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
 	cfg["time step"] = "0.001";       // time step
-	cfg["duration"] = "31.41592";
+	cfg["destination time"] = "31.41592";
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
 	cfg["blocksize"] = "16";
 	cfg["log writer"] = "null";
 	return cfg;
+}
+std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
+	return o << r.average << "[" << (r.min-r.average) << "," << (r.max-r.average) << "] ";
 }

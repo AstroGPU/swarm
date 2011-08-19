@@ -84,4 +84,4 @@
 #define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
 #define $$$ (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " @@ " << std::endl)
 
-#include "swarm/swarm_error.h"
+#include "swarm/runtime_error.hpp"

@@ -28,8 +28,7 @@ namespace bppt {
 struct HermitePropagatorParams {
 	double time_step;
 	HermitePropagatorParams(const config& cfg){
-		if(!cfg.count("time step")) ERROR("Integrator gpu_hermite requires a timestep ('time step' keyword in the config file).");
-		time_step = atof(cfg.at("time step").c_str());
+		time_step = cfg.require("time step", 0.0);
 	}
 };
 
@@ -63,6 +62,10 @@ struct HermitePropagator {
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 	}
+
+	GPUAPI void shutdown() {
+	}
+
 	GPUAPI void advance(){
 		double h = _params.time_step;
 		double pos = 0, vel = 0;

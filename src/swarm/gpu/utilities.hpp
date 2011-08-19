@@ -15,52 +15,38 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#pragma once
 
-#include <limits>
+#pragma once
+#include "../types/ensemble.hpp"
 
 namespace swarm {
 
+int number_of_active_systems(deviceEnsemble ens);
 
-struct stop_on_ejection_params {
-	double rmax_squared;
-	stop_on_ejection_params(const config &cfg)
-	{
-		double rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
-		rmax_squared = rmax * rmax;
-	}
-};
+/*!
+   \brief Find best factorization
 
-template<class log_t>
-class stop_on_ejection {
-	public:
-	typedef stop_on_ejection_params params;
+   Find the dimensions (bx,by) of a 2D grid of blocks that has as close to nblocks blocks as possible
+  @param[out] bx
+  @param[out] by
+  @param[in] nblocks
+*/
+void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks);
 
-	private:
-	params _params;
+/*!
+   \brief Configur grid
 
-	ensemble::SystemRef& _sys;
-	log_t& _log;
-	int _counter;
+   Given a total number of threads, their memory requirements, and the
+   number of threadsPerBlock, compute the optimal allowable grid dimensions.
+   Returns false if the requested number of threads are impossible to fit to
+   shared memory.
 
-	public:
-
-	GPUAPI bool operator () () { 
-		for(int b = 1 ; b < _sys.nbod(); b ++ ){
-			if(_sys.distance_squared_between(b,0) > _params.rmax_squared )
-				return true;
-		}
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-
-		_counter++;
-
-		return false; 
-	}
-
-	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_params(p),_sys(s),_log(l),_counter(0){}
-	
-};
-
+  @param[out] gridDim
+  @param[in] threadsPerBlock
+  @param[in] nthreads
+  @param[in] dynShmemPerThread
+  @param[in] staticShmemPerBlcok
+  @return boolean
+ */
+bool configure_grid(dim3 &gridDim, int threadsPerBlock, int nthreads, int dynShmemPerThread, int staticShmemPerBlock);
 }

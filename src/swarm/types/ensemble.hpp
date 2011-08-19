@@ -23,6 +23,9 @@
 
 namespace swarm {
 
+template<class N>
+GENERIC N sqr(const N& x) { return x*x; }
+
 const int ENSEMBLE_WARPSIZE = 16;
 
 typedef long double_int;
@@ -358,6 +361,27 @@ class EnsembleBase {
 	GENERIC void calc_total_energy(double* E) const {
 		for (int sys = 0; sys != nsys(); sys++)
 			E[sys] = calc_total_energy(sys);
+	}
+
+	struct range_t {
+		double average, min, max;
+		range_t(const double& a,const double& m, const double& M)
+			:average(a),min(m),max(M){}
+	};
+
+	GENERIC range_t time_ranges() const {
+		double time = operator[](0).time();
+		double min = time;
+		double max = time;
+		double sum = time;
+		for(int i= 1; i < nsys(); i++) {
+			double time = operator[](i).time();
+			if( time < min ) min = time;
+			if( time > max ) max = time;
+			sum += time;
+		}
+		return range_t(sum/nsys(),min,max);
+
 	}
 
 };

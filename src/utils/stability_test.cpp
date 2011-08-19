@@ -15,7 +15,6 @@ using namespace swarm;
 using namespace std;
 
 int DEBUG_LEVEL  = 0;
-const int LOGARITHMIC_BASE = 2;
 
 #define SYNC cudaThreadSynchronize()
 

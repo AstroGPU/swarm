@@ -15,7 +15,7 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-
+#include "../common.hpp"
 #include "bppt.hpp"
 
 
@@ -27,16 +27,17 @@ namespace bppt {
 template< template<class T> class Propagator, template<class L> class Stopper >
 class generic: public integrator {
 	typedef integrator base;
-	typedef  typename Stopper<gpulog::device_log>::params stop_params_t;
+	typedef Monitor<gpulog::device_log> monitor_t;
+	typedef typename monitor_t::params mon_params_t;
 	typedef  typename Propagator< params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
-	stop_params_t _stop_params;
+	mon_params_t _mon_params;
 	prop_params_t _prop_params;
 
 	public:
-	generic(const config& cfg): base(cfg),_time_step(0.001), _stop_params(cfg),_prop_params(cfg) {
+	generic(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg),_prop_params(cfg) {
 		if(!cfg.count("time step")) ERROR("Integrator gpu_generic requires a timestep ('time step' keyword in the config file).");
 		_time_step = atof(cfg.at("time step").c_str());
 	}
@@ -68,7 +69,7 @@ class generic: public integrator {
 
 
 		// local variables
-		Stopper<gpulog::device_log> stoptest(_stop_params,sys,*_log) ;
+		monitor_t montest(_mon_params,sys,*_log) ;
 		Propagator<T> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;
@@ -79,17 +80,21 @@ class generic: public integrator {
 		////////// INTEGRATION //////////////////////
 		//
 		prop.init();
+		__syncthreads();
 
 
 		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
 
 			prop.advance();
+			__syncthreads();
 
 			if( first_thread_in_system ) 
-				sys.active() = ! stoptest() ;
+				sys.active() = (! montest()) && (sys.time() < _destination_time );
 
 			__syncthreads();
 		}
+
+		prop.shutdown();
 
 	}
 

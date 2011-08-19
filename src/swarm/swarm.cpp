@@ -17,9 +17,6 @@ void run_integration(config& cfg){
 		ERROR( "Invalid configuration" );
 	}
 
-	double duration = cfg.optional("duration", 10 * M_PI );
-	double interval = cfg.optional("interval", duration / 10 ) ; 
-	double logarithmic = cfg.optional("logarithmic", 0 ) ; 
 
 	DEBUG_OUTPUT(1,"Initialize swarm library ");
 	swarm::init(cfg);
@@ -27,21 +24,31 @@ void run_integration(config& cfg){
 	// Load/Generate the ensemble
 	defaultEnsemble ref;
 	if(cfg.valid("input") ) {
-		DEBUG_OUTPUT(0,"Lading initial conditions from " << cfg["input"] );
+		cout << "Lading initial conditions from " << cfg["input"];
 		ref = swarm::snapshot::load(cfg["input"]);	
+		cout << "\n\t time = " << ref.time_ranges() << endl;
+		
 	}else{
-		DEBUG_OUTPUT(0,"Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"]);
+		cout << "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl;
 		ref = generate_ensemble(cfg);
 	}
 
 	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
 	defaultEnsemble ens = ref.clone();
+	
+	double begin_time = ens.time_ranges().average;
+	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
+	double interval = cfg.optional("interval", (destination_time-begin_time) / 10 ) ; 
+	double logarithmic = cfg.optional("logarithmic", 0 ) ; 
+	if(destination_time < begin_time ) ERROR("Destination time should be larger than begin time");
+	if(interval < 0) ERROR("Interval cannot be negative");
+	if(interval < 0.001) ERROR("Interval too small");
+	if(logarithmic != 0 && logarithmic <= 1) ERROR("logarithm base should be greater than 1");
 
 
 	// Initialize Integrator
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
 	integ->set_ensemble(ens);
-	integ->set_duration ( duration  );
 	SYNC;
 
 	std::cout << "Time, Energy Conservation Error " << std::endl;
@@ -50,12 +57,15 @@ void run_integration(config& cfg){
 	stopwatch swatch_all;
 	swatch_all.start(); // Start timer for entire program
 
-	for(double time = 0; time < duration ; ) {
+	for(double time = begin_time; time < destination_time; ) {
 
-		if((logarithmic > 1) && (time > 0)) interval = time * (logarithmic - 1);
+		if(logarithmic > 1)
+			time = (time > 0) ? time * logarithmic : interval;
+		else
+			time += interval;
 
-		double step_size = min(interval, duration - time );
-		integ->set_duration ( step_size  );
+		double effective_time = min(time,destination_time);
+		integ->set_destination_time ( effective_time );
 
 		DEBUG_OUTPUT(2, "Integrator ensemble" );
 		integ->integrate();
@@ -63,9 +73,7 @@ void run_integration(config& cfg){
 		SYNC;
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, ref );
-		std::cout << time << ", " << max_deltaE << std::endl;
-
-		time += step_size;
+		std::cout << effective_time << ", " << max_deltaE << std::endl;
 
 	}
 
@@ -74,7 +82,8 @@ void run_integration(config& cfg){
 
 	// Save the ensemble
 	if(cfg.valid("output")) {
-		cout << "Saving to " << cfg["output"] << endl;
+		cout << "Saving to " << cfg["output"];
+		cout << "\n\t time = " << ens.time_ranges() << endl;
 		swarm::snapshot::save(ens,cfg["output"]);	
 	}
 
@@ -90,7 +99,9 @@ void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 	po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
 
 	desc.add_options()
-		("duration,d", po::value<std::string>() , "Duration of the integration")
+		("destination time,d", po::value<std::string>() , "Destination time to achieve")
+		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
+		("interval,n", po::value<std::string>() , "Energy test intervals")
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>(), "Output file")
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
@@ -115,11 +126,11 @@ void parse_commandline_and_config(int argc, char* argv[], config& cfg){
 
 	if(vm.count("cfg")){
 		std::string icfgfn =  vm["cfg"].as<std::string>();
-		cfg = config::load(icfgfn);
+		cfg = config::load(icfgfn, cfg);
 	}
 
-	const int cmd_to_config_len = 3;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "duration" };
+	const int cmd_to_config_len = 5;
+	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "destination time", "logarithmic", "interval" };
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();

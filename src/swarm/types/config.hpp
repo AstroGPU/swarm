@@ -1,5 +1,5 @@
 #pragma once
-#include "../swarm_error.h"
+#include <stdexcept>
 
 namespace swarm {
 
@@ -9,7 +9,7 @@ namespace swarm {
 
 	class config : public std::map<std::string, std::string> {
 	public:
-		static config load(const std::string &fn);
+		static config load(const std::string &fn,config cfg = config() );
 
 		static bool valid_value(const std::string& v, std::string) {
 			return v.size() > 0;
@@ -53,9 +53,8 @@ namespace swarm {
 				return default_value;
 		}
 		template<typename T> T require(const std::string& key, const T&  = T() )const{
-			std::string value = at(key);
-			if( count(key) && valid_value(value,T()) )
-				return parse(value,T());
+			if( count(key) && valid_value(at(key),T()) )
+				return parse(at(key),T());
 			else
 				throw key_not_found(key);
 		}
@@ -66,15 +65,15 @@ namespace swarm {
 
 NOTE: heavy (unoptimized) function, use sparingly
 */
-	template<typename T>
+/*	template<typename T>
 		void get_config(T &val, const config &cfg, const std::string &key)
 		{
-			if(!cfg.count(key)) { ERROR("Configuration key '" + key + "' missing."); }
+			if(!cfg.count(key)) { throw key_not_found(key); }
 #ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
 			std::istringstream ss(cfg.at(key));
 			ss >> val;
 #endif
-		}
+		}*/
 
 }
 
