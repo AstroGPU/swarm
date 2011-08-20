@@ -103,3 +103,34 @@ std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
 	else
 		return o << r.average << "[" << (r.min-r.average) << "," << (r.max-r.average) << "] ";
 }
+
+bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_diff, double & vel_diff, double & time_diff ) {
+	if (e1.nsys() != e2.nsys() || e1.nbod() != e2.nbod() ) return false;
+
+	pos_diff = vel_diff = time_diff = 0;
+
+	for(int i = 0; i < e1.nsys(); i++) {
+		for(int j = 0; j < e1.nbod() ; j++){
+
+			double dp = sqrt( 
+					  sqr ( e1[i][j][0].pos() - e2[i][j][0].pos() ) 
+					+ sqr ( e1[i][j][1].pos() - e2[i][j][1].pos() ) 
+					+ sqr ( e1[i][j][2].pos() - e2[i][j][2].pos() ) ) ;
+
+			double dv = sqrt( 
+					  sqr ( e1[i][j][0].vel() - e2[i][j][0].vel() ) 
+					+ sqr ( e1[i][j][1].vel() - e2[i][j][1].vel() ) 
+					+ sqr ( e1[i][j][2].vel() - e2[i][j][2].vel() ) ) ;
+
+			if ( dp > pos_diff ) pos_diff = dp;
+			if ( dv > vel_diff ) vel_diff = dv;
+
+		}
+
+		double dt = fabs(e1[i].time() - e2[i].time());
+		if ( dt > time_diff ) time_diff = dt;
+
+	}
+	return true;
+}
+
