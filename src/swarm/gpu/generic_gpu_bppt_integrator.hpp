@@ -24,7 +24,7 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< template<class T> class Propagator, template<class L> class Stopper >
+template< template<class T> class Propagator, template<class L> class Monitor >
 class generic: public integrator {
 	typedef integrator base;
 	typedef Monitor<gpulog::device_log> monitor_t;
