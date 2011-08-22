@@ -62,6 +62,7 @@ int number_of_active_systems(deviceEnsemble ens) {
 	number_of_active_systems_kernel<<< gD, tD >>>( pcount_systems );
 
 	cudaErrCheck ( cudaMemcpy(&count_systems,pcount_systems,sizeof(count_systems_t),cudaMemcpyDeviceToHost) );
+	cudaErrCheck ( cudaFree(pcount_systems) );
 
 	return count_systems.count_running;
 
