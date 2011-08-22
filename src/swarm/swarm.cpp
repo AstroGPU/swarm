@@ -17,6 +17,7 @@ typedef shared_ptr<integrator> Pintegrator;
 
 
 // Runtime variables
+string command;
 config cfg = default_config();
 config base_cfg;
 defaultEnsemble initial_ens;
@@ -40,7 +41,7 @@ void stability_test() {
 	if(logarithmic != 0 && logarithmic <= 1) ERROR("logarithm base should be greater than 1");
 
 
-	std::cout << "Time, Energy Conservation Error " << std::endl;
+	std::cout << "Time, Energy Conservation Factor (delta E/E)" << std::endl;
 	for(double time = begin_time; time < destination_time; ) {
 
 		if(logarithmic > 1)
@@ -66,12 +67,12 @@ void stability_test() {
 void load_generate_ensemble(){
 	// Load/Generate the ensemble
 	if(cfg.valid("input") ) {
-		cout << "Lading initial conditions from " << cfg["input"];
+		cout << "# Lading initial conditions from " << cfg["input"];
 		initial_ens = swarm::snapshot::load(cfg["input"]);	
 		cout << ", time = " << initial_ens.time_ranges() << endl;
 		
 	}else{
-		cout << "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl;
+		cout << "# Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl;
 		initial_ens = generate_ensemble(cfg);
 	}
 }
@@ -96,6 +97,11 @@ void prepare_integrator () {
 	SYNC;
 }
 
+void generic_integrate () {
+	DEBUG_OUTPUT(2, "Integrator ensemble" );
+	integ->integrate();
+}
+
 void run_integration(){
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 
@@ -106,7 +112,7 @@ void run_integration(){
 
 	prepare_integrator();
 
-	double integration_time = watch_time ( stability_test );
+	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
 
 	save_ensemble();
 
@@ -114,9 +120,11 @@ void run_integration(){
 }
 
 void reference_integration() {
-	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
+	DEBUG_OUTPUT(2, "Make a copy of ensemble for reference ensemble" );
 	reference_ens = initial_ens.clone();
+	DEBUG_OUTPUT(1, "Reference integration" );
 	prepare_integrator();
+	integ->set_ensemble( reference_ens );
 	integ->integrate();
 }
 
@@ -131,16 +139,24 @@ void benchmark_item(const string& param, const string& value) {
 
 	double init_time = watch_time( prepare_integrator );
 
-	DEBUG_OUTPUT(2, "Integrator ensemble" );
-	double integration_time = watch_time( bind(&integrator::integrate,integ.get())) ;
+	double integration_time = watch_time( generic_integrate );
 
 	double max_deltaE = find_max_energy_conservation_error(current_ens, initial_ens );
+
+	double pos_diff = 0, vel_diff = 0, time_diff = 0;
+	if ( !compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff ) ) {
+		ERROR("Fatal error: ensembles compared are too different");
+	}
 	
 	// TODO: compare with reference ensemble
 	/// CSV output for use in spreadsheet software 
 	std::cout << param << ", "
 	          << value << ",  "   
+			  << current_ens.time_ranges() << ",  "
 	          << max_deltaE << ",    " 
+			  << pos_diff << ",    "
+			  << vel_diff << ",   "
+			  << time_diff << ",   "
 	          << integration_time << ",    "
 	          << init_time 
 	          << std::endl;
@@ -153,7 +169,8 @@ void benchmark(){
 	reference_integration();
 
 	// Go through the loop
-	std::cout << "Parameter, Value, Energy Conservation Error"
+	std::cout << "Parameter, Value, Time, Energy Conservation Factor (delta E/E)"
+				 ", Position Difference, Velocity Difference, Time difference "
 			     ", Integration (ms), Integrator initialize (ms) \n";
 
 	po::variables_map &vm = argvars_map;
@@ -207,7 +224,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	pos.add("value", -1);
 
 	desc.add_options()
-		("command" , po::value<string>() , "Swarm command: stability, integrate, benchmark ")
+		("command" , po::value<string>() , "Swarm command: integrate, benchmark ")
 		("parameter" , po::value<vector<string> >() , "Parameteres to benchmark: config, integrator, nsys, nbod, blocksize, ... ")
 		("value" , po::value<vector<string> >() , "Values to iterate over ")
 		("from", po::value<int>() , "from integer value")
@@ -221,6 +238,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
+		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
 		;
 
 	po::variables_map &vm = argvars_map;
@@ -258,22 +276,25 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 int main(int argc, char* argv[]){
 
+	// Command line and Config file
 	parse_commandline_and_config(argc,argv);
-
 	outputConfigSummary(std::cout,cfg);
-
 	base_cfg = cfg;
+	command = argvars_map["command"].as< string >();
 
 	// Initialize Swarm
 	swarm::init(cfg);
+	srand(time(NULL));
 
-	string command = argvars_map["command"].as< string >();
-	if(command == "integrate" || command == "stability")
+	// Branch based on COMMAND
+	if(command == "integrate")
 		run_integration();
+
 	else if(command == "benchmark" || command == "verify" )
 		benchmark();
+
 	else
-		std::cerr << "Valid commands are: integrate, stability, benchmark, verify " << std::endl;
+		std::cerr << "Valid commands are: integrate, benchmark, verify " << std::endl;
 
 	return 0;
 }
