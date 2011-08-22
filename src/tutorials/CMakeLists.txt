@@ -1,1 +1,1 @@
-
+SWARM_ADD_EXECUTABLE(tutorial_simple swarm_tutorial_simple.cpp)

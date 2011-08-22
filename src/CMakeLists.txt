@@ -23,4 +23,4 @@ SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp)
 
 # Build the command line utilities
 #ADD_SUBDIRECTORY(utils)
-#ADD_SUBDIRECTORY(tutorials)
+ADD_SUBDIRECTORY(tutorials)
