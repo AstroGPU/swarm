@@ -40,7 +40,7 @@ namespace swarm {
 /* Initialize the swarm library.  This function must be called before
  * any other */
 inline void init(const config &cfg) { 
-	swarm::log::manager::default_log().init(cfg);
+	swarm::log::manager::default_log()->init(cfg);
 }
 
 

@@ -20,7 +20,7 @@
 
 #include "types/ensemble.hpp"
 #include "types/config.hpp"
-#include "log/log.hpp"
+#include "log/logmanager.hpp"
 
 
 namespace swarm {
@@ -28,14 +28,11 @@ namespace swarm {
 class integrator;
 typedef integrator *(*integratorFactory_t)(const config &cfg);
 
-namespace log {
-	class manager;
-}
-
 class integrator {	
 	protected:
 	defaultEnsemble _ens;
 	double _destination_time;
+	log::Pmanager _logman;
 	gpulog::host_log* _log;
 	const static int _default_max_iterations;
 	const static int _default_max_attempts;
@@ -61,7 +58,7 @@ class integrator {
 	}
 	static integrator* create(const config &cfg);
 
-	virtual void set_log_manager(swarm::log::manager& l);
+	virtual void set_log_manager(log::Pmanager& l);
 
 };
 
@@ -83,7 +80,7 @@ class integrator : public swarm::integrator {
 
 	virtual void integrate();
 
-	virtual void set_log_manager(log::manager& l);
+	virtual void set_log_manager(log::Pmanager& l);
 
 	void set_log(gpulog::device_log* log) { _log = log; }
 

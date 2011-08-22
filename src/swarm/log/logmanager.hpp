@@ -16,6 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #pragma once
+#include "../common.hpp"
 #include "log.hpp"
 #include "writer.h"
 
@@ -37,8 +38,10 @@ namespace swarm { namespace log {
 		gpulog::device_log* get_gpulog() { return pdlog; }
 		gpulog::host_log* get_hostlog() { return &hlog; }
 
-		static manager& default_log();
+		static shared_ptr<manager>& default_log();
 
 	};
+
+	typedef shared_ptr<manager> Pmanager;
 
 }}

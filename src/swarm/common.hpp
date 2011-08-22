@@ -48,6 +48,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
+using boost::shared_ptr;
+
 // CUDA libraries
 #include <cuda.h>
 #include <cuda_runtime.h>

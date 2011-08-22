@@ -30,17 +30,20 @@ extern "C" void debug_hook()
 	std::cerr << "";
 }
 
-swarm::log::manager& swarm::log::manager::default_log() {
-	static swarm::log::manager default_manager;
+namespace swarm {
+namespace log {
+
+Pmanager& manager::default_log() {
+	static Pmanager default_manager(new manager());
 	static bool is_initialized = false;
 	if( !is_initialized ){
 		config cfg; cfg["log writer"] = "null";
-		default_manager.init(cfg);
+		default_manager->init(cfg);
 	}
 	return default_manager;
 }
 
-void swarm::log::manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
+void manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
 {
 	log_writer.reset(writer::create(cfg));
 
@@ -49,13 +52,13 @@ void swarm::log::manager::init(const config& cfg, int host_buffer_size, int devi
 	pdlog = gpulog::alloc_device_log(device_buffer_size);
 }
 
-void swarm::log::manager::shutdown()
+void manager::shutdown()
 {
 	config cfg; cfg["log writer"] = "null";
 	swarm::log::manager::init(cfg);
 }
 
-void swarm::log::manager::flush(int flags)
+void manager::flush(int flags)
 {
 	// TODO: Implement flushing of writer as well
 	assert(flags & memory);
@@ -63,8 +66,7 @@ void swarm::log::manager::flush(int flags)
 	// TODO: Implement flush-only-if-near-capacity (observe the if_full flag)
 	if(!log_writer.get())
 	{
-		std::cerr << "No output writer attached!\n";
-		assert(0);
+		ERROR( "No output writer attached!\n" );
 	}
 
 	// flush the CPU and GPU buffers
@@ -76,4 +78,7 @@ void swarm::log::manager::flush(int flags)
 	log_writer->process(hlog.internal_buffer(), hlog.size());
 
 	hlog.clear();
+}
+
+}
 }

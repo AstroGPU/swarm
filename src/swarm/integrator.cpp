@@ -32,11 +32,13 @@ namespace swarm {
 	const int integrator::_default_max_iterations = 100000;
 	const int integrator::_default_max_attempts = 100;
 
-	void integrator::set_log_manager(log::manager& l){
-		_log = l.get_hostlog();
+	void integrator::set_log_manager(log::Pmanager& l){
+		_logman = l;
+		_log = l->get_hostlog();
 	}
-	void gpu::integrator::set_log_manager(log::manager& l){
-		set_log(l.get_gpulog());
+	void gpu::integrator::set_log_manager(log::Pmanager& l){
+		Base::set_log_manager(l);
+		set_log(l->get_gpulog());
 	}
 
 	integrator::integrator(const config &cfg){
@@ -65,6 +67,7 @@ namespace swarm {
 		activate_all_systems(_ens);
 		for(int i = 0; i < _max_attempts; i++){
 			launch_integrator();
+			_logman->flush();
 			if( number_of_active_systems(_ens) == 0 )
 				break;
 		}
@@ -75,6 +78,7 @@ namespace swarm {
 		upload_ensemble();
 		for(int i = 0; i < _max_attempts; i++){
 			launch_integrator();
+			_logman->flush();
 			if( number_of_active_systems(_dens) == 0 )
 				break;
 		}
