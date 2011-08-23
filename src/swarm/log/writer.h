@@ -16,14 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file writer.h
- *   \brief Declares writer class
- *
-*/
 #pragma once
+#include "../common.hpp"
 #include "../types/config.hpp"
 
-/// The main namespace for the Swarm-NG library
 namespace swarm {
 
 /**
@@ -36,16 +32,17 @@ namespace swarm {
 class writer
 {
         public:
+			//! Produce appropriate output based on log_data input.
                 virtual void process(const char *log_data, size_t length) = 0;
                 virtual ~writer() {};   // has to be here to ensure the derived class' destructor is called (if it exists)
 
         public:
-                /// Integrator factory functions (and supporting typedefs)
-                static writer *create(const config &cfg);
+                //! Integrator factory functions (and supporting typedefs)
+                static shared_ptr<writer> create(const config &cfg);
 
         protected:
                 writer() {};            //!< hide the constructor.and force integrator instantiation with integrator::create
 };
-typedef writer *(*writerFactory_t)(const config &cfg);
+typedef shared_ptr<writer> Pwriter;
 
 }

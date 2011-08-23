@@ -24,10 +24,71 @@ using std::string;
 
 namespace swarm {
 
+/*! Static class containing methods to load/save ensembles to file.
+ *   
+ *   This class supports load and save in text and binary formats.
+ *   For binary format use:
+ *     - ens = load(filename)
+ *     - save(ens,filename)
+ *
+ *   For text format use:
+ *     - ens = load_text(filename)
+ *     - save_text(ens,filename)
+ *
+ *
+ *  Binary file format: 
+ *    HEADER | SYS | BODY | BODY | BODY | SYS | BODY | BODY | BODY | SYS | BODY | BODY | BODY | ...
+ * 
+ *   The example above is for an ensemble with 3 bodies per system. HEADER, SYS and BODY are structs
+ *   defined inside the snapshot class.(refer to \ref header, \ref sys, \ref body).
+ *   
+ *   header containts number of systems and numebr of bodies.
+ *
+ *  Text file format:
+ *  \verbatim
+ *   <nsys> <nbod>
+ *   
+ *   
+ *   <time> <active>
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *   <time> <active>
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *        <mass> 
+ *        <x> <y> <z>
+ *        <vx> <vy> <vz>
+ *
+ *     .
+ *     .
+ *     .
+ *
+ *  \endverbatim
+ *
+ *   The example above is for 3-body systems.
+ *
+ */
 class snapshot {
 	private:
 	snapshot(){}
 
+	public:
 	struct header {
 		int nsys, nbod;
 	};
@@ -39,7 +100,6 @@ class snapshot {
 		double pos[3], vel[3], mass;
 	};
 
-	public:
 	struct readfileexception : public std::exception {};
 	struct writefileexception : public std::exception {};
 

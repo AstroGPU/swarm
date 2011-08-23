@@ -17,7 +17,21 @@
  ************************************************************************/
 
 /*! \file common.hpp
- *   \brief Common library headers between all files
+ *   \brief Common external (and some internal) library headers used by all components of swarm.
+ *
+ *   This file can be compiled as a precompiled header.
+ *
+ *   External libraries referenced:
+ *    - Standard C++ Library
+ *    - Boost libraries (bind, shared_ptr)
+ *    - CUDA runtime library
+ *    - Linux libc headers
+ *
+ *   Internal headers referenced:
+ *    - Common error handling: base class for all other exceptions
+ *
+ *   Some useful debugging and CUDA macros
+ *
  *
 */
 #pragma once
@@ -61,7 +75,7 @@ using boost::shared_ptr;
 #include <sys/stat.h>
 #include <time.h>
 
-#include "swarm/runtime_error.hpp"
+#include "runtime_error.hpp"
 
 //
 // Struct alignment is handled differently between the CUDA compiler and other
@@ -84,8 +98,13 @@ using boost::shared_ptr;
 	#endif
 #endif
 
+//! To debug output a value
 #define $$(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " |> " << (x) << std::endl)
+
+//! Show the an expression and its value for debugging
 #define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
+
+//! To indicate when the execution reaches a specific line in code
 #define $$$ (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " @@ " << std::endl)
 #define SYNC cudaThreadSynchronize()
 

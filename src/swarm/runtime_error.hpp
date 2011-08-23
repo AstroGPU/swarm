@@ -17,7 +17,10 @@
  ************************************************************************/
 
 /*! \file runtime_error.h
- *   \brief Declares swarm error class
+ *   \brief Error handling for swarm
+ *
+ *   Generic swarm runtime error is declared as well as
+ *   CUDA error handling option.
  *
 */
 #pragma once
@@ -48,6 +51,9 @@ public:
 #endif
 }
 
+/*!  Unrecoverable CUDA error, thrown by cudaErrCheck macro.
+ *    Do not use directly. use cudaErrCheck macro instead.
+ */
 struct cudaException : public swarm::runtime_error
 {
 	cudaException(cudaError err) : swarm::runtime_error( cudaGetErrorString(err) ) {}

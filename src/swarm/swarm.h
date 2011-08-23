@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2010 by Mario Juric  and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -17,12 +17,11 @@
  ************************************************************************/
 
 /*! \file swarm.h
- *   \brief Main header file for swarm library
+ *   \brief Public interface for swarmng library. 
  *
- *   Declares class swarm_error.  Methods declared here are defined in swarmlib.cpp
+ *   User application intending to use swarm library should include this header file.
+ *   This file has most of essential headers needed to use the swarmng library.
  *
- *   Declares swarm_error, ensemble, cpu_ensemble, gpu_ensemble, writer (abstract), 
- *   Also contains some memory management funcctions
 */
 #pragma once
 
@@ -34,14 +33,16 @@
 #include "plugin.hpp"
 #include "utils.hpp"
 
-/// The main namespace for the Swarm-NG library
 namespace swarm {
 
-/* Initialize the swarm library.  This function must be called before
- * any other */
+/*! Initialize the swarm library.
+ *   This function is included for compatibility. 
+ *  It is not mandatory to call this functions but it is
+ *  encouraged for forward compatibility.
+ */
 inline void init(const config &cfg) { 
 	swarm::log::manager::default_log()->init(cfg);
 }
 
 
-} // end namespace swarm
+} 

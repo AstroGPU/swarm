@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+/*! \file integrator.hpp
+ *   \brief Definition of class interface for generic and GPU integrator class
+ *
+ *   This is the only file that external applications need to include
+ *   if they need to use integrators
+ *
+ */
 
 #pragma once
 
@@ -25,80 +32,203 @@
 
 namespace swarm {
 
-class integrator;
-typedef integrator *(*integratorFactory_t)(const config &cfg);
-
+/*! Interface class for all integrators.
+ *   This class sets out the general functions to 
+ *   use an integrator for external applications.
+ *
+ *   All CPU integrators should be based on this class. It contains
+ *   all the variables required for basic integrations. User variables
+ *   can be added in derived instances.
+ *
+ *   To add your integrator to swarm library look at plugin development guide.
+ *
+ */
 class integrator {	
-	protected:
-	defaultEnsemble _ens;
-	double _destination_time;
-	log::Pmanager _logman;
-	gpulog::host_log* _log;
+	public:
+	
+	//! Default value for maximum number of iterations. c.f. \ref _max_iterations
 	const static int _default_max_iterations;
+	//! Default value for maximum number of attempts. c.f. \ref _max_attempts
 	const static int _default_max_attempts;
+	protected:
+
+	//! ensemble to be integrated
+	defaultEnsemble _ens;          
+
+	//! the timestamp at which the integration should finish
+	double _destination_time;
+
+	//! log manager for log output, set to manager::default() by default
+	log::Pmanager _logman;
+
+	//! log object, obtained from log manager
+	gpulog::host_log* _log;
+
+	//! Maximum number of iterations per each integration step. c.f. \ref integrate for usage
 	int _max_iterations;
+	//! Maximum number of attempts to complete the integration. c.f. \ref integrate for usage
 	int _max_attempts;
 
-	public:
-	integrator(const config &cfg);
+	//! Integrater implementation provided by derived instance
 	virtual void launch_integrator() = 0 ;
 
+	public:
+	//! Inetgrator class should be configurable. 
+	//! Derived instances should also have a constructor with similar signature 
+	//! and pass on the config parameter.
+	integrator(const config &cfg);
+
+	/*! Interfaces function to integrate, for use by general user.
+	 *  Calls launch_integrator() several times up to
+	 *  the value specified in \ref _max_attempts until all the
+	 *  systems are inactive. Each call can go through
+	 *  at most a limited number of iterations specified in
+	 *  \ref _max_iterations .
+	 *
+	 *  To set the parameters for integration use set_ensemble(ens),
+	 *  set_destination_time(t), set_log_manager(l) 
+	 */
 	virtual void integrate();
 
+	//! Access the ensemble subject to integration
 	virtual defaultEnsemble& get_ensemble() {
 		return _ens;
 	}
 
+	//! Set the ensemble subject to integration
 	virtual void set_ensemble(defaultEnsemble& ens) {
 		_ens = ens;
 	}
 
+	//! Set the time marker to end the integration
 	virtual void set_destination_time(const double& destination_time) {
 		_destination_time = destination_time;
 	}
+
+	/*! Loads an integrator using the plugin system. 
+	 * value of cfg["integrator"] is used to identify the 
+	 * plugin to be instantiated. The integrator plugin
+	 * usually requires additional configuration.
+	 *
+	 * The "integrator_" suffix is automatically added to
+	 * the the value of cfg["integrator"].
+	 * Example: To load hermite integrator set cfg["integrator"]="hermite"
+	 * and then the plugin "integrator_hermite" will be 
+	 * loaded and instantiated.
+	 *
+	 * If cfg["integrator"] contains an invalid value then
+	 * plugin_not_found exception is raised.
+	 *
+	 * to see the list of plugins available use swarm -P.
+	 */
 	static integrator* create(const config &cfg);
 
+	//! accessor function to set the manager for log output
 	virtual void set_log_manager(log::Pmanager& l);
 
 };
 
 namespace gpu {
 
-
+/*! Interface class for all GPU based integrators.
+ *   It is very similar to its base class integrator. But it is adapted
+ *   for GPU integrators.
+ *
+ *   This class takes care of GPU logs, uploading and downloding ensemble 
+ *   from GPU. Derived instances need to override the pure virtual method
+ *   \ref launch_integrator with the CUDA kernel launch code.
+ *
+ *   Because CUDA is not capable of dereferencing virtual methods, this class
+ *   cannot launch kernels. However, template classes for launching kernels
+ *   are included in \ref gpu/helpers.hpp.
+ */
 class integrator : public swarm::integrator {
 	typedef swarm::integrator Base;
 	protected:
+	//! Copy of ensemble on host (kept in sync with \ref _dens).
 	hostEnsemble& _hens;
-	//TODO: use cux auto ptr to make sure we don't have memory leaks
+	//! Copy of ensemble on [GPU] device (kept in sync with \ref _hens).
+	//! TODO: use cux auto ptr to make sure we don't have memory leaks
 	deviceEnsemble _dens;
 
+	//! GPU log object obtained from log manager.
 	gpulog::device_log* _log;
 
 	public: 
 
+	//! Pass on constructor
 	integrator(const config &cfg);
 
+	/*! Interfaces function to integrate, for use by general user.
+	 *  Launches the GPU integrator kernel several times up to
+	 *  the value specified in \ref _max_attempts until all the
+	 *  systems are inactive. Each kernel call can go through
+	 *  at most a limited number of iterations specified in
+	 *  \ref _max_iterations .
+	 *
+	 *  To set the parameters for integration use set_ensemble(ens),
+	 *  set_destination_time(t), set_log_manager(l) 
+	 */
 	virtual void integrate();
 
+	//! Read the GPU log object from log manager and set it
 	virtual void set_log_manager(log::Pmanager& l);
 
+	//! Set the GPU log object used for log output
 	void set_log(gpulog::device_log* log) { _log = log; }
 
+	//! Set the ensemble, only provide an ensemble on host.
+	//! This cals automatically creates a copy of ensemble 
+	//! on GPU and keeps it in sync.
+	//! Refer to set_ensemble(host_ens,device_ens) if you wish
+	//! to manage the GPU memory allocation.
 	void set_ensemble(defaultEnsemble& ens) {
 		_hens = ens;
 		_dens = _hens.cloneTo<deviceEnsemble>();
 	}
 
+	/*! Set two host and device ensembles, two ensembles should match.
+	 *  Be careful: all data on device_ens will be overwritten when you
+	 *  call integrate(). 
+	 *  Only use this function if you want to save memory when integrating
+	 *  the same ensemble on different integrators.
+	 *  Example:
+	 *  \code
+	 *  defaultEnsemble hens = snapshot::load(...);
+	 *  deviceEnsemble  dens = hens.cloneTo<deviceEnsemble>();
+	 *
+	 *  i1->set_ensemble(hens,dens);
+	 *  i2->set_ensemble(hens,dens);
+	 *
+	 *  i1->integrate();
+	 *  i2->integrate();
+	 *  i1->integrate();
+	 *   .
+	 *   .
+	 *   .
+	 *  \endcode
+	 *
+	 */
+	void set_ensemble(defaultEnsemble& host_ens, deviceEnsemble& device_ens) {
+		_hens = host_ens;
+		_dens = device_ens;
+	}
+
+	//! Synchronize device ensemble with host ensemble
 	void upload_ensemble() {
 		_hens.copyTo( _dens );
 	}
 	
+	//! Synchronize host ensemble with device ensemble
 	void download_ensemble() {
 		_dens.copyTo( _hens );
 	}
 
+	//! Grid dimentions for CUDA kernel launch
 	virtual dim3 gridDim() = 0;
+	//! Block dimentions for CUDA kernel launch
 	virtual dim3 threadDim() = 0;
+	//! Amount of shared memory required for CUDA kernel launch
 	virtual int  shmemSize() = 0;
 };
 

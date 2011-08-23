@@ -30,15 +30,41 @@ const int ENSEMBLE_WARPSIZE = 16;
 
 typedef long double_int;
 
-/**
+/*! ensemble data structure containing nbody systems.
+ *  
+ *  Usage:
+ *  Contains an ensemble of nsys() systems each containing nbod() bodies.
+ *  use operator [] to peek into the data structure:
+ *   - First [] to access a specific system
+ *   - Second [] to access a specific body
+ *   - Third [] to access a specific coordinate component
  *
- * TODO: use allocator template parameter
+ *  Example:
+ *  \code
+ *  ens[0][1].mass() = 1.0;  // Set mass of body 1 in system #0
+ *  ens[2][1][0].pos() = 4;  // Set x cooridante of position of body #1 in system #2
+ *  ens[3][2][1].vel() = 3;  // Set y coordinate of velocity of body #2 in system #3
+ *  ens[1].time() = 3;       // Set time of system #1
+ *
+ *  \endcode
+ *
+ *  There are also compatibily accessors get_body(), set_body(), p(), v(), time(), ...
+ *
+ *  Two utility functions are provided for ease of use: calc_total_energy() and get_barycenter()
+ *
+ *  This class does not contain memory management routines and cannot
+ *  be instantiated. It should be used as the \ref ensemble typedef only
+ *  for parameter definition in functions and should be passed as a reference.
+ *  To create an ensemble use one of \ref defaultEnsemble, \ref deviceEnsemble or \ref hostEnsemble
+ *
+ * 
  */
 template< int _WARPSIZE>
 class EnsembleBase {
 	public:
 	static const int WARPSIZE = _WARPSIZE;
 
+	//! Concrete structure of Body 
 	struct Body {
 		struct Component {
 			double _pos[WARPSIZE];
@@ -51,23 +77,33 @@ class EnsembleBase {
 
 		double _mass[WARPSIZE];
 
-		// Accessors 
+		//! Mass of the body
 		GENERIC double& mass() { return _mass[0];  }
+		//! Mass of the body
 		GENERIC const double& mass() const { return _mass[0];  }
+		//! Index into components 0 is x, 1 is y, 2 is z
+		//! Example b[0].pos() is x-coordinate of position 
+		//! and b[3].vel() is z-coordinate of velocity.
 		GENERIC Component& operator[] (const int & i) { return component[i]; };
+		//! Index into components 0 is x, 1 is y, 2 is z
+		//! Example b[0].pos() is x-coordinate of position 
+		//! and b[3].vel() is z-coordinate of velocity.
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 
+		//! Distance of the planet to (0,0,0) 
 		GENERIC double radius() { 
 			return sqr(operator[](0).pos()) 
 				+ sqr(operator[](1).pos()) 
 				+ sqr(operator[](2).pos());
 		}
+		//! Magnitude of velocity
 		GENERIC double speed() {
 			return sqr(operator[](0).vel()) 
 				+ sqr(operator[](1).vel()) 
 				+ sqr(operator[](2).vel());
 		}
 
+		//! Get all position and velocities at once
 		GENERIC void get(double& x,double & y, double & z
 				, double & vx, double & vy, double & vz) {
 			x = operator[](0).pos();
@@ -80,6 +116,7 @@ class EnsembleBase {
 
 	};
 
+	//! Per system parameters: time and active.
 	struct Sys {
 		double _time[WARPSIZE];
 		double_int _active[WARPSIZE];
@@ -92,26 +129,41 @@ class EnsembleBase {
 
 
 
+	//! Reference to a system within an ensemble
+	//! Usage: SystemRef s = ens[i];
 	struct SystemRef {
+		//! Number of bodies, copied from ensemble
 		const int _nbod;
+		//! Serial number of the system in the ensemble
 		const int _number;
+		//! Pointer to the array of bodies
 		Body* _body;
+		//! Pointer to system parameters
 		Sys* _sys;
 
-		// Constructor
+		//! Only should be used by ensemble
 		GENERIC SystemRef(const int& nbod,const int& number,Body* body,Sys* sys):_nbod(nbod),_number(number),_body(body),_sys(sys){}
 
-		// Accessor
+		//! Access a body within the system
 		GENERIC Body& operator[](const int & i ) const { return _body[i]; };
+		//! Current time of the system
 		GENERIC double& time() const { return _sys[0].time(); }
+		//! Activity state
+		//! True: still running, False: will not be integrated
 		GENERIC double_int& active() const { return _sys[0].active(); }
+		//! Same as active()
 		GENERIC double_int& flags() const { return _sys[0].active(); }
+		//! Number of bodies in this system
 		GENERIC const int& nbod()const{ return _nbod;	}
+		//! Serial number of the system in the ensemble
 		GENERIC const int& number()const{ return _number;	}
 
+		//! Distance between planet i and j in the system
+		//! For a faster version c.f. \ref distance_squared_between(i,j)
 		GENERIC double distance_between(const int& i , const int & j ) {
 			return sqrt(distance_squared_between(i,j));
 		}
+		//! Distance squared between planet i and j in the system.
 		GENERIC double distance_squared_between(const int& i , const int & j ) {
 			const Body& b1 = _body[i], & b2 = _body[j];
 			return sqr(b1[0].pos()-b2[0].pos())
@@ -121,6 +173,8 @@ class EnsembleBase {
 	};
 
 	//! Constant encapsulation of SystemRef
+	//! If the ens is constant use:
+	//! SystemRefConst s = ens[i];
 	struct SystemRefConst {
 		SystemRef _ref;
 
@@ -138,10 +192,12 @@ class EnsembleBase {
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 	};
 
+	//! Size of Body[] array required for an ensemble of size nbod,nsys
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE * nbod ;
 	}
 
+	//! Size of Sys[] array required for an ensemble of size nsys
 	GENERIC static size_t sys_element_count(const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE ;
 	}
@@ -154,7 +210,9 @@ class EnsembleBase {
 	protected:
 	int _nbod;
 	int _nsys;
+	//! Coalesced array of Body(s)
 	BodyArray _body;
+	//! Coalesced array of Sys(s)
 	SysArray _sys;
 
 	public:
@@ -162,22 +220,25 @@ class EnsembleBase {
 
 
 	public:
-	// Constructors
+	//! Trivial constructor, creates an invalid ensemble
 	GENERIC EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
+	//! Create an ensemble from pre-allocated body_array and sys_array arrays.
 	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,PBody body_array, PSys sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
-	~EnsembleBase() { 
-		// TODO: We need reference counting before using this:
-		// release();
-	}
-	// Accessors
+
+	//! Number of bodies per system
 	GENERIC const int& nbod()const{ return _nbod;	}
+	//! Number of systems
 	GENERIC const int& nsys()const{ return _nsys;	}
+	//! Coalsed array of bodies. For INTERNAL use only
 	BodyArray& bodies() { return _body; }
+	//! Coalsed array of systems. For INTERNAL use only
 	SysArray& systems() { return _sys; }
 
 
-	/** 
-	 * Accessor function for first body of a system
+	/*! Index into systems array to access a system.
+	 * Use: ens[i]
+	 *
+	 * Finds the first body of a system to set as Body* parameter
 	 * The hierarchy is like this:
 	 *    Blocks ( nsys / WARPSIZE )
 	 *    Bodies ( nbod )
@@ -338,6 +399,7 @@ class EnsembleBase {
 	};
 
 
+	//! Total energy (potential+kinetic) of a system
 	GENERIC double calc_total_energy( int sys ) const {
 		double E = 0.;
 		for (int bod1 = 0; bod1 != nbod(); bod1++)
@@ -369,6 +431,9 @@ class EnsembleBase {
 			:average(a),min(m),max(M){}
 	};
 
+	//! Range of times of systems (average,min,max)
+	//! Averages the time for all systems and finds min and max
+	//! Useful to find the best value for destination time
 	GENERIC range_t time_ranges() const {
 		double time = operator[](0).time();
 		double min = time;
@@ -386,6 +451,7 @@ class EnsembleBase {
 
 };
 
+//! Allocator based version of ensemble containing memory management routines
 template< int W , template<class T> class _Allocator >
 struct EnsembleAlloc : public EnsembleBase<W> {
 	typedef EnsembleBase<W> Base;
@@ -398,16 +464,20 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 	typedef boost::shared_ptr<Body> PBody;
 	typedef boost::shared_ptr<Sys> PSys;
 
+	//! Deep copy of this ensemble
 	EnsembleAlloc clone() {
 		return cloneTo<EnsembleAlloc>();
 	}
 
+	//! Create a new ensemble that can accomodate nsys systems with nbod bodies
+	//! Arrays are allocated on the heap but ensemble structure is value-copied
 	static EnsembleAlloc create(const int& nbod, const int& nsys) {
 		PBody b ( BodyAllocator::alloc( Base::body_element_count(nbod,nsys) ), &BodyAllocator::free );
 		PSys s ( SysAllocator::alloc( Base::sys_element_count(nsys) ), &SysAllocator::free );
 		return EnsembleAlloc(nbod,nsys,b,s);
 	}
 
+	//! Clone to a different memory (e.g. GPU)
 	template< class Other > 
 	Other cloneTo() {
 		Other o = Other::create(Base::nbod(),Base::nsys());
@@ -415,6 +485,7 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 		return o;
 	}
 
+	//! Copy to another ensemble located on a different memory
 	template< class Other > 
 	void copyTo(Other& o){
 		assert(o.nsys() == Base::nsys() && o.nbod() == Base::nbod());
@@ -432,10 +503,14 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 	PBody _body;
 };
 
+//! Base class of all ensembles
 typedef EnsembleBase< ENSEMBLE_WARPSIZE > ensemble;
 
+//! Default ensemble class for most of uses
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > defaultEnsemble;
+//! Ensemble allocated on host memory
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > hostEnsemble;
+//! Ensemble allocated on [GPU] device memory
 typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DeviceAllocator > deviceEnsemble;
 
 typedef hostEnsemble cpu_ensemble;

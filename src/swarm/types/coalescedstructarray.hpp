@@ -29,8 +29,13 @@
 
 namespace swarm {
 
-/**
+/*!
  * Array of structures with coalecsed access.
+ *
+ * It allows multiple threads access consecutive elements of an structure
+ * by grouping the structure elements together. However, it requires that all
+ * the elements of the structure should be of the same size.
+ *
  * The Item should provide WARPSIZE and scalar_t
  * for offset calculation
  */

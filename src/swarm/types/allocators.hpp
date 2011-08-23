@@ -15,9 +15,20 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+/*! \file allocators.hpp
+ *  \brief Routines to allocate memory using different APIs and copy between them
+ *
+ *  Current allocators are:
+ *   - C++ new/delete
+ *   - CUDA [GPU] device memory 
+ *   - CUDA host memory
+ *   - CUDA device-mapped host memory
+ *
+ */
 
 #pragma once
 
+//! Default allocator that uses C++ new/delete
 template< class T >
 struct DefaultAllocator {
 	typedef T Elem;
@@ -35,6 +46,7 @@ struct DefaultAllocator {
 	}
 };
 
+//! CUDA device memory allocator that uses cudaMalloc,cudaMemcpy,cudaFree
 template< class T >
 struct DeviceAllocator {
 	typedef T Elem;
@@ -57,6 +69,7 @@ struct DeviceAllocator {
 };
 
 
+//! CUDA host memory allocator uses cudaMallocHost,cudaMemcpy,cudaFreeHost
 template< class T >
 struct HostAllocator {
 	typedef T Elem;
@@ -78,6 +91,7 @@ struct HostAllocator {
 	}
 };
 
+//! CUDA host memory allocator similar to HostAllocator using device mapped memory
 template< class T >
 struct MappedHostAllocator : public HostAllocator<T> {
 	static T *  alloc(size_t s) {  
@@ -98,11 +112,13 @@ void alloc_copy(A,A, T* begin, T* end, T* dst){
 	A::copy(begin,end,dst);
 }
 
+//! Copy from host memory to device memory
 template< class T>
 void alloc_copy(DefaultAllocator<T>,DeviceAllocator<T>, T* begin, T* end, T* dst){
 	cudaMemcpy(dst, begin, (end-begin)*sizeof(T), cudaMemcpyHostToDevice);
 }
 
+//! Copy from device memory to host memory
 template< class T>
 void alloc_copy(DeviceAllocator<T>,DefaultAllocator<T>, T* begin, T* end, T* dst){
 	cudaMemcpy(dst, begin, (end-begin)*sizeof(T), cudaMemcpyDeviceToHost);

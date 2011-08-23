@@ -41,9 +41,9 @@ namespace swarm {
  * compile time
  */
 
-writer *writer::create(const config& cfg)
+Pwriter writer::create(const config& cfg)
 {
-        std::auto_ptr<writer> w;
+        Pwriter w;
 
 		std::string name = cfg.at("log writer");
 		std::string plugin_name = "writer_" + name;
@@ -54,6 +54,6 @@ writer *writer::create(const config& cfg)
 			ERROR("Log writer " + name + " not found.");
 		}
 
-        return w.release();
+        return w;
 }
 }

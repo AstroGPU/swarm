@@ -45,7 +45,7 @@ Pmanager& manager::default_log() {
 
 void manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
 {
-	log_writer.reset(writer::create(cfg));
+	log_writer = writer::create(cfg);
 
 	// log memory allocation
 	hlog.alloc(host_buffer_size);
