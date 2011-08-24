@@ -28,8 +28,6 @@
 	
 	Declarations of libpeyton specific types.
 	
-	\todo Move sqr, sgn and sign templates to some other header in peyton::math namespace,
-		that is, if they're needed at all
 */
 
 namespace peyton {

@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 #include "swarm.h"
+#include "query.hpp"
 #include "snapshot.hpp"
 #include "stopwatch.h"
 
@@ -224,7 +225,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	pos.add("value", -1);
 
 	desc.add_options()
-		("command" , po::value<string>() , "Swarm command: integrate, benchmark ")
+		("command" , po::value<string>() , "Swarm command: integrate, benchmark, verify, query ")
 		("parameter" , po::value<vector<string> >() , "Parameteres to benchmark: config, integrator, nsys, nbod, blocksize, ... ")
 		("value" , po::value<vector<string> >() , "Values to iterate over ")
 		("from", po::value<int>() , "from integer value")
@@ -236,6 +237,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>(), "Output file")
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+		("time,t", po::value<time_range_t>(), "range of times to query")
+		("system,s", po::value<sys_range_t>(), "range of systems to query")
+		("logfile,f", po::value<std::string>(), "the log file to query")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
@@ -278,7 +282,7 @@ int main(int argc, char* argv[]){
 
 	// Command line and Config file
 	parse_commandline_and_config(argc,argv);
-	outputConfigSummary(std::cout,cfg);
+//	outputConfigSummary(std::cout,cfg);
 	base_cfg = cfg;
 	command = argvars_map["command"].as< string >();
 
@@ -293,6 +297,22 @@ int main(int argc, char* argv[]){
 	else if(command == "benchmark" || command == "verify" )
 		benchmark();
 
+	else if(command == "query" ) {
+		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
+
+		time_range_t T;
+		sys_range_t sys;
+		if (argvars_map.count("time")) { T = argvars_map["time"].as<time_range_t>(); }
+		if (argvars_map.count("system")) { sys = argvars_map["system"].as<sys_range_t>(); }
+
+        std::cout.flush(); 
+		cerr << "Systems " << sys << " in time range " << T << endl;
+
+		std::string datafile(argvars_map["logfile"].as<std::string>());
+
+		query::execute(datafile, T, sys);
+
+	}
 	else
 		std::cerr << "Valid commands are: integrate, benchmark, verify " << std::endl;
 

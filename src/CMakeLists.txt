@@ -16,7 +16,7 @@ CUDA_ADD_LIBRARY(swarmng SHARED
 	${SWARM_PLUGINS})
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
-SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp)
+SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp swarm/query.cpp)
 
 
 

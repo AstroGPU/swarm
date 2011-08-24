@@ -45,12 +45,10 @@ namespace swarm
 		double  x, y, z;
 		double  vx, vy, vz;
 		double   mass;
-		long bod;
 
 		// load body information from ensemble to body structure
 		GENERIC void set(const int& i,const ensemble::Body& b)
 		{
-			bod = i;
 			mass = b.mass();
 			x = b[0].pos();
 			y = b[1].pos();

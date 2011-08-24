@@ -39,6 +39,7 @@ Pmanager& manager::default_log() {
 	if( !is_initialized ){
 		config cfg; cfg["log writer"] = "null";
 		default_manager->init(cfg);
+		is_initialized = true;
 	}
 	return default_manager;
 }

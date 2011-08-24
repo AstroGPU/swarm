@@ -13,7 +13,8 @@ SET(CUDA_NVCC_FLAGS
 	-gencode arch=compute_13,code=sm_13;
 	-Xcudafe --diag_suppress=subscript_out_of_range;
 	-Xcudafe --diag_suppress=partial_override;
-	-Xcudafe --diag_suppress=initialization_not_reachable
+	-Xcudafe --diag_suppress=initialization_not_reachable;
+	-w
 	)
 
 include(CMakeUserConfig.txt)
