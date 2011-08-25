@@ -27,6 +27,8 @@ SET(SHMEM_WARPSIZE 16 CACHE STRING "Warpsize in shared memory for coalesced read
 FIND_PACKAGE(CUDA REQUIRED)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 
+#SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so)
+
 # Macro to build other project based on swarm library
 MACRO(SWARM_ADD_EXECUTABLE target)
 	ADD_EXECUTABLE(${target} ${ARGN})

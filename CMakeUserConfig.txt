@@ -1,5 +1,0 @@
-# Put all your extra options to CMake in here if you don't want to set them in command line
-
-# On some versions of Ubuntu you will need this
-# SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so)
-

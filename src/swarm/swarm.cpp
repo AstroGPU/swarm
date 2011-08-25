@@ -65,6 +65,44 @@ void stability_test() {
 
 }
 
+void output_test() {
+	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
+
+	if(cfg.valid("input") ) {
+		cout << "# Lading initial conditions from " << cfg["input"];
+		initial_ens = swarm::snapshot::load(cfg["input"]);	
+		cout << ", time = " << initial_ens.time_ranges() << endl;
+	}else{
+		ERROR("you should have a tested input file");
+	}
+
+	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
+	current_ens = initial_ens.clone();
+
+	prepare_integrator();
+
+	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
+
+	if(cfg.valid("output")) {
+		reference_ens = swarm::snapshot::load(cfg["output"]);	
+		// Compare with reneference ensemble for integrator verification
+		double pos_diff = 0, vel_diff = 0, time_diff = 0;
+		bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
+		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
+			cout << "Test failed" << endl;
+		}else {
+			cout << "Test success" << endl;
+		}
+		cout << "\tPosition difference: " << pos_diff  << endl
+			 << "\tVelocity difference: " << vel_diff  << endl
+			 << "\tTime     difference: " << time_diff << endl;
+	}else{
+		ERROR("You should provide a test output file");
+	}
+
+	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
+}
+
 void load_generate_ensemble(){
 	// Load/Generate the ensemble
 	if(cfg.valid("input") ) {
@@ -250,7 +288,10 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			"\tintegrate :  Integrate a [loaded|generated] ensemble\n"
 			"\tbenchmark :  Compare outputs for different methods of integrations\n"
 			"\tverify    :  Verify an integrator against a reference integrator\n"
-			"\tquery     :  Query data from a log file\n\nOptions");
+			"\tquery     :  Query data from a log file\n"
+			"\ttest      :  Test a configuration against input/output files\n"
+			"\nOptions"
+		);
 
 
 	po::options_description integrate("Integation Options");
@@ -341,6 +382,9 @@ int main(int argc, char* argv[]){
 	// Branch based on COMMAND
 	if(command == "integrate")
 		run_integration();
+
+	else if(command == "test")
+		output_test();
 
 	else if(command == "benchmark") {
 		benchmark();
