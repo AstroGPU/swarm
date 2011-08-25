@@ -129,6 +129,20 @@ void reference_integration() {
 	integ->integrate();
 }
 
+
+
+bool verification_results = true, verify_mode = false;
+double pos_threshold = 0, vel_threshold = 0, time_threshold = 0;
+
+void fail_verify() {
+	if(verify_mode){
+		cout << "Verify failed" << endl;
+		exit(1);
+	}else{
+		verification_results = false;
+	}
+}
+
 void benchmark_item(const string& param, const string& value) {
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 
@@ -144,12 +158,10 @@ void benchmark_item(const string& param, const string& value) {
 
 	double max_deltaE = find_max_energy_conservation_error(current_ens, initial_ens );
 
+	// Compare with reneference ensemble for integrator verification
 	double pos_diff = 0, vel_diff = 0, time_diff = 0;
-	if ( !compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff ) ) {
-		ERROR("Fatal error: ensembles compared are too different");
-	}
-	
-	// TODO: compare with reference ensemble
+	bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
+
 	/// CSV output for use in spreadsheet software 
 	std::cout << param << ", "
 	          << value << ",  "   
@@ -161,6 +173,11 @@ void benchmark_item(const string& param, const string& value) {
 	          << integration_time << ",    "
 	          << init_time 
 	          << std::endl;
+
+	if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
+		fail_verify();
+	}
+
 }
 
 void benchmark(){ 
@@ -168,6 +185,11 @@ void benchmark(){
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 	load_generate_ensemble();
 	reference_integration();
+
+	// Set some variables
+	pos_threshold = cfg.optional("pos threshold", 1e-10);
+	vel_threshold = cfg.optional("vel threshold", 1e-10);
+	time_threshold = cfg.optional("time threshold", 1e-4);
 
 	// Go through the loop
 	std::cout << "Parameter, Value, Time, Energy Conservation Factor (delta E/E)"
@@ -217,37 +239,63 @@ void benchmark(){
 }
 
 void parse_commandline_and_config(int argc, char* argv[]){
-	po::positional_options_description pos;
-	po::options_description desc("Usage: swarm [options] COMMAND [PARAMETER VALUES] \nOptions");
 
+	po::positional_options_description pos;
 	pos.add("command", 1);
 	pos.add("parameter", 1);
 	pos.add("value", -1);
 
-	desc.add_options()
-		("command" , po::value<string>() , "Swarm command: integrate, benchmark, verify, query ")
-		("parameter" , po::value<vector<string> >() , "Parameteres to benchmark: config, integrator, nsys, nbod, blocksize, ... ")
-		("value" , po::value<vector<string> >() , "Values to iterate over ")
-		("from", po::value<int>() , "from integer value")
-		("to", po::value<int>() , "to integer value")
-		("inc", po::value<int>() , "increment integer value")
+	po::options_description desc("Usage:\n \tswarm [options] COMMAND [PARAMETER VALUE VALUE ...]\n\n"
+			"Possible commands are: \n"
+			"\tintegrate :  Integrate a [loaded|generated] ensemble\n"
+			"\tbenchmark :  Compare outputs for different methods of integrations\n"
+			"\tverify    :  Verify an integrator against a reference integrator\n"
+			"\tquery     :  Query data from a log file\n\nOptions");
+
+
+	po::options_description integrate("Integation Options");
+	integrate.add_options()
 		("destination time,d", po::value<std::string>() , "Destination time to achieve")
 		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
 		("interval,n", po::value<std::string>() , "Energy test intervals")
 		("input,i", po::value<std::string>(), "Input file")
-		("output,o", po::value<std::string>(), "Output file")
-		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+		("output,o", po::value<std::string>(), "Output file");
+
+	po::options_description benchmark("Benchmark Options");
+	benchmark.add_options()
+		("from", po::value<int>() , "from integer value")
+		("to", po::value<int>() , "to integer value")
+		("inc", po::value<int>() , "increment integer value");
+
+	po::options_description query("Query Options");
+	query.add_options()
 		("time,t", po::value<time_range_t>(), "range of times to query")
 		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("logfile,f", po::value<std::string>(), "the log file to query")
+		("logfile,f", po::value<std::string>(), "the log file to query");
+
+	po::options_description positional("Positional Options");
+	positional.add_options()
+		("command" , po::value<string>() , "Swarm command: integrate, benchmark, verify, query ")
+		("parameter" , po::value<vector<string> >() , "Parameteres to benchmark: config, integrator, nsys, nbod, blocksize, ... ")
+		("value" , po::value<vector<string> >() , "Values to iterate over ");
+
+	po::options_description general("General Options");
+	general.add_options()
+		("cfg,c", po::value<std::string>(), "Integrator configuration file")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
-		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
-		;
+		("verbose,v", po::value<int>(), "Verbosity level (debug output) ");
+	
+	desc.add(general).add(integrate).add(benchmark).add(query);
+
+	po::options_description all;
+	all.add(desc).add(positional);
+	
+
 
 	po::variables_map &vm = argvars_map;
 	po::store(po::command_line_parser(argc, argv).
-			options(desc).positional(pos).run(), vm);
+			options(all).positional(pos).run(), vm);
 	po::notify(vm);
 
 	//// Respond to switches 
@@ -294,8 +342,16 @@ int main(int argc, char* argv[]){
 	if(command == "integrate")
 		run_integration();
 
-	else if(command == "benchmark" || command == "verify" )
+	else if(command == "benchmark") {
 		benchmark();
+		return verification_results ? 0 : 1;
+	}
+
+	else if(command == "verify" ) {
+		verify_mode = true;
+		benchmark();
+		return verification_results ? 0 : 1;
+	}
 
 	else if(command == "query" ) {
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
