@@ -37,14 +37,16 @@ struct Unroller<End, End, Step> {
 
 
 template<template<int> class T,int N,int MAXN,class B,class P>
-B choose(int n, P x){
+struct choose {
+B operator ()(const int& n, const P& x){
 	if(n == N)
 		return T<N>::choose(x);
-	else if(n < MAXN && n > N)
-		return choose<T,(N<MAXN ? N+1 : MAXN),MAXN,B,P>(n,x);
+	else if(n <= MAXN && n > N)
+		return choose<T,(N<MAXN ? N+1 : MAXN),MAXN,B,P>()(n,x);
 	else
 		return B();
 }
+};
 
 namespace swarm {
 
@@ -68,20 +70,35 @@ void launch_template(implementation* integ, implementation* gpu_integ, T a)
 
 }
 
+template<int N>
+struct launch_template_choose {
+	template<class integ_pair>
+	static void choose(integ_pair p){
+		params_t<N> a;
+		generic_kernel<<<p.first->gridDim(), p.first->threadDim(), p.first->shmemSize() >>>(p.second,a);
+	}
+};
+
 template<class implementation>
 void launch_templatized_integrator(implementation* integ){
 
-	if(integ->get_ensemble().nbod() <= 3){
+	if(integ->get_ensemble().nbod() <= MAX_NBODIES){
 		implementation* gpu_integ;
 		cudaErrCheck ( cudaMalloc(&gpu_integ,sizeof(implementation)) );
 		cudaErrCheck ( cudaMemcpy(gpu_integ,integ,sizeof(implementation),cudaMemcpyHostToDevice) );
 
-		launch_template(integ,gpu_integ,params_t<3>());
+		typedef std::pair<implementation*,implementation*> integ_pair ;
+		integ_pair p ( integ, gpu_integ );
+		int nbod = integ->get_ensemble().nbod();
+
+		choose< launch_template_choose, 3, MAX_NBODIES, void, integ_pair > c;
+			c( nbod, p );
 
 		cudaFree(integ);
 	} else {
-		// How do we get an error message out of here?
-		ERROR("Invalid number of bodies. (only up to 10 bodies per system)");
+		char b[100];
+		snprintf(b,100,"Invalid number of bodies. (only up to %d bodies per system)",MAX_NBODIES);
+		ERROR(b);
 	}
 
 }

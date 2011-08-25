@@ -350,6 +350,7 @@ int main(int argc, char* argv[]){
 	else if(command == "verify" ) {
 		verify_mode = true;
 		benchmark();
+		cout << (verification_results ? "Verify success" : "Verify failed") << endl;
 		return verification_results ? 0 : 1;
 	}
 

@@ -22,8 +22,6 @@
 #include "../log/log.hpp"
 #include "../plugin.hpp"
 
-static const int SHMEM_WARPSIZE = 16;
-
 #include "helpers.hpp"
 #include "utilities.hpp"
 #include "gravitation.hpp"

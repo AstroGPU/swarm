@@ -20,13 +20,12 @@
 
 #include "allocators.hpp"
 #include "coalescedstructarray.hpp"
+#include "config.h"
 
 namespace swarm {
 
 template<class N>
 GENERIC N sqr(const N& x) { return x*x; }
-
-const int ENSEMBLE_WARPSIZE = 16;
 
 typedef long double_int;
 

@@ -17,9 +17,11 @@ SET(CUDA_NVCC_FLAGS
 	-w
 	)
 
-include(CMakeUserConfig.txt)
-
 SET(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda CACHE PATH "Path to CUDA SDK directory")
+
+SET(MAX_NBODIES 6 CACHE STRING "Maximum number of bodies per system [3..10]")
+SET(ENSEMBLE_WARPSIZE 16 CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
+SET(SHMEM_WARPSIZE 16 CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
 
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
@@ -28,7 +30,7 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 # Macro to build other project based on swarm library
 MACRO(SWARM_ADD_EXECUTABLE target)
 	ADD_EXECUTABLE(${target} ${ARGN})
-	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+	INCLUDE_DIRECTORIES(${sawrm_INCCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 	TARGET_LINK_LIBRARIES(${target} swarmng ${Boost_LIBRARIES})
 ENDMACRO(SWARM_ADD_EXECUTABLE target)
 
@@ -42,6 +44,10 @@ if(DOXYGEN_FOUND)
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
 		)
 endif(DOXYGEN_FOUND)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
+
+SET(swarm_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 # Include src
 ADD_SUBDIRECTORY(src)
