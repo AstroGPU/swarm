@@ -29,7 +29,7 @@ namespace gpulog
 
 #ifdef __CUDACC__
 		__device__ static inline int global_atomicAdd(int *x, int add) {
-			return atomicAdd(x,add);
+			return ::atomicAdd(x,add);
 		}
 #else
 		__host__ static inline int global_atomicAdd(int *x, int add) {
