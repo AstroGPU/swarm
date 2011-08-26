@@ -82,8 +82,10 @@ class hermite: public integrator {
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
 			double h = _time_step;
-			// can't use this one because t might go past t_end
-			// double h = min(_time_step, t_end - t);
+
+			if( sys.time() + h > _destination_time ) {
+				h = _destination_time - sys.time();
+			}
 
 			
 			// Initial Evaluation

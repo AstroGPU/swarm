@@ -125,6 +125,10 @@ class rkck: public integrator {
 
 			double h = time_step;
 
+			if( sys.time() + h > _destination_time ) {
+				h = _destination_time - sys.time();
+			}
+
 			//// RKCK   integrate system  ////////////////////////////////////////////////////////////////
 			double p0 = pos, v0 = vel;
 
@@ -256,7 +260,7 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system ) 
-					sys.active() = (! montest()) && (sys.time() < _destination_time );
+					sys.active() = ! montest() && sys.time() < _destination_time; 
 			}
 
 			__syncthreads();
