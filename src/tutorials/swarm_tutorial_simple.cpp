@@ -11,7 +11,8 @@ using namespace std;
 
 config default_config() {
 	config cfg;
-	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+	//cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+	cfg["integrator"] = "euler"; // Set to use a GPU integrator
 	cfg["time step"] = "0.001";       // time step
 	cfg["destination time"] = "31.41592";
 	cfg["nbod"] = "3";
@@ -84,23 +85,15 @@ int main(int argc, char* argv[]){
 
 	// Initialize Swarm
 	swarm::init(cfg);
-	swarm::log::manager logman;
-	logman.init(cfg);
 
 	// Initialize Integrator
 	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	// TODO: detect gpu integrators
-	{
-		swarm::gpu::integrator* integ_gpu = (swarm::gpu::integrator*) integ.get();
-		integ_gpu->set_log(logman.get_gpulog());
-	}
 	integ->set_ensemble(ens);
 	integ->set_destination_time ( destination_time );
 	SYNC;
 
 	// Integrate
 	integ->integrate();
-	logman.flush();
 	SYNC;
 
 	/// Energy conservation error
