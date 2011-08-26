@@ -33,6 +33,13 @@
 #include "plugin.hpp"
 #include "utils.hpp"
 
+/// \defgroup integrators Integrators
+/// \defgroup propagators Propagators
+/// \defgroup monitors Monitors
+
+/*! Swarm-NG library
+ *
+ */
 namespace swarm {
 
 /*! Initialize the swarm library.

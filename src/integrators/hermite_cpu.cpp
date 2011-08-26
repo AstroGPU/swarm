@@ -25,6 +25,16 @@
 
 namespace swarm {
 
+/*! CPU implementation of PEC2 Hermite integrator
+ *
+ * \ingroup integrators
+ *
+ *   This is used as a reference implementation to
+ *   test other GPU implementations of other integrators
+ *   
+ *   This integrator can be used as an example of CPU integrator
+ *
+ */
 template< template<class L> class Monitor >
 class hermite_cpu : public integrator {
 	typedef integrator base;

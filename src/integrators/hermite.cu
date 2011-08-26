@@ -26,6 +26,10 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
+/*! GPU implementation of PEC2 Hermite integrator
+ * \ingroup integrators
+ *
+ */
 template< template<class L> class Monitor >
 class hermite: public integrator {
 	typedef integrator base;

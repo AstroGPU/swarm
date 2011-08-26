@@ -38,6 +38,10 @@ struct stop_on_crossing_orbit_or_close_approach_p {
 	}
 };
 
+/** Stopping monitor to detect crossing orbits for planets or a close approach
+ *
+ *  \ingroup monitors
+ */
 template<class log_t>
 class stop_on_crossing_orbit_or_close_approach {
 	public:

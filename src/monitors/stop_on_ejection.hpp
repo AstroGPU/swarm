@@ -31,6 +31,9 @@ struct stop_on_ejection_params {
 	}
 };
 
+/** Simple monitor that stops the system when a planet ejects from the system
+ *  \ingroup monitors
+ */
 template<class log_t>
 class stop_on_ejection {
 	public:

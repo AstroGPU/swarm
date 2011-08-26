@@ -28,7 +28,6 @@
 #include <string>
 #include <cuda_runtime_api.h>
 
-/// The main namespace for the Swarm-NG library
 namespace swarm {
 
 /**

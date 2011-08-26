@@ -28,6 +28,10 @@ struct stopper_template_params {
 	}
 };
 
+/** Empty monitor to use as a template
+ * \ingroup monitors
+ *
+ */
 template<class log_t>
 class stopper_template {
 	public:

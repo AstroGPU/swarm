@@ -31,6 +31,9 @@ struct combine_monitors_params {
 	}
 };
 
+/**
+ *  \ingroup monitors
+ */
 template< template <class log_t> class Monitor1, 
 	template <class log_t> class Monitor2 >
 class combine_monitors {

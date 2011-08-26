@@ -128,6 +128,12 @@ class integrator {
 
 };
 
+/*! GPU-based integrators and other GPU tools
+ *
+ *   All GPU integrators are containted within this namespace.
+ *   There are also some helpers like Gravitation are in this namespace.
+ *
+ */
 namespace gpu {
 
 /*! Interface class for all GPU based integrators.

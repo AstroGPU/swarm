@@ -29,6 +29,12 @@ struct log_time_interval_params {
 	}
 };
 
+/** Monitor that logs the state of the periodically
+ *
+ *  \ingroup monitors
+ *
+ *   the period of logging should be specified as "log interval" in config file.
+ */
 template<class log_t>
 class log_time_interval {
 	public:

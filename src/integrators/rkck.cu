@@ -36,6 +36,14 @@ struct AdaptiveTimeStep {
 	const static bool conditional_accept_step = true;
 };
 
+/*! Runge Kutta Cash Karp integrator Fixed/Adaptive
+ *
+ * \ingroup integrators
+ *
+ *  This integrator comes in two flavors: Fixed time step, Adaptive time step
+ *
+ *
+ */
 template< class AdaptationStyle, template<class L> class Monitor >
 class rkck: public integrator {
 	typedef integrator base;

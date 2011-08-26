@@ -45,6 +45,17 @@
 #include "bits/gpulog_ilogstream.h"
 #include "bits/gpulog_macro_cleanup.h"
 
+/*! Output arbitrary information in a stream from a CUDA Kernel
+ *  
+ *  This subsystem is aimed at providing an independent set of 
+ *  classess that provide an output stream for to use in a CUDA
+ *  kernel.
+ *
+ *  Data pushed into the gpulog are kept in pre-allocated memory buffer
+ *  and the buffer should be emptied and dumped to the disk before
+ *  it runs out of space.
+ *
+ */
 namespace gpulog
 {
 	// Import the externally visible classes and constant

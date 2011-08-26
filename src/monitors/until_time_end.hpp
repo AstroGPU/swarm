@@ -30,6 +30,10 @@ struct until_time_end_params {
 	}
 };
 
+/** Stops at a certain time
+ * \ingroup monitors
+ *
+ */
 template<class log_t>
 class until_time_end {
 	public:

@@ -24,12 +24,9 @@
 #include <cmath>
 
 /**
-	\file
-	
-	Declarations of libpeyton specific types.
+	peyton library imported from another project (Mario Juric)
 	
 */
-
 namespace peyton {
 
 typedef double MJD;

@@ -29,6 +29,11 @@
 
 namespace swarm {
 namespace gpu {
+
+/*! Class of GPU integrators with a thread for each body-pair
+ * \addtogroup integrators
+ *
+ */
 namespace bppt {
 
 
