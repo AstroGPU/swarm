@@ -65,43 +65,6 @@ void stability_test() {
 
 }
 
-void output_test() {
-	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
-
-	if(cfg.valid("input") ) {
-		cout << "# Lading initial conditions from " << cfg["input"];
-		initial_ens = swarm::snapshot::load(cfg["input"]);	
-		cout << ", time = " << initial_ens.time_ranges() << endl;
-	}else{
-		ERROR("you should have a tested input file");
-	}
-
-	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
-	current_ens = initial_ens.clone();
-
-	prepare_integrator();
-
-	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
-
-	if(cfg.valid("output")) {
-		reference_ens = swarm::snapshot::load(cfg["output"]);	
-		// Compare with reneference ensemble for integrator verification
-		double pos_diff = 0, vel_diff = 0, time_diff = 0;
-		bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
-		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
-			cout << "Test failed" << endl;
-		}else {
-			cout << "Test success" << endl;
-		}
-		cout << "\tPosition difference: " << pos_diff  << endl
-			 << "\tVelocity difference: " << vel_diff  << endl
-			 << "\tTime     difference: " << time_diff << endl;
-	}else{
-		ERROR("You should provide a test output file");
-	}
-
-	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
-}
 
 void load_generate_ensemble(){
 	// Load/Generate the ensemble
@@ -158,6 +121,7 @@ void run_integration(){
 	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
 }
 
+
 void reference_integration() {
 	DEBUG_OUTPUT(2, "Make a copy of ensemble for reference ensemble" );
 	reference_ens = initial_ens.clone();
@@ -179,6 +143,44 @@ void fail_verify() {
 	}else{
 		verification_results = false;
 	}
+}
+
+void output_test() {
+	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
+
+	if(cfg.valid("input") ) {
+		cout << "# Lading initial conditions from " << cfg["input"];
+		initial_ens = swarm::snapshot::load(cfg["input"]);	
+		cout << ", time = " << initial_ens.time_ranges() << endl;
+	}else{
+		ERROR("you should have a tested input file");
+	}
+
+	DEBUG_OUTPUT(2, "Make a copy of ensemble for energy conservation test" );
+	current_ens = initial_ens.clone();
+
+	prepare_integrator();
+
+	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
+
+	if(cfg.valid("output")) {
+		reference_ens = swarm::snapshot::load(cfg["output"]);	
+		// Compare with reneference ensemble for integrator verification
+		double pos_diff = 0, vel_diff = 0, time_diff = 0;
+		bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
+		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
+			cout << "Test failed" << endl;
+		}else {
+			cout << "Test success" << endl;
+		}
+		cout << "\tPosition difference: " << pos_diff  << endl
+			 << "\tVelocity difference: " << vel_diff  << endl
+			 << "\tTime     difference: " << time_diff << endl;
+	}else{
+		ERROR("You should provide a test output file");
+	}
+
+	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
 }
 
 void benchmark_item(const string& param, const string& value) {
@@ -224,10 +226,6 @@ void benchmark(){
 	load_generate_ensemble();
 	reference_integration();
 
-	// Set some variables
-	pos_threshold = cfg.optional("pos threshold", 1e-10);
-	vel_threshold = cfg.optional("vel threshold", 1e-10);
-	time_threshold = cfg.optional("time threshold", 1e-4);
 
 	// Go through the loop
 	std::cout << "Parameter, Value, Time, Energy Conservation Factor (delta E/E)"
@@ -378,6 +376,11 @@ int main(int argc, char* argv[]){
 	// Initialize Swarm
 	swarm::init(cfg);
 	srand(time(NULL));
+
+	// Set some variables
+	pos_threshold = cfg.optional("pos threshold", 1e-10);
+	vel_threshold = cfg.optional("vel threshold", 1e-10);
+	time_threshold = cfg.optional("time threshold", 1e-4);
 
 	// Branch based on COMMAND
 	if(command == "integrate")
