@@ -69,12 +69,12 @@ void stability_test() {
 void load_generate_ensemble(){
 	// Load/Generate the ensemble
 	if(cfg.valid("input") ) {
-		cout << "# Lading initial conditions from " << cfg["input"];
+		INFO_OUTPUT(1, "Loading initial conditions from " << cfg["input"]);
 		initial_ens = swarm::snapshot::load(cfg["input"]);	
-		cout << ", time = " << initial_ens.time_ranges() << endl;
+		INFO_OUTPUT(1,", time = " << initial_ens.time_ranges() << endl);
 		
 	}else{
-		cout << "# Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl;
+		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
 		initial_ens = generate_ensemble(cfg);
 	}
 }
@@ -82,8 +82,8 @@ void load_generate_ensemble(){
 void save_ensemble(){ 
 	// Save the ensemble
 	if(cfg.valid("output")) {
-		cout << "Saving to " << cfg["output"];
-		cout << ", time = " << current_ens.time_ranges() << endl;
+		INFO_OUTPUT(1, "Saving to " << cfg["output"]);
+		INFO_OUTPUT(1, ", time = " << current_ens.time_ranges() << endl);
 		swarm::snapshot::save(current_ens,cfg["output"]);	
 	}
 }
@@ -118,7 +118,7 @@ void run_integration(){
 
 	save_ensemble();
 
-	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
+	INFO_OUTPUT( 1, "Integration time: " << integration_time << " ms " << std::endl);
 }
 
 
@@ -138,7 +138,7 @@ double pos_threshold = 0, vel_threshold = 0, time_threshold = 0;
 
 void fail_verify() {
 	if(verify_mode){
-		cout << "Verify failed" << endl;
+		INFO_OUTPUT(0, "Verify failed" << endl);
 		exit(1);
 	}else{
 		verification_results = false;
@@ -149,9 +149,9 @@ void output_test() {
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 
 	if(cfg.valid("input") ) {
-		cout << "# Lading initial conditions from " << cfg["input"];
+		INFO_OUTPUT(1, "Loading initial conditions from " << cfg["input"]);
 		initial_ens = swarm::snapshot::load(cfg["input"]);	
-		cout << ", time = " << initial_ens.time_ranges() << endl;
+		INFO_OUTPUT(1,", time = " << initial_ens.time_ranges() << endl);
 	}else{
 		ERROR("you should have a tested input file");
 	}
@@ -164,23 +164,29 @@ void output_test() {
 	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
 
 	if(cfg.valid("output")) {
+
+		INFO_OUTPUT(1, "Loading reference ensemble from " << cfg["output"]);
 		reference_ens = swarm::snapshot::load(cfg["output"]);	
+		INFO_OUTPUT(1,", time = " << reference_ens.time_ranges() << endl);
+
 		// Compare with reneference ensemble for integrator verification
 		double pos_diff = 0, vel_diff = 0, time_diff = 0;
 		bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
+
 		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
-			cout << "Test failed" << endl;
+			INFO_OUTPUT(0, "Test failed" << endl);
 		}else {
-			cout << "Test success" << endl;
+			INFO_OUTPUT(0, "Test success" << endl);
 		}
-		cout << "\tPosition difference: " << pos_diff  << endl
+
+		INFO_OUTPUT(1,"\tPosition difference: " << pos_diff  << endl
 			 << "\tVelocity difference: " << vel_diff  << endl
-			 << "\tTime     difference: " << time_diff << endl;
+			 << "\tTime     difference: " << time_diff << endl );
 	}else{
 		ERROR("You should provide a test output file");
 	}
 
-	std::cout << "\n# Integration time: " << integration_time << " ms " << std::endl;
+	INFO_OUTPUT( 1, "Integration time: " << integration_time << " ms " << std::endl);
 }
 
 void benchmark_item(const string& param, const string& value) {
@@ -323,7 +329,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
-		("verbose,v", po::value<int>(), "Verbosity level (debug output) ");
+		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
+		("quiet,q",  "Suppress all the notifications (for CSV generation)");
 	
 	desc.add(general).add(integrate).add(benchmark).add(query);
 
@@ -341,6 +348,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	//
 	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
 	if (vm.count("verbose") ) DEBUG_LEVEL = vm["verbose"].as<int>();
+	if (vm.count("quiet") ) DEBUG_LEVEL = -1;
 
 	if (vm.count("plugins")) {
 		cout << swarm::plugin::help;
@@ -391,7 +399,6 @@ int main(int argc, char* argv[]){
 
 	else if(command == "benchmark") {
 		benchmark();
-		return verification_results ? 0 : 1;
 	}
 
 	else if(command == "verify" ) {

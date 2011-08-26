@@ -34,6 +34,7 @@
 #define $__(x,line) (std::cerr << __FUNCTION__ << ":" << line << ": " << #x <<  " = " << (x) << std::endl)
 #define DEBUG_OUTPUT(level,message) ( (DEBUG_LEVEL >= level) ? (std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << message << std::endl) : std::cerr )
 
+#define INFO_OUTPUT(level,message) ( (DEBUG_LEVEL >= level) ? (std::cerr <<  message ) : std::cerr )
 
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r);
 
