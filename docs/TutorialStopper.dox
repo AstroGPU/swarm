@@ -1,0 +1,11 @@
+namespace swarm {
+
+/** \page TutorialStopper Tutorial 3: How to add a stopper
+	\ingroup Tutorial
+
+
+simple example to show how to add a stopper. 
+
+*/
+
+}

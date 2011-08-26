@@ -1,0 +1,11 @@
+namespace swarm {
+
+/** \page TutorialIntegrator Tutorial 5: How to add an integrator (advanced)
+	\ingroup Tutorial
+
+
+simple example to show how to add an integrator. 
+
+*/
+
+}

@@ -1,8 +1,3 @@
-/*! \file mainpage.h
- * \brief text for main page of Doxygen output
- */
-
-
 /** @mainpage Swarm-NG library & demonstration programs
 
  @authors Aaron Boley, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
@@ -18,6 +13,17 @@ partiular interest for astronomers who study the chaotic evolution of
 planetary systems.  In the long term, we hope Swarm-NG will allow for
 the efficient parallel integration of user-defined systems of ordinary
 differential equations.
+
+\b Table \b of \b contents
+ - \ref IntroductionSwarm
+ - \ref BuildSwarm
+ - \ref TestSwarm
+ - \b Tutorial
+ 	- \ref TutorialSimple
+	- \ref TutorialPropagator
+	- \ref TutorialStopper
+	- \ref TutorialLogger
+	- \ref TutorialIntegrator
 
  @section moreinfo Further Information
  Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/

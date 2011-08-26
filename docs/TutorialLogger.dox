@@ -1,0 +1,11 @@
+namespace swarm {
+
+/** \page TutorialLogger Tutorial 4: How to add a logger
+	\ingroup Tutorial
+
+
+simple example to show how to add a logger. 
+
+*/
+
+}
