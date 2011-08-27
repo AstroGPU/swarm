@@ -53,7 +53,7 @@ demonstrate functionality and how to program with Swarm-NG.
    'make test' successfully, then the output will be stored in
    'test-outputs/swarm/swarm-run.test/output.log'</li>
 
-<li> Read link:swarm.html[] and link:configuration_file.html[] for a
+<li> Read link:swarm.html[] and \ref Configuration for a
    description of swarm, the configuration file format and valid
    parameters for the 'bin/swarm' program.  (Some of the other demos
    use a configuration file with the same format, but they may not
@@ -76,12 +76,10 @@ demonstrate functionality and how to program with Swarm-NG.
 
 <li> To learn more from examples of non-trivial codes, take a look at the following applications:
 <ul>
-<li> 'src/scatter_demo/swarm_scatter_demo.cpp':  example that considers
+<li> swarm_scatter_demo.cpp:  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li>
-<li> 'src/swarm.cpp': this reads in an ensemble of initial conditions and
+<li> swarm.cpp: this reads in an ensemble of initial conditions and
   writes output to binary files.  More information at link:swarm.html[]. </li>
-<li> The binary output files can be easily accessed via the swarmquery program 
-  (see link:swarmquery.html[] or link:swarmquerykeplerian.html[]).</li>
 </ul>
 </li>
 

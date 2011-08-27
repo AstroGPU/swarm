@@ -1,0 +1,50 @@
+namespace swarm {
+
+/** \page Configuration Configuration Files
+
+Text-based configuration files are used to feed parameters into 
+swarm utility. Here is a sample of configuration file:
+\verbatim
+# I/O configuration
+input=sample.in
+output=sample.out
+
+# Integrator config
+integrator=rkck_adaptive
+min time step=0.0001
+max time step=0.001
+error tolerance=1E-27
+
+\endverbatim 
+
+Syntax is:
+ - Every line starting with # is ignored
+ - Empty lines are ignored
+ - A valid line is in form name=value
+ - Spaces in the parameter name and parameter value are allowed.
+ - If a name is assigned more than once, only the last occurence
+is considered.
+ - Parameter names are case-sensitive.
+
+
+<TABLE>
+<TR><TD> Name </TD><TD> Default Value </TD><TD> Description </TD> </TR>
+<TR><TD> integrator </TD> <TD> hermite </TD> <TD> Name of THe integrator plugin used for integration</TD> </TR>
+<TR><TD> destination time </TD><TD>  10 pi </TD><TD> Marker for end of integration, all systems integrated and synchronized to this time </TD></TR>
+<TR><TD> time step  </TD><TD> 0.0001 </TD><TD>  </TD></TR>
+<TR><TD> min time step </TD> <TD> </TD> <TD> Used by Adaptive Time step integrators </TD> </TR>
+<TR><TD> max time step </TD> <TD> </TD> <TD> Used by Adaptive Time step integrators </TD> </TR>
+<TR><TD> input  </TD><TD>    </TD><TD>  Binary input file    </TD></TR>
+<TR><TD> output  </TD><TD>    </TD><TD> Binary output file    </TD></TR>
+<TR><TD> text input  </TD><TD>    </TD><TD>  Text input file    </TD></TR>
+<TR><TD> text output  </TD><TD>    </TD><TD> Text output file    </TD></TR>
+<TR><TD>     </TD><TD>       </TD><TD>     </TD></TR>
+<TR><TD>     </TD><TD>       </TD><TD>     </TD></TR>
+</TABLE>
+
+
+
+
+*/
+
+}
