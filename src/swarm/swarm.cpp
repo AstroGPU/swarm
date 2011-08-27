@@ -65,13 +65,47 @@ void stability_test() {
 
 }
 
+bool read_input_file(defaultEnsemble& ens, config& cfg){
+
+	if(cfg.valid("input") ) {
+		INFO_OUTPUT(1, "Loading from binary file " << cfg["input"]);
+		ens = swarm::snapshot::load(cfg["input"]);	
+		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
+		return true;
+
+	}else if(cfg.valid("text input")) {
+		INFO_OUTPUT(1, "Loading from text file " << cfg["text input"]);
+		ens = swarm::snapshot::load_text(cfg["text input"]);	
+		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
+		return true;
+
+	}else
+		return false;
+		
+}
+
+bool read_output_file(defaultEnsemble& ens, config& cfg){
+
+	if(cfg.valid("output") ) {
+		INFO_OUTPUT(1, "Loading from binary file " << cfg["output"]);
+		ens = swarm::snapshot::load(cfg["output"]);	
+		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
+		return true;
+
+	}else if(cfg.valid("text output")) {
+		INFO_OUTPUT(1, "Loading from text file " << cfg["text output"]);
+		ens = swarm::snapshot::load_text(cfg["text output"]);	
+		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
+		return true;
+
+	}else
+		return false;
+		
+}
 
 void load_generate_ensemble(){
 	// Load/Generate the ensemble
-	if(cfg.valid("input") ) {
-		INFO_OUTPUT(1, "Loading initial conditions from " << cfg["input"]);
-		initial_ens = swarm::snapshot::load(cfg["input"]);	
-		INFO_OUTPUT(1,", time = " << initial_ens.time_ranges() << endl);
+	if(read_input_file(initial_ens,cfg)) {
 		
 	}else{
 		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
@@ -82,9 +116,14 @@ void load_generate_ensemble(){
 void save_ensemble(){ 
 	// Save the ensemble
 	if(cfg.valid("output")) {
-		INFO_OUTPUT(1, "Saving to " << cfg["output"]);
+		INFO_OUTPUT(1, "Saving as binary  " << cfg["output"]);
 		INFO_OUTPUT(1, ", time = " << current_ens.time_ranges() << endl);
 		swarm::snapshot::save(current_ens,cfg["output"]);	
+
+	}else if(cfg.valid("text output")) {
+		INFO_OUTPUT(1, "Saving as text  " << cfg["text output"]);
+		INFO_OUTPUT(1, ", time = " << current_ens.time_ranges() << endl);
+		swarm::snapshot::save_text(current_ens,cfg["text output"]);	
 	}
 }
 
@@ -163,11 +202,7 @@ void output_test() {
 
 	double integration_time = watch_time ( cfg.valid("interval") ? stability_test : generic_integrate );
 
-	if(cfg.valid("output")) {
-
-		INFO_OUTPUT(1, "Loading reference ensemble from " << cfg["output"]);
-		reference_ens = swarm::snapshot::load(cfg["output"]);	
-		INFO_OUTPUT(1,", time = " << reference_ens.time_ranges() << endl);
+	if(read_output_file(reference_ens,cfg)){
 
 		// Compare with reneference ensemble for integrator verification
 		double pos_diff = 0, vel_diff = 0, time_diff = 0;
@@ -182,6 +217,7 @@ void output_test() {
 		INFO_OUTPUT(1,"\tPosition difference: " << pos_diff  << endl
 			 << "\tVelocity difference: " << vel_diff  << endl
 			 << "\tTime     difference: " << time_diff << endl );
+
 	}else{
 		ERROR("You should provide a test output file");
 	}
@@ -294,6 +330,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			"\tverify    :  Verify an integrator against a reference integrator\n"
 			"\tquery     :  Query data from a log file\n"
 			"\ttest      :  Test a configuration against input/output files\n"
+			"\tgenerate  :  Generate a new ensemble and save it to output file\n"
+			"\tconvert   :  Read input file and write it to output file (converts to/from text)\n"
 			"\nOptions"
 		);
 
@@ -304,7 +342,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
 		("interval,n", po::value<std::string>() , "Energy test intervals")
 		("input,i", po::value<std::string>(), "Input file")
-		("output,o", po::value<std::string>(), "Output file");
+		("output,o", po::value<std::string>(), "Output file")
+		("text input,I", po::value<std::string>(), "Text Input file")
+		("text output,O", po::value<std::string>(), "Text Output file");
 
 	po::options_description benchmark("Benchmark Options");
 	benchmark.add_options()
@@ -364,8 +404,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		std::cout << desc << "\n"; exit(1); 
 	}
 
-	const int cmd_to_config_len = 5;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "destination time", "logarithmic", "interval" };
+	const int cmd_to_config_len = 7;
+	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text input" , "text output", "destination time", "logarithmic", "interval" };
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
@@ -422,8 +462,23 @@ int main(int argc, char* argv[]){
 		std::string datafile(argvars_map["logfile"].as<std::string>());
 
 		query::execute(datafile, T, sys);
-
 	}
+
+	else if(command == "generate" ) {
+		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
+		current_ens = generate_ensemble(cfg);
+		save_ensemble();
+	} 
+	
+	else if(command == "convert" ) {
+		if( read_input_file(current_ens,cfg) ) {
+			save_ensemble();
+			INFO_OUTPUT(1,"Converted!");
+		}else{
+			INFO_OUTPUT(1,"Convertion failed");
+		}
+	} 
+	
 	else
 		std::cerr << "Valid commands are: integrate, benchmark, verify " << std::endl;
 
