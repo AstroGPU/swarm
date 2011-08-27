@@ -5,6 +5,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+SET(Swarm_NG_VERSION_MAJOR 0)
+SET(Swarm_NG_VERSION_MINOR 2)
+
 
 # Set CUDA Flags and options
 SET(CUDA_VERBOSE_BUILD 0)
@@ -22,6 +25,7 @@ SET(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda CACHE PATH "Path to CUDA SDK directory
 SET(MAX_NBODIES 6 CACHE STRING "Maximum number of bodies per system [3..10]")
 SET(ENSEMBLE_WARPSIZE 16 CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
 SET(SHMEM_WARPSIZE 16 CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
+SET(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs CACHE PATH "Where to put documentation output")
 
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
