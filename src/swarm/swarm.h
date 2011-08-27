@@ -48,6 +48,17 @@ namespace swarm {
  *  encouraged for forward compatibility.
  */
 inline void init(const config &cfg) { 
+	// Select the proper device
+	const char* devstr = getenv("CUDA_DEVICE");
+	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
+
+	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
+	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
+	if( dev >= 0 && dev < devcnt )
+		cudaErrCheck( cudaSetDevice(dev) );
+	else
+		std::cerr << "Cannot select the CUDA device. GPU integrators are disabled" << std::endl;
+
 	swarm::log::manager::default_log()->init(cfg);
 }
 
