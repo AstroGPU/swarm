@@ -28,7 +28,8 @@ struct stopper_template_params {
 	}
 };
 
-/** Empty monitor to use as a template
+/** Empty monitor to use as a template.  
+ * Signal is always false.  Does not do any logging.
  * \ingroup monitors
  *
  */

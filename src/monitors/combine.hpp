@@ -31,7 +31,8 @@ struct combine_monitors_params {
 	}
 };
 
-/**
+/** Template to allow developer to join two monitors
+ *  Signal is true if either monitor returns true.
  *  \ingroup monitors
  */
 template< template <class log_t> class Monitor1, 

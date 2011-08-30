@@ -30,7 +30,9 @@ struct until_time_end_params {
 	}
 };
 
-/** Stops at a certain time
+/** Signals true once time is equal to or greater than "time end".
+ *  Does not do any logging.
+ *  Assumes integration forward in time.
  * \ingroup monitors
  *
  */
@@ -48,7 +50,7 @@ class until_time_end {
 	public:
 
 	GPUAPI bool operator () () { 
-		return _sys.time() > _params.time_end; 
+		return _sys.time() >= _params.time_end; 
 	}
 
 	GPUAPI until_time_end(const params& p,ensemble::SystemRef& s,log_t& l)
