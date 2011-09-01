@@ -21,6 +21,7 @@
 
 namespace swarm {
 
+//TODO: Should monitors have their own sub-namespace?  Perhaps swarm::monitors
 
 struct monitor_template_params {
 	monitor_template_params(const config &cfg)

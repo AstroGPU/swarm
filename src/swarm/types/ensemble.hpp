@@ -90,14 +90,14 @@ class EnsembleBase {
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 
 		//! Distance of the planet to (0,0,0) 
-                // TODO: Rename distance_to_origin_sq 
+        // TODO: Rename distance_to_origin_sq 
 		GENERIC double radius() { 
 			return sqr(operator[](0).pos()) 
 				+ sqr(operator[](1).pos()) 
 				+ sqr(operator[](2).pos());
 		}
 		//! Magnitude of velocity
-                // TODO: Rename speed_sq
+        // TODO: Rename speed_sq
 		GENERIC double speed() {
 			return sqr(operator[](0).vel()) 
 				+ sqr(operator[](1).vel()) 

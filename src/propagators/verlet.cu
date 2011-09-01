@@ -59,7 +59,7 @@ struct VerletPropagator {
 
 	GPUAPI void advance(){
 		double h = _params.time_step;
-		double pos = 0, vel = 0;
+		double pos = 0.0, vel = 0.0;
 
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
@@ -67,7 +67,7 @@ struct VerletPropagator {
 
 			///////// INTEGRATION STEP /////////////////
 
-			double h_first_half = h / 2 ;
+			double h_first_half = 0.5 * h;
 
 			// First half step for positions
 			pos = pos + h_first_half * vel;

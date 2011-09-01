@@ -98,7 +98,7 @@ class Gravitation {
 			double dx[3] =  { sys[j][0].pos()- sys[i][0].pos(),sys[j][1].pos()- sys[i][1].pos(), sys[j][2].pos()- sys[i][2].pos() };
 			double dv[3] =  { sys[j][0].vel()- sys[i][0].vel(),sys[j][1].vel()- sys[i][1].vel(), sys[j][2].vel()- sys[i][2].vel() };
 			double r2 =  dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2];
-			double jerk_mag =  inner_product(dx,dv) * 3. / r2;
+			double jerk_mag =  inner_product(dx,dv) * 3.0 / r2;
 			double acc_mag =  rsqrt(r2) / r2;
 
 #pragma unroll
@@ -137,10 +137,10 @@ class Gravitation {
 	}
 
 	__device__ void sum(int b,int c,double& acc, double & jerk)const{
-		double total_a = 0;
-		double from_sun_a = 0;
-		double total_j = 0;
-		double from_sun_j = 0;
+		double total_a = 0.0;
+		double from_sun_a = 0.0;
+		double total_j = 0.0;
+		double from_sun_j = 0.0;
 
 		/// Find the contribution from/to Sun first
 #pragma unroll
