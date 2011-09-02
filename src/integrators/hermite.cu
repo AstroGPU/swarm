@@ -74,7 +74,7 @@ class hermite: public integrator {
 
 
 		// local information per component per body
-		double pos = 0, vel = 0 , acc0 = 0, jerk0 = 0;
+		double pos = 0.0, vel = 0.0 , acc0 = 0.0, jerk0 = 0.0;
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
@@ -96,7 +96,7 @@ class hermite: public integrator {
 			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
-			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.)*jerk0));
+			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.0)*jerk0));
 			vel = vel +  h*(acc0+(h*0.5)*jerk0);
 
 			double pre_pos = pos, pre_vel = vel;
@@ -105,18 +105,24 @@ class hermite: public integrator {
 			{
 				// Evaluation
 				calcForces(ij,b,c,pos,vel,acc1,jerk1);
-
+				
 				// Correct
-				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
+				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
+				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
+				//	TODO: Need to test w/ new expressions below
+				//				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
+				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
 			}
 			{
 				// Evaluation
 				calcForces(ij,b,c,pos,vel,acc1,jerk1);
-
+				
 				// Correct
-				pos = pre_pos + (.1-.25) * (acc0 - acc1) * h * h - 1/60.0 * ( 7 * jerk0 + 2 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -.5 ) * (acc0 - acc1 ) * h -  1/12.0 * ( 5 * jerk0 + jerk1 ) * h * h;
+				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
+				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
+				//	TODO: Need to test w/ new expressions below
+				// pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
+				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
 			}
 			acc0 = acc1, jerk0 = jerk1;
 

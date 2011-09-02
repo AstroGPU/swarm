@@ -21,21 +21,23 @@
 
 namespace swarm {
 
+//TODO: Should monitors have their own sub-namespace?  Perhaps swarm::monitors
 
-struct stopper_template_params {
-	stopper_template_params(const config &cfg)
+struct monitor_template_params {
+	monitor_template_params(const config &cfg)
 	{
 	}
 };
 
-/** Empty monitor to use as a template
+/** Empty monitor to use as a template.  
+ * Signal is always false.  Does not do any logging.
  * \ingroup monitors
  *
  */
 template<class log_t>
-class stopper_template {
+class monitor_template {
 	public:
-	typedef stopper_template_params params;
+	typedef monitor_template_params params;
 
 	private:
 	params _params;
@@ -49,7 +51,7 @@ class stopper_template {
 		return false; 
 	}
 
-	GPUAPI stopper_template(const params& p,ensemble::SystemRef& s,log_t& l)
+	GPUAPI monitor_template(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l){}
 	
 };

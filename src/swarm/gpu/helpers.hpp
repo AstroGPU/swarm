@@ -67,7 +67,8 @@ void launch_template(implementation* integ, implementation* gpu_integ, T a)
 {
 	if(integ->get_ensemble().nbod() == T::n) 
 		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
-
+	// TODO:  Add else print error message?
+		
 }
 
 template<int N>

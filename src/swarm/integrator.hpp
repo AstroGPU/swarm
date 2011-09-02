@@ -224,7 +224,7 @@ class integrator : public swarm::integrator {
 	void upload_ensemble() {
 		_hens.copyTo( _dens );
 	}
-	
+		
 	//! Synchronize host ensemble with device ensemble
 	void download_ensemble() {
 		_dens.copyTo( _hens );

@@ -62,10 +62,13 @@ class integrator : public gpu::integrator  {
 
 	public:
 	integrator(const config &cfg) : Base(cfg) {
-		_system_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 32;
+	// TODO: Should we allow integrator to provide its own default block size?
+	//       Or is this about memory mangagment, so not integrator specific?
+	_system_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 32;
 	}
 
 	dim3 gridDim(){
+		// TODO:  Is this one too many blocks if nsys%system_per_block==0?
 		const int nblocks = ( _hens.nsys() + system_per_block() ) / system_per_block();
 		dim3 gD;
 		gD.z = 1;

@@ -29,8 +29,11 @@ struct log_time_interval_params {
 	}
 };
 
-/** Monitor that logs the state of the periodically
- *
+/** Monitor that logs the entire state of systems at periodic intervals of approximately "log interval"
+ *  Systems may be integrated for more than log interval before another log entry is written.
+ *  Always returns signal of false.  
+ *  Assumes integration results in increasing time.
+ * 
  *  \ingroup monitors
  *
  *   the period of logging should be specified as "log interval" in config file.
@@ -50,7 +53,7 @@ class log_time_interval {
 	public:
 
 	GPUAPI bool operator () () { 
-		if( _sys.time() > _next_log_time ) {
+		if(_sys.time() >= _next_log_time )  {
 			log::system(_log, _sys );
 			_next_log_time += _params.time_interval; 
 			//lprintf(_log,"Logging at %lg\n",_sys.time());

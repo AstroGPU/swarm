@@ -57,16 +57,17 @@ struct EulerPropagator {
 
 	GPUAPI void advance(){
 		double h = _params.time_step;
-		double pos = 0, vel = 0;
-		double acc = 0, jerk = 0;
-
+		double pos = 0.0, vel = 0.0;
+		double acc = 0.0, jerk = 0.0;
+		const double third = 1.0/3.0;
+		
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		calcForces(ij,b,c,pos,vel,acc,jerk);
 		// Integratore
-		pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.)*jerk));
+		pos = pos +  h*(vel+(h*0.5)*(acc+(h*third)*jerk));
 		vel = vel +  h*(acc+(h*0.5)*jerk);
 
 

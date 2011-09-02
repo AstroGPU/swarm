@@ -94,13 +94,13 @@ namespace swarm {
 
 							a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
 
-							p_i = p_im2 + 2 * h * v_im1;
-							v_i = v_im2 + 2 * h * a_im1;
+							p_i = p_im2 + 2.0 * h * v_im1;
+							v_i = v_im2 + 2.0 * h * a_im1;
 						}
 						double a_i = calcForces.acc(ij,b,c,p_i,v_i);
 
-						pos = ( p_i + p_im1 + h * v_i ) / 2;
-						vel = ( v_i + v_im1 + h * a_i ) / 2;
+						pos = 0.5 * ( p_i + p_im1 + h * v_i );
+						vel = 0.5 * ( v_i + v_im1 + h * a_i );
 
 
 						// Finalize the step

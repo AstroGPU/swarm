@@ -268,7 +268,7 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system ) 
-					sys.active() = ! montest() && sys.time() < _destination_time; 
+					sys.active() = (! montest()) && (sys.time() < _destination_time); 
 			}
 
 			__syncthreads();

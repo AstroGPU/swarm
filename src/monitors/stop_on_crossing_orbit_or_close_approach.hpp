@@ -21,7 +21,6 @@
 
 namespace swarm {
 
-
 struct stop_on_crossing_orbit_or_close_approach_p {
 	double rmax,dmin;
 	stop_on_crossing_orbit_or_close_approach_p(const config &cfg)
@@ -39,7 +38,9 @@ struct stop_on_crossing_orbit_or_close_approach_p {
 };
 
 /** Stopping monitor to detect crossing orbits for planets or a close approach
- *
+ *  WARNING:  This has the potential to grow into a default monitor for stopping and/or logging.
+ *            But I'll need to clearn this up quite a bit first.  
+ *  WARNING:  This only tests for potential orbit crossing and makes assumptions about planet ordering
  *  \ingroup monitors
  */
 template<class log_t>
@@ -52,8 +53,10 @@ class stop_on_crossing_orbit_or_close_approach {
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-
-	double _GM;
+	
+	int _counter;
+	// replaced so just use  mass of body zero
+	//	double _GM;
 
 	public:
 
@@ -64,6 +67,7 @@ class stop_on_crossing_orbit_or_close_approach {
 		// h2 = ||pos X vel||^2
 		double h2 = sqr(y*vz-z*vy) + sqr(z*vx-x*vz) + sqr(x*vy-y*vx);
 		double r = _sys[b].radius(), sp = _sys[b].speed();
+		double _GM = _sys[b].mass();  // remove _ if ok to keep
 		double energy = sp*0.5-_GM/r;
 		double epp = energy*r/_GM;
 
@@ -112,7 +116,7 @@ class stop_on_crossing_orbit_or_close_approach {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d = _sys.distance_between(i,j);
-		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
+		double _GM = _sys[b].mass();  // remove _ if ok to keepdouble rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
 		bool close_encounter = d < _p.dmin * rH;
 
 		if( close_encounter )
@@ -124,6 +128,7 @@ class stop_on_crossing_orbit_or_close_approach {
 	}
 
 	GPUAPI bool operator () () { 
+		// WARNING: Maximum number of planet hardwired here
 		double a[10],e[10];
 		bool stopit = false;
 
@@ -144,11 +149,16 @@ class stop_on_crossing_orbit_or_close_approach {
 			log::system(_log, _sys);
 		}
 
+		//	if(_counter % 1000 == 0)
+		//		lprintf(_log,"Hello %g\n", _sys.time() );
+		_counter++;
+
 		return stopit;
 	}
 
 	GPUAPI stop_on_crossing_orbit_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
+	    :_p(p),_sys(s),_log(l),_counter(0)){}
+//		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
 	
 };
 
