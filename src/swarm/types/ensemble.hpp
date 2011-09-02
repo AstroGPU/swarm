@@ -20,7 +20,7 @@
 
 #include "allocators.hpp"
 #include "coalescedstructarray.hpp"
-#include "config.h"
+#include <config.h>
 
 namespace swarm {
 
@@ -425,27 +425,36 @@ class EnsembleBase {
 	}
 
 	struct range_t {
-		double average, min, max;
-		range_t(const double& a,const double& m, const double& M)
-			:average(a),min(m),max(M){}
+		double average, min, max,median;
+		range_t(const double& a,const double& m, const double& M, const double& d)
+			:average(a),min(m),max(M),median(d){}
+
+		template<class RandomAccessIterator>
+		static range_t calculate(RandomAccessIterator begin, RandomAccessIterator end){
+			size_t n = end - begin;
+			double min = *begin;
+			double max = *begin;
+			double sum = *begin;
+			for(RandomAccessIterator i = begin+1; i != end; i++) {
+				double v = *i;
+				if( v < min ) min = v;
+				if( v > max ) max = v;
+				sum += v;
+			}
+			std::nth_element(begin,end, begin+n/2);
+			return range_t(sum/n,min,max,*(begin+n/2));
+		}
 	};
 
 	//! Range of times of systems (average,min,max)
 	//! Averages the time for all systems and finds min and max
 	//! Useful to find the best value for destination time
 	GENERIC range_t time_ranges() const {
-		double time = operator[](0).time();
-		double min = time;
-		double max = time;
-		double sum = time;
-		for(int i= 1; i < nsys(); i++) {
-			double time = operator[](i).time();
-			if( time < min ) min = time;
-			if( time > max ) max = time;
-			sum += time;
-		}
-		return range_t(sum/nsys(),min,max);
+		std::vector<double> times(nsys());
+		for(int i= 0; i < nsys(); i++) 
+			times[i] = operator[](i).time();
 
+		return range_t::calculate(times.begin(),times.end());
 	}
 
 };

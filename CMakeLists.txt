@@ -10,7 +10,7 @@ SET(Swarm_NG_VERSION_MINOR 2)
 
 
 # Set CUDA Flags and options
-SET(CUDA_VERBOSE_BUILD 0)
+SET(CUDA_VERBOSE_BUILD 1)
 SET(CUDA_NVCC_FLAGS 
 	-gencode arch=compute_20,code=sm_20;
 	-gencode arch=compute_13,code=sm_13;
@@ -36,7 +36,7 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 # Macro to build other project based on swarm library
 MACRO(SWARM_ADD_EXECUTABLE target)
 	ADD_EXECUTABLE(${target} ${ARGN})
-	INCLUDE_DIRECTORIES(${sawrm_INCCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+	INCLUDE_DIRECTORIES(${swarm_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 	TARGET_LINK_LIBRARIES(${target} swarmng ${Boost_LIBRARIES})
 ENDMACRO(SWARM_ADD_EXECUTABLE target)
 

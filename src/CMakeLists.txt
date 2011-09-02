@@ -5,6 +5,7 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE(plugins.cmake)
 
 # Build swarm
+INCLUDE_DIRECTORIES(${swarm_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 CUDA_ADD_LIBRARY(swarmng SHARED 
 	swarm/plugin.cpp
 	swarm/peyton/binarystream.cpp swarm/peyton/util.cpp 
@@ -14,7 +15,6 @@ CUDA_ADD_LIBRARY(swarmng SHARED
 	swarm/log/io.cpp swarm/log/logmanager.cpp
 	swarm/types/config.cpp swarm/utils.cpp swarm/gpu/utilities.cu
 	${SWARM_PLUGINS})
-INCLUDE_DIRECTORIES(${swarm_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 
 SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp swarm/query.cpp)
 

@@ -31,7 +31,7 @@ void stability_test() {
 
 	defaultEnsemble &ens = current_ens;
 
-	double begin_time = ens.time_ranges().average;
+	double begin_time = ens.time_ranges().median;
 	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
 	double interval = cfg.optional("interval", (destination_time-begin_time) ) ; 
 	double logarithmic = cfg.optional("logarithmic", 0 ) ; 

@@ -63,10 +63,11 @@ bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
   int nsystems = cfg.require("nsys",0);
   int nbodypersystem = cfg.require("nbod",0);
-  int bs = cfg.optional("block size",16);
+  int bs = cfg.optional("block size",SHMEM_WARPSIZE);
 
   // Check that parameters from command line are ok
-  if((bs<8)||(bs>32)) valid =false;
+  if((bs<SHMEM_WARPSIZE)||(bs>64)) valid =false;
+  if( bs % SHMEM_WARPSIZE != 0 ) valid = false;
   if(!(nsystems>=1)||!(nsystems<=256000)) valid = false;
   if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
 
@@ -99,9 +100,9 @@ config default_config() {
 }
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
 	if(r.min-r.max < 1e-11) 
-		return o << r.average;
+		return o << r.median;
 	else
-		return o << r.average << "[" << (r.min-r.average) << "," << (r.max-r.average) << "] ";
+		return o << r.median << "[" << (r.min-r.median) << "," << (r.max-r.median) << "] ";
 }
 
 bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_diff, double & vel_diff, double & time_diff ) {

@@ -116,6 +116,10 @@ class hermite_cpu : public integrator {
 		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
 			double h = _time_step;
 
+			if( sys.time() + h > _destination_time ) {
+				h = _destination_time - sys.time();
+			}
+
 			// Predict
 			for(int b = 0; b < nbod; b++)	for(int c =0; c < 3; c++) {
 					sys[b][c].pos() += h * (sys[b][c].vel()+h*0.5*(acc0[b][c]+h/3*jerk0[b][c]));
