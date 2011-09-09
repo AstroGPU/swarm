@@ -1,0 +1,169 @@
+namespace swarm {
+/*!
+
+  \page SwarmExec Swarm executable
+
+  Swarm executable is the average Linus user's interface to Swarm-NG package. Swarm executable can be used
+  to accomplish different tasks:
+    
+    - Integrate an ensemble from a text input file
+    - Examine log output files
+    - Launch and test integrators
+    - Generate stable ensembles
+    - Convert binary files to text files
+
+  \section cmdline Command-line interface
+
+  \verbatim
+Usage:
+ 	swarm [options] COMMAND [PARAMETER VALUE VALUE ...]
+
+Possible commands are: 
+	integrate :  Integrate a [loaded|generated] ensemble
+	benchmark :  Compare outputs for different methods of integrations
+	verify    :  Verify an integrator against a reference integrator
+	query     :  Query data from a log file
+	test      :  Test a configuration against input/output files
+	generate  :  Generate a new ensemble and save it to output file
+	convert   :  Read input file and write it to output file (converts to/from text)
+
+Options:
+
+General Options:
+  -c [ --cfg ] arg      Integrator configuration file
+  -h [ --help ]         produce help message
+  -p [ --plugins ]      list all of the plugins
+  -v [ --verbose ] arg  Verbosity level (debug output) 
+  -q [ --quiet ]        Suppress all the notifications (for CSV generation)
+
+Integation Options:
+  -d [ --destination time ] arg Destination time to achieve
+  -l [ --logarithmic ] arg      Produce times in logarithmic scale
+  -n [ --interval ] arg         Energy test intervals
+  -i [ --input ] arg            Input file
+  -o [ --output ] arg           Output file
+  -I [ --text input ] arg       Text Input file
+  -O [ --text output ] arg      Text Output file
+
+Benchmark Options:
+  --from arg            from integer value
+  --to arg              to integer value
+  --inc arg             increment integer value
+
+Query Options:
+  -t [ --time ] arg     range of times to query
+  -s [ --system ] arg   range of systems to query
+  -f [ --logfile ] arg  the log file to query
+\endverbatim
+
+   Typical use of swarm requires a command followed by several options and parameters specific to the command. 
+   There are some options that are general to all commands, but most options are only valid with specific commands.
+
+   \subsection General General Options
+   Following options are interpreted by swarm regardless of the command used.
+   
+   - -c [ --cfg ] &lt;configuration file&gt;: Specifies path to the file containing configuration for various parts of
+   swarm framework. This configuration will be used to configure all modules of Swarm-NG library. Configuration 
+   file syntax is:
+\verbatim
+param 1 = value
+param 2 = value
+\endverbatim
+   Note that parameter name can contain spaces, the space is considered when parsing the file.
+   Although the configuration file is optional, it is highly recommended. Because most components of the library
+   require configuration and if the configuration is not provided by user, a predefined configuration will be used.
+
+   - -p [ --plugins ] : Used without a command. Writes the list of plugins that are linked to the Swarm-NG library.
+   This option can be usefull when you are selecting an integrator.
+   
+   - -v [ --verbose ] &lt;verbosity level&gt;: Specify a positive number for verobsity level. The higher the number, the
+   more informational and debug messages will appear in output. The normal levels vary between 1 to 4.
+   To see all messages, provide a large number (e.g. 10).
+
+   - -q [ --quiet ] : Synonomous to -v -1. Suppress all messages and execute without producing any output other
+   than the CSV output. This option is useful when trying to use the output to generate spreadsheets.
+
+   - -h [ --help ] : Displays the brief help message
+
+   \subsection Integrate integrate: General prupose integration
+   Reads an ensemble from a file (Generates one if no input file specified) and integrates it. Statistical 
+   information about time progress and energy conservation will be written to output in specified intervals.
+   The resulting ensemble is saved to a file if an output file is specified.
+
+   Examples:
+   \verbatim
+   swarm integrate -c test.cfg
+
+   swarm integrate -c conf1.cfg -d 100 -i INPUT.bin -o OUTPUT.bin
+
+   swarm integrate -c conf2.cfg -d 100 -n 10 -I INPUT.txt -O OUTPUT.txt
+   \endverbatim
+
+   - -c [ --cfg ] &lt;configuration file&gt;: Path to a configuration file that contains setting about how the
+   integration should be done. It is recommended that you put all the parameters in the configuration file. 
+   Most of command-line options can be specified in the configuration file.
+
+   - -d [ --destination-time ] &lt;destination time&gt; : Specify the destination time that the systems in the
+   ensemble are going to be synced to. 
+   This option has the same effect and overrides "destination time" parameter from configuration file.
+
+   - -n [ --interval ] &lt;interval&gt; : Specify intervals for summary output. If no interval is specified, then
+   the summary will be given only at the end of the integration. 
+   This option has the same effect and overrides "interval" parameter from configuration file.
+
+   - -l [ --logarithmic ] &lt;base&gt; : If this option is specified the intervals are generated on the 
+   logarithmic scale. The &lt;base&gt; is used as the base for exponential growth of the interval.
+
+   - -i [ --input ] &lt;binary input file&gt; : Specify the input file containing positions and velocities for
+   an ensemble in Swarm binary format. This is meant to be used to read the binary output of Swarm. 
+   To make input data for swarm, please use the text input files.
+   This option has the same effect and overrides "input" parameter from configuration file.
+
+   - -I [ --text-input ] &lt;text input file&gt;:Specify the input file containing positions and velocities for
+   an ensemble in Swarm text format. To know more about how to generate an input file refere to \ref TextFormat .
+   This option has the same effect and overrides "text input" parameter from configuration file.
+
+   - -o [ --output ] &lt;binary output file&gt; : Specify the output file where the resulting ensemble will be 
+   saved in Swarm binary format. The binary output files were meant to be used as input to swarm executable
+   and are not meant to be parsed by third-party applications. To examine ensemble, use textual output.
+   This option has the same effect and overrides "output" parameter from configuration file.
+
+   - -O [ --text-output ] &lt;text output file&gt;:Specify the output file where the resulting ensemble will be 
+   saved in Swarm text format. To know more about how to read an output file refere to \ref TextFormat .
+   This option has the same effect and overrides "text output" parameter from configuration file.
+
+
+   \subsection Benchmark benchmark: Stress test and Stability test for integrators
+   To put integrators under stress test and compare the timing and stability of different
+   integration scenarios.
+
+   Examples:
+   \verbatim
+   swarm benchmark -c conf.cfg nsys 4000 8000 16000 32000
+
+   swarm benchmark -c base.cfg -I testcase.text integrator hermite euler verlet
+   \endverbatim
+
+   - --from &lt;start number&gt;
+   - --to &lt;end number&gt;
+   - --inc &lt;increment&gt; 
+
+   \subsection Verify verify: Verifying correctness
+   Integrate ensembles in different scenarios and compare the results to a reference 
+   implementation.
+
+
+   \subsection Query query: Examine log files
+   - -s [ --system ] &lt;range&gt;
+   - -t [ --time ] &lt;range&gt;
+   - -f [ --logfile ] &lt;file name&gt;
+
+
+   \subsection Test test: Integration testing
+
+   \subsection Generate generate: Generate stable ensemble for tests
+
+   \subsection Convert convert: Convert I/O formats
+  
+*/
+ }
