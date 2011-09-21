@@ -90,14 +90,14 @@ param 2 = value
    information about time progress and energy conservation will be written to output in specified intervals.
    The resulting ensemble is saved to a file if an output file is specified.
 
-   Examples:
-   \verbatim
-   swarm integrate -c test.cfg
+Examples:
+\verbatim
+swarm integrate -c test.cfg
 
-   swarm integrate -c conf1.cfg -d 100 -i INPUT.bin -o OUTPUT.bin
+swarm integrate -c conf1.cfg -d 100 -i INPUT.bin -o OUTPUT.bin
 
-   swarm integrate -c conf2.cfg -d 100 -n 10 -I INPUT.txt -O OUTPUT.txt
-   \endverbatim
+swarm integrate -c conf2.cfg -d 100 -n 10 -I INPUT.txt -O OUTPUT.txt
+\endverbatim
 
    - -c [ --cfg ] &lt;configuration file&gt;: Path to a configuration file that contains setting about how the
    integration should be done. It is recommended that you put all the parameters in the configuration file. 
@@ -136,17 +136,55 @@ param 2 = value
    \subsection Benchmark benchmark: Stress test and Stability test for integrators
    To put integrators under stress test and compare the timing and stability of different
    integration scenarios.
+   
+   Benchmark requires a parameter name to iterate over and values for the parameter. Values
+   can be listed in the command line or can be specified using from, to, inc switches
+   for looping over numerical values.
 
-   Examples:
-   \verbatim
-   swarm benchmark -c conf.cfg nsys 4000 8000 16000 32000
+	   
+	   Parameter name should be a valid configuration parameter. In the current version, any 
+	   parameter can be iterated over, however some parameters should not be iterated over
+	   this behavior might change in future versions. 
 
-   swarm benchmark -c base.cfg -I testcase.text integrator hermite euler verlet
-   \endverbatim
+	   Paramaters that are usually used for benchmark are:
+	   - nsys : Number of systems
+	   - nbod : Number of bodies
+	   - integrator: Integrator plugin used for integration
+	   - config : Integrate using different configuration
+	   - blocksize: Number of systems in a block. only a few numbers are allowed: e.g 16, 32, 64
 
-   - --from &lt;start number&gt;
-   - --to &lt;end number&gt;
-   - --inc &lt;increment&gt; 
+
+   \subsubsection BenchmarkOptions Options
+   The following three options can be used with a parameter to specify a range for looping
+   over to make different integration scenarios. 
+   - --from &lt;start number&gt; The first number to try on for the parameter
+   - --to &lt;end number&gt; Last number to try on for the parameter
+   - --inc &lt;increment&gt; Amount that will be added to the parameter after each step
+
+   \subsubsection BenchmarkExamples Examples:
+   Performs a stress test to a specific integration scenario using generated systems
+\verbatim
+swarm benchmark -c conf.cfg nsys 4000 8000 16000 32000
+\endverbatim
+
+   Integrate an ensemble stored in text format in testcase.txt using three different 
+   integrators and compare the time and stability.
+\verbatim
+swarm benchmark -c base.cfg -I testcase.txt integrator hermite euler verlet
+\endverbatim
+
+   Compare 3 completely different integration scenarios stored in 3 different files
+   using the same test data.
+\verbatim
+swarm benchmark -I testcase.txt config case1.cfg case2.cfg case3.cfg
+\endverbatim
+
+   Strees test for different number of bodies ranging from 3 to 9.
+\verbatim
+swarm benchmark -c conf.cfg nbod --from 3 --to 9
+\endverbatim
+
+
 
    \subsection Verify verify: Verifying correctness
    Integrate ensembles in different scenarios and compare the results to a reference 
