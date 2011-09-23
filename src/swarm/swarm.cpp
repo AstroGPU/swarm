@@ -14,7 +14,6 @@ namespace po = boost::program_options;
 using boost::bind;
 using boost::shared_ptr;
 
-typedef shared_ptr<integrator> Pintegrator;
 
 
 // Runtime variables
@@ -132,7 +131,7 @@ void prepare_integrator () {
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
 	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
-	integ.reset(integrator::create(cfg));
+	integ = integrator::create(cfg);
 	integ->set_ensemble(current_ens);
 	integ->set_destination_time ( destination_time );
 	SYNC;
