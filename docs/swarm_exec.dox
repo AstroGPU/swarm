@@ -190,6 +190,35 @@ swarm benchmark -c conf.cfg nbod --from 3 --to 9
    Integrate ensembles in different scenarios and compare the results to a reference 
    implementation.
 
+   First, the ensemble is integrated using the base configuration. The resulting ensemble
+   is then used as reference ensemble. Then the different scenarios are executed and after
+   each integration scenario the result is compared to reference ensemble. Positions and
+   velocitios of each body is compared to corresponding body in the reference ensemble.
+   Time of the corresponding systems should be close enough. The difference between values
+   can be tolerated up to certain user-controlled threshold.
+
+   To use different scenarios, you can use the same syntax as benchmark command. While
+   you can iterate over any parameter, it is recommended to iterate only over integrators
+   and configurations.
+   
+   \subsubsection VerifyOptions Configuration Options
+   These options should be specified in the base configuration:
+   - pos threshold : Tolerated error when comparing positions. Difference between magnitude of positions should be less than threshold for verification to pass.
+   - vel threshold : Tolerated error when comparing velocities. Difference between magnitude of velocities should be less than threshold for verification to pass.
+   - time threshold : Tolerated error when comparing times. Difference between time of systems should be less than threshold amount for verification to pass.
+
+   \subsubsection VerifyExamples Examples:
+
+	 Provided that basecpu.cfg contains all the configurations for hermite, euler and verlet integrators
+	 and integrator is set to a CPU integrator, the following line verifies the correctness of
+	 hermite, euler and verlet integrators versus a CPU implementation using data from testcase.txt
+\verbatim
+swarm benchmark -c basecpu.cfg -I testcase.txt integrator hermite euler verlet
+\endverbatim
+
+
+
+
 
    \subsection Query query: Examine log files
    - -s [ --system ] &lt;range&gt;
@@ -198,10 +227,69 @@ swarm benchmark -c conf.cfg nbod --from 3 --to 9
 
 
    \subsection Test test: Integration testing
+	   Used for inetgrity testing of swarm. Similar to verify but compares the results to a pre-calculated ensemble.
+
+	\subsubsection TestOverview Overview
+	Options and execution is similar to integrate command. After the integration, the output file is loaded and is
+	compared to the result of integration. The test is passed if the difference in time, positions and velocities is
+	less than the user-controllable thresholds. cf. \ref VerifyOptions
+
+	\subsubsection TestExamples Examples:
+	First Step: On machine A, generate the output file using a specific integration scenario:
+\verbatim
+MachineA$ swarm integrate -c integ.cfg -I testinput.txt -O testoutput.txt
+\endverbatim
+    Second Step: Copy all files to machine B, build swarm and test the same integration scenario using:
+\verbatim
+MachineB$ swarm test -c integ.cfg -I testinput.txt -O testoutput.txt && echo "Test Passed!"
+\endverbatim
+
 
    \subsection Generate generate: Generate stable ensemble for tests
+   Generate a stable ensemble for stability tests.
+
+   \subsection GenerateOptions Options
+   Configuration Options:
+   - nsys : Number of systems
+   - nbod : Number of bodies
+   Command-line Options:
+   - -O   : Text output file
+   - -o   : Binary output file
+
+   \subsubsection GenerateExamples Examples:
+   Generate an ensemble with 12000 systems consisting of 4 bodies each.
+   Put two lines in generate.cfg:
+\verbatim
+nsys=12000
+nbod=4
+\endverbatim
+   Generate the ensamble using swarm generate
+\verbatim
+swarm generate -c generate.cfg -o ensemble.bin
+\endverbatim
 
    \subsection Convert convert: Convert I/O formats
+   Convert text files to binary files and vice versa.
+
+   \subsection ConvertOptions Options
+   Convert text to binary
+   - -I   : Text input file
+   - -o   : Binary output file
+
+   Convert binary to text
+   - -i   : Binary input file
+   - -O   : Text output file
+
+   \subsection ConvertExamples Examples
+   Convert text file to binary
+\verbatim
+swarm convert -I my.txt -o my.bin
+\endverbatim
+
+   Convert binary file to text
+\verbatim
+swarm convert -i my.bin -O my.txt
+\endverbatim
   
 */
  }

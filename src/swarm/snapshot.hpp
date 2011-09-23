@@ -24,6 +24,56 @@ using std::string;
 
 namespace swarm {
 
+/**
+ *  \page TextFormat
+ *
+ *
+ *  Text formats are used by load_text and save_text functions in \ref snapshot class. 
+ *
+ *  The files are ASCII files containing textual representation of double precision floating point numbers.
+ *  All quantities are double precision point numbers except for nsys, nbod and active, that are integers.
+ *  Active is a 0/1 quantity. 1 means system is active and 0 means the system is inactive.
+ *
+ *  Text file format:
+\verbatim
+<nsys> <nbod>
+
+
+<time> <active>
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+<time> <active>
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+     <mass> 
+     <x> <y> <z>
+     <vx> <vy> <vz>
+
+  .
+  .
+  .
+ \endverbatim
+ *
+ *   The example above is for 3-body systems.
+ *
+ */
+
 /*! Static class containing methods to load/save ensembles to file.
  *   
  *   This class supports load and save in text and binary formats.
@@ -44,44 +94,7 @@ namespace swarm {
  *   
  *   header containts number of systems and numebr of bodies.
  *
- *  Text file format:
- *  \verbatim
- *   <nsys> <nbod>
- *   
- *   
- *   <time> <active>
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *   <time> <active>
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *        <mass> 
- *        <x> <y> <z>
- *        <vx> <vy> <vz>
- *
- *     .
- *     .
- *     .
- *
- *  \endverbatim
- *
- *   The example above is for 3-body systems.
+ *   For text format refere to \ref TextFormat
  *
  */
 class snapshot {
@@ -103,9 +116,13 @@ class snapshot {
 	struct readfileexception : public std::exception {};
 	struct writefileexception : public std::exception {};
 
+	/// Load binary snapshot file
 	static defaultEnsemble load(const string& filename) throw (readfileexception);
+	/// Loads textual snapshot file
 	static defaultEnsemble load_text(const string& filename) throw (readfileexception);
+	/// Save the ensemble to a binary file
 	static void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
+	/// Save the ensemble as a text file
 	static void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
 
 };

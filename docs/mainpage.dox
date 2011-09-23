@@ -1,6 +1,6 @@
 /** @mainpage Swarm-NG library & demonstration programs
 
- @authors Aaron Boley, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
+ @authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
 
  \brief Swarm-NG is a collection of code which to help
 scientists and engineers harness the power of GPUs.  In the early
@@ -17,13 +17,12 @@ differential equations.
 \b Table \b of \b contents
  - \ref IntroductionSwarm
  - \ref BuildSwarm
- - \ref TestSwarm
+ - \ref UsingSwarm
  - \b Tutorial
  	- \ref TutorialSimple
 	- \ref TutorialPropagator
 	- \ref TutorialStopper
 	- \ref TutorialLogger
-	- \ref TutorialIntegrator
 
  @section moreinfo Further Information
  Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/

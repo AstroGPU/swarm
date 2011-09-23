@@ -12,10 +12,35 @@ namespace swarm {
 	//! Configuration used to configure most classes
 	class config : public std::map<std::string, std::string> {
 	public:
+
+		config(){}
+
+		/*! Simple constructur for inline creation of config objects form 2D arrays of strings.
+		 *  Example:
+\code
+const char* pairs[][2] = { { "nsys" , "8000" }, { "nbod", "4" } };
+config inline_configuration( pairs );
+\endcode
+		 *
+		 *  \args key_value_pairs 2D array of key-value pairs for initializing the config object
+		 *
+		 */
+		template< class T >
+		config(const T& key_value_pairs){
+			initialize(key_value_pairs, sizeof(T)/sizeof(char*[2]));
+		}
+
+		void initialize(const char* const key_value_pairs[][2], const int n);
+
 		/*! Load a new configuration from a text file and merge it with cfg.
 		 * Syntax:
-		 * key=value
-		 * key2=value2
+\verbatim
+key=value
+key2=value2
+ .
+ .
+ .
+\endverbatim
 		 *
 		 */
 		static config load(const std::string &fn,config cfg = config() );

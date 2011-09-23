@@ -1,110 +1,115 @@
+/*
+ *  This is a simple tutorial used in doxygen pages
+ *  should go through program2doxygen before it
+ *  can be used by doxygen.
+ *  
+ *
+ */
+// \page TutorialSimple Simple Tutorial on How to use the Swarm-NG Library
+// \ingroup Tutorials
+//
+// You can write your own scenarios for integrating ensembles and use parts
+// and pieces of the Swarm-NG library for your C++ application.
+//
+// In this tutorial we go through a simple C++ program to show you how you can
+// use Swarm-NG library. You can find the source file at src/tutorials/swarm_tutorial_simple.cpp
+//
+//
+// We start at the first line of the program. You need to include needed headers to use the library.
+//
+// Some standard C++ libraries
 #include <iostream>
-#include <boost/program_options.hpp>
-#include <boost/program_options/positional_options.hpp>
+// Include Swarm library headers. You may need to add other headers if you want to use
+// More advanced feautures. But for simple ensemble creation and integration the following
+// line should be enough
 #include "swarm/swarm.h"
-#include "swarm/snapshot.hpp"
-#include "swarm/stopwatch.h"
+// We define a shortcut; because we need to use cudaThreadSynchronize() after
+// every GPU call to make sure that we are in-sync with GPU.
 #define SYNC cudaThreadSynchronize()
 
+// All the Swarm-NG classes are enclodes in swarm namespace, a C++ tradition. (std is the standard library)
 using namespace swarm;
 using namespace std;
 
-config default_config() {
-	config cfg;
-	//cfg["integrator"] = "hermite"; // Set to use a GPU integrator
-	cfg["integrator"] = "euler"; // Set to use a GPU integrator
-	cfg["time step"] = "0.001";       // time step
-	cfg["destination time"] = "31.41592";
-	cfg["nbod"] = "3";
-	cfg["nsys"] = "16";
-	cfg["blocksize"] = "16";
-	cfg["log writer"] = "null";
-	return cfg;
-}
+// We define parameters for integration as constants so we can change them later.
+// We set the destination time for 5 revolutions. Each revolution is 2 * pi radians.
+const double destination_time = 5 * 2 * M_PI ;
+// Swarm uses the configuration data structure to pass most of parameters to creation functions
+// Here we put all of our configuration items in a 2D string array.
+const char * config_pairs[6][2] = {  
+       { "integrator" , "hermite" }
+      ,{ "time step", "0.001" }
+      ,{ "blocksize" , "16" }
+      ,{ "log writer", "null" } 
+      ,{ "nsys" , "4000" } 
+      ,{ "nbod" , "3" } 
+    };
 
-void parse_commandline_and_config(int argc, char* argv[], config& cfg){
-	namespace po = boost::program_options;
-	po::positional_options_description pos;
-	po::options_description desc(std::string("Usage: ") + argv[0] + " \nOptions");
+// The easy way to create a config object is from a 2D array containing pairs of strings.
+// You can also use \ref swarm::config::load to load a configuration from a file. 
+// We use this config object to configure all parts of swarm. Note that not every function
+// reads all the configuration items. For example, generate_ensemble only reads "nsys" and "nbod".
+config cfg( config_pairs );
 
-	desc.add_options()
-		("destination time,d", po::value<std::string>() , "Destination time to achieve")
-		("input,i", po::value<std::string>(), "Input file")
-		("output,o", po::value<std::string>(), "Output file")
-		("cfg,c", po::value<std::string>(), "Integrator configuration file")
-		("help,h", "produce help message")
-		("plugins,p", "list all of the plugins")
-		;
-
-	po::variables_map vm;
-	po::store(po::command_line_parser(argc, argv).
-			options(desc).positional(pos).run(), vm);
-	po::notify(vm);
-
-	//// Respond to switches 
-	//
-	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
-
-	if (vm.count("plugins")) {
-		cout << swarm::plugin::help;
-		exit(0);
-	}
-
-	if(vm.count("cfg")){
-		std::string icfgfn =  vm["cfg"].as<std::string>();
-		cfg = config::load(icfgfn, cfg);
-	}
-
-	const int cmd_to_config_len = 3;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "destination time" };
-	for(int i = 0; i < cmd_to_config_len; i++)
-		if(vm.count(cmd_to_config[i]))
-			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
-
-}
-
+// Since our program is short, we can put everything in the main function.
 int main(int argc, char* argv[]){
 
-	config cfg = default_config();
-	parse_commandline_and_config(argc,argv,cfg);
-	outputConfigSummary(std::cout,cfg);
+    // First we create our reference ensemble. We use the automatic generation using generate_ensemble function
+    // This function creates a very stable ensemble of systems for us.
+    defaultEnsemble ref = generate_ensemble(cfg);
 
-	// Load/Generate the ensemble
-	defaultEnsemble ref;
-	if(cfg["input"]!="") {
-		cout << "Loading from " << cfg["input"] << endl;
-		ref = swarm::snapshot::load(cfg["input"]);	
-	}else{
-		cout << "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl;
-		ref = generate_ensemble(cfg);
-	}
-	defaultEnsemble ens = ref.clone();
+    // We have to make a copy of initial conditions. We would like to compare the results to initial conditions
+    // after integration
+    defaultEnsemble ens = ref.clone();
 
-	double begin_time = ens.time_ranges().average;
-	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
 
-	// Initialize Swarm
-	swarm::init(cfg);
+    // Initialize Swarm library. Basically, it initializes CUDA system and default logging system.
+    swarm::init(cfg);
 
-	// Initialize Integrator
-	std::auto_ptr<integrator> integ(integrator::create(cfg));
-	integ->set_ensemble(ens);
-	integ->set_destination_time ( destination_time );
-	SYNC;
+    // Select and create the integrator. While you can create an integrator by calling its constructor directly.
+    // It is recommended to use integrator::create since it gives you more flexibility at runtime.
+    // The create function looks in the swarm library and finds the integrator you requested from 
+    // the list of available plugins. 
+    Pintegrator integ = integrator::create(cfg);
 
-	// Integrate
-	integ->integrate();
-	SYNC;
+    // Now we set-up the integrator for integrating.
+    //
+    // First set the ensemble. For a GPU integrator, the GPU memory will be allocated.
+    integ->set_ensemble(ens);
+    // Now set the destination time where we want to stop the integration.
+    integ->set_destination_time ( destination_time );
+    // Need to synchronize because \ref integrator::set_ensemble may upload data to GPU.
+    SYNC;
 
-	/// Energy conservation error
-	double max_deltaE = find_max_energy_conservation_error(ens, ref );
-	std::cout << "Max Energy Conservation Error =  " << max_deltaE << std::endl;
+    // Now that everything is set-up, it is safe to pull the trigger and 
+    // call the integrate method on integrator. Note that since we didn't set
+    // a logger for the integrator, it will use the default logging system.
+    integ->integrate();
+    // Need to synchronize because integrate is a GPU call.
+    SYNC;
 
-	// Save the ensemble
-	if(cfg["output"]!="") {
-		cout << "Saving to " << cfg["output"] << endl;
-		swarm::snapshot::save(ens,cfg["output"]);	
-	}
+    // Once the integration done, we need to examine the data. The easiest
+    // check is to see if the systems have preserved energy.
+    //
+    // find_max_energy_conservation_error is a utility function that compares
+    // two ensemble of systems. We compare our working ensemble ens to the 
+    // unchanged ensemble ref.
+    double max_deltaE = find_max_energy_conservation_error(ens, ref );
+    std::cout << "Max Energy Conservation Error =  " << max_deltaE << std::endl;
 
-	return 0;
+    // This concludes the program, at this point you will need to clean up the data and ensembles.
+    // But most of Swarm-NG objects are stored in reference-counter pointers and will be automatically
+    // deallocated by C++ runtime library.
+    return 0;
 }
+// If you want to do more with Swarm-NG, you may consider looking into
+// following classes
+//  -  \ref swarm::ensemble  This is an abstarct class for ensembles, there are trivial methods to access the data
+//      in the ensemble. You can examine and change the ensemble the way you want.
+//  -  \ref swarm::defaultEnsemble  The concrete class which contains memory management for ensembles. Use \ref defaultEnsemble::create
+//     to create new ensembles. The arrays will be automatically allocated and de-allocated based on reference counting.
+//  -  \ref swarm::snapshot::load_text  Use this utility function to load an ensemble from a text file.
+//  -  \ref swarm::snapshot::save_text  Use this utility function to save an ensemble to a text file.
+//  -  \ref swarm::log::manager      Most users won't need it because the default log manager is used by all integrators.
+//      But if you need multiple log streams, you need to create your own log manager
+//      and use it in integrators by \ref integrator::set_log_manager.

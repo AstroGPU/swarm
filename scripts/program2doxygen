@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+#---------------------------------------------------------------------------
+#    $Id: program2doxygen 20602 2010-02-13 17:44:17Z bangerth $
+#    Version: $Name$
+#
+#    Copyright (C) 2006, 2007, 2010 by the deal.II authors
+#
+#    This file is subject to QPL and may not be  distributed
+#    without copyright and license information. Please refer
+#    to the file deal.II/doc/license.html for the  text  and
+#    further information on this license.
+#
+#---------------------------------------------------------------------------
+
+
+
+print "/** \n";
+
+# ignore comments at the start of the program. this includes subversion
+# tags and copyright notices.
+$_ = <>;
+while ( m!^/[\*]!  ||  m!\s*\*! || m/^$/ ) {
+    $_ = <>;
+}
+
+# have two states, in which the program can be:
+# comment-mode and program-mode
+$comment_mode = 0;
+$program_mode = 1;
+$state =  $comment_mode;
+
+print " * \n";
+
+do {
+    # substitute tabs. also make sure that we don't output comment end
+    # markers that might confuse doxygen
+    s!/\*!/ \*!g;
+    s!\*/!\* /!g;
+
+    s/\t/        /g;
+
+    if (($state == $program_mode) && m!^\s*//*!)
+    {
+	$state = $comment_mode;
+	print " * \@endcode\n";
+	print " * \n";
+    }
+    # if in comment mode and no comment line: toggle state.
+    # don't do so, if only a blank line
+    elsif (($state == $comment_mode) && !m!^\s*//*! && !m!^\s*$!)
+    {
+	$state = $program_mode;
+	print " * \n";
+	print " * \@code\n";
+    }
+
+    if ($state == $comment_mode)
+    {
+	# in comment mode: first skip leading whitespace and
+	# comment // signs
+	s!\s*//*\s*(.*)\n!$1!;
+
+	# second, replace section headers, and generate addressable
+	# anchor
+	if ( /\@sect/ ) {
+	   s!\@sect(\d)\{(.*)\}\s*$!<h$1>$2</h$1>!g;
+	   $sect_name = $2;
+
+	   # for the anchor, use the name of the section but discard
+	   # everything except for letters, numbers, and underscores
+	   $sect_name =~ s/[^a-zA-Z0-9_]//g;
+
+	   $_ = "\n * <a name=\"$sect_name\"></a> \n * $_";
+	}
+
+	# finally print this line
+	print " * $_\n";
+
+	# if empty line, introduce paragraph break
+	print " * \n" if  $_ =~ m!^\s*$!;
+    }
+    else
+    {
+        # in program mode, output the program line. the only thing we need
+	# to do is to avoid $ signs because that confuses doxygen. since
+	# we don't want formulas rendered in the program text anyway,
+	# simply replace them by spaces (it would be nice to suppress their
+	# meaning somehow, but I don't know how...)
+	s/\$//g;
+
+	print " * $_";
+    }
+} while (<>);
+
+if ($state == $program_mode) {
+   print " * \@endcode\n";
+}
+
+print " */\n";

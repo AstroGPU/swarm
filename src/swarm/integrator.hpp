@@ -121,12 +121,13 @@ class integrator {
 	 *
 	 * to see the list of plugins available use swarm -P.
 	 */
-	static integrator* create(const config &cfg);
+	static shared_ptr<integrator> create(const config &cfg);
 
 	//! accessor function to set the manager for log output
 	virtual void set_log_manager(log::Pmanager& l);
 
 };
+typedef shared_ptr<integrator> Pintegrator;
 
 /*! GPU-based integrators and other GPU tools
  *

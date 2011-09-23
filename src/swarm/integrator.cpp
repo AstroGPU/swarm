@@ -97,9 +97,9 @@ namespace swarm {
  * own integrators that the swarm code does not need to know about at
  * compile time
  */
-integrator *integrator::create(const config &cfg)
+Pintegrator integrator::create(const config &cfg)
 {
-        std::auto_ptr<integrator> integ;
+        Pintegrator integ;
 
         if(!cfg.count("integrator")) ERROR("Integrator type has to be chosen with 'integrator=xxx' keyword");
 
@@ -112,7 +112,7 @@ integrator *integrator::create(const config &cfg)
 			ERROR("Integrator " + name + " not found.");
 		}
 
-        return integ.release();
+        return integ;
 }
 
 

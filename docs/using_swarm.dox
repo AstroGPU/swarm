@@ -1,0 +1,9 @@
+/**
+ *
+ * \page UsingSwarm Using Swarm 
+ *
+ * Once you build Swarm-NG library, you can use the command-line interface by invoking the executable
+ * file at bin/swarm. To learn about all commands and switches refer to \ref SwarmExec
+ *
+ *
+ */
