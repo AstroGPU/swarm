@@ -5,7 +5,7 @@
  *  
  *
  */
-// \page TutorialSimple Simple Tutorial on How to use the Swarm-NG Library
+// \page TutorialBeginner Beginner tutorial for using the API
 // \ingroup Tutorials
 //
 // You can write your own scenarios for integrating ensembles and use parts

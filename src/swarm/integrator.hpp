@@ -178,6 +178,17 @@ class integrator : public swarm::integrator {
 	 */
 	virtual void integrate();
 
+	/** To integrate without any bookkeeping
+	 *
+	 * This function just executes the integration implementation
+	 * The callee has to take care of systems running and
+	 * stop conditions and memory management
+	 *
+	 */
+	virtual void core_integrate() {
+		return launch_integrator();
+	}
+
 	//! Read the GPU log object from log manager and set it
 	virtual void set_log_manager(log::Pmanager& l);
 
@@ -238,6 +249,7 @@ class integrator : public swarm::integrator {
 	//! Amount of shared memory required for CUDA kernel launch
 	virtual int  shmemSize() = 0;
 };
+typedef shared_ptr<integrator> Pintegrator;
 
 
 }

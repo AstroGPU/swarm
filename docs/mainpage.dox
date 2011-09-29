@@ -1,4 +1,4 @@
-/** @mainpage Swarm-NG library & demonstration programs
+/** @mainpage Swarm-NG library 
 
  @authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
 
@@ -18,8 +18,9 @@ differential equations.
  - \ref IntroductionSwarm
  - \ref BuildSwarm
  - \ref UsingSwarm
- - \b Tutorial
- 	- \ref TutorialSimple
+ - \b Tutorials \b for \b Developers
+ 	- \ref TutorialBeginner
+	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialStopper
 	- \ref TutorialLogger
