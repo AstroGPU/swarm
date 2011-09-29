@@ -10,7 +10,6 @@ SET(Swarm_NG_VERSION_MINOR 2)
 
 
 # Set CUDA Flags and options
-SET(CUDA_VERBOSE_BUILD 1)
 SET(CUDA_NVCC_FLAGS 
 	-gencode arch=compute_20,code=sm_20;
 	-gencode arch=compute_13,code=sm_13;
@@ -45,7 +44,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 	add_custom_target(doc
-		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM
 		)
@@ -63,3 +62,4 @@ SET(SAMPLES ${CMAKE_CURRENT_SOURCE_DIR}/samples)
 
 INCLUDE(test.cmake)
 INCLUDE(custom.cmake)
+

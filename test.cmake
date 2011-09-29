@@ -2,7 +2,7 @@
 
 ENABLE_TESTING()
 
-ADD_TEST(NAME basic COMMAND swarm integrate)
+ADD_TEST(NAME basic COMMAND swarm integrate --defaults )
 
 MACRO(TEST_INTEGRATOR title cfgname)
 	ADD_TEST(NAME Verify_${title}

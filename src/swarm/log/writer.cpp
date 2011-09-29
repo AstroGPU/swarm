@@ -45,7 +45,7 @@ Pwriter writer::create(const config& cfg)
 {
         Pwriter w;
 
-		std::string name = cfg.at("log writer");
+		std::string name = cfg.optional(std::string("log writer") , std::string("null") );
 		std::string plugin_name = "writer_" + name;
 
 		try {

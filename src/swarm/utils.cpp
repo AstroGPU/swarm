@@ -61,8 +61,8 @@ double find_max_energy_conservation_error(ensemble& ens, ensemble& reference_ens
 
 bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
-  int nsystems = cfg.require("nsys",0);
-  int nbodypersystem = cfg.require("nbod",0);
+  int nsystems = cfg.optional("nsys",1000);
+  int nbodypersystem = cfg.optional("nbod",3);
   int bs = cfg.optional("block size",SHMEM_WARPSIZE);
 
   // Check that parameters from command line are ok

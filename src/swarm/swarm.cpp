@@ -18,7 +18,7 @@ using boost::shared_ptr;
 
 // Runtime variables
 string command;
-config cfg = default_config();
+config cfg;
 config base_cfg;
 defaultEnsemble initial_ens;
 defaultEnsemble current_ens;
@@ -366,6 +366,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	po::options_description general("General Options");
 	general.add_options()
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+		("defaults", "Use default values for required configuration options")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
@@ -394,6 +395,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		exit(0);
 	}
 
+	if(vm.count("defaults")){
+		cfg = default_config();
+	}
 	if(vm.count("cfg")){
 		std::string icfgfn =  vm["cfg"].as<std::string>();
 		cfg = config::load(icfgfn, cfg);
@@ -408,6 +412,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
+
 
 }
 
