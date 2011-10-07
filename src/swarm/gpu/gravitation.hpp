@@ -111,6 +111,26 @@ class Gravitation {
 
 	}
 
+	__device__ double sum_acc_planets(int b,int c)const{
+		double total = 0;
+
+		/// Find the contribution from/to Sun first
+#pragma unroll
+		for(int d = 0; d < pair_count; d++){
+			int x = first(d), y= second(d);
+
+			if(x == b){
+				if(y != 0)
+					total += shared[d][c].acc() * sys[y].mass();
+			}else if(y == b){
+				if(x != 0)
+					total -= shared[d][c].acc() * sys[x].mass();
+			}
+		}
+
+		return total;
+	}
+
 	__device__ double sum_acc(int b,int c)const{
 		double total = 0;
 		double from_sun = 0;
@@ -182,6 +202,16 @@ class Gravitation {
 		if(b < nbod && c < 3){
 			sum(b,c,acc,jerk);
 		}
+	}
+
+	__device__ double acc_planets (int ij,int b,int c)const{
+		if(ij < pair_count)
+			calc_pair(ij);
+		__syncthreads();
+		if(b < nbod && c < 3){
+			return sum_acc_planets(b,c);
+		}else
+			return 0;
 	}
 
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{

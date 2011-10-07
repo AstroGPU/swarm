@@ -28,18 +28,21 @@ is considered.
 
 
 <TABLE>
-<TR><TD> Name </TD><TD> Default Value </TD><TD> Description </TD> </TR>
-<TR><TD> integrator </TD> <TD> hermite </TD> <TD> Name of THe integrator plugin used for integration</TD> </TR>
-<TR><TD> destination time </TD><TD>  10 pi </TD><TD> Marker for end of integration, all systems integrated and synchronized to this time </TD></TR>
-<TR><TD> time step  </TD><TD> 0.0001 </TD><TD>  </TD></TR>
-<TR><TD> min time step </TD> <TD> </TD> <TD> Used by Adaptive Time step integrators </TD> </TR>
-<TR><TD> max time step </TD> <TD> </TD> <TD> Used by Adaptive Time step integrators </TD> </TR>
-<TR><TD> input  </TD><TD>    </TD><TD>  Binary input file    </TD></TR>
-<TR><TD> output  </TD><TD>    </TD><TD> Binary output file    </TD></TR>
-<TR><TD> text input  </TD><TD>    </TD><TD>  Text input file    </TD></TR>
-<TR><TD> text output  </TD><TD>    </TD><TD> Text output file    </TD></TR>
-<TR><TD>     </TD><TD>       </TD><TD>     </TD></TR>
-<TR><TD>     </TD><TD>       </TD><TD>     </TD></TR>
+<TR><TD> Name </TD><TD> Default Value </TD><TD>Used In</TD><TD> Description </TD> </TR>
+<TR><TD> integrator </TD> <TD> hermite </TD><TD>Integrator Instantiation</TD> <TD> Name of The integrator plugin used for integration</TD> </TR>
+<TR><TD> destination time </TD><TD>  10 pi </TD><TD>Swarm Executable</TD><TD> Marker for end of integration, all systems integrated and synchronized to this time </TD></TR>
+<TR><TD> time step  </TD><TD> 0.0001 </TD><TD>Fixed step integrators</TD>  </TD></TR>
+<TR><TD> min time step </TD> <TD> </TD><TD>Adaptive step integrators</TD> <TD> Smallest step size allowed in adaptive mode </TD> </TR>
+<TR><TD> max time step </TD> <TD> </TD><TD>Adaptive step integrators</TD> <TD> largest step size allowed in adaptive mode </TD> </TR>
+<TR><TD> input  </TD><TD>    </TD><TD>Swarm Executable</TD><TD>  Binary input file    </TD></TR>
+<TR><TD> output  </TD><TD>    </TD><TD>Swarm Executable</TD><TD> Binary output file    </TD></TR>
+<TR><TD> text input  </TD><TD>    </TD><TD>Swarm Executable</TD><TD>  Text input file    </TD></TR>
+<TR><TD> text output  </TD><TD>    </TD><TD>Swarm Executable</TD><TD> Text output file    </TD></TR>
+<TR><TD>log output</TD><TD>       </TD><TD>  Logging Subsystem   </TD><TD>Name of the output file where the log is stored     </TD></TR>
+<TR><TD>log writer</TD><TD>  null  </TD><TD> Logging Subsystem    </TD><TD>Output method used for logging: "null" is to discard output, "binary" writes binary files.</TD></TR>
+<TR><TD>error tolerance </TD><TD>       </TD><TD>Adaptive step integrators</TD><TD> Amount of error allowed for adaptive integration   </TD></TR>
+<TR><TD>     </TD><TD>       </TD><TD>     </TD><TD>     </TD></TR>
+<TR><TD>     </TD><TD>       </TD><TD>     </TD><TD>     </TD></TR>
 </TABLE>
 
 
