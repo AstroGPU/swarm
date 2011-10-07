@@ -20,20 +20,22 @@
 
 namespace swarm {
 
+namespace snapshot {
+
 template<class T>
 void readfromFILE(FILE*f,T& t){
 	if(fread(&t,1,sizeof(t),f) != sizeof(t)){
-		throw snapshot::readfileexception();
+		throw readfileexception();
 	}
 }
 template<class T>
 void writetoFILE(FILE*f,const T& t){
 	if(fwrite(&t,1,sizeof(t),f) != sizeof(t)){
-		throw snapshot::writefileexception();
+		throw writefileexception();
 	}
 }
 
-defaultEnsemble snapshot::load(const string& filename) throw (readfileexception){
+defaultEnsemble load(const string& filename) throw (readfileexception){
 	FILE* f = fopen(filename.c_str(),"rb");
 
 	header h; sys s; body b;
@@ -46,7 +48,8 @@ defaultEnsemble snapshot::load(const string& filename) throw (readfileexception)
 
 		readfromFILE(f,s);
 
-		sr.time() = s.time; sr.active() = s.active;
+		sr.id() = s.id;
+		sr.time() = s.time; sr.state() = s.state;
 
 		for(int j = 0; j < h.nbod; j++){
 			readfromFILE(f,b);
@@ -65,10 +68,20 @@ defaultEnsemble snapshot::load(const string& filename) throw (readfileexception)
 }
 
 
-defaultEnsemble snapshot::load_text(const string& filename) throw (readfileexception){
+const char* DEFAULT_IO_TAG = "SwarmDataFile";
+const int CURRENT_IO_VERSION = 1;
+
+defaultEnsemble load_text(const string& filename) throw (readfileexception){
 	FILE* f = fopen(filename.c_str(),"r");
 
 	header h; sys s; body b;
+
+	char tag[1024];
+	int version = 0;
+
+	fscanf(f, "%s %i\n" , tag, &version);
+	if(strcmp( DEFAULT_IO_TAG, tag ) != 0 || version != CURRENT_IO_VERSION )
+		throw readfileexception();
 
 	fscanf(f,"%i %i\n\n\n",&h.nbod,&h.nsys);
 	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
@@ -76,10 +89,10 @@ defaultEnsemble snapshot::load_text(const string& filename) throw (readfileexcep
 	for(int i = 0; i < h.nsys; i++){
 		ensemble::SystemRef sr = ens[i];
 
-		fscanf(f,"%lg %li\n", &sr.time(), &sr.active());
+		fscanf(f,"%i %le %i\n", &sr.id(), &sr.time(), &sr.state());
 
 		for(int j = 0; j < h.nbod; j++){
-			fscanf(f,"\t%lg\n\t%lg %lg %lg\n\t%lg %lg %lg\n\n",
+			fscanf(f,"\t%le\n\t%le %le %le\n\t%le %le %le\n\n",
 					&sr[j].mass(),
 					&sr[j][0].pos(),
 					&sr[j][1].pos(),
@@ -94,7 +107,7 @@ defaultEnsemble snapshot::load_text(const string& filename) throw (readfileexcep
 	return ens;
 }
 
-void snapshot::save(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
+void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
 	FILE* f = fopen(filename.c_str(),"wb");
 
 	header h; sys s; body b;
@@ -106,7 +119,8 @@ void snapshot::save(defaultEnsemble& ens, const string& filename)  throw (writef
 	for(int i = 0; i < h.nsys; i++){
 
 		ensemble::SystemRef sr = ens[i];
-		s.time = sr.time(), s.active = sr.active(); 
+		s.id = sr.id();
+		s.time = sr.time(), s.state = sr.state(); 
 
 		writetoFILE(f,s);
 
@@ -126,18 +140,20 @@ void snapshot::save(defaultEnsemble& ens, const string& filename)  throw (writef
 	fclose(f);
 }
 
-void snapshot::save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
+void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception){
 	FILE* f = fopen(filename.c_str(),"w");
 
+
+	fprintf(f, "%s %i\n" , DEFAULT_IO_TAG, CURRENT_IO_VERSION );
 	fprintf(f,"%i %i\n\n\n", ens.nbod(), ens.nsys() );
 
 	for(int i = 0; i < ens.nsys(); i++){
 
 		ensemble::SystemRef sr = ens[i];
-		fprintf(f,"%lg %li\n", sr.time(), sr.active()); 
+		fprintf(f,"%i %.15le %i\n", sr.id(), sr.time(), sr.state()); 
 
 		for(int j = 0; j < ens.nbod(); j++){
-			fprintf(f,"\t%lg\n\t%lg %lg %lg\n\t%lg %lg %lg\n\n",
+			fprintf(f,"\t%.15le\n\t%.15le %.15le %.15le\n\t%.15le %.15le %.15le\n\n",
 					sr[j].mass(),
 					sr[j][0].pos(),
 					sr[j][1].pos(),
@@ -155,4 +171,5 @@ void snapshot::save_text(defaultEnsemble& ens, const string& filename)  throw (w
 }
 
 
+}
 }

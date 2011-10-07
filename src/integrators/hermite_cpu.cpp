@@ -113,7 +113,7 @@ class hermite_cpu : public integrator {
 
 		monitor_t montest (_mon_params,sys,*_log);
 
-		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 			double h = _time_step;
 
 			if( sys.time() + h > _destination_time ) {
@@ -167,7 +167,8 @@ class hermite_cpu : public integrator {
 			
 			sys.time() += h;
 
-			sys.active() = (! montest()) && (sys.time() < _destination_time );
+			if( montest() || (sys.time() >= _destination_time )) 
+				sys.set_inactive();
 		}
 	}
 };

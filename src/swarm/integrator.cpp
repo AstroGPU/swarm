@@ -55,12 +55,12 @@ namespace swarm {
 	int number_of_active_systems(defaultEnsemble ens) {
 		int count_running = 0;
 		for(int i = 0; i < ens.nsys() ; i++)
-			if( ens[i].active() ) count_running++;
+			if( ens[i].is_active() ) count_running++;
 		return count_running;
 	}
 	void activate_all_systems(defaultEnsemble ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
-			ens[i].active() = true;
+			ens[i].set_active();
 	}
 
 	void integrator::integrate() {

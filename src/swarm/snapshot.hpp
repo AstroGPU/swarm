@@ -31,15 +31,16 @@ namespace swarm {
  *  Text formats are used by load_text and save_text functions in \ref snapshot class. 
  *
  *  The files are ASCII files containing textual representation of double precision floating point numbers.
- *  All quantities are double precision point numbers except for nsys, nbod and active, that are integers.
- *  Active is a 0/1 quantity. 1 means system is active and 0 means the system is inactive.
+ *  All quantities are double precision point numbers except for nsys, nbod, id and state, that are integers.
+ *  State is defined in the ensemble. 0 means active, -1 is disabled, other values are intermediate 
+ *  inactive states.
  *
  *  Text file format:
 \verbatim
 <nsys> <nbod>
 
 
-<time> <active>
+<id> <time> <state>
      <mass> 
      <x> <y> <z>
      <vx> <vy> <vz>
@@ -52,7 +53,7 @@ namespace swarm {
      <x> <y> <z>
      <vx> <vy> <vz>
 
-<time> <active>
+<id> <time> <state>
      <mass> 
      <x> <y> <z>
      <vx> <vy> <vz>
@@ -97,17 +98,15 @@ namespace swarm {
  *   For text format refere to \ref TextFormat
  *
  */
-class snapshot {
-	private:
-	snapshot(){}
+namespace snapshot {
 
-	public:
 	struct header {
 		int nsys, nbod;
 	};
 	struct sys {
 		double time;
-		double_int active;
+		int id;
+		int state;
 	};
 	struct body {
 		double pos[3], vel[3], mass;
@@ -117,15 +116,15 @@ class snapshot {
 	struct writefileexception : public std::exception {};
 
 	/// Load binary snapshot file
-	static defaultEnsemble load(const string& filename) throw (readfileexception);
+	defaultEnsemble load(const string& filename) throw (readfileexception);
 	/// Loads textual snapshot file
-	static defaultEnsemble load_text(const string& filename) throw (readfileexception);
+	defaultEnsemble load_text(const string& filename) throw (readfileexception);
 	/// Save the ensemble to a binary file
-	static void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
+	void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
 	/// Save the ensemble as a text file
-	static void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
+	void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
 
-};
+}
 
 }
 

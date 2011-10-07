@@ -39,7 +39,7 @@ deviceEnsemble ens;
 __global__ 
 void number_of_active_systems_kernel( count_systems_t* csys){
 	int sysid = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-	if(csys->ens[sysid].active() )
+	if(csys->ens[sysid].is_active() )
 		atomicAdd(&csys->count_running,1);
 };
 

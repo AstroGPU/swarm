@@ -76,6 +76,7 @@ class generic: public integrator {
 		prop.ij = ij;
 		prop.body_component_grid = body_component_grid;
 		prop.first_thread_in_system = first_thread_in_system;
+		prop.max_timestep = _destination_time - sys.time();
 
 		////////// INTEGRATION //////////////////////
 		//
@@ -83,13 +84,14 @@ class generic: public integrator {
 		__syncthreads();
 
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _iteration_count) && sys.is_active() ; iter ++ ) {
 
 			prop.advance();
 			__syncthreads();
 
 			if( first_thread_in_system ) 
-				sys.active() = (! montest()) && (sys.time() < _destination_time );
+				if( montest() || (sys.time() >= _destination_time )) 
+					sys.set_inactive();
 
 			__syncthreads();
 		}

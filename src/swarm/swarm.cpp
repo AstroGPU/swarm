@@ -186,11 +186,7 @@ void fail_verify() {
 void output_test() {
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 
-	if(cfg.valid("input") ) {
-		INFO_OUTPUT(1, "Loading initial conditions from " << cfg["input"]);
-		initial_ens = swarm::snapshot::load(cfg["input"]);	
-		INFO_OUTPUT(1,", time = " << initial_ens.time_ranges() << endl);
-	}else{
+	if(!read_input_file(initial_ens, cfg) ) {
 		ERROR("you should have a tested input file");
 	}
 

@@ -45,6 +45,7 @@ struct EulerPropagator {
 	int ij;
 	bool body_component_grid;
 	bool first_thread_in_system;
+	double max_timestep;
 
 
 	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
@@ -56,7 +57,7 @@ struct EulerPropagator {
 	GPUAPI void shutdown() { }
 
 	GPUAPI void advance(){
-		double h = _params.time_step;
+		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;
 		double acc = 0.0, jerk = 0.0;
 		const double third = 1.0/3.0;

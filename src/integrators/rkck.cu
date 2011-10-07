@@ -129,7 +129,7 @@ class rkck: public integrator {
 
 		////////// INTEGRATION //////////////////////
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _iteration_count) && sys.is_active() ; iter ++ ) {
 
 			double h = time_step;
 
@@ -268,7 +268,8 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system ) 
-					sys.active() = (! montest()) && (sys.time() < _destination_time); 
+					if( montest() || (sys.time() >= _destination_time )) 
+						sys.set_inactive();
 			}
 
 			__syncthreads();

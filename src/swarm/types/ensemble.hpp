@@ -117,14 +117,39 @@ class EnsembleBase {
 
 	};
 
-	//! Per system parameters: time and active.
+	//! Per system parameters: time and .
 	struct Sys {
 		double _time[WARPSIZE];
-		double_int _active[WARPSIZE];
+		
+		struct {
+			int state;	int id;
+		} _bunch[WARPSIZE];
+
 		GENERIC double& time() { return _time[0];  }
 		GENERIC const double& time() const { return _time[0];  }
-		GENERIC double_int& active() { return _active[0];  }
-		GENERIC const double_int& active()const { return _active[0];  }
+		GENERIC int& state() { return _bunch[0].state;  }
+		GENERIC const int& state()const { return _bunch[0].state;  }
+		GENERIC int& id() { return _bunch[0].id; }
+		GENERIC const int& id() const { return _bunch[0].id; }
+
+		/*! Constanst that are used as values for state variable
+		 *  Value 0 is the active state, it means that the 
+		 *  integrator will integrate the ensemble.
+		 *
+		 *  All other values are considered inactive state. However
+		 *  The policy on how they get reactivated depends on the value
+		 *
+		 *  SYSTEM_INACTIVE: will be reactivated for next integration
+		 *  SYSTEM_NEEDS_EXAM: needs to be examined before reactivation
+		 *  SYSTEM_DISABLED: it is permenantly deactivated.
+		 *
+		 */
+		enum ActivationStates {
+			SYSTEM_ACTIVE = 0,
+			SYSTEM_INACTIVE = 1,
+			SYSTEM_NEEDS_EXAM = 2,
+			SYSTEM_DISABLED = -1
+		};
 	};
 
 
@@ -150,10 +175,15 @@ class EnsembleBase {
 		//! Current time of the system
 		GENERIC double& time() const { return _sys[0].time(); }
 		//! Activity state
-		//! True: still running, False: will not be integrated
-		GENERIC double_int& active() const { return _sys[0].active(); }
-		//! Same as active()
-		GENERIC double_int& flags() const { return _sys[0].active(); }
+		GENERIC bool is_active() const { return _sys[0].state() == Sys::SYSTEM_ACTIVE; }
+		GENERIC int& state() const { return _sys[0].state(); }
+		GENERIC void set_active() const { _sys[0].state() = Sys::SYSTEM_ACTIVE; }
+		GENERIC void set_inactive() const { _sys[0].state() = Sys::SYSTEM_INACTIVE; }
+		GENERIC void set_disabled() const { _sys[0].state() = Sys::SYSTEM_DISABLED; }
+		//! The id of the current system it is the unique identifier 
+		//! It is different from number, which is the array index of the 
+		//! system in the current ensemble.
+		GENERIC int& id() const { return _sys[0].id(); }
 		//! Number of bodies in this system
 		GENERIC const int& nbod()const{ return _nbod;	}
 		//! Serial number of the system in the ensemble
@@ -186,8 +216,10 @@ class EnsembleBase {
 		GENERIC const Body& operator[](const int & i ) const { return _ref[i]; }
 		GENERIC const double& time() { return _ref.time(); }
 		GENERIC const int& number() { return _ref.number(); }
-		GENERIC const double_int& active() { return _ref.active(); }
-		GENERIC const double_int& flags() { return _ref.active(); }
+		GENERIC const double& time() const { return _ref.time(); }
+		GENERIC bool is_active() const { return _ref.state() == Sys::SYSTEM_ACTIVE; }
+		GENERIC const int& state() const { return _ref.state(); }
+		GENERIC const int& id() const { return _ref.id(); }
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
@@ -286,8 +318,12 @@ class EnsembleBase {
 		return operator[] ( sys ).time();
 	}
 
-	GENERIC long& flags(const int& sys){
-		return operator[] ( sys ).active();
+	GENERIC int& state(const int& sys){
+		return operator[] ( sys ).state();
+	}
+
+	GENERIC int& flags(const int& sys){
+		return operator[] ( sys ).state();
 	}
 
 	//// Const Versions
@@ -316,8 +352,12 @@ class EnsembleBase {
 		return operator[] ( sys ).time();
 	}
 
-	GENERIC const long& flags(const int& sys)const {
-		return operator[] ( sys ).active();
+	GENERIC const int& state(const int& sys) const{
+		return operator[] ( sys ).state();
+	}
+
+	GENERIC const int& flags(const int& sys) const{
+		return operator[] ( sys ).state();
 	}
 
 	GENERIC void set_time( const int& sys, const double& time ) {
@@ -326,16 +366,16 @@ class EnsembleBase {
 	}
 
 	GENERIC bool is_active(const int& sys) const { 
-		return operator[] ( sys ).active();
+		return operator[] ( sys ).is_active();
 	}
 	GENERIC bool is_inactive(const int& sys) const { 
-		return ! operator[] ( sys ).active();
+		return ! operator[] ( sys ).is_active();
 	}
 	GENERIC void set_active(const int& sys) { 
-		operator[] ( sys ).active() = true;
+		operator[] ( sys ).state() = Sys::SYSTEM_ACTIVE;
 	}
 	GENERIC void set_inactive(const int& sys) { 
-		operator[] ( sys ).active() = false;
+		operator[] ( sys ).state() = Sys::SYSTEM_INACTIVE;
 	}
 
 

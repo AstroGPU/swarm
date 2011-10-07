@@ -307,7 +307,7 @@ GENERIC PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int
 		template<typename L>
 		GENERIC void system(L &l, ensemble::SystemRefConst sys)
 		{
-			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, sys.time(), sys.number() , sys.flags() , sys.nbod(), gpulog::array<body>(sys.nbod()));
+			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, sys.time(), sys.id() , sys.state() , sys.nbod(), gpulog::array<body>(sys.nbod()));
 			if(bodies != NULL) // buffer overflow hasn't happened
 			{
 				for(int bod=0; bod != sys.nbod(); bod++)

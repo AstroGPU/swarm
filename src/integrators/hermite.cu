@@ -84,7 +84,7 @@ class hermite: public integrator {
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
-		for(int iter = 0 ; (iter < _max_iterations) && sys.active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 			double h = _time_step;
 
 			if( sys.time() + h > _destination_time ) {
@@ -133,7 +133,8 @@ class hermite: public integrator {
 				sys.time() += h;
 
 			if( first_thread_in_system ) 
-			sys.active() = (! montest()) && (sys.time() < _destination_time );
+				if( montest() || (sys.time() >= _destination_time )) 
+					sys.set_inactive();
 
 			__syncthreads();
 
