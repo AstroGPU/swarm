@@ -105,7 +105,7 @@ class integrator : public gpu::integrator  {
 	}
 
 	template< class T> 
-	static __device__ void * system_shared_data_pointer(T a) {
+	static __device__ void * system_shared_data_pointer(T compile_time_param) {
 		extern __shared__ char shared_mem[];
 		int b = sysid_in_block() / SHMEM_WARPSIZE ;
 		int i = sysid_in_block() % SHMEM_WARPSIZE ;

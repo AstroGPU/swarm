@@ -29,7 +29,7 @@ class generic: public integrator {
 	typedef integrator base;
 	typedef Monitor<gpulog::device_log> monitor_t;
 	typedef typename monitor_t::params mon_params_t;
-	typedef  typename Propagator< params_t<3> >::params prop_params_t;
+	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
@@ -49,13 +49,13 @@ class generic: public integrator {
 
 
 	template<class T>
-	__device__ void kernel(T a){
+	__device__ void kernel(T compile_time_param){
 		if(sysid()>=_dens.nsys()) return;
 
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;

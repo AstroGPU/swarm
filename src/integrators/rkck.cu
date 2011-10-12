@@ -74,7 +74,7 @@ class rkck: public integrator {
 
 
 	template<class T>
-	__device__ void kernel(T a){
+	__device__ void kernel(T compile_time_param){
 
 ////////////////////// RKCK Constants /////////////////////////////
 	// Cash-Karp constants From GSL
@@ -97,7 +97,7 @@ class rkck: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
