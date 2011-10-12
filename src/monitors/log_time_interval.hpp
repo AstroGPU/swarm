@@ -19,7 +19,7 @@
 
 
 namespace swarm {
-
+  namespace monitors {
 
 struct log_time_interval_params {
 	double time_interval;
@@ -69,3 +69,4 @@ class log_time_interval {
 }
 
 
+}

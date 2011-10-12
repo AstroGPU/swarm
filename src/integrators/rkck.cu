@@ -281,10 +281,10 @@ class rkck: public integrator {
 
 };
 
-integrator_plugin_initializer<rkck< AdaptiveTimeStep, stop_on_ejection> >
+integrator_plugin_initializer<rkck< AdaptiveTimeStep, monitors::stop_on_ejection> >
 	rkck_adaptive_plugin("rkck_adaptive");
 
-integrator_plugin_initializer<rkck< FixedTimeStep, stop_on_ejection> >
+integrator_plugin_initializer<rkck< FixedTimeStep, monitors::stop_on_ejection> >
 	rkck_Fixed_plugin("rkck_fixed");
 
 }

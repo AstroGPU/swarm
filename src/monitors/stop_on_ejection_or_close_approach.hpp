@@ -20,6 +20,7 @@
 #include <limits>
 
 namespace swarm {
+  namespace monitors {
 
 struct stop_on_ejection_or_close_approach_param {
 	double rmax,dmin;
@@ -176,3 +177,4 @@ class stop_on_ejection_or_close_approach {
 }
 
 
+}

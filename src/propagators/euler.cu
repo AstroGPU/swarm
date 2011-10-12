@@ -80,7 +80,7 @@ struct EulerPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< EulerPropagator, log_time_interval > >
+integrator_plugin_initializer< generic< EulerPropagator, monitors::log_time_interval > >
 	euler_prop_plugin("euler"
 			,"This is the integrator based on euler propagator");
 

@@ -181,7 +181,7 @@ class hermite_cpu : public integrator {
 //	hermite_cpu_plugin("hermite_cpu");
 
 
-integrator_plugin_initializer< hermite_cpu< stop_on_any_large_distance_or_close_encounter > >
+integrator_plugin_initializer< hermite_cpu< monitors::stop_on_any_large_distance_or_close_encounter > >
 	hermite_cpu_plugin("hermite_cpu");
 
 }

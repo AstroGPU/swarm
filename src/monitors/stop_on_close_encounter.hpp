@@ -20,6 +20,7 @@
 #include <limits>
 
 namespace swarm {
+  namespace monitors {
 
 struct stop_on_close_encounter_param {
 	double dmin;
@@ -97,4 +98,4 @@ class stop_on_close_encounter {
 
 }
 
-
+}

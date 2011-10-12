@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace swarm {
-
+  namespace monitors {
 
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;
@@ -93,4 +93,5 @@ class stop_on_all_but_two_at_large_distance {
 	
 };
 
+}
 }

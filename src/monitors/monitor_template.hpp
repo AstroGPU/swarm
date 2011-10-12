@@ -20,6 +20,7 @@
 #include <limits>
 
 namespace swarm {
+  namespace monitors {
 
 //TODO: Should monitors have their own sub-namespace?  Perhaps swarm::monitors
 
@@ -58,3 +59,4 @@ class monitor_template {
 
 }
 
+}

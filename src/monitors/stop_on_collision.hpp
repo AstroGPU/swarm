@@ -20,6 +20,7 @@
 #include <limits>
 
 namespace swarm {
+  namespace monitors {
 
 struct stop_on_collision_param {
 	double dmin_squared;
@@ -98,3 +99,4 @@ class stop_on_collision {
 }
 
 
+}

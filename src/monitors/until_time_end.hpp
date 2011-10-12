@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace swarm {
-
+  namespace monitors {
 
 struct until_time_end_params {
 	double time_end;
@@ -61,3 +61,4 @@ class until_time_end {
 }
 
 
+}

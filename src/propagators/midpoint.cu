@@ -111,7 +111,7 @@ namespace swarm {
 					}
 				};
 
-			integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection > >
+			integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
 				midpoint_prop_plugin("midpoint"
 						,"This is the integrator based on midpoint propagator");
 

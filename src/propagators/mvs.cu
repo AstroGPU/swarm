@@ -165,7 +165,7 @@ struct MVSPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection > >
+integrator_plugin_initializer< generic< MVSPropagator, monitors::stop_on_ejection > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
 
