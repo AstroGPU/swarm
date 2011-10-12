@@ -62,23 +62,24 @@ class stop_on_any_large_distance {
 
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) > _params.rmax )
+			if(_sys.radius_squared(b) > _params.rmax * _params.rmax )
 				is_any_body_far_from_origin = true;
 		}
 		if(!is_any_body_far_from_origin) return false;
 					
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) <= _params.rmax ) continue;
+			if(_sys.radius_squared(b) <= _params.rmax * _params.rmax ) continue;
 			bool is_far_from_every_body = true;
 			for(int bb = 0 ; bb < _sys.nbod(); bb ++ ){		
 			   if(b == bb) continue;
-			   if(_sys.distance_squared_between(b,bb) < _params.rmax*_params.rmax )
+			   double r2 = _sys.distance_squared_between(b,bb);
+			   if(r2 < _params.rmax*_params.rmax )
 					{ is_far_from_every_body = false;  break; }
 				}
 			if(is_far_from_every_body) 
 				{
 				lprintf(_log, "Distance from all bodies exceeds rmax: _sys=%d, bod=%d, T=%lg r=%lg rmax=%lg.\n"
-				, _sys.number(), b, _sys.time() , r, _params.rmax_squared);
+					, _sys.number(), b, _sys.time() , sqrt(r2), _params.rmax);
 				log::system(_log, _sys);
 				if(stop) return true;
 				}

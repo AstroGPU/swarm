@@ -108,27 +108,22 @@ int main(int argc, const char **argv)
   integ->set_ensemble(ens); 
 
   std::cerr << "Set integration duration for all systems.\n";
-  // EBF: WARNING:  Is this being used?
-  double Tinit = cfg.optional("time_init",0.);
+  // EBF: This was moved to set_initial_conditions_for_demo
+  // double Tinit = cfg.optional("time_init",0.);
   double destination_time = cfg.optional("integration end",10.);
-  // EBF: WARNING:  This isn't being used?
-  //  double Toutputstep = cfg.optional("output interval",destination_time*1.01);
-
   // EBF: Replaced w/ Saleh's new syntax
   //  ens.set_time_end_all(Tend);
+  // Now set the destination time where we want to stop the integration.
+  integ->set_destination_time ( destination_time );
+  // Need to synchronize because \ref integrator::set_ensemble may upload data to GPU.
+  SYNC;
 
-    // Now set the destination time where we want to stop the integration.
-    integ->set_destination_time ( destination_time );
-    // Need to synchronize because \ref integrator::set_ensemble may upload data to GPU.
-    SYNC;
-
-  // EBF: WARNING: Disabled until figure out how to put back in properly
+  // EBF: This is moved to the monitor for log_time_interval
+  //  double Toutputstep = cfg.optional("output interval",destination_time*1.01);
   //  ens.set_time_output_all(0,Tinit);  // Time of first output (immediate)
   //  ens.set_time_output_all(1,Toutputstep);  // output interval
-
-  // EBF: WARNING: Disabled until figure out how to put back in properly
   // Perform logging if needed
-    //  swarm::log::output_systems_needing_output(hlog, ens);
+  //  swarm::log::output_systems_needing_output(hlog, ens);
 
   // EBF: Disabled as this is now done automatically
   // Perform the integration on gpu
@@ -217,7 +212,21 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens, const swarm::config& 
       float mass_star = cfg.optional("mass_star",1.);
       double x=0, y=0, z=0, vx=0, vy=0, vz=0;
       ens.set_body(sys, 0, mass_star, x, y, z, vx, vy, vz);
+      
+	  double x_t = ens.x(sys,0);
+	  double y_t = ens.y(sys,0);
+	  double z_t = ens.z(sys,0);
+	  double vx_t = ens.vx(sys,0);
+	  double vy_t = ens.vy(sys,0);
+	  double vz_t = ens.vz(sys,0);
 
+	  std::cout << " x= " << x << "=" << x_t << " ";
+	  std::cout << " y= " << y << "=" << y_t << " ";
+	  std::cout << " z= " << z << "=" << z_t << " ";
+	  std::cout << "vx= " << vx << "=" << vx_t << " ";
+	  std::cout << "vy= " << vy << "=" << vy_t << " ";
+	  std::cout << "vz= " << vz << "=" << vz_t << "\n";
+			       
       double mass_enclosed = mass_star;
       for(unsigned int bod=1;bod<ens.nbod();++bod)
 	{
@@ -230,23 +239,40 @@ void set_initial_conditions_for_demo(swarm::ensemble& ens, const swarm::config& 
 	  double O = draw_value_from_config(cfg,"node",bod,-720.,720.);
 	  double w = draw_value_from_config(cfg,"omega",bod,-720.,720.);
 	  double M = draw_value_from_config(cfg,"meananom",bod,-720.,720.);
-	  //	  std::cout << "# Drawing sys= " << sys << " bod= " << bod << ' ' << mass_planet << "  " << a << ' ' << e << ' ' << i << ' ' << O << ' ' << w << ' ' << M << '\n';
+	  if(sys<10)
+	    std::cout << "# Drawing sys= " << sys << " bod= " << bod << " m= " << mass_planet << "  a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << '\n';
 
 	  i *= M_PI/180.;
 	  O *= M_PI/180.;
 	  w *= M_PI/180.;
 	  M *= M_PI/180.;
 
-	  double mass = use_jacobi ? mass_enclosed : mass_star+mass_planet;
+	  //	  double mass = use_jacobi ? mass_enclosed : mass_star+mass_planet;
+	  double mass = mass_star+mass_planet;
 	  calc_cartesian_for_ellipse(x,y,z,vx,vy,vz, a, e, i, O, w, M, mass);
 
-	  double bx, by, bz, bvx, bvy, bvz;
+	  double bx=0., by=0., bz=0., bvx=0., bvy=0., bvz=0.;
+#if JACOBI
 	  ens.get_barycenter(sys,bx,by,bz,bvx,bvy,bvz,bod-1);
+#endif
 	  x  += bx;	  y  += by;	  z  += bz;
 	  vx += bvx;	  vy += bvy;	  vz += bvz;
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
+	  x_t = ens.x(sys,bod);
+	  y_t = ens.y(sys,bod);
+	  z_t = ens.z(sys,bod);
+	  vx_t = ens.vx(sys,bod);
+	  vy_t = ens.vy(sys,bod);
+	  vz_t = ens.vz(sys,bod);
+
+	  std::cout << " x= " << x << "=" << x_t << " ";
+	  std::cout << " y= " << y << "=" << y_t << " ";
+	  std::cout << " z= " << z << "=" << z_t << " ";
+	  std::cout << "vx= " << vx << "=" << vx_t << " ";
+	  std::cout << "vy= " << vy << "=" << vy_t << " ";
+	  std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	}  // end loop over bodies
 
       // Shift into barycentric frame
@@ -288,9 +314,22 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 #endif
 #endif
 
+      {
+	unsigned int bod = 0;
+	  float mass = ens.mass(systemid,bod);
+	  double x = ens.x(systemid,bod);
+	  double y = ens.y(systemid,bod);
+	  double z = ens.z(systemid,bod);
+	  double vx = ens.vx(systemid,bod);
+	  double vy = ens.vy(systemid,bod);
+	  double vz = ens.vz(systemid,bod);
+
+	  std::cout << "body= " << bod << ": mass= " << mass << " pos= " << x << ' ' << y << ' ' << z << " vel= " << vx << ' ' << vy << ' ' << vz << "\n";
+     }
+
       for(unsigned int bod=1;bod<ens.nbod();++bod) // Skip star since printing orbits
 	{
-	  std::cout << "body= " << bod << ": ";
+	  //	  std::cout << "body= " << bod << ": ";
 	  //	  std::cout << "pos= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ") vel= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
 	  float mass = ens.mass(systemid,bod);
 #if JACOBI
@@ -316,13 +355,14 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	      double vy = ens.vy(systemid,bod)-bvy;
 	      double vz = ens.vz(systemid,bod)-bvz;
 
+	      std::cout << " body= " << bod << ": m= " << mass << " pos= " << x << ' ' << y << ' ' << z << " vel= " << vx << ' ' << vy << ' ' << vz << "\n";
 	      double a, e, i, O, w, M;
 	      calc_keplerian_for_cartesian(a,e,i,O,w,M, x,y,z,vx,vy,vz, mass_effective);
 	      i *= 180/M_PI;
 	      O *= 180/M_PI;
 	      w *= 180/M_PI;
 	      M *= 180/M_PI;
-	      std::cout << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
+	      std::cout << "body= " << bod << ": m= " << mass << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
 
 
 	}

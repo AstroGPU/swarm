@@ -20,6 +20,8 @@
 #include "swarm/plugin.hpp"
 #include "monitors/until_time_end.hpp"
 #include "monitors/stop_on_ejection.hpp"
+#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
+#include "monitors/log_time_interval.hpp"
 #include "monitors/combine.hpp"
 
 
@@ -174,7 +176,12 @@ class hermite_cpu : public integrator {
 };
 
 
-integrator_plugin_initializer< hermite_cpu< stop_on_ejection > >
+// WARNING: EBF: commented out to test new stopper
+//integrator_plugin_initializer< hermite_cpu< stop_on_ejection > >
+//	hermite_cpu_plugin("hermite_cpu");
+
+
+integrator_plugin_initializer< hermite_cpu< stop_on_any_large_distance_or_close_encounter > >
 	hermite_cpu_plugin("hermite_cpu");
 
 }

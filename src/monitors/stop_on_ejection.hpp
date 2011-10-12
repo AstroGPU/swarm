@@ -57,13 +57,13 @@ class stop_on_ejection {
 	GPUAPI bool test_body(const int& b) {
 
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
-		double r = sqrt(_sys[b].radius());  // WARNING: Deceiving function name
+		double r = sqrt(_sys[b].radius_squared());  // WARNING: Deceiving function name
 		if( r < _params.rmax ) return false;
 		double rdotv = x*vx+y*vy+z*vz;
 		if( rdotv <= 0. ) return false;
 		
 		bool stopit = false;
-		double speed_sq = _sys[b].speed();  // WARNING: Deceiving function name
+		double speed_sq = _sys[b].speed_squared();  // WARNING: Deceiving function name
 		double epp = 0.5*speed_sq*r/_sys[b].mass()-1.;
 		if( fabs(epp) < 1e-4 ) {
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
@@ -74,6 +74,9 @@ class stop_on_ejection {
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
 			lprintf(_log, "Orbit is hyperbolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
+			// TODO: Make sure that planet is not near another body
+			// This is very unlikely to be an issue, provided that rmax
+			// is set to be well beyond the initial semi-major axes
 			stopit = true;
 		}
 

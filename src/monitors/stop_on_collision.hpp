@@ -22,13 +22,17 @@
 namespace swarm {
 
 struct stop_on_collision_param {
-	double dmin;
+	double dmin_squared;
 	stop_on_collision_param(const config &cfg)
 	{
 		if(!cfg.count("collision radius"))
-			dmin = 0.;
+		  dmin_squared = 0.;
 		else
-			dmin = atof(cfg.at("collision radius").c_str());
+		  {
+		    dmin_squared = atof(cfg.at("collision radius").c_str());
+		    dmin_squared *= dmin_squared;
+		  }
+		
 	}
 };
 
@@ -55,13 +59,13 @@ class stop_on_collision {
 
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
-		double d = _sys.distance_between(i,j);
-		bool close_encounter = d < _p.dmin;
+		double d_squared = _sys.distance_squared_between(i,j);
+		bool close_encounter = d_squared < _p.dmin_squared;
 
 		if( close_encounter )
 			lprintf(_log, "Collision detected: "
 					"sys=%d, T=%f j=%d i=%d  d=%lg.\n"
-					, _sys.number(), _sys.time(), j, i,d);
+				, _sys.number(), _sys.time(), j, i,sqrt(d_squared));
 
 		return close_encounter;
 	}

@@ -56,9 +56,11 @@ class stop_on_close_encounter {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d = _sys.distance_between(i,j);
-		double _GM = _sys[b].mass();  // remove _ if ok to keep
-		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
-		bool close_encounter = d < _p.dmin * rH;
+		double _GM = _sys[0].mass();  // remove _ if ok to keep
+		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
+		//		bool close_encounter = d < _p.dmin * rH;
+		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM);
+		bool close_encounter = d*d*d < _p.dmin*_p.dmin*_p.dmin * rH3;
 
 		if( close_encounter )
 			lprintf(_log, "Close apporach detected: "

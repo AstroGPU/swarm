@@ -21,9 +21,9 @@
 
 namespace swarm {
 
-struct stop_on_crossing_orbit_or_close_approach_p {
+struct stop_on_crossing_orbit_or_close_approach_param {
 	double rmax,dmin;
-	stop_on_crossing_orbit_or_close_approach_p(const config &cfg)
+	stop_on_crossing_orbit_or_close_approach_param(const config &cfg)
 	{
 		if(!cfg.count("rmax"))
 			rmax = 1000.;
@@ -46,7 +46,7 @@ struct stop_on_crossing_orbit_or_close_approach_p {
 template<class log_t>
 class stop_on_crossing_orbit_or_close_approach {
 	public:
-	typedef stop_on_crossing_orbit_or_close_approach_p params;
+	typedef stop_on_crossing_orbit_or_close_approach_param params;
 
 	private:
 	params _p;
@@ -100,11 +100,16 @@ class stop_on_crossing_orbit_or_close_approach {
 
 		return stopit;
 	}
+
 	GPUAPI bool check_for_crossing_orbits(
 			const int& i, const double&a_i, const double & e_i
 			,const int& j, const double&a_j, const double & e_j ) {
 
+	  // WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
+	  // Doesn't account for pericenter directions
+	  // Assumes planets ordered from closest to farthest
 			if( a_i * (1. + e_i)  >  a_j * ( 1. - e_j ) ) {
+
 				lprintf(_log, "Crossing orbits detected: " 
 						"sys=%d, T=%lg i=%d j=%d  a_i=%lg e_i=%lg a_j=%lg e_j=%lg.\n"
 						, _sys.number(), _sys.time(),i,j, a_i,e_i, a_j, e_j);
@@ -116,8 +121,11 @@ class stop_on_crossing_orbit_or_close_approach {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d = _sys.distance_between(i,j);
-		double _GM = _sys[b].mass();  // remove _ if ok to keepdouble rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
-		bool close_encounter = d < _p.dmin * rH;
+		double _GM = _sys[b].mass();  // remove _ if ok to keep
+		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
+		//		bool close_encounter = d < _p.dmin * rH;
+		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM);
+		bool close_encounter = d*d*d < _p.dmin*_p.dmin*_p.dmin * rH3;
 
 		if( close_encounter )
 			lprintf(_log, "Close apporach detected: "
@@ -138,7 +146,7 @@ class stop_on_crossing_orbit_or_close_approach {
 
 		// Check for crossing orbits
 		for(int b = 0; b < _sys.nbod()-2; b++)
-			stopit = stopit || check_for_crossing_orbits(b,a[b],e[b],b+1,a[b+1],e[b+1]);
+		  stopit = stopit || check_for_crossing_orbits(b,a[b],e[b],b+1,a[b+1],e[b+1]);
 
 		// Chcek for close encounters
 		for(int b = 1; b < _sys.nbod(); b++)

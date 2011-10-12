@@ -50,7 +50,7 @@ class until_time_end {
 	public:
 
 	GPUAPI bool operator () () { 
-		return _sys.time() >= _params.time_end; 
+	  return (_sys.time() >= _params.time_end); 
 	}
 
 	GPUAPI until_time_end(const params& p,ensemble::SystemRef& s,log_t& l)

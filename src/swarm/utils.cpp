@@ -114,14 +114,14 @@ bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_
 		for(int j = 0; j < e1.nbod() ; j++){
 
 			double dp = sqrt( 
-					  sqr ( e1[i][j][0].pos() - e2[i][j][0].pos() ) 
-					+ sqr ( e1[i][j][1].pos() - e2[i][j][1].pos() ) 
-					+ sqr ( e1[i][j][2].pos() - e2[i][j][2].pos() ) ) ;
+					  square ( e1[i][j][0].pos() - e2[i][j][0].pos() ) 
+					+ square ( e1[i][j][1].pos() - e2[i][j][1].pos() ) 
+					+ square ( e1[i][j][2].pos() - e2[i][j][2].pos() ) ) ;
 
 			double dv = sqrt( 
-					  sqr ( e1[i][j][0].vel() - e2[i][j][0].vel() ) 
-					+ sqr ( e1[i][j][1].vel() - e2[i][j][1].vel() ) 
-					+ sqr ( e1[i][j][2].vel() - e2[i][j][2].vel() ) ) ;
+					  square ( e1[i][j][0].vel() - e2[i][j][0].vel() ) 
+					+ square ( e1[i][j][1].vel() - e2[i][j][1].vel() ) 
+					+ square ( e1[i][j][2].vel() - e2[i][j][2].vel() ) ) ;
 
 			if ( dp > pos_diff ) pos_diff = dp;
 			if ( dv > vel_diff ) vel_diff = dv;
