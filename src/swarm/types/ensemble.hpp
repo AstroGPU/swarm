@@ -420,7 +420,7 @@ class EnsembleBase {
 
 		x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;
 		double mass_sum = 0.;
-		for(int bod=0;bod<=min(nbod()-1,max_body_id);++bod)
+		for(int bod=0;bod<=std::min(nbod()-1,max_body_id);++bod)
 		{
 			double m = mass(sys,bod);
 			x  += m* this->x(sys,bod);
