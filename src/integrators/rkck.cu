@@ -74,7 +74,7 @@ class rkck: public integrator {
 
 
 	template<class T>
-	__device__ void kernel(T a){
+	__device__ void kernel(T compile_time_param){
 
 ////////////////////// RKCK Constants /////////////////////////////
 	// Cash-Karp constants From GSL
@@ -97,7 +97,7 @@ class rkck: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -267,9 +267,11 @@ class rkck: public integrator {
 				if( first_thread_in_system ) 
 					sys.time() += h;
 
-				if( first_thread_in_system ) 
-					if( montest() || (sys.time() >= _destination_time )) 
+				if( first_thread_in_system )  {
+					if( sys.time() >= _destination_time ) 
 						sys.set_inactive();
+					montest();
+				}
 			}
 
 			__syncthreads();
@@ -281,10 +283,10 @@ class rkck: public integrator {
 
 };
 
-integrator_plugin_initializer<rkck< AdaptiveTimeStep, stop_on_ejection> >
+integrator_plugin_initializer<rkck< AdaptiveTimeStep, monitors::stop_on_ejection> >
 	rkck_adaptive_plugin("rkck_adaptive");
 
-integrator_plugin_initializer<rkck< FixedTimeStep, stop_on_ejection> >
+integrator_plugin_initializer<rkck< FixedTimeStep, monitors::stop_on_ejection> >
 	rkck_Fixed_plugin("rkck_fixed");
 
 }

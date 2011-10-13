@@ -52,21 +52,23 @@ namespace swarm {
 
 
 template<int i>
-struct params_t {
+struct compile_time_params_t {
 	const static int n = i;
 };
 
 template<class implementation,class T>
-__global__ void generic_kernel(implementation* integ,T a) {
-	integ->kernel(a);
+__global__ void generic_kernel(implementation* integ,T compile_time_param) {
+	integ->kernel(compile_time_param);
 }
 
 
 template< class implementation, class T>
-void launch_template(implementation* integ, implementation* gpu_integ, T a)
+void launch_template(implementation* integ, implementation* gpu_integ, T compile_time_param)
 {
 	if(integ->get_ensemble().nbod() == T::n) 
-		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,a);
+		generic_kernel<<<integ->gridDim(), integ->threadDim(), integ->shmemSize() >>>(gpu_integ,compile_time_param);
+	else
+	  std::cerr << "# Error launching kernel.  Active ensemble has " << integ->get_ensemble().nbod() << " bodies per system.\n";
 	// TODO:  Add else print error message?
 		
 }
@@ -75,8 +77,8 @@ template<int N>
 struct launch_template_choose {
 	template<class integ_pair>
 	static void choose(integ_pair p){
-		params_t<N> a;
-		generic_kernel<<<p.first->gridDim(), p.first->threadDim(), p.first->shmemSize() >>>(p.second,a);
+		compile_time_params_t<N> compile_time_param;
+		generic_kernel<<<p.first->gridDim(), p.first->threadDim(), p.first->shmemSize() >>>(p.second,compile_time_param);
 	}
 };
 

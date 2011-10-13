@@ -8,6 +8,6 @@ LIST(APPEND SWARM_PLUGINS integrators/rkck.cu)
 # Integrators based on generic integrator
 LIST(APPEND SWARM_PLUGINS propagators/euler.cu)
 LIST(APPEND SWARM_PLUGINS propagators/mvs.cu)
-#LIST(APPEND SWARM_PLUGINS propagators/verlet.cu)
-#LIST(APPEND SWARM_PLUGINS propagators/midpoint.cu)
+LIST(APPEND SWARM_PLUGINS propagators/verlet.cu)
+LIST(APPEND SWARM_PLUGINS propagators/midpoint.cu)
 

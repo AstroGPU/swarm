@@ -22,9 +22,9 @@
 namespace swarm {
   namespace monitors {
 
-struct stop_on_crossing_orbit_or_close_approach_param {
+struct stop_on_ejection_or_close_approach_param {
 	double rmax,dmin;
-	stop_on_crossing_orbit_or_close_approach_param(const config &cfg)
+	stop_on_ejection_or_close_approach_param(const config &cfg)
 	{
 		if(!cfg.count("rmax"))
 			rmax = 1000.;
@@ -45,9 +45,9 @@ struct stop_on_crossing_orbit_or_close_approach_param {
  *  \ingroup monitors
  */
 template<class log_t>
-class stop_on_crossing_orbit_or_close_approach {
+class stop_on_ejection_or_close_approach {
 	public:
-	typedef stop_on_crossing_orbit_or_close_approach_param params;
+	typedef stop_on_ejection_or_close_approach_param params;
 
 	private:
 	params _p;
@@ -68,7 +68,7 @@ class stop_on_crossing_orbit_or_close_approach {
 		// h2 = ||pos X vel||^2
 		double h2 = sqr(y*vz-z*vy) + sqr(z*vx-x*vz) + sqr(x*vy-y*vx);
 		double r = _sys[b].radius(), sp = _sys[b].speed();
-		double _GM = _sys[b].mass();  // remove _ if ok to keep
+		double _GM = _sys[0].mass();  // remove _ if ok to keep
 		double energy = sp*0.5-_GM/r;
 		double epp = energy*r/_GM;
 
@@ -81,10 +81,13 @@ class stop_on_crossing_orbit_or_close_approach {
 		if( fabs(epp) < 1e-4 ) {
 			lprintf(_log, "Orbit is parabolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
-			stopit = true;
+			//			stopit = true;
 		}else if ( energy > 0 ){
 			lprintf(_log, "Orbit is hyperbolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
+			// TODO: Make sure that planet is not near another body
+			// This is very unlikely to be an issue, provided that rmax
+			// is set to be well beyond the initial semi-major axes
 			stopit = true;
 		}else {
 			a = -0.5*_GM/energy;
@@ -122,7 +125,7 @@ class stop_on_crossing_orbit_or_close_approach {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d = _sys.distance_between(i,j);
-		double _GM = _sys[b].mass();  // remove _ if ok to keep
+		double _GM = _sys[0].mass();  // remove _ if ok to keep
 		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
 		//		bool close_encounter = d < _p.dmin * rH;
 		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM);
@@ -136,7 +139,7 @@ class stop_on_crossing_orbit_or_close_approach {
 		return close_encounter;
 	}
 
-	GPUAPI void operator () () { 
+	GPUAPI bool operator () () { 
 		// WARNING: Maximum number of planet hardwired here
 		double a[10],e[10];
 		bool stopit = false;
@@ -146,8 +149,8 @@ class stop_on_crossing_orbit_or_close_approach {
 			stopit = stopit || test_body(b,a[b],e[b]);
 
 		// Check for crossing orbits
-		for(int b = 0; b < _sys.nbod()-2; b++)
-		  stopit = stopit || check_for_crossing_orbits(b,a[b],e[b],b+1,a[b+1],e[b+1]);
+		//		for(int b = 0; b < _sys.nbod()-2; b++)
+		//		  stopit = stopit || check_for_crossing_orbits(b,a[b],e[b],b+1,a[b+1],e[b+1]);
 
 		// Chcek for close encounters
 		for(int b = 1; b < _sys.nbod(); b++)
@@ -156,12 +159,18 @@ class stop_on_crossing_orbit_or_close_approach {
 
 		if(stopit) {
 			log::system(_log, _sys);
-			_sys.set_disabled();
 		}
+
+		//	if(_counter % 1000 == 0)
+		//		lprintf(_log,"Hello %g\n", _sys.time() );
+		_counter++;
+
+		return stopit;
 	}
 
-	GPUAPI stop_on_crossing_orbit_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l),_counter(0){}
+	GPUAPI stop_on_ejection_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
+	    :_p(p),_sys(s),_log(l),_counter(0)){}
+//		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
 	
 };
 

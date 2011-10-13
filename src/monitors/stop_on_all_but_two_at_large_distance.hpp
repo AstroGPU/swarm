@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace swarm {
-
+  namespace monitors {
 
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;
@@ -47,26 +47,23 @@ class stop_on_all_but_two_at_large_distance {
 
 	public:
 
-	GPUAPI bool operator () () { 
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-
-		_counter++;
+	GPUAPI void operator () () { 
 
 		int num_body_near_origin = 0, id1 = -1, id2 = -2;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
+			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
 				{
 				if(num_body_near_origin==0) id1 = b;
 				if(num_body_near_origin==1) id2 = b;
 				 num_body_near_origin++;
 				}
 		}
-		if( num_body_near_origin > 2 ) return false;
-
+		if( num_body_near_origin > 2 )
+			_sys.set_disabled();
+ 
 		int num_body_far_from_all = 0;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
+			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
 			bool is_far_from_every_body = true;
 			for(int bb = 0 ; bb < _sys.nbod(); bb ++ ){		
 			   if(b == bb) continue;
@@ -83,9 +80,8 @@ class stop_on_all_but_two_at_large_distance {
 			lprintf(_log, "No more than two bodies are within rmax of other bodies: _sys=%d, bod1=%d, bod2=%d, T=%lg r=%lg rmax=%lg.\n"
 				, _sys.number(), id1, id2, _sys.time() , r, _params.rmax);
 			log::system(_log, _sys);
-			return true;
+			_sys.set_disabled();
 			}
-		return false; 
 	}
 
 	GPUAPI stop_on_all_but_two_at_large_distance(const params& p,ensemble::SystemRef& s,log_t& l)
@@ -93,4 +89,5 @@ class stop_on_all_but_two_at_large_distance {
 	
 };
 
+}
 }

@@ -25,7 +25,7 @@
 namespace swarm {
 
 template<class N>
-GENERIC N sqr(const N& x) { return x*x; }
+GENERIC N square(const N& x) { return x*x; }
 
 typedef long double_int;
 
@@ -91,17 +91,19 @@ class EnsembleBase {
 
 		//! Distance of the planet to (0,0,0) 
         // TODO: Rename distance_to_origin_sq 
-		GENERIC double radius() { 
-			return sqr(operator[](0).pos()) 
-				+ sqr(operator[](1).pos()) 
-				+ sqr(operator[](2).pos());
+	  //		GENERIC double radius() { 
+		GENERIC double radius_squared() { 
+			return square(operator[](0).pos()) 
+				+ square(operator[](1).pos()) 
+				+ square(operator[](2).pos());
 		}
 		//! Magnitude of velocity
         // TODO: Rename speed_sq
-		GENERIC double speed() {
-			return sqr(operator[](0).vel()) 
-				+ sqr(operator[](1).vel()) 
-				+ sqr(operator[](2).vel());
+	  //		GENERIC double speed() {
+		GENERIC double speed_squared() {
+			return square(operator[](0).vel()) 
+				+ square(operator[](1).vel()) 
+				+ square(operator[](2).vel());
 		}
 
 		//! Get all position and velocities at once
@@ -198,9 +200,9 @@ class EnsembleBase {
 		//! Distance squared between planet i and j in the system.
 		GENERIC double distance_squared_between(const int& i , const int & j ) {
 			const Body& b1 = _body[i], & b2 = _body[j];
-			return sqr(b1[0].pos()-b2[0].pos())
-				+ sqr(b1[1].pos()-b2[1].pos())
-				+ sqr(b1[2].pos()-b2[2].pos());
+			return square(b1[0].pos()-b2[0].pos())
+				+ square(b1[1].pos()-b2[1].pos())
+				+ square(b1[2].pos()-b2[2].pos());
 		}
 
 		/// This is a really bad way to copy this but
@@ -443,7 +445,8 @@ class EnsembleBase {
 
 		x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;
 		double mass_sum = 0.;
-		for(int bod=0;bod<=min(nbod()-1,max_body_id);++bod)
+		const int stop_at_body = std::min(nbod()-1,max_body_id);
+		for(int bod=0;bod<=stop_at_body;++bod)
 		{
 			double m = mass(sys,bod);
 			x  += m* this->x(sys,bod);

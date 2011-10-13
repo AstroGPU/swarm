@@ -47,6 +47,7 @@ struct VerletPropagator {
 	int ij;
 	bool body_component_grid;
 	bool first_thread_in_system;
+	double max_timestep;
 
 
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
@@ -96,7 +97,7 @@ struct VerletPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< VerletPropagator, stop_on_ejection > >
+integrator_plugin_initializer< generic< VerletPropagator, monitors::stop_on_ejection > >
 	verlet_prop_plugin("verlet"
 			,"This is the integrator based on verlet propagator");
 

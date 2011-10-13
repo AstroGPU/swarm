@@ -55,8 +55,6 @@ struct MVSPropagator {
 		:_params(p),sys(s),calcForces(calc){}
 
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
-	/// \todo: The code does not seem right. Everything is with respect to
-	/// center of mass but the sun is treated differently.
 	GPUAPI void init()  { 
 		sqrtGM = sqrt(sys[0].mass());
 
@@ -83,8 +81,6 @@ struct MVSPropagator {
 	}
 
 	/// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
-	/// \todo The backward conversion does not look similar enough to
-	/// the forward conversion in \ref init.
 	GPUAPI void shutdown() { 
 		if ( body_component_grid ) {
 
@@ -125,7 +121,7 @@ struct MVSPropagator {
 	GPUAPI void advance(){
 
 		double H = min( max_timestep ,  _params.time_step );
-		double hby2 = H / 2;
+		double hby2 = 0.5 * H;
 
 		double acc = calcForces.acc_planets(ij,b,c);
 
@@ -165,7 +161,7 @@ struct MVSPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection > >
+integrator_plugin_initializer< generic< MVSPropagator, monitors::stop_on_ejection > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
 

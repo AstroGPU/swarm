@@ -44,6 +44,7 @@ namespace swarm {
 					int ij;
 					bool body_component_grid;
 					bool first_thread_in_system;
+					double max_timestep;
 
 
 					GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
@@ -55,7 +56,7 @@ namespace swarm {
 					GPUAPI void shutdown() { }
 
 					GPUAPI void advance(){
-						double H = _params.time_step;
+						double H = min( max_timestep ,  _params.time_step );
 						double pos = 0, vel = 0;
 
 						if( body_component_grid )
@@ -111,7 +112,7 @@ namespace swarm {
 					}
 				};
 
-			integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection > >
+			integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
 				midpoint_prop_plugin("midpoint"
 						,"This is the integrator based on midpoint propagator");
 

@@ -19,6 +19,9 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
+#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
+#include "monitors/log_time_interval.hpp"
+#include "monitors/combine.hpp"
 
 
 namespace swarm {
@@ -50,13 +53,13 @@ class hermite: public integrator {
 
 
 	template<class T>
-	__device__ void kernel(T a){
+	__device__ void kernel(T compile_time_param){
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(a) ) );
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -149,8 +152,13 @@ class hermite: public integrator {
 };
 
 
-integrator_plugin_initializer<hermite< stop_on_ejection > >
+// WARNING: EBF: commented out to test new stopper
+//integrator_plugin_initializer<hermite< stop_on_ejection > >
+//	hermite_plugin("hermite");
+
+integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
 	hermite_plugin("hermite");
+
 
 
 }

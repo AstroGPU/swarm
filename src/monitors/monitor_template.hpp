@@ -20,6 +20,7 @@
 #include <limits>
 
 namespace swarm {
+  namespace monitors {
 
 //TODO: Should monitors have their own sub-namespace?  Perhaps swarm::monitors
 
@@ -47,8 +48,10 @@ class monitor_template {
 
 	public:
 
-	GPUAPI bool operator () () { 
-		return false; 
+	GPUAPI void operator () () { 
+		// _sys.set_inactive();
+		//_sys.set_disabled();
+		// log::system(_log,_sys);
 	}
 
 	GPUAPI monitor_template(const params& p,ensemble::SystemRef& s,log_t& l)
@@ -58,3 +61,4 @@ class monitor_template {
 
 }
 
+}

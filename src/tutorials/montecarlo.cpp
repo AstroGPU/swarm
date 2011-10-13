@@ -239,6 +239,11 @@ defaultEnsemble trim_disabled_systems( const defaultEnsemble& ens ) {
 	return active_ens;
 }
 
+void reactivate_systems(defaultEnsemble&ens){
+		for(int i = 0; i < ens.nsys() ; i++)
+			if(ens[i].state() == ensemble::Sys::SYSTEM_INACTIVE )
+				ens[i].set_active();
+}
 volatile bool integration_loop_not_aborted_yet = true;
 /**
  *   We can use this signal handler function
@@ -277,7 +282,7 @@ int main(int argc, char* argv[] ) {
 	// does the first three steps. Its pretty amazing.
 	defaultEnsemble ens ; 
 	if( cfg.count("input") ) {
-		ens = snapshot::load_text(cfg["input"]);
+		ens = snapshot::load(cfg["input"]);
 	}else{
 		ens = generate_randomized_initial_conditions( config::load(initc_configfile) );
 	}
@@ -299,7 +304,7 @@ int main(int argc, char* argv[] ) {
 	// We can set the following two items if we really need
 	// longer integrations before we stop for checking the
 	// ensemble and saving snapshots.
-	integ->set_max_attempts( 1 );
+	integ->set_max_attempts( 5 );
 	// integ->set_max_iterations ( ? );
 	SYNC;
 
@@ -312,6 +317,7 @@ int main(int argc, char* argv[] ) {
 	//  define Ctrl-C signal handler to get out
 	//  of this loop in a safe way. But we really want this loop
 	//  to run for a long time
+	reactivate_systems(ens);
 	catch_ctrl_c();
 	while( number_of_active_systems(ens) > 0 && integration_loop_not_aborted_yet ) {
 

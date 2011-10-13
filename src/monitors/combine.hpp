@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace swarm {
-
+namespace monitors {
 
 template< class Param1, class Param2 >
 struct combine_monitors_params {
@@ -68,4 +68,4 @@ public:
 
 }
 
-
+}

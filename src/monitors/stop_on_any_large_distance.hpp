@@ -20,7 +20,7 @@
 #include <limits>
 
 namespace swarm {
-
+  namespace monitors {
 
 struct stop_on_any_large_distance_params {
 	double rmax;
@@ -50,40 +50,35 @@ class stop_on_any_large_distance {
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-	int _counter;
 
 	public:
 
-	GPUAPI bool operator () () { 
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-
-		_counter++;
+	GPUAPI void operator () () { 
 
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) > _params.rmax )
+			if(_sys.radius_squared(b) > _params.rmax * _params.rmax )
 				is_any_body_far_from_origin = true;
 		}
-		if(!is_any_body_far_from_origin) return false;
+		if(!is_any_body_far_from_origin) _sys.set_disabled();
 					
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius(b) <= _params.rmax ) continue;
+			if(_sys.radius_squared(b) <= _params.rmax * _params.rmax ) continue;
 			bool is_far_from_every_body = true;
 			for(int bb = 0 ; bb < _sys.nbod(); bb ++ ){		
 			   if(b == bb) continue;
-			   if(_sys.distance_squared_between(b,bb) < _params.rmax*_params.rmax )
+			   double r2 = _sys.distance_squared_between(b,bb);
+			   if(r2 < _params.rmax*_params.rmax )
 					{ is_far_from_every_body = false;  break; }
 				}
 			if(is_far_from_every_body) 
 				{
 				lprintf(_log, "Distance from all bodies exceeds rmax: _sys=%d, bod=%d, T=%lg r=%lg rmax=%lg.\n"
-				, _sys.number(), b, _sys.time() , r, _params.rmax_squared);
+					, _sys.number(), b, _sys.time() , sqrt(r2), _params.rmax);
 				log::system(_log, _sys);
-				if(stop) return true;
+				if(stop) a_sys.set_disabled();
 				}
 		}
-		return false; 
 	}
 
 	GPUAPI stop_on_any_large_distance(const params& p,ensemble::SystemRef& s,log_t& l)
@@ -91,4 +86,5 @@ class stop_on_any_large_distance {
 	
 };
 
+}
 }
