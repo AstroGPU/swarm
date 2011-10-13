@@ -126,6 +126,9 @@ class integrator {
 	//! accessor function to set the manager for log output
 	virtual void set_log_manager(log::Pmanager& l);
 
+	virtual void set_max_iterations( const int& mi ) { _max_iterations = mi; }
+	virtual void set_max_attempts( const int& ma ) { _max_attempts = ma; }
+
 };
 typedef shared_ptr<integrator> Pintegrator;
 
@@ -186,7 +189,8 @@ class integrator : public swarm::integrator {
 	 *
 	 */
 	virtual void core_integrate() {
-		return launch_integrator();
+		launch_integrator();
+		_logman->flush();
 	}
 
 	//! Read the GPU log object from log manager and set it
@@ -253,4 +257,6 @@ typedef shared_ptr<integrator> Pintegrator;
 
 
 }
+
+	int number_of_active_systems(defaultEnsemble ens) ;
 }

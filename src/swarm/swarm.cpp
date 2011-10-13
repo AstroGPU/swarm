@@ -41,7 +41,7 @@ void stability_test() {
 	if(logarithmic != 0 && logarithmic <= 1) ERROR("logarithm base should be greater than 1");
 
 
-	std::cout << "Time, Energy Conservation Factor (delta E/E)" << std::endl;
+	std::cout << "Time, Energy Conservation Factor (delta E/E), Active Systems" << std::endl;
 	for(double time = begin_time; time < destination_time; ) {
 
 		if(logarithmic > 1)
@@ -58,7 +58,9 @@ void stability_test() {
 		SYNC;
 		DEBUG_OUTPUT(2, "Check energy conservation" );
 		double max_deltaE = find_max_energy_conservation_error(ens, initial_ens );
-		std::cout << effective_time << ", " << max_deltaE << std::endl;
+
+		int active_systems = ens.nsys() - number_of_disabled_systems( ens );
+		std::cout << effective_time << ", " << max_deltaE << ", " << active_systems << std::endl;
 
 	}
 

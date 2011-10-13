@@ -176,6 +176,7 @@ class EnsembleBase {
 		GENERIC double& time() const { return _sys[0].time(); }
 		//! Activity state
 		GENERIC bool is_active() const { return _sys[0].state() == Sys::SYSTEM_ACTIVE; }
+		GENERIC bool is_disabled() const { return _sys[0].state() == Sys::SYSTEM_DISABLED; }
 		GENERIC int& state() const { return _sys[0].state(); }
 		GENERIC void set_active() const { _sys[0].state() = Sys::SYSTEM_ACTIVE; }
 		GENERIC void set_inactive() const { _sys[0].state() = Sys::SYSTEM_INACTIVE; }
@@ -201,6 +202,26 @@ class EnsembleBase {
 				+ sqr(b1[1].pos()-b2[1].pos())
 				+ sqr(b1[2].pos()-b2[2].pos());
 		}
+
+		/// This is a really bad way to copy this but
+		/// I really don't know any other way. If 
+		/// someone adds another property to the
+		/// system should change this copy function
+		/// too. This sucks
+		GENERIC void copyTo(const  SystemRef& s ) {
+			for(int i = 0; i < _nbod; i++){
+				s[i][0].pos() = _body[i][0].pos();
+				s[i][1].pos() = _body[i][1].pos();
+				s[i][2].pos() = _body[i][2].pos();
+				s[i][0].vel() = _body[i][0].vel();
+				s[i][1].vel() = _body[i][1].vel();
+				s[i][2].vel() = _body[i][2].vel();
+				s[i].mass() = _body[i].mass();
+			}
+			s.time() = time();
+			s.state() = state();
+			s.id() = id();
+		}
 	};
 
 	//! Constant encapsulation of SystemRef
@@ -218,11 +239,13 @@ class EnsembleBase {
 		GENERIC const int& number() { return _ref.number(); }
 		GENERIC const double& time() const { return _ref.time(); }
 		GENERIC bool is_active() const { return _ref.state() == Sys::SYSTEM_ACTIVE; }
+		GENERIC bool is_disabled() const { return _ref.is_disabled(); }
 		GENERIC const int& state() const { return _ref.state(); }
 		GENERIC const int& id() const { return _ref.id(); }
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
+		GENERIC void copyTo( const SystemRef& r ) { _ref.copyTo( r ) ; }
 	};
 
 	//! Size of Body[] array required for an ensemble of size nbod,nsys
@@ -303,7 +326,7 @@ class EnsembleBase {
 	}
 
 	GENERIC double& v(const int& sys, const int & bod, const int& c){
-		return operator[] ( sys )[bod][c].pos();
+		return operator[] ( sys )[bod][c].vel();
 	}
 
 	GENERIC double& x(const int& sys, const int& bod ) { return p(sys,bod,0); }
@@ -337,7 +360,7 @@ class EnsembleBase {
 	}
 
 	GENERIC const double& v(const int& sys, const int & bod, const int& c)const{
-		return operator[] ( sys )[bod][c].pos();
+		return operator[] ( sys )[bod][c].vel();
 	}
 
 	GENERIC const double& x(const int& sys, const int& bod )const { return p(sys,bod,0); }

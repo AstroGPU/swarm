@@ -1,2 +1,3 @@
 SWARM_ADD_EXECUTABLE(tutorial_simple swarm_tutorial_simple.cpp)
 SWARM_ADD_EXECUTABLE(tutorial_gpu tutorial_gpu.cpp)
+SWARM_ADD_EXECUTABLE(montecarlo montecarlo.cpp kepler.cpp)

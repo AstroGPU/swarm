@@ -45,3 +45,4 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  ;
 void outputConfigSummary(std::ostream& o,swarm::config& cfg);
 swarm::config default_config() ;
 bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_diff, double & vel_diff, double & time_diff ) ;
+int number_of_disabled_systems(swarm::defaultEnsemble ens) ;

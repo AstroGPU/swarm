@@ -47,7 +47,6 @@ class stop_on_ejection {
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-	int _counter;
 
 	public:
 
@@ -58,7 +57,7 @@ class stop_on_ejection {
 
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
 		double r = sqrt(_sys[b].radius());  // WARNING: Deceiving function name
-		if( r < _params.rmax ) return false;
+		if( r < _params.rmax ) return false; else return true;
 		double rdotv = x*vx+y*vy+z*vz;
 		if( rdotv <= 0. ) return false;
 		
@@ -80,7 +79,7 @@ class stop_on_ejection {
 		return stopit;
 	}
 	
-	GPUAPI bool operator () () { 
+	GPUAPI void operator () () { 
 		bool stopit = false;
 
 		// Check each body
@@ -89,18 +88,14 @@ class stop_on_ejection {
 
 		if(stopit) {
 			log::system(_log, _sys);
+			_sys.set_disabled();
 		}
 
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-		_counter++;
-
-		return stopit;
 	}
 
 	
 	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_params(p),_sys(s),_log(l),_counter(0){}
+		:_params(p),_sys(s),_log(l){}
 	
 };
 
