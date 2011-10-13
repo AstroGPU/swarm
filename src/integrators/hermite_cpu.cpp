@@ -169,8 +169,9 @@ class hermite_cpu : public integrator {
 			
 			sys.time() += h;
 
-			if( montest() || (sys.time() >= _destination_time )) 
-				sys.set_inactive();
+				if( sys.time() >= _destination_time ) 
+					sys.set_inactive();
+				montest();
 		}
 	}
 };

@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -15,52 +15,23 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file kepler.hpp
+ *  \brief converts between Cartesian & Keplerian coordinates
+ *
+ *  Based on code from John Chambers' Mercury code
+ *
+ *  Cleaned up by Saleh on October 11, 2011. First I split this
+ *  up into Header/Source files and used it in montecarlo.cpp
+*/
 #pragma once
 
-#include <limits>
+double improve_mean_to_eccentric_annomaly_guess(const double e, const double M, const double x);
+double mean_to_eccentric_annomaly(const double e,  double M);
+void calc_cartesian_for_ellipse(double& x,double& y, double & z, double &vx, double &vy, double &vz, const double a, const double e, const double i, const double O, const double w, const double M, const double GM);
+void calc_keplerian_for_cartesian( double& a,  double& e,  double& i,  double& O,  double& w,  double& M, const double x,const double y, const double z, const double vx, const double vy, const double vz, const double GM);
 
-namespace swarm {
 
-/**
- * @brief Namespace for monitors (i.e., stoppers & loggers) and their associated classes
- */
-  namespace monitors {
 
-struct monitor_template_params {
-	monitor_template_params(const config &cfg)
-	{
-	}
-};
 
-/** Empty monitor to use as a template.  
- * Signal is always false.  Does not do any logging.
- * \ingroup monitors
- *
- */
-template<class log_t>
-class monitor_template {
-	public:
-	typedef monitor_template_params params;
-
-	private:
-	params _params;
-
-	ensemble::SystemRef& _sys;
-	log_t& _log;
-
-	public:
-
-	GPUAPI void operator () () { 
-		// _sys.set_inactive();
-		//_sys.set_disabled();
-		// log::system(_log,_sys);
-	}
-
-	GPUAPI monitor_template(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_params(p),_sys(s),_log(l){}
-	
-};
-
-}
-
-}

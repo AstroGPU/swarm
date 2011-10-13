@@ -60,7 +60,8 @@ namespace swarm {
 	}
 	void activate_all_systems(defaultEnsemble ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
-			ens[i].set_active();
+			if(ens[i].state() == ensemble::Sys::SYSTEM_INACTIVE )
+				ens[i].set_active();
 	}
 
 	void integrator::integrate() {

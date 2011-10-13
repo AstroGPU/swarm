@@ -71,7 +71,7 @@ class stop_on_close_encounter {
 		return close_encounter;
 	}
 
-	GPUAPI bool operator () () { 
+	GPUAPI void operator () () { 
 		bool stopit = false;
 
 		// Chcek for close encounters
@@ -81,18 +81,12 @@ class stop_on_close_encounter {
 
 		if(stopit) {
 			log::system(_log, _sys);
+			_sys.set_disabled();
 		}
-
-		//	if(_counter % 1000 == 0)
-		//		lprintf(_log,"Hello %g\n", _sys.time() );
-		_counter++;
-
-		return stopit;
 	}
 
 	GPUAPI stop_on_close_encounter(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l),_counter(0)){}
-//		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
+	    :_p(p),_sys(s),_log(l){}
 	
 };
 

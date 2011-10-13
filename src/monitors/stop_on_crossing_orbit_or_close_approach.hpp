@@ -136,7 +136,7 @@ class stop_on_crossing_orbit_or_close_approach {
 		return close_encounter;
 	}
 
-	GPUAPI bool operator () () { 
+	GPUAPI void operator () () { 
 		// WARNING: Maximum number of planet hardwired here
 		double a[10],e[10];
 		bool stopit = false;
@@ -156,18 +156,12 @@ class stop_on_crossing_orbit_or_close_approach {
 
 		if(stopit) {
 			log::system(_log, _sys);
+			_sys.set_disabled();
 		}
-
-		//	if(_counter % 1000 == 0)
-		//		lprintf(_log,"Hello %g\n", _sys.time() );
-		_counter++;
-
-		return stopit;
 	}
 
 	GPUAPI stop_on_crossing_orbit_or_close_approach(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l),_counter(0)){}
-//		:_p(p),_sys(s),_log(l),_GM(_sys[0].mass()){}
+	    :_p(p),_sys(s),_log(l),_counter(0){}
 	
 };
 

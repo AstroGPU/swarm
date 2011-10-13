@@ -52,13 +52,12 @@ class log_time_interval {
 
 	public:
 
-	GPUAPI bool operator () () { 
+	GPUAPI void operator () () { 
 		if(_sys.time() >= _next_log_time )  {
 			log::system(_log, _sys );
 			_next_log_time += _params.time_interval; 
 			//lprintf(_log,"Logging at %lg\n",_sys.time());
 		}
-		return false;
 	}
 
 	GPUAPI log_time_interval(const params& p,ensemble::SystemRef& s,log_t& l)

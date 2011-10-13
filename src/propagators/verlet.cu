@@ -47,6 +47,7 @@ struct VerletPropagator {
 	int ij;
 	bool body_component_grid;
 	bool first_thread_in_system;
+	double max_timestep;
 
 
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,

@@ -70,12 +70,12 @@ class stop_on_any_large_distance_or_close_encounter {
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
 			lprintf(_log, "Orbit is nearly parabolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
-			//			stopit = true;
+						stopit = true;
 		}else if ( epp > 0 ){
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
 			lprintf(_log, "Orbit is hyperbolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
-			//			stopit = true;
+						stopit = true;
 		}
 
 		return stopit;
@@ -98,7 +98,7 @@ class stop_on_any_large_distance_or_close_encounter {
 		return close_encounter;
 	}
 
-	GPUAPI bool operator () () { 
+	GPUAPI void operator () () { 
 		bool stopit = false;
 
 		// Check each body
@@ -112,13 +112,10 @@ class stop_on_any_large_distance_or_close_encounter {
 
 		if(stopit) {
 			log::system(_log, _sys);
+			_sys.set_disabled();
 		}
 
-	//	if(_counter % 1000 == 0)
-	//		lprintf(_log,"Hello %g\n", _sys.time() );
-		_counter++;
 
-		return stopit;
 	}
 
 	

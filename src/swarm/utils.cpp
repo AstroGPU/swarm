@@ -10,9 +10,17 @@ using std::max;
 using namespace swarm;
 using std::string;
 
+int number_of_disabled_systems(defaultEnsemble ens) {
+	int count_running = 0;
+	for(int i = 0; i < ens.nsys() ; i++)
+		if( ens[i].is_disabled() ) count_running++;
+	return count_running;
+}
+
 swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
+	double spacing_factor = cfg.optional( "spacing factor", 1.4 );
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
 
@@ -28,7 +36,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
 			float mass_planet = 0.001; // approximately (mass of Jupiter)/(mass of sun)
-			double rmag = pow(1.4,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
+			double rmag = pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 			double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
 			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
 			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
