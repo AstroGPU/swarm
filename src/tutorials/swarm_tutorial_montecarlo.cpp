@@ -25,7 +25,6 @@
 #define JACOBI 0       // Not implemented
 
 #include "swarm/swarm.h"
-//#include "swarmlog.h"
 
 #include <iostream>
 #include <sstream>

@@ -109,11 +109,29 @@ namespace snapshot {
 		int state;
 	};
 	struct body {
-		double pos[3], vel[3], mass;
+		double pos[3], vel[3], mass, attribute[NUM_PLANET_ATTRIBUTES];
 	};
 
-	struct readfileexception : public std::exception {};
-	struct writefileexception : public std::exception {};
+	struct readfileexception : public std::exception {
+		string filename;
+		int lineno;
+		string message;
+		readfileexception( const string& filename, const string& message, const int& lineno = 0): filename(filename),message(message),lineno(lineno) {}
+		virtual ~readfileexception()throw(){}
+		virtual const char* what() const throw() {
+			return ("Error reading " + filename + " : " + message).c_str();
+		}
+	};
+	struct writefileexception : public std::exception {
+		string filename;
+		int lineno;
+		string message;
+		writefileexception( const string& filename, const string& message, const int& lineno = 0): filename(filename),message(message),lineno(lineno) {}
+		virtual ~writefileexception()throw(){}
+		virtual const char* what() const throw() {
+			return ("Error writing " + filename + " : " + message).c_str();
+		}
+	};
 
 	/// Load binary snapshot file
 	defaultEnsemble load(const string& filename) throw (readfileexception);

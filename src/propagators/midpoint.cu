@@ -17,6 +17,7 @@
  ************************************************************************/
 #include "swarm/swarmplugin.h"
 #include "swarm/gpu/gravitation.hpp"
+#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 
@@ -118,7 +119,7 @@ namespace swarm {
 					}
 				};
 
-			integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
+			integrator_plugin_initializer< generic< MidpointPropagator, monitors::log_time_interval > >
 				midpoint_prop_plugin("midpoint"
 						,"This is the integrator based on midpoint propagator");
 
