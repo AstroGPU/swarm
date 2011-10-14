@@ -157,7 +157,8 @@ class hermite: public integrator {
 //integrator_plugin_initializer<hermite< stop_on_ejection > >
 //	hermite_plugin("hermite");
 
-integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
+ //integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
+ integrator_plugin_initializer<hermite<  monitors::log_time_interval > >
 	hermite_plugin("hermite");
 
 
