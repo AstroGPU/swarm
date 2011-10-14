@@ -58,10 +58,11 @@ typedef long double_int;
  *
  * 
  */
-template< int _WARPSIZE>
+template< int _WARPSIZE, int _NUM_ATTRIBUTES = NUM_PLANET_ATTRIBUTES >
 class EnsembleBase {
 	public:
 	static const int WARPSIZE = _WARPSIZE;
+	static const int NUM_ATTRIBUTES = _NUM_ATTRIBUTES;
 
 	//! Concrete structure of Body 
 	struct Body {
@@ -75,6 +76,7 @@ class EnsembleBase {
 		} component[3];
 
 		double _mass[WARPSIZE];
+		double _attribute[NUM_ATTRIBUTES][WARPSIZE];
 
 		//! Mass of the body
 		GENERIC double& mass() { return _mass[0];  }
@@ -88,6 +90,10 @@ class EnsembleBase {
 		//! Example b[0].pos() is x-coordinate of position 
 		//! and b[3].vel() is z-coordinate of velocity.
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
+
+		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
+
+		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
 
 		//! Distance of the planet to (0,0,0) 
         // TODO: Rename distance_to_origin_sq 

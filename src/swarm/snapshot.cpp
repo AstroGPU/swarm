@@ -23,15 +23,15 @@ namespace swarm {
 namespace snapshot {
 
 template<class T>
-void readfromFILE(FILE*f,T& t){
+void readfromFILE(FILE*f,T& t,const string& filename = ""){
 	if(fread(&t,1,sizeof(t),f) != sizeof(t)){
-		throw readfileexception();
+		throw readfileexception(filename,"File I/O error");
 	}
 }
 template<class T>
-void writetoFILE(FILE*f,const T& t){
+void writetoFILE(FILE*f,const T& t,const string& filename = ""){
 	if(fwrite(&t,1,sizeof(t),f) != sizeof(t)){
-		throw writefileexception();
+		throw writefileexception(filename,"File I/O error");
 	}
 }
 
@@ -40,19 +40,19 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 
 	header h; sys s; body b;
 
-	readfromFILE(f,h);
+	readfromFILE(f,h,filename);
 	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
 
 	for(int i = 0; i < h.nsys; i++){
 		ensemble::SystemRef sr = ens[i];
 
-		readfromFILE(f,s);
+		readfromFILE(f,s,filename);
 
 		sr.id() = s.id;
 		sr.time() = s.time; sr.state() = s.state;
 
 		for(int j = 0; j < h.nbod; j++){
-			readfromFILE(f,b);
+			readfromFILE(f,b,filename);
 
 			sr[j].mass() = b.mass;
 			sr[j][0].pos() = b.pos[0];
@@ -61,6 +61,8 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 			sr[j][0].vel() = b.vel[0];
 			sr[j][1].vel() = b.vel[1];
 			sr[j][2].vel() = b.vel[2];
+			for(int i = 0; i < NUM_PLANET_ATTRIBUTES; i++)
+				sr[j].attribute(i) = b.attribute[i];
 		}
 	}
 	fclose(f);
@@ -80,8 +82,11 @@ defaultEnsemble load_text(const string& filename) throw (readfileexception){
 	int version = 0;
 
 	fscanf(f, "%s %i\n" , tag, &version);
-	if(strcmp( DEFAULT_IO_TAG, tag ) != 0 || version != CURRENT_IO_VERSION )
-		throw readfileexception();
+	if(strcmp( DEFAULT_IO_TAG, tag ) != 0)
+		throw readfileexception(filename,"Invalid file, header doesn't match");
+
+	if(version != CURRENT_IO_VERSION )
+		throw readfileexception(filename, "Incorrect version");
 
 	fscanf(f,"%i %i\n\n\n",&h.nbod,&h.nsys);
 	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
@@ -114,7 +119,7 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 
 	h.nsys = ens.nsys(), h.nbod = ens.nbod();
 
-	writetoFILE(f,h);
+	writetoFILE(f,h,filename);
 
 	for(int i = 0; i < h.nsys; i++){
 
@@ -122,7 +127,7 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 		s.id = sr.id();
 		s.time = sr.time(), s.state = sr.state(); 
 
-		writetoFILE(f,s);
+		writetoFILE(f,s,filename);
 
 		for(int j = 0; j < h.nbod; j++){
 			b.pos[0] = sr[j][0].pos();
@@ -132,8 +137,10 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 			b.vel[1] = sr[j][1].vel();
 			b.vel[2] = sr[j][2].vel();
 			b.mass = sr[j].mass();
+			for(int i = 0; i < NUM_PLANET_ATTRIBUTES; i++)
+				b.attribute[i] = sr[j].attribute(i);
 
-			writetoFILE(f,b);
+			writetoFILE(f,b,filename);
 		}
 
 	}
