@@ -56,8 +56,9 @@ public:
 
 		public:
 
-		GPUAPI bool operator () () { 
-			return _monitor1() || _monitor2();
+		GPUAPI void operator () () { 
+		  _monitor1();
+		  _monitor2();
 		}
 
 		GPUAPI combined(const params& p,ensemble::SystemRef& s,log_t& l)

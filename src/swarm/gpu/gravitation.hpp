@@ -26,12 +26,12 @@ namespace gpu {
 namespace bppt {
 
 /**
- *  Unit type of the acceleration and jerk pairs shared array.
+ *  Unit type of the acceleration pairs shared array.
  *   
- *  This for each pair we keep an acc and a jerk. The values are
+ *  This for each pair we keep an acc. The values are
  *  not final values, they are intermediate values calculated by
  *  calc_pair and should be accumulated using the correct algorithm
- *  to produce acceleration and jerk. WARPSIZE can be 1. Usually it is
+ *  to produce acceleration. WARPSIZE can be 1. Usually it is
  *  set to 16 for optimizing coalesced reads from memory.
  *
  */
@@ -47,6 +47,16 @@ struct GravitationAccOnlyScalars {
 };
 
 
+/**
+ *  Unit type of the acceleration and jerk pairs shared array.
+ *   
+ *  This for each pair we keep an acc and a jerk. The values are
+ *  not final values, they are intermediate values calculated by
+ *  calc_pair and should be accumulated using the correct algorithm
+ *  to produce acceleration and jerk. WARPSIZE can be 1. Usually it is
+ *  set to 16 for optimizing coalesced reads from memory.
+ *
+ */
 template<int W>
 struct GravitationScalars {
 	static const int WARPSIZE = W;
@@ -60,6 +70,44 @@ struct GravitationScalars {
 	GENERIC double& jerk() { return _jerk[0];  }
 };
 
+
+  // Default warpsize suggestion for large systems
+  template<int nbod, int gpu_shared_mem_size>  struct SelectWarpSizeGravitation
+  {    static const int suggest = 1;  };
+
+  // Default warpsize suggestion for small systems (assuming 16k cache)
+  template<>  struct SelectWarpSizeGravitation<2,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<3,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<4,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<5,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<6,16384>
+  {    static const int suggest = 16;  };
+
+  // Default warpsize suggestion for small systems (assuming 48k cache)
+  template<>  struct SelectWarpSizeGravitation<2,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<3,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<4,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<5,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<6,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<7,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<8,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<9,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<10,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitation<11,49152>
+  {    static const int suggest = 16;  };
 
 /** 
  * templatized Class working as a function object to 
@@ -84,7 +132,8 @@ struct GravitationScalars {
  * data and calculates the acc/jerk for each body.
  *
  */
-template<int nbod, int WARPSIZE = SHMEM_WARPSIZE>
+//template<int nbod, int WARPSIZE = SHMEM_WARPSIZE>
+  template<int nbod, int WARPSIZE = SelectWarpSizeGravitation<nbod,MIN_SHMEM_SIZE>::suggest >
 class Gravitation {
 	public:
 	const static int pair_count = (nbod*(nbod-1))/2;
@@ -359,6 +408,60 @@ class Gravitation {
 };
 
 
+  // Default warpsize suggestion for large systems
+  template<int nbod, int gpu_shared_mem_size>  struct SelectWarpSizeGravitationAccOnly
+  {    static const int suggest = 1;  };
+
+  // Default warpsize suggestion for small systems (assuming 16k cache)
+  template<>  struct SelectWarpSizeGravitationAccOnly<2,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<3,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<4,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<5,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<6,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<7,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<8,16384>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<9,16384>
+  {    static const int suggest = 16;  };
+
+  // Default warpsize suggestion for small systems (assuming 48k cache)
+  template<>  struct SelectWarpSizeGravitationAccOnly<2,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<3,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<4,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<5,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<6,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<7,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<8,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<9,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<10,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<11,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<12,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<13,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<14,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<15,49152>
+  {    static const int suggest = 16;  };
+  template<>  struct SelectWarpSizeGravitationAccOnly<16,49152>
+  {    static const int suggest = 16;  };
+
 /*! 
  * templatized Class to calculate acceleration and jerk in parallel
  *
@@ -366,7 +469,7 @@ class Gravitation {
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
  */
 
-template<int nbod, int WARPSIZE = SHMEM_WARPSIZE>
+  template<int nbod, int WARPSIZE = SelectWarpSizeGravitationAccOnly<nbod,MIN_SHMEM_SIZE>::suggest >
 class GravitationAccOnly {
 	public:
 	const static int pair_count = (nbod*(nbod-1))/2;

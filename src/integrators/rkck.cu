@@ -216,6 +216,7 @@ class rkck: public integrator {
 					shared_mag[1][b][c] = vel_error * vel_error;
 
 					__syncthreads();
+					// TODO: Could compute the normalized error using one thread per body and reduction (or atomic max)
 					if ( (c == 0) && (b == 0) ) {
 
 						double max_error = 0;
@@ -271,7 +272,7 @@ class rkck: public integrator {
 				if( first_thread_in_system ) 
 					sys.time() += h;
 
-				if( first_thread_in_system )  {
+				if( first_thread_in_system && sys.is_active() )  {
 					montest();
 					if( sys.time() >= _destination_time ) 
 						sys.set_inactive();

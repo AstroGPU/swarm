@@ -31,7 +31,7 @@ typedef long double_int;
 
 /*! ensemble data structure containing nbody systems.
  *  
- *  Usage:
+ *  Internal Usage:
  *  Contains an ensemble of nsys() systems each containing nbod() bodies.
  *  use operator [] to peek into the data structure:
  *   - First [] to access a specific system
@@ -47,9 +47,12 @@ typedef long double_int;
  *
  *  \endcode
  *
- *  There are also compatibily accessors get_body(), set_body(), p(), v(), time(), ...
+ *  Public Usage:
+ *  There are accessors: nsys(), nbod() for each ensemble;
+ *      time(), state(), id(), number() for each system (pass sys); and
+ *      get_body(), set_body(), mass(), attribute(), x(), y(), z(), vx(), vy(), vz() ... for each body (pass sys, bod)
  *
- *  Two utility functions are provided for ease of use: calc_total_energy() and get_barycenter()
+ *  Two utility functions are provided for ease of use: calc_total_energy(sys) and get_barycenter(sys)
  *
  *  This class does not contain memory management routines and cannot
  *  be instantiated. It should be used as the \ref ensemble typedef only
@@ -96,16 +99,12 @@ class EnsembleBase {
 		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
 
 		//! Distance of the planet to (0,0,0) 
-        // TODO: Rename distance_to_origin_sq 
-	  //		GENERIC double radius() { 
 		GENERIC double radius_squared() { 
 			return square(operator[](0).pos()) 
 				+ square(operator[](1).pos()) 
 				+ square(operator[](2).pos());
 		}
 		//! Magnitude of velocity
-        // TODO: Rename speed_sq
-	  //		GENERIC double speed() {
 		GENERIC double speed_squared() {
 			return square(operator[](0).vel()) 
 				+ square(operator[](1).vel()) 
@@ -257,11 +256,13 @@ class EnsembleBase {
 	};
 
 	//! Size of Body[] array required for an ensemble of size nbod,nsys
+  // WARNING: Aren't these too high when nsys is a multiple of WARPSIZE?
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE * nbod ;
 	}
 
 	//! Size of Sys[] array required for an ensemble of size nsys
+  // WARNING: Aren't these too high when nsys is a multiple of WARPSIZE?
 	GENERIC static size_t sys_element_count(const int& nsys){
 		return (nsys + WARPSIZE) / WARPSIZE ;
 	}
@@ -446,7 +447,7 @@ class EnsembleBase {
 	// Utilities
 	//
 	
-	GENERIC void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = 1000) const 
+	GENERIC void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = MAX_NBODIES) const 
 	{
 
 		x = 0.; y = 0.; z = 0.; vx = 0.; vy = 0.; vz = 0.;

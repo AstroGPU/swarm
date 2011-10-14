@@ -25,6 +25,7 @@ SET(NUM_PLANET_ATTRIBUTES 1 CACHE STRING "Number of attributes per planet [1..10
 SET(MAX_NBODIES 6 CACHE STRING "Maximum number of bodies per system [3..10]")
 SET(ENSEMBLE_WARPSIZE 16 CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
 SET(SHMEM_WARPSIZE 16 CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
+SET(MIN_SHMEM_SIZE 17280 CACHE STRING "Minimum ammount of shared memory per block in bytes to be assumed at compile time")
 SET(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs CACHE PATH "Where to put documentation output")
 
 # Find the libraries and packages

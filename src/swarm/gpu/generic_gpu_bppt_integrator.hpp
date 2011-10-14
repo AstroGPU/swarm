@@ -91,7 +91,7 @@ class generic: public integrator {
 			prop.advance();
 			__syncthreads();
 
-			if( first_thread_in_system )  {
+			if( first_thread_in_system && sys.is_active() )  {
 				montest();
 				if( sys.time() >= _destination_time ) 
 					sys.set_inactive();
