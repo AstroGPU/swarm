@@ -58,13 +58,13 @@ class rkck: public integrator {
 
 	public:
 	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _mon_params(cfg) {
-		if(!cfg.count("min time step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
-		_min_time_step = atof(cfg.at("min time step").c_str());
-		if(!cfg.count("max time step")) ERROR("Integrator rkck requires a max timestep ('max time step' keyword in the config file).");
-		_max_time_step = atof(cfg.at("max time step").c_str());
+		if(!cfg.count("min_time_step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
+		_min_time_step = atof(cfg.at("min_time_step").c_str());
+		if(!cfg.count("max_time_step")) ERROR("Integrator rkck requires a max timestep ('max time step' keyword in the config file).");
+		_max_time_step = atof(cfg.at("max_time_step").c_str());
 
-		if(!cfg.count("error tolerance")) ERROR("Integrator rkck requires a error tolerance ('error tolerance' keyword in the config file).");
-		_error_tolerance = atof(cfg.at("error tolerance").c_str());
+		if(!cfg.count("error_tolerance")) ERROR("Integrator rkck requires a error tolerance ('error tolerance' keyword in the config file).");
+		_error_tolerance = atof(cfg.at("error_tolerance").c_str());
 	}
 
 	virtual void launch_integrator() {

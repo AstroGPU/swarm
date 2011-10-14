@@ -39,7 +39,7 @@ protected:
 public:
 	binary_writer(const config &cfg)
 	{
-		binfn = cfg.at("log output");
+		binfn = cfg.at("log_output");
 		if(binfn=="")
 			ERROR("Expected filename for writer.")
 				rawfn = binfn + ".raw";

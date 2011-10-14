@@ -43,8 +43,8 @@ namespace swarm {
 
 	integrator::integrator(const config &cfg){
 		set_log_manager(log::manager::default_log());
-		_max_iterations = cfg.optional("max iterations", _default_max_iterations );
-		_max_attempts = cfg.optional("max attempts", _default_max_attempts );
+		_max_iterations = cfg.optional("max_iterations", _default_max_iterations );
+		_max_attempts = cfg.optional("max_attempts", _default_max_attempts );
 	}
 
 	gpu::integrator::integrator(const config &cfg)

@@ -48,7 +48,7 @@ class hermite_cpu : public integrator {
 
 	public:
 	hermite_cpu(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
-		_time_step =  cfg.require("time step", 0.0);
+		_time_step =  cfg.require("time_step", 0.0);
 	}
 
 	virtual void launch_integrator() {

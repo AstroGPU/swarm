@@ -25,18 +25,18 @@ struct log_time_interval_params {
 	double time_interval;
 	log_time_interval_params(const config &cfg)
 	{
-		time_interval = cfg.require("log interval", 0.0);
+		time_interval = cfg.require("log_interval", 0.0);
 	}
 };
 
-/** Monitor that logs the entire state of systems at periodic intervals of approximately "log interval"
+/** Monitor that logs the entire state of systems at periodic intervals of approximately "log_interval"
  *  Systems may be integrated for more than log interval before another log entry is written.
  *  Always returns signal of false.  
  *  Assumes integration results in increasing time.
  * 
  *  \ingroup monitors
  *
- *   the period of logging should be specified as "log interval" in config file.
+ *   the period of logging should be specified as "log_interval" in config file.
  */
 template<class log_t>
 class log_time_interval {

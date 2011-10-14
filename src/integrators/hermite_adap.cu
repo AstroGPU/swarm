@@ -44,8 +44,8 @@ class hermite_adap: public integrator {
 
 	public:
 	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.), _mon_params(cfg) {
-		_time_step_factor =  cfg.require("time step factor", 0.0);
-		_min_time_step =  cfg.require("min time step", 0.0);
+		_time_step_factor =  cfg.require("time_step_factor", 0.0);
+		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
 	virtual void launch_integrator() {

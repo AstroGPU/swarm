@@ -27,7 +27,7 @@ struct stop_on_any_large_distance_or_close_encounter_params {
 	stop_on_any_large_distance_or_close_encounter_params(const config &cfg)
 	{
 		rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
-		dmin = cfg.optional("close approach", 0.);
+		dmin = cfg.optional("close_approach", 0.);
 	}
 };
 

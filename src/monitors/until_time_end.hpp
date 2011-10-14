@@ -26,11 +26,11 @@ struct until_time_end_params {
 	double time_end;
 	until_time_end_params(const config &cfg)
 	{
-		time_end = cfg.require("time end", 0.0);
+		time_end = cfg.require("time_end", 0.0);
 	}
 };
 
-/** Signals true once time is equal to or greater than "time end".
+/** Signals true once time is equal to or greater than "time_end".
  *  Does not do any logging.
  *  Assumes integration forward in time.
  * \ingroup monitors

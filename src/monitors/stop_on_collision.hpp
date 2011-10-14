@@ -26,11 +26,11 @@ struct stop_on_collision_param {
 	double dmin_squared;
 	stop_on_collision_param(const config &cfg)
 	{
-		if(!cfg.count("collision radius"))
+		if(!cfg.count("collision_radius"))
 		  dmin_squared = 0.;
 		else
 		  {
-		    dmin_squared = atof(cfg.at("collision radius").c_str());
+		    dmin_squared = atof(cfg.at("collision_radius").c_str());
 		    dmin_squared *= dmin_squared;
 		  }
 		
@@ -38,7 +38,7 @@ struct stop_on_collision_param {
 };
 
 /** Simple monitor to detect physical collisions.  
- *  Signals and logs if current separation between any two bodies is less than "collision radius".
+ *  Signals and logs if current separation between any two bodies is less than "collision_radius".
  *  WARNING: Does not interpolate between steps
  *  TODO: Need to allow object specific collision radii or collision densities
  *  \ingroup monitors

@@ -28,7 +28,7 @@ struct stop_on_any_large_distance_params {
 	stop_on_any_large_distance_params(const config &cfg)
 	{
 		rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
-		stop = cfg.optional("stop on rmax",false);
+		stop = cfg.optional("stop_on_rmax",false);
 	}
 };
 

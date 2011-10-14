@@ -31,7 +31,7 @@ void stability_test() {
 	defaultEnsemble &ens = current_ens;
 
 	double begin_time = ens.time_ranges().median;
-	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
+	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
 	double interval = cfg.optional("interval", (destination_time-begin_time) ) ; 
 	double logarithmic = cfg.optional("logarithmic", 0 ) ; 
 
@@ -74,9 +74,9 @@ bool read_input_file(defaultEnsemble& ens, config& cfg){
 		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
 		return true;
 
-	}else if(cfg.valid("text input")) {
-		INFO_OUTPUT(1, "Loading from text file " << cfg["text input"]);
-		ens = swarm::snapshot::load_text(cfg["text input"]);	
+	}else if(cfg.valid("text_input")) {
+		INFO_OUTPUT(1, "Loading from text file " << cfg["text_input"]);
+		ens = swarm::snapshot::load_text(cfg["text_input"]);	
 		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
 		return true;
 
@@ -93,9 +93,9 @@ bool read_output_file(defaultEnsemble& ens, config& cfg){
 		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
 		return true;
 
-	}else if(cfg.valid("text output")) {
-		INFO_OUTPUT(1, "Loading from text file " << cfg["text output"]);
-		ens = swarm::snapshot::load_text(cfg["text output"]);	
+	}else if(cfg.valid("text_output")) {
+		INFO_OUTPUT(1, "Loading from text file " << cfg["text_output"]);
+		ens = swarm::snapshot::load_text(cfg["text_output"]);	
 		INFO_OUTPUT(1,", time = " << ens.time_ranges() << endl);
 		return true;
 
@@ -114,25 +114,29 @@ void load_generate_ensemble(){
 	}
 }
 
-void save_ensemble(){ 
+bool save_ensemble(){ 
 	// Save the ensemble
 	if(cfg.valid("output")) {
 		INFO_OUTPUT(1, "Saving as binary  " << cfg["output"]);
 		INFO_OUTPUT(1, ", time = " << current_ens.time_ranges() << endl);
 		swarm::snapshot::save(current_ens,cfg["output"]);	
+		return true;
 
-	}else if(cfg.valid("text output")) {
-		INFO_OUTPUT(1, "Saving as text  " << cfg["text output"]);
+	}else if(cfg.valid("text_output")) {
+		INFO_OUTPUT(1, "Saving as text  " << cfg["text_output"]);
 		INFO_OUTPUT(1, ", time = " << current_ens.time_ranges() << endl);
-		swarm::snapshot::save_text(current_ens,cfg["text output"]);	
-	}
+		swarm::snapshot::save_text(current_ens,cfg["text_output"]);	
+		return true;
+
+	}else
+		return false;
 }
 
 void prepare_integrator () {
 	// Initialize Integrator
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
-	double destination_time = cfg.optional("destination time", begin_time + 10 * M_PI );
+	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
 	integ = integrator::create(cfg);
 	integ->set_ensemble(current_ens);
 	integ->set_destination_time ( destination_time );
@@ -207,6 +211,7 @@ void output_test() {
 
 		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
 			INFO_OUTPUT(0, "Test failed" << endl);
+			exit(1);
 		}else {
 			INFO_OUTPUT(0, "Test success" << endl);
 		}
@@ -317,8 +322,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::positional_options_description pos;
 	pos.add("command", 1);
-	pos.add("parameter", 1);
-	pos.add("value", -1);
+	pos.add("param_value_pair", -1);
 
 	po::options_description desc("Usage:\n \tswarm [options] COMMAND [PARAMETER VALUE VALUE ...]\n\n"
 			"Possible commands are: \n"
@@ -335,16 +339,19 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::options_description integrate("Integation Options");
 	integrate.add_options()
-		("destination time,d", po::value<std::string>() , "Destination time to achieve")
+		("destination_time,d", po::value<std::string>() , "Destination time to achieve")
 		("logarithmic,l", po::value<std::string>() , "Produce times in logarithmic scale" )
 		("interval,n", po::value<std::string>() , "Energy test intervals")
 		("input,i", po::value<std::string>(), "Input file")
 		("output,o", po::value<std::string>(), "Output file")
-		("text input,I", po::value<std::string>(), "Text Input file")
-		("text output,O", po::value<std::string>(), "Text Output file");
+		("text_input,I", po::value<std::string>(), "Text Input file")
+		("text_output,O", po::value<std::string>(), "Text Output file");
 
 	po::options_description benchmark("Benchmark Options");
 	benchmark.add_options()
+		("parameter" , po::value<vector<string> >(), "Parameteres to benchmark:"
+			"config, integrator, nsys, nbod, blocksize, ... ")
+        ("value" , po::value<vector<string> >() , "Values to iterate over ")
 		("from", po::value<int>() , "from integer value")
 		("to", po::value<int>() , "to integer value")
 		("inc", po::value<int>() , "increment integer value");
@@ -358,8 +365,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	po::options_description positional("Positional Options");
 	positional.add_options()
 		("command" , po::value<string>() , "Swarm command: integrate, benchmark, verify, query ")
-		("parameter" , po::value<vector<string> >() , "Parameteres to benchmark: config, integrator, nsys, nbod, blocksize, ... ")
-		("value" , po::value<vector<string> >() , "Values to iterate over ");
+		("param_value_pair" , po::value< vector<string> >() , "Parameter value pairs: param=value")
+		;
 
 	po::options_description general("General Options");
 	general.add_options()
@@ -406,10 +413,25 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	}
 
 	const int cmd_to_config_len = 7;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text input" , "text output", "destination time", "logarithmic", "interval" };
+	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text_input" , "text_output", "destination_time", "logarithmic", "interval" };
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
+
+	if(vm.count("param_value_pair") > 0) {
+		vector<string> pairs = vm["param_value_pair"].as< vector<string> >();
+
+		for(vector<string>::const_iterator i = pairs.begin();  i != pairs.end(); i++){
+			string::size_type pos     = i->find_first_of( "=" );
+			if( string::npos != pos ){
+				string parameter = i->substr( 0, pos );
+				string value = i->substr( pos + 1 );
+				cfg[parameter] = value;
+			}else{
+				ERROR( ("Wrong parameter value pair : " + *i ).c_str() );
+			}
+		}
+	}
 
 
 }
@@ -428,9 +450,9 @@ int main(int argc, char* argv[]){
 	srand(time(NULL));
 
 	// Set some variables
-	pos_threshold = cfg.optional("pos threshold", 1e-10);
-	vel_threshold = cfg.optional("vel threshold", 1e-10);
-	time_threshold = cfg.optional("time threshold", 1e-4);
+	pos_threshold = cfg.optional("pos_threshold", 1e-10);
+	vel_threshold = cfg.optional("vel_threshold", 1e-10);
+	time_threshold = cfg.optional("time_threshold", 1e-4);
 
 	// Branch based on COMMAND
 	if(command == "integrate")
@@ -473,16 +495,16 @@ int main(int argc, char* argv[]){
 	} 
 	
 	else if(command == "convert" ) {
-		if( read_input_file(current_ens,cfg) ) {
-			save_ensemble();
+		if( read_input_file(current_ens,cfg) && save_ensemble() ) {
 			INFO_OUTPUT(1,"Converted!");
 		}else{
 			INFO_OUTPUT(1,"Convertion failed");
+			exit(1);
 		}
 	} 
 	
 	else
-		std::cerr << "Valid commands are: integrate, benchmark, verify " << std::endl;
+		std::cerr << "Valid commands are: integrate, benchmark, verify, test, query, generate " << std::endl;
 
 	return 0;
 }

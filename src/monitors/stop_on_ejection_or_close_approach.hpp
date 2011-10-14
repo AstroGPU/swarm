@@ -31,10 +31,10 @@ struct stop_on_ejection_or_close_approach_param {
 		else
 			rmax = atof(cfg.at("rmax").c_str());
 
-		if(!cfg.count("close approach"))
+		if(!cfg.count("close_approach"))
 			dmin = 0.;
 		else
-			dmin = atof(cfg.at("close approach").c_str());
+			dmin = atof(cfg.at("close_approach").c_str());
 	}
 };
 

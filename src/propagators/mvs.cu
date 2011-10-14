@@ -26,7 +26,7 @@ namespace bppt {
 struct MVSPropagatorParams {
 	double time_step;
 	MVSPropagatorParams(const config& cfg){
-		time_step = cfg.require("time step", 0.0);
+		time_step = cfg.require("time_step", 0.0);
 	}
 };
 

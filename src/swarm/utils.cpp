@@ -20,7 +20,7 @@ int number_of_disabled_systems(defaultEnsemble ens) {
 swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
-	double spacing_factor = cfg.optional( "spacing factor", 1.4 );
+	double spacing_factor = cfg.optional( "spacing_factor", 1.4 );
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
 
@@ -71,7 +71,7 @@ bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
   int nsystems = cfg.optional("nsys",1000);
   int nbodypersystem = cfg.optional("nbod",3);
-  int bs = cfg.optional("block size",SHMEM_WARPSIZE);
+  int bs = cfg.optional("block_size",SHMEM_WARPSIZE);
 
   // Check that parameters from command line are ok
   if((bs<SHMEM_WARPSIZE)||(bs>64)) valid =false;
@@ -84,8 +84,8 @@ bool validate_configuration(config& cfg){
 
 void outputConfigSummary(std::ostream& o,swarm::config& cfg) {
 	o << "# Integrator:\t" << cfg["integrator"] << "\n"
-		<< "# Time step\t" << cfg["time step"] << "\n"
-		<< "# Destination time\t" << cfg["destination time"] << "\n"
+		<< "# Time step\t" << cfg["time_step"] << "\n"
+		<< "# Destination time\t" << cfg["destination_time"] << "\n"
 		<< "# Min time step\t" << cfg["min time step"] << "\n"
 		<< "# Max time step\t" << cfg["max time step"] << "\n"
 		<< "# No. Systems\t" << cfg["nsys"] << "\n"
@@ -99,11 +99,11 @@ config default_config() {
 	cfg["nsys"] = 16;
 	cfg["nbod"] = 3;
 	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
-	cfg["time step"] = "0.001";       // time step
+	cfg["time_step"] = "0.001";       // time step
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
 	cfg["blocksize"] = "16";
-	cfg["log writer"] = "null";
+	cfg["log_writer"] = "null";
 	return cfg;
 }
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
