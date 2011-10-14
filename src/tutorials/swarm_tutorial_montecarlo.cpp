@@ -25,14 +25,13 @@
 #define JACOBI 0       // Not implemented
 
 #include "swarm/swarm.h"
-//#include "swarmlog.h"
 
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include <memory>
 
-#include "random.h"
+#include "random.hpp"
 #include "swarm/kepler.h"
 
 #define PARANOID_CPU_CHECK 0  // WARNING:  Setting to 1 takes a very long time
