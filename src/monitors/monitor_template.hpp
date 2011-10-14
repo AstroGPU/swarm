@@ -20,9 +20,11 @@
 #include <limits>
 
 namespace swarm {
-  namespace monitors {
 
-//TODO: Should monitors have their own sub-namespace?  Perhaps swarm::monitors
+/**
+ * @brief Namespace for monitors (i.e., stoppers & loggers) and their associated classes
+ */
+  namespace monitors {
 
 struct monitor_template_params {
 	monitor_template_params(const config &cfg)
