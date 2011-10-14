@@ -3,6 +3,7 @@ LIST(APPEND SWARM_PLUGINS integrators/hermite_cpu.cpp)
 
 # GPU integrators
 LIST(APPEND SWARM_PLUGINS integrators/hermite.cu)
+LIST(APPEND SWARM_PLUGINS integrators/hermite_adap.cu)
 LIST(APPEND SWARM_PLUGINS integrators/rkck.cu)
 
 # Integrators based on generic integrator

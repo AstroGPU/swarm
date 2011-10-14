@@ -98,9 +98,13 @@ class integrator : public gpu::integrator  {
 		return tD;
 	}
 
-	int  system_per_block() {
+        __host__ int  system_per_block() {
 		return  _system_per_block ;
 	}
+
+        __device__ int system_per_block_gpu() {
+	  return blockDim.x;
+	};
 
 	int  thread_per_system() {
 		return  _thread_per_system ;
