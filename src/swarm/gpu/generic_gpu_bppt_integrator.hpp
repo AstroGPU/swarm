@@ -32,7 +32,6 @@ class generic: public integrator {
 	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
-	int _iteration_count;
 	mon_params_t _mon_params;
 	prop_params_t _prop_params;
 
@@ -43,7 +42,6 @@ class generic: public integrator {
 	}
 
 	virtual void launch_integrator() {
-		_iteration_count = _destination_time / _time_step;
 		launch_templatized_integrator(this);
 	}
 
@@ -76,7 +74,6 @@ class generic: public integrator {
 		prop.ij = ij;
 		prop.body_component_grid = body_component_grid;
 		prop.first_thread_in_system = first_thread_in_system;
-		prop.max_timestep = _destination_time - sys.time();
 
 		////////// INTEGRATION //////////////////////
 		//
@@ -84,8 +81,9 @@ class generic: public integrator {
 		__syncthreads();
 
 
-		for(int iter = 0 ; (iter < _iteration_count) && sys.is_active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 
+			prop.max_timestep = _destination_time - sys.time();
 			prop.advance();
 			__syncthreads();
 

@@ -16,7 +16,6 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
-#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 
@@ -80,7 +79,7 @@ struct EulerPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< EulerPropagator, monitors::log_time_interval > >
+integrator_plugin_initializer< generic< EulerPropagator, monitors::stop_on_ejection > >
 	euler_prop_plugin("euler"
 			,"This is the integrator based on euler propagator");
 

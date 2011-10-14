@@ -16,6 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
+#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 
@@ -112,7 +113,7 @@ namespace swarm {
 					}
 				};
 
-			integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
+			integrator_plugin_initializer< generic< MidpointPropagator, monitors::log_time_interval > >
 				midpoint_prop_plugin("midpoint"
 						,"This is the integrator based on midpoint propagator");
 
