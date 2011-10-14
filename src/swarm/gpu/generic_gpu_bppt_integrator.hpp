@@ -24,12 +24,15 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
-template< template<class T> class Propagator, template<class L> class Monitor >
+    template< template<class T> class Propagator, template<class L> class Monitor >
+  //  template< template<class T, class G> class Propagator, template<class L> class Monitor >
 class generic: public integrator {
 	typedef integrator base;
 	typedef Monitor<gpulog::device_log> monitor_t;
 	typedef typename monitor_t::params mon_params_t;
-	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
+  // WARNING:  Why is this hardcoded to 3?  Shouldn't it be the number of bodies?
+    //	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
+        typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
 	private:
 	double _time_step;
 	int _iteration_count;
@@ -55,7 +58,8 @@ class generic: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+		//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+		Gravitation<T::n> calcForces(sys,sysid_in_block());
 
 		// Local variables
 		const int nbod = T::n;
@@ -65,7 +69,7 @@ class generic: public integrator {
 		int c = thread_component_idx(nbod);
 		int ij = thread_in_system();
 		bool body_component_grid = (b < nbod) && (c < 3);
-		bool first_thread_in_system = thread_in_system() == 0;
+		bool first_thread_in_system = (thread_in_system() == 0);
 
 
 		// local variables

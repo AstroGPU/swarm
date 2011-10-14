@@ -16,6 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
+#include "swarm/gpu/gravitation.hpp"
 
 namespace swarm {
 
@@ -30,6 +31,7 @@ namespace swarm {
 			};
 
 			template<class T>
+//			template<class T, class GravClass>
 				struct MidpointPropagator {
 					typedef MidpointPropagatorParams params;
 
@@ -39,6 +41,8 @@ namespace swarm {
 					// Runtime variables
 					ensemble::SystemRef& sys;
 					Gravitation<T::n>& calcForces;
+//					typedef GravClass grav_t;
+//					grav_t& calcForces;
 					int b;
 					int c;
 					int ij;
@@ -49,6 +53,8 @@ namespace swarm {
 
 					GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
 							Gravitation<T::n>& calc)
+//							GravitationAccOnly<T::n>& calc)
+//							grav_t& calc)
 						:_params(p),sys(s),calcForces(calc){}
 
 					GPUAPI void init()  { }

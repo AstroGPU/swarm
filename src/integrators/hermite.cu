@@ -59,7 +59,8 @@ class hermite: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+		Gravitation<T::n> calcForces(sys,sysid_in_block());
 
 		// Local variables
 		const int nbod = T::n;
@@ -136,9 +137,9 @@ class hermite: public integrator {
 				sys.time() += h;
 
 			if( first_thread_in_system )  {
+				montest();
 				if( sys.time() >= _destination_time ) 
 					sys.set_inactive();
-				montest();
 			}
 
 			__syncthreads();

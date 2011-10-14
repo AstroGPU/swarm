@@ -30,6 +30,7 @@ struct MVSPropagatorParams {
 	}
 };
 
+//template<class T, class GravClass>
 template<class T>
 struct MVSPropagator {
 	typedef MVSPropagatorParams params;
@@ -41,6 +42,8 @@ struct MVSPropagator {
 	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation<T::n>& calcForces;
+//	GravitationAccOnly<T::n>& calcForces;
+//	GravClass& calcForces;	
 	int b;
 	int c;
 	int ij;
@@ -52,6 +55,8 @@ struct MVSPropagator {
 
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation<T::n>& calc)
+//			GravitationAccOnly<T::n>& calc)
+//			GravClass calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)

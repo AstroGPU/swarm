@@ -31,6 +31,7 @@ struct EulerPropagatorParams {
 };
 
 template<class T>
+//template<class T, class GravClass>
 struct EulerPropagator {
 	typedef EulerPropagatorParams params;
 
@@ -40,6 +41,7 @@ struct EulerPropagator {
 	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation<T::n>& calcForces;
+//	GravClass& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -50,6 +52,7 @@ struct EulerPropagator {
 
 	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation<T::n>& calc)
+//			GravClass& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	GPUAPI void init()  { }

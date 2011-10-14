@@ -96,8 +96,11 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+//		typedef typename Gravitation<T::n>::shared_data grav_t;
+//		GravitationT::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+		typedef typename GravitationAccOnly<T::n>::shared_data grav_t;
+//		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
+		GravitationAccOnly<T::n> calcForces(sys,sysid_in_block());
 
 		// Local variables
 		const int nbod = T::n;
@@ -113,6 +116,7 @@ class rkck: public integrator {
 		// local variables
 		monitor_t montest(_mon_params,sys,*_log) ;
 
+		// NB: We use the same shared memory for two purpose and overwrite each other
 		extern __shared__ char shared_mem[];
 		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
 
@@ -268,9 +272,9 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system )  {
+					montest();
 					if( sys.time() >= _destination_time ) 
 						sys.set_inactive();
-					montest();
 				}
 			}
 
