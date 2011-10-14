@@ -94,9 +94,10 @@ class generic: public integrator {
 			__syncthreads();
 
 			if( first_thread_in_system )  {
+				montest();
 				if( sys.time() >= _destination_time ) 
 					sys.set_inactive();
-				montest();
+
 			}
 
 			__syncthreads();
