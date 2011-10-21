@@ -39,8 +39,6 @@ namespace bppt {
 
 inline __device__ int sysid(){
 	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-	// TODO: Test whether we could use just
-	//	return ((blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
 }
 inline __device__ int sysid_in_block(){
 	return threadIdx.x;
@@ -60,19 +58,13 @@ class integrator : public gpu::integrator  {
 	typedef gpu::integrator Base;
 	protected:
 	//// Launch Variables
-        int _system_per_block;
-        int _thread_per_system;
+	int _system_per_block;
 
 	public:
 	integrator(const config &cfg) : Base(cfg) {
 	// TODO: Should we allow integrator to provide its own default block size?
 	//       Or is this about memory mangagment, so not integrator specific?
-	// WARNING: "blocksize" or "block size"?
 	_system_per_block = cfg.count("blocksize") ? atoi(cfg.at("blocksize").c_str()) : 32;
-	// WARNING: Should the above be changed to match what's in utils.cpp:validate_configuration? (see below)
-	//  int bs = cfg.optional("block size",SHMEM_WARPSIZE);
-
-	_thread_per_system = calc_thread_per_system();
 	}
 
 	dim3 gridDim(){
@@ -84,7 +76,7 @@ class integrator : public gpu::integrator  {
 		return gD;
 	}
 
-	int calc_thread_per_system() {
+	int thread_per_system() {
 		const int nbod = _hens.nbod();
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
@@ -98,36 +90,20 @@ class integrator : public gpu::integrator  {
 		return tD;
 	}
 
-        __host__ int  system_per_block() {
+	int  system_per_block() {
 		return  _system_per_block ;
 	}
 
-        __device__ int system_per_block_gpu() {
-	  return blockDim.x;
-	};
-
-	int  thread_per_system() {
-		return  _thread_per_system ;
-	}
-
-  // TODO: Do we really need to provide a default version (that we override if we use a non-default Gravitation class)?
-  // Or should we make integrator take a GravitationClass as a template parameter, so we will already know how much memory it will need?
 	int  shmemSize(){
-	  //  WARNING: Is this right?  
-	  //   What if the number of systems per block is not a multiple of SHMEM_WARPSIZE?  
-	  //   If we enforce that it is, then there's no problem
 		const int nbod = _hens.nbod();
 		return system_per_block() * shmem_per_system(nbod);
 	}
 
-
-  // Shouldn't this be moved into gravitation class?
 	static GENERIC int shmem_per_system(int nbod) {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * 2 * sizeof(double);
 	}
 
-  // Shouldn't this be moved into gravitation class?
 	template< class T> 
 	static __device__ void * system_shared_data_pointer(T compile_time_param) {
 		extern __shared__ char shared_mem[];
@@ -139,18 +115,10 @@ class integrator : public gpu::integrator  {
 		return &shared_mem[idx];
 	}
 
-  // Shouldn't this be moved into gravitation class?
-	template< class T> 
-	__device__ void * unused_shared_data_pointer(T compile_time_param) {
-		extern __shared__ char shared_mem[];
-		int idx = system_per_block() * shmem_per_system(T::n);
-		return &shared_mem[idx];
-	}
-
-
 };
 
 	
 }
 }
 }
+
