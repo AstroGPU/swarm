@@ -83,6 +83,10 @@ class hermite: public integrator {
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
+		if( first_thread_in_system  )  {
+		    montest();
+		    }
+
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
@@ -157,8 +161,7 @@ class hermite: public integrator {
 //integrator_plugin_initializer<hermite< stop_on_ejection > >
 //	hermite_plugin("hermite");
 
- //integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
- integrator_plugin_initializer<hermite<  monitors::log_time_interval > >
+integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
 	hermite_plugin("hermite");
 
 integrator_plugin_initializer<hermite< monitors::log_time_interval > >

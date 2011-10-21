@@ -47,6 +47,11 @@ inline __device__ int thread_in_system() {
 	return threadIdx.y;
 }
 
+
+inline  __device__ int system_per_block_gpu() {
+    return blockDim.x;
+  };
+
 inline __device__ int thread_component_idx(int nbod) {
 	return thread_in_system() / nbod;
 }

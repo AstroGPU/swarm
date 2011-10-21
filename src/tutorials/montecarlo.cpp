@@ -294,7 +294,7 @@ int main(int argc, char* argv[] ) {
 
 	// We want to find the ones that are really stable, so we integrate for
 	// a really long time and over time we get rid of unstable ones. 
-	double destination_time = cfg.optional("destination time", 1.0E6);
+	double destination_time = cfg.optional("destination_time", 1.0E6);
 
 
 	swarm::init(cfg);

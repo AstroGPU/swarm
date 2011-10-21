@@ -138,8 +138,9 @@ std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr)
 			const double rad2deg = 180./M_PI;
 			snprintf(buf, bufsize, "%10d %lg  %5d %5d  %lg  % 9.5lg % 9.5lg % 9.5lg  % 9.5lg % 9.5lg % 9.5lg  %d", lr.msgid(), T, sys, bod, b.mass, k.a, k.e , k.i*rad2deg, k.O*rad2deg, k.w *rad2deg, k.M*rad2deg, flags);
 
-		}else 
-			snprintf(buf, bufsize, "%10d %lg  %5d %5d  %lg  %9.5lg %9.5lg %9.5lg  %9.5lg %9.5lg %9.5lg  %d", lr.msgid(), T, sys, bod, b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
+		}
+		if(!keplerian_output)
+		  snprintf(buf, bufsize, "%10d %lg  %5d %5d  %lg  %9.5lg %9.5lg %9.5lg  %9.5lg %9.5lg %9.5lg  %d", lr.msgid(), T, sys, bod, b.mass, b.x, b.y, b.z, b.vx, b.vy, b.vz, flags);
 		out << buf;
 	}
 	return out;
