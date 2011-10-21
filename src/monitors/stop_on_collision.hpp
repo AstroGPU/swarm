@@ -26,14 +26,8 @@ struct stop_on_collision_param {
 	double dmin_squared;
 	stop_on_collision_param(const config &cfg)
 	{
-		if(!cfg.count("collision_radius"))
-		  dmin_squared = 0.;
-		else
-		  {
-		    dmin_squared = atof(cfg.at("collision_radius").c_str());
-		    dmin_squared *= dmin_squared;
-		  }
-		
+	  dmin_squared = cfg.optional("collision_radius",0.);
+	  dmin_squared *= dmin_squared;
 	}
 };
 
@@ -58,6 +52,28 @@ class stop_on_collision {
 
 	public:
 
+#if 0 // still under development
+  GPUAPI bool check_close_encounter_possible(const int& i, const int& j, double dt){
+
+    //	  double hill_radius_sq_upper_limit = pow(((_sys.mass(i)+_sys.mass(j))/(3.0*_sys.mass(0))),2.0/3.0)*(std::max(_sys.radius_squared(i),_sys.radius_squared(j)));
+	  double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _p.dmin_squared;
+	  double vesc_sq = 2.0*_sys.mass(0)/std::min(_sys.radius(i),_sys.radius(j));
+	  double d_squared = _sys.distance_squared_between(i,j);
+	  bool close_encounter = (d_squared < vesc_sq*dt*dt + target_radius_sq);
+	  return close_encounter;
+	}
+#endif
+  
+#if 0 // still under development
+  GPUAPI double min_encounter_distance(const int& i, const int& j){
+    const Body& b1 = _body[i], & b2 = _body[j];
+    double d = sqrt( square(b1[0].pos()-b2[0].pos())
+		     + square(b1[1].pos()-b2[1].pos())
+		     + square(b1[2].pos()-b2[2].pos()) );
+    return d;
+  }
+#endif
+
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d_squared = _sys.distance_squared_between(i,j);
@@ -71,6 +87,8 @@ class stop_on_collision {
 		return close_encounter;
 	}
 
+  
+  
 	GPUAPI void operator () () { 
 		bool stopit = false;
 
