@@ -164,17 +164,18 @@ std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr)
 	return out;
 }
 
-typedef std::ostream& (*record_output_function_t)(std::ostream &out, gpulog::logrecord &lr);
-record_output_function_t record_output_function_pointers[] = { 0, record_output_1, record_output_2 };
-
 std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr)
 {
 	int evtid = lr.msgid();
 
-	record_output_function_t fun = record_output_function_pointers[evtid];
-	fun = fun ? fun : record_output_default;
-
-	return fun(out, lr);
+	switch(evtid){
+	case 1:
+		return record_output_1(out,lr);
+	case 2:
+		return record_output_2(out,lr);
+	default:
+		return record_output_default(out,lr);
+	}
 }
 
 
