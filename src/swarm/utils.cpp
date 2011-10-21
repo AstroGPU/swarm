@@ -47,6 +47,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		}
 		ens[sys].set_active();
 		ens[sys].time() = 0;
+		ens[sys].id() = sys;
 	}
 	return ens;
 }
@@ -86,8 +87,8 @@ void outputConfigSummary(std::ostream& o,swarm::config& cfg) {
 	o << "# Integrator:\t" << cfg["integrator"] << "\n"
 		<< "# Time step\t" << cfg["time_step"] << "\n"
 		<< "# Destination time\t" << cfg["destination_time"] << "\n"
-		<< "# Min time step\t" << cfg["min time step"] << "\n"
-		<< "# Max time step\t" << cfg["max time step"] << "\n"
+		<< "# Min time step\t" << cfg["min_time_step"] << "\n"
+		<< "# Max time step\t" << cfg["max_time_step"] << "\n"
 		<< "# No. Systems\t" << cfg["nsys"] << "\n"
 		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
 		<< "# Blocksize\t" << cfg["blocksize"] << "\n"

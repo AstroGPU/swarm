@@ -228,6 +228,7 @@ void output_test() {
 }
 
 void benchmark_item(const string& param, const string& value) {
+	//outputConfigSummary(std::cout,cfg);
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 
 	if(param == "input" || param == "nsys" || param == "nbod" || cfg.count("reinitialize"))
@@ -264,10 +265,57 @@ void benchmark_item(const string& param, const string& value) {
 
 }
 
-void benchmark(){ 
+/**
+ * Data structure hold the values for a range
+ * of parameters
+ */
+struct parameter_range {
+	string parameter;
+	vector<string> values;
+	bool interpolate;
+};
+
+/// Function called by Boost to parse the range parameter
+void validate(boost::any& v, const std::vector<std::string>& values
+	, parameter_range* , int){
+
+	// Make sure no previous assignment to 'v' was made.
+	po::validators::check_first_occurrence(v);
+
+	// Extract the first string from 'values'. If there is more than
+	// one string, it's an error, and exception will be thrown.
+	const std::string& s = po::validators::get_single_string(values);
+
+	parameter_range p;
+	static boost::regex assign("^(\\w+)=(.+)$");
+	static boost::regex range("^(.+)\\.\\.(.+)$");
+	static boost::regex list("^([^,]+)(?:,([^,]+))+$");
+	boost::smatch match;
+	if (boost::regex_match(s, match, assign)) {
+		p.parameter = match[1];
+		string value_range = match[2];
+		boost::smatch range_match, list_match;
+		if (boost::regex_match( value_range , range_match, range )) {
+			p.values.push_back(range_match[1]);
+			p.values.push_back(range_match[2]);
+			p.interpolate = true;
+		}else if (boost::regex_match( value_range , list_match, list )) {
+			for(int i =1 ; i < list_match.size(); i++)
+				p.values.push_back(list_match[i]);
+			p.interpolate = false;
+		}else {
+			throw po::validation_error("Range is invalid");
+		}
+	}else
+		throw po::validation_error("Wrong parameter-value pair ");
+	v = boost::any(p);
+}
+
+void benchmark(const parameter_range& pr){ 
 	// Reference settings
 	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
 	load_generate_ensemble();
+	outputConfigSummary(std::cout,cfg);
 	reference_integration();
 
 
@@ -276,13 +324,25 @@ void benchmark(){
 				 ", Position Difference, Velocity Difference, Time difference "
 			     ", Integration (ms), Integrator initialize (ms) \n";
 
-	po::variables_map &vm = argvars_map;
-	if((vm.count("parameter") > 0) && (vm.count("value") > 0)) {
-		
-		// Iterate over values
-		string param = vm["parameter"].as< vector<string> >().front();
-		vector<string> values = vm["value"].as< vector<string> >();
+	string param = pr.parameter;
+	vector<string> values = pr.values;
+	if(pr.interpolate)  {
+		// Numeric range
+		double from = atof(values[0].c_str()), to = atof(values[1].c_str());
+		double increment = 1;
 
+		for(double i = from; i <= to ; i+= increment ){
+			std::ostringstream stream;
+			stream <<  i;
+			string value = stream.str();
+
+			cfg[param] = value;
+
+			DEBUG_OUTPUT(1, "=========================================");
+			benchmark_item(param,value);
+		}
+	}else {
+		// Iterate over values
 		for(vector<string>::const_iterator i = values.begin();  i != values.end(); i++){
 			string value = *i;
 
@@ -294,27 +354,6 @@ void benchmark(){
 			DEBUG_OUTPUT(1, "=========================================");
 			benchmark_item(param,value);
 		}
-
-	} else if ((vm.count("parameter") > 0) &&(vm.count("from") > 0) && (vm.count("to") > 0)){
-
-		// Numeric range
-		int from = vm["from"].as<int>(), to = vm["to"].as<int>();
-		int increment = vm.count("inc") > 0 ? vm["inc"].as<int>() : 1;
-		string param = vm["parameter"].as< vector<string> >().front();
-
-		for(int i = from; i <= to ; i+= increment ){
-			std::ostringstream stream;
-			stream <<  i;
-			string value = stream.str();
-
-			cfg[param] = value;
-
-			DEBUG_OUTPUT(1, "=========================================");
-			benchmark_item(param,value);
-		}
-
-	} else {
-		std::cerr << "Invalid combination of parameters and values " << std::endl;
 	}
 }
 
@@ -349,12 +388,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::options_description benchmark("Benchmark Options");
 	benchmark.add_options()
-		("parameter" , po::value<vector<string> >(), "Parameteres to benchmark:"
-			"config, integrator, nsys, nbod, blocksize, ... ")
-        ("value" , po::value<vector<string> >() , "Values to iterate over ")
-		("from", po::value<int>() , "from integer value")
-		("to", po::value<int>() , "to integer value")
-		("inc", po::value<int>() , "increment integer value");
+		("range", po::value<parameter_range>(), "Parameter value range param=v1,v2,v3");
 
 	po::options_description query("Query Options");
 	query.add_options()
@@ -427,6 +461,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 				string parameter = i->substr( 0, pos );
 				string value = i->substr( pos + 1 );
 				cfg[parameter] = value;
+				INFO_OUTPUT(3, parameter << " set to " << value << endl );
 			}else{
 				ERROR( ("Wrong parameter value pair : " + *i ).c_str() );
 			}
@@ -461,16 +496,22 @@ int main(int argc, char* argv[]){
 	else if(command == "test")
 		output_test();
 
-	else if(command == "benchmark") {
-		benchmark();
+	else if(command == "benchmark" || command == "verify") {
+		if(command == "verify") 
+			verify_mode = true;
+
+		if(argvars_map.count("range") > 0) {
+			parameter_range pr = argvars_map["range"].as<parameter_range>();
+			benchmark(pr);
+		}else
+			cerr << "A parameter-value range is missing" << endl;
+
+		if(command == "verify")  {
+			cout << (verification_results ? "Verify success" : "Verify failed") << endl;
+			return verification_results ? 0 : 1;
+		}
 	}
 
-	else if(command == "verify" ) {
-		verify_mode = true;
-		benchmark();
-		cout << (verification_results ? "Verify success" : "Verify failed") << endl;
-		return verification_results ? 0 : 1;
-	}
 
 	else if(command == "query" ) {
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }

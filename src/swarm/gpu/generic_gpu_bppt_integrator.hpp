@@ -40,8 +40,7 @@ class generic: public integrator {
 
 	public:
 	generic(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg),_prop_params(cfg) {
-		if(!cfg.count("time step")) ERROR("Integrator gpu_generic requires a timestep ('time step' keyword in the config file).");
-		_time_step = atof(cfg.at("time step").c_str());
+		_time_step = cfg.require("time_step", 0.0);
 	}
 
 	virtual void launch_integrator() {
