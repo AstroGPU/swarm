@@ -136,7 +136,7 @@ class hermite: public integrator {
 			if( first_thread_in_system ) 
 				sys.time() += h;
 
-			if( first_thread_in_system && sys.is_active() )  {
+			if( first_thread_in_system  )  {
 			    montest();
 			    if( sys.time() >= _destination_time ) 
 				sys.set_inactive();
@@ -160,6 +160,8 @@ class hermite: public integrator {
 integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
 	hermite_plugin("hermite");
 
+integrator_plugin_initializer<hermite< monitors::log_time_interval > >
+	hermite_log_plugin("hermite_log");
 
 
 }

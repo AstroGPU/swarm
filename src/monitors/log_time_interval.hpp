@@ -56,7 +56,7 @@ class log_time_interval {
 		if(_sys.time() >= _next_log_time )  {
 			log::system(_log, _sys );
 			_next_log_time += _params.time_interval; 
-			//lprintf(_log,"Logging at %lg\n",_sys.time());
+			lprintf(_log,"Logging at %lg\n",_sys.time());
 		}
 	}
 

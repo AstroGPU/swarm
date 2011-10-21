@@ -115,6 +115,7 @@ class hermite_cpu : public integrator {
 
 		monitor_t montest (_mon_params,sys,*_log);
 
+
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 			double h = _time_step;
 
@@ -187,5 +188,9 @@ class hermite_cpu : public integrator {
 
 integrator_plugin_initializer< hermite_cpu< monitors::stop_on_any_large_distance_or_close_encounter > >
 	hermite_cpu_plugin("hermite_cpu");
+
+integrator_plugin_initializer<hermite_cpu< monitors::log_time_interval > >
+	hermite_cpu_log_plugin("hermite_cpu_log");
+
 
 }
