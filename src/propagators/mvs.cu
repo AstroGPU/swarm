@@ -17,6 +17,7 @@
  ************************************************************************/
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
+#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 
@@ -168,6 +169,10 @@ struct MVSPropagator {
 
 integrator_plugin_initializer< generic< MVSPropagator, monitors::stop_on_ejection > >
 	mvs_prop_plugin("mvs"
+			,"This is the integrator based on mvs propagator");
+
+integrator_plugin_initializer< generic< MVSPropagator, monitors::log_time_interval > >
+	mvs_log_prop_plugin("mvs_log"
 			,"This is the integrator based on mvs propagator");
 
 }
