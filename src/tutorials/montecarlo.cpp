@@ -486,7 +486,8 @@ int main(int argc, char* argv[] )
     
     // 2. CPU-based tests to identify systems that can be terminated
     int active_ones = number_of_active_systems(ens);
-    disable_unstable_systems( ens, semimajor_axes_init, 0.25 );
+    const double deltaa_frac_threshold = cfg.optional("deltaa_frac_threshold", 0.5);
+    disable_unstable_systems( ens, semimajor_axes_init, deltaa_frac_threshold );
     std::cerr << "# Time: " << ens.time_ranges() << " Active Systems: " << active_ones << ", ";
     active_ones = number_of_active_systems(ens);    
     std::cerr << active_ones << "\n";
