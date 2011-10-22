@@ -44,8 +44,8 @@ namespace swarm {
 	};
 
 	typedef range<int> sys_range_t;
+	typedef range<int> body_range_t;
 	typedef range<double> time_range_t;
-
 
 	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
 	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
@@ -59,6 +59,7 @@ namespace swarm {
 	
 			double T;	// time
 			int sys;	// system at the record
+			int body;	// bod at/in the record
 		};
 
 	protected:
@@ -83,11 +84,13 @@ namespace swarm {
 			const swarmdb &db;
 
 			sys_range_t  sys;
+		  //			body_range_t  body;
 			time_range_t T;
 			
 			const index_entry *begin, *end, *at, *atprev;
 
-			result(const swarmdb &db_, const sys_range_t &sys, const time_range_t &T);
+		  result(const swarmdb &db_, const sys_range_t &sys, const time_range_t &T);
+		  //		  result(const swarmdb &db_, const sys_range_t &sys, const body_range_t &body, const time_range_t &T);
 
 			gpulog::logrecord next();
 			void unget();
@@ -97,10 +100,17 @@ namespace swarm {
 		swarmdb(const std::string &datafile);
 
 		// return a stream of events with msgid, and system sys, at time T
-		result query(sys_range_t sys, time_range_t T) const
+	  result query(sys_range_t sys, time_range_t T) const
 		{
-			return result(*this, sys, T);
+		  return result(*this, sys, T);
 		}
+
+	  /*
+	  result query(sys_range_t sys, body_range_t body, time_range_t T) const
+		{
+		  return result(*this, sys, body, T);
+		}
+	  */
 
 	public:
 		struct snapshots

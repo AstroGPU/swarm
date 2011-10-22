@@ -77,10 +77,13 @@ namespace swarm {
 	namespace query {
 
 void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys);
+void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys, body_range_t body_range);
 enum planets_coordinate_system_t {
-	 astrocentric, barycentric, jacobi
+  astrocentric, barycentric, jacobi, origin
 };
-void set_keplerian_output(const planets_coordinate_system_t& coordinate_system = astrocentric ) ;
+void set_cartesian_output(const planets_coordinate_system_t& coordinate_system = origin) ;
+void set_keplerian_output(const planets_coordinate_system_t& coordinate_system = jacobi) ;
+void set_coordinate_system(const planets_coordinate_system_t& coordinate_system);  
 
 } }
 
