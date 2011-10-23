@@ -26,6 +26,13 @@
 
 namespace swarm {
 
+template<int W = SHMEM_WARPSIZE>
+struct DoubleCoalescedStruct {
+	typedef double scalar_t;
+	double _value[W];
+	GENERIC double& value(){ return _value[0]; }
+};
+
 namespace gpu {
 namespace bppt {
 
@@ -54,7 +61,7 @@ class hermite_adap: public integrator {
 
 
 	template<class T>
-	__device__ double calc_adaptive_time_step(T compile_time_param, const double acc, const double jerk)
+	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
 		{
 		// Body number
 		int b = thread_body_idx(T::n);
@@ -63,39 +70,70 @@ class hermite_adap: public integrator {
 		bool body_component_grid = (b < T::n) && (c < 3);
 		bool first_thread_in_system = (thread_in_system() == 0);
 
+		// Shared Memory pointer computations here are wrong
+		// The correct shared memory pointer calculation is done in
+		// system_shared_data_pointer(T) in bppt.hpp
+		// The system_shared_data_pointer can compute
+		// extra shared memory for us as long as we define our data
+		// structure using CoalescedDataStructure pattern
+
 		// shared memory for computing time step
-		extern __shared__ char shared_mem[];
-		// Array of squared acceleration and squared jerk for each body and each component
-                char*  system_shmem_1 = (shared_mem + sysid_in_block() * sizeof(double)*2*T::n*3 );
-                double (&shared_acc_jerk_sq)[2][T::n][3] = * (double (*)[2][T::n][3]) system_shmem_1;
-		// Array of ratios for each body, sum to go in body 0
-                char*  system_shmem_2 = (shared_mem + system_per_block_gpu() * sizeof(double)*2*T::n*3 + sysid_in_block() * sizeof(double)*T::n);
-                double (&shared_time_step_factor)[T::n] = * (double (*)[T::n]) system_shmem_2;
+   //            double (&shared_acc_jerk_sq)[2][T::n][3] = * (double (*)[2][T::n][3]) system_shmem_1;
+   //            double (&shared_time_step_factor)[T::n] = * (double (*)[T::n]) system_shmem_2;
 
 		// Put accelerations and jerks for each body and component into shared memory
 		if( body_component_grid ) {
-		    shared_acc_jerk_sq[0][b][c] = acc*acc;
-		    shared_acc_jerk_sq[1][b][c] = jerk*jerk;
-		    }
+		    shared.gravitation[b][c].acc() = acc*acc;
+		    shared.gravitation[b][c].jerk() = jerk*jerk;
+	        }
 		__syncthreads();
 		// calculate sum of squares of each component for each body
 		// store ratio in shared memory
 		if( (b < T::n) && (c==0) )
 		    {
-		    double acc_mag_sq = shared_acc_jerk_sq[0][b][0]+shared_acc_jerk_sq[0][b][1]+shared_acc_jerk_sq[0][b][2];
-		    double jerk_mag_sq = shared_acc_jerk_sq[1][b][0]+shared_acc_jerk_sq[1][b][1]+shared_acc_jerk_sq[1][b][2];
-		    shared_time_step_factor[b] = jerk_mag_sq/acc_mag_sq;
+		    double acc_mag_sq = shared.gravitation[b][0].acc()+shared.gravitation[b][1].acc()+shared.gravitation[b][2].acc();
+		    double jerk_mag_sq = shared.gravitation[b][0].jerk()+shared.gravitation[b][1].jerk()+shared.gravitation[b][2].jerk();
+		    shared.time_step_factor[b].value() = jerk_mag_sq/acc_mag_sq;
 		    }
 		__syncthreads();
 		if( first_thread_in_system ) 		    
-		    {
+		{
+			double tf = shared.time_step_factor[0].value();
 		    for(int bb=1;bb<T::n;++bb)
-		      shared_time_step_factor[0] += shared_time_step_factor[bb];
-		    shared_time_step_factor[0] = rsqrt(shared_time_step_factor[0])*_time_step_factor+_min_time_step;
-		    }
+		      	tf += shared.time_step_factor[bb].value();
+		    shared.time_step_factor[0].value() = rsqrt(tf)*_time_step_factor+_min_time_step;
+		}
 		__syncthreads();
-		return shared_time_step_factor[0];
+		return shared.time_step_factor[0].value();
 		}		
+
+		template<class T>
+		struct SystemSharedData {
+			typename Gravitation<T::n>::shared_data gravitation;
+			DoubleCoalescedStruct<> time_step_factor[T::n];
+		};
+
+	static GENERIC int shmem_per_system(int nbod){
+		return bppt::shmem_per_system(nbod) + nbod*sizeof(double);
+	}
+	int  shmemSize(){
+		const int nbod = _hens.nbod();
+		// Round up number of systems in a block to the next multiple of SHMEM_WARPSIZE
+		int spb = ((system_per_block()+SHMEM_WARPSIZE-1)/SHMEM_WARPSIZE) * SHMEM_WARPSIZE;
+		return spb *  shmem_per_system(nbod);
+	}
+
+
+template< class T> 
+static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
+	extern __shared__ char shared_mem[];
+	int b = sysid_in_block() / SHMEM_WARPSIZE ;
+	int i = sysid_in_block() % SHMEM_WARPSIZE ;
+	int idx = i * sizeof(double) 
+		+ b * SHMEM_WARPSIZE 
+		* shmem_per_system(T::n);
+	return &shared_mem[idx];
+}
 
 
 	template<class T>
@@ -104,9 +142,8 @@ class hermite_adap: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
-		Gravitation<T::n> calcForces(sys,sysid_in_block());
+		SystemSharedData* shared_data = (SystemSharedData*) system_shared_data_pointer(compile_time_param);
+		Gravitation<T::n> calcForces(sys, shared_data->gravitation );
 
 		// Local variables
 		const int nbod = T::n;
@@ -132,10 +169,11 @@ class hermite_adap: public integrator {
 
 		// Calculate acceleration and jerk
 		calcForces(ij,b,c,pos,vel,acc0,jerk0);
-		double time_step = calc_adaptive_time_step(compile_time_param,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
-			double h = time_step;
+			// Since h is the time step that is used for the step it makes more sense to
+			// to calculate time step and assign it to h
+			double h = calc_adaptive_time_step(compile_time_param, shared_data ,acc0,jerk0);
 
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
@@ -175,7 +213,6 @@ class hermite_adap: public integrator {
 				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
 			}
 			acc0 = acc1, jerk0 = jerk1;
-			time_step = calc_adaptive_time_step(compile_time_param,acc0,jerk0);
 
 			// Finalize the step
 			if( body_component_grid )

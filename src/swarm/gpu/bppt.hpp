@@ -36,27 +36,44 @@ namespace gpu {
  */
 namespace bppt {
 
+//// These functions are used inside kernels for consistent interpretation of thread and shared memory references
 
-inline __device__ int sysid(){
+GPUAPI int sysid(){
 	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
 }
-inline __device__ int sysid_in_block(){
+GPUAPI int sysid_in_block(){
 	return threadIdx.x;
 }
-inline __device__ int thread_in_system() {
+GPUAPI int thread_in_system() {
 	return threadIdx.y;
 }
 
 
-inline  __device__ int system_per_block_gpu() {
+GPUAPI int system_per_block_gpu() {
     return blockDim.x;
   };
 
-inline __device__ int thread_component_idx(int nbod) {
+GPUAPI int thread_component_idx(int nbod) {
 	return thread_in_system() / nbod;
 }
-inline __device__ int thread_body_idx(int nbod) {
+GPUAPI int thread_body_idx(int nbod) {
 	return thread_in_system() % nbod;
+}
+
+GENERIC int shmem_per_system(int nbod) {
+	const int pair_count = nbod * (nbod - 1) / 2;
+	return pair_count * 3  * 2 * sizeof(double);
+}
+
+template< class T> 
+GPUAPI void * system_shared_data_pointer(T compile_time_param) {
+	extern __shared__ char shared_mem[];
+	int b = sysid_in_block() / SHMEM_WARPSIZE ;
+	int i = sysid_in_block() % SHMEM_WARPSIZE ;
+	int idx = i * sizeof(double) 
+		+ b * SHMEM_WARPSIZE 
+		* shmem_per_system(T::n);
+	return &shared_mem[idx];
 }
 
 class integrator : public gpu::integrator  {
@@ -104,21 +121,6 @@ class integrator : public gpu::integrator  {
 		return system_per_block() * shmem_per_system(nbod);
 	}
 
-	static GENERIC int shmem_per_system(int nbod) {
-		const int pair_count = nbod * (nbod - 1) / 2;
-		return pair_count * 3  * 2 * sizeof(double);
-	}
-
-	template< class T> 
-	static __device__ void * system_shared_data_pointer(T compile_time_param) {
-		extern __shared__ char shared_mem[];
-		int b = sysid_in_block() / SHMEM_WARPSIZE ;
-		int i = sysid_in_block() % SHMEM_WARPSIZE ;
-		int idx = i * sizeof(double) 
-			+ b * SHMEM_WARPSIZE 
-			* shmem_per_system(T::n);
-		return &shared_mem[idx];
-	}
 
 };
 
