@@ -40,7 +40,7 @@ const char * config_pairs[6][2] = {
        { "integrator" , "hermite" }
       ,{ "time step", "0.001" }
       ,{ "blocksize" , "16" }
-      ,{ "log writer", "null" } 
+      ,{ "log_writer", "null" } 
       ,{ "nsys" , "4000" } 
       ,{ "nbod" , "3" } 
     };

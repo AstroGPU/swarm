@@ -36,6 +36,12 @@ namespace swarm {
 		_logman = l;
 		_log = l->get_hostlog();
 	}
+
+        gpulog::host_log* integrator::get_host_log(){
+	  //	  return _logman->get_hostlog();
+	  return _log;
+	}
+
 	void gpu::integrator::set_log_manager(log::Pmanager& l){
 		Base::set_log_manager(l);
 		set_log(l->get_gpulog());

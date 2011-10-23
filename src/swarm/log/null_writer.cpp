@@ -37,6 +37,6 @@ public:
 };
 
 writer_plugin_initializer< null_writer >
-	null_writer_plugin("null", "This is the dummy writer");
+	null_writer_plugin("null", "This is the dummy null writer");
 
 }

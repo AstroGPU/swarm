@@ -12,6 +12,7 @@
 
 #include "swarm/swarm.h"
 #include "swarm/snapshot.hpp"
+#include "swarm/log/log.hpp"
 #include "random.hpp"
 #include "kepler.hpp"
 
@@ -461,7 +462,7 @@ int main(int argc, char* argv[] )
   // longer integrations before we stop for checking the
   // ensemble and saving snapshots.
   integ->set_max_attempts( 1 );     // one kernel call to allow for prompt CPU pruning of unstable systems
-  integ->set_max_iterations ( 6283186 ); // 10^3 years at time_step=0.001
+  integ->set_max_iterations ( 62832 ); // 10^3 years at time_step=0.001
   SYNC;
 
   // integrate ensemble
@@ -474,6 +475,9 @@ int main(int argc, char* argv[] )
   //  of this loop in a safe way. But we really want this loop
   //  to run for a long time
   reactivate_systems(ens);
+  // WARNING:  EBF Experiment trying to expose host log.  Doesn't work!
+  swarm::log::ensemble(*(integ->get_host_log()),ens);
+
   catch_ctrl_c();
   while( number_of_active_systems(ens) > 0 && integration_loop_not_aborted_yet ) {
 
@@ -491,6 +495,10 @@ int main(int argc, char* argv[] )
     std::cerr << "# Time: " << ens.time_ranges() << " Active Systems: " << active_ones << ", ";
     active_ones = number_of_active_systems(ens);    
     std::cerr << active_ones << "\n";
+
+    // WARNING:  EBF Experiment trying to expose host log.  Doesn't work!
+    swarm::log::ensemble(*(integ->get_host_log()),ens);
+    integ->flush_log();
 
     // 3. Now we need to get rid of the inactive ones. There 
     // should be some criteria, whatever it is we are
