@@ -475,7 +475,7 @@ int main(int argc, char* argv[] )
   // longer integrations before we stop for checking the
   // ensemble and saving snapshots.
   integ->set_max_attempts( 1 );     // one kernel call to allow for prompt CPU pruning of unstable systems
-  integ->set_max_iterations ( 62832 ); // 10^3 years at time_step=0.001
+  integ->set_max_iterations ( 6283299 ); // 10^3 years at time_step=0.001
   SYNC;
 
   // integrate ensemble
@@ -488,8 +488,9 @@ int main(int argc, char* argv[] )
   //  of this loop in a safe way. But we really want this loop
   //  to run for a long time
   reactivate_systems(ens);
-  // WARNING:  EBF Experiment trying to expose host log.  Doesn't work!
-  swarm::log::ensemble(*(integ->get_host_log()),ens);
+  // EBF Experiment trying to expose host log.
+  swarm::log::ensemble(*(log::manager::default_log()->get_hostlog()),ens);
+  integ->flush_log();
 
   catch_ctrl_c();
   while( number_of_active_systems(ens) > 0 && integration_loop_not_aborted_yet ) {
@@ -509,8 +510,8 @@ int main(int argc, char* argv[] )
     active_ones = number_of_active_systems(ens);    
     std::cerr << active_ones << "\n";
 
-    // WARNING:  EBF Experiment trying to expose host log.  Doesn't work!
-    swarm::log::ensemble(*(integ->get_host_log()),ens);
+    // EBF Experiment trying to expose host log.  
+    swarm::log::ensemble(*(log::manager::default_log()->get_hostlog()),ens);
     integ->flush_log();
 
     // 3. Now we need to get rid of the inactive ones. There 
