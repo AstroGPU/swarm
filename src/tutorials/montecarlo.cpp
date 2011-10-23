@@ -161,9 +161,9 @@ defaultEnsemble generate_ensemble_with_randomized_initial_conditions(const confi
   defaultEnsemble ens = defaultEnsemble::create( cfg.require("nbod",0), cfg.require("nsys",0) );
   std::cerr << "# nsystems = " << ens.nsys() << " nbodies/system = " << ens.nbod() << "\n";
 
-  std::cerr << "# Set initial time for all systems = ";
+  //  std::cerr << "# Set initial time for all systems = ";
   double time_init = cfg.optional("time_init", 0.0);
-  std::cerr << time_init << ".\n";
+  //  std::cerr << time_init << ".\n";
 
   const bool use_jacobi = cfg.optional("use_jacobi", 0);
   bool keplerian_ephemeris = cfg.optional("use_keplerian", 1);

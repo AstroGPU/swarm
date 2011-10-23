@@ -48,6 +48,20 @@ class hermite_adap: public integrator {
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
+        // WARNING: Is this override working right?
+	static GENERIC int shmem_per_system(int nbod) {
+	   int mem_base = base::shmem_per_system(nbod);
+	   int mem_derived = (2*3*nbod + nbod)*sizeof(double);
+	   return std::max(mem_base,mem_derived);
+	}
+
+        // WARNING: Is this override working right?
+	int  shmemSize(){
+	   int mem_base = base::shmemSize();
+	   int mem_derived = (system_per_block() * 2*3*_hens.nbod() + system_per_block()*_hens.nbod())*sizeof(double);
+	   return std::max(mem_base,mem_derived);
+	}
+
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
