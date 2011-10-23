@@ -394,7 +394,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	query.add_options()
 		("time,t", po::value<time_range_t>(), "range of times to query")
 		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("keplerian,k", "output in Keplerian coordinates")
+		("keplerian,k",po::value<std::string>(), "output in Keplerian coordinates")
 		("logfile,f", po::value<std::string>(), "the log file to query");
 
 	po::options_description positional("Positional Options");
@@ -521,8 +521,13 @@ int main(int argc, char* argv[]){
 		sys_range_t sys;
 		if (argvars_map.count("time")) { T = argvars_map["time"].as<time_range_t>(); }
 		if (argvars_map.count("system")) { sys = argvars_map["system"].as<sys_range_t>(); }
-		if (argvars_map.count("keplerian")) { query::set_keplerian_output(); }
-		//		if (argvars_map.count("keplerian")) { query::set_keplerian_output(query::jacobi); }
+		if (argvars_map.count("keplerian"))
+			if(argvars_map["keplerian"].as<string>() == string("jacobi") )
+				query::set_keplerian_output(query::jacobi);
+			else if(argvars_map["keplerian"].as<string>() == string("astrocentric") )
+				query::set_keplerian_output(query::astrocentric);
+			else if(argvars_map["keplerian"].as<string>() == string("barycentric") )
+				query::set_keplerian_output(query::barycentric);
 
         std::cout.flush(); 
 		cerr << "Systems " << sys << " in time range " << T << endl;
