@@ -179,19 +179,16 @@ defaultEnsemble generate_ensemble_with_randomized_initial_conditions(const confi
 }
 
 
-void print_selected_systems_for_demo(swarm::ensemble& ens)
+void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
     JACOBI, BARYCENTRIC, ASTROCENTRIC
   } COORDINATE_SYSTEM = BARYCENTRIC;
   
 
-  std::streamsize cout_precision_old = std::cout.precision();
-  std::cout.precision(10);
-  unsigned int nprint = std::min(10,ens.nsys());
-  for(unsigned int systemid = 0; systemid< nprint; ++systemid)
-    {
-      std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << "\n";
+  std::streamsize cout_precision_old = os.precision();
+  os.precision(10);
+  os << "sys_idx= " << systemid << " sys_id= " << ens[systemid].id() << " time= " << ens.time(systemid) << "\n";
       double star_mass = ens.mass(systemid,0);
       double mass_effective = star_mass;
       double bx, by, bz, bvx, bvy, bvz;
@@ -243,12 +240,28 @@ void print_selected_systems_for_demo(swarm::ensemble& ens)
 	  O *= 180/M_PI;
 	  w *= 180/M_PI;
 	  M *= 180/M_PI;
-	  std::cout << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
+	  //	  os << " b= " << bod << " m= " << mass << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";
+	  os << ens[systemid].id() << " " << bod << " " << mass << " " << a << " " << e << " " << i << " " << O << " " << w << " " << M << "\n";
 	}
-    }
-  std::cout.precision(cout_precision_old);
-  std::cout << std::flush;
+
+  os.precision(cout_precision_old);
+  os << std::flush;
 }
+
+
+void print_selected_systems(swarm::ensemble& ens, std::vector<unsigned int> systemindices, std::ostream &os = std::cout)
+{
+  for(unsigned int i=0; i<systemindices.size(); ++i)
+      print_system(ens,systemindices[i], os);
+}
+
+void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, std::ostream &os = std::cout)
+{
+  if(nprint>ens.nsys()) nprint = ens.nsys();
+  for(unsigned int systemid = 0; systemid< nprint; ++systemid)
+      print_system(ens,systemid,os);
+}
+
 
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
@@ -551,11 +564,13 @@ int main(int argc, char* argv[] )
   //  std::cerr << "# Writing stable system ids\n";
   ofstream output( cfg.optional("stable_output", string("stable_output.txt")).c_str() ); 
 
+  std::vector<unsigned int> stable_system_indices;
   for(int i = 0; i < ens.nsys() ; i++ )
     {
       if(!ens[i].is_disabled())
-	output << ens[i].id() << endl;
+	stable_system_indices.push_back(i);
     }
-	
+  
+  print_selected_systems(ens,stable_system_indices, output);
 }
 

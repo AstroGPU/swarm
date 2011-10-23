@@ -46,6 +46,7 @@ namespace swarm { namespace log {
 		//! Writer plugin to output to a file
 		Pwriter log_writer;
 
+	        // TODO: Add to CMake parameters
 	        static const int default_buffer_size = 50*1024*1024;
 		public:
 
