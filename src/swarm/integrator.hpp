@@ -62,6 +62,8 @@ class integrator {
 	log::Pmanager _logman;
 
 	//! log object, obtained from log manager
+        //  WARNING: Why do we store a raw pointer here?  
+        // Any reason not to just use host_log stored in _logman?
 	gpulog::host_log* _log;
 
 	//! Maximum number of iterations per each integration step. c.f. \ref integrate for usage
@@ -89,6 +91,11 @@ class integrator {
 	 *  set_destination_time(t), set_log_manager(l) 
 	 */
 	virtual void integrate();
+
+        //! Flush the host log
+        virtual void flush_log() {
+	  _logman->flush();	  
+	}
 
 	//! Access the ensemble subject to integration
 	virtual defaultEnsemble& get_ensemble() {
@@ -125,6 +132,7 @@ class integrator {
 
 	//! accessor function to set the manager for log output
 	virtual void set_log_manager(log::Pmanager& l);
+        virtual gpulog::host_log* get_host_log();
 
 	virtual void set_max_iterations( const int& mi ) { _max_iterations = mi; }
 	virtual void set_max_attempts( const int& ma ) { _max_attempts = ma; }
@@ -190,14 +198,18 @@ class integrator : public swarm::integrator {
 	 */
 	virtual void core_integrate() {
 		launch_integrator();
-		_logman->flush();
+		flush_log();
+		//		_logman->flush();
 	}
 
 	//! Read the GPU log object from log manager and set it
 	virtual void set_log_manager(log::Pmanager& l);
 
-	//! Set the GPU log object used for log output
+	//! Set the GPU log object used for loggin output
 	void set_log(gpulog::device_log* log) { _log = log; }
+
+	//! Get the GPU log object used for logging output
+        gpulog::device_log* get_device_log() { return _log; }
 
 	//! Set the ensemble, only provide an ensemble on host.
 	//! This cals automatically creates a copy of ensemble 

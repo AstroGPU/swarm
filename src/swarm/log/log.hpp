@@ -45,6 +45,7 @@ namespace swarm
 		double  x, y, z;
 		double  vx, vy, vz;
 		double   mass;
+		int body_id; // EBF added
 
 		// load body information from ensemble to body structure
 		GENERIC void set(const int& i,const ensemble::Body& b)
@@ -56,6 +57,7 @@ namespace swarm
 			vx = b[0].vel();
 			vy = b[1].vel();
 			vz = b[2].vel();
+			body_id = i; // EBF added
 		}
 	};
 
@@ -125,7 +127,7 @@ behind it are quite simple:
               functions to log events.  Their effective interface behaves
               like:
 
-			  \code
+		\code
 		void log_event(int evtId, ...)
 		\endcode
 
@@ -136,11 +138,12 @@ behind it are quite simple:
 
               Example usage:
 
-			  \code
-                #define EVT_COLLISION 1
+		\code
+                #define EVT_EJECTTION 1
+                #define EVT_ENCOUTNER 2
                    ....
-                dlog.log_event(EVT_COLLISION, bod1, bod2);
-				\endcode
+                dlog.log_event(EVT_ENCOUTNER, bod1, bod2);
+		\endcode
 
   2a) Printf- an implementation of C printf() functionality, callable from
               the GPU.  Internally, these are just events of event ID
@@ -164,12 +167,12 @@ behind it are quite simple:
   collision event between bodies bod1 and bod2. You might do it like this:
 
   \code
-    int evtref = dlog.log_event(EVT_COLLISION, sys, bod1, bod2, T);
+    int evtref = dlog.log_event(EVT_ENCOUTNER, sys, bod1, bod2, T);
     dlog.log_body(ens, sys, bod1, T, evtref);
     dlog.log_body(ens, sys, bod2, T, evtref);
 \endcode
 
-  The above will store a user-defined EVT_COLLISION event to the event log,
+  The above will store a user-defined EVT_ENCOUTNER event to the event log,
   recording the system id, the ids of the two bodies involved, and the time
   of the collision.  log_event returns a unique integer (evtref). 
   Subsequent two lines stored all the information about the bodies (masses,
@@ -250,6 +253,7 @@ behind it are quite simple:
 	{
 		static const int EVT_SNAPSHOT		= 1;	// marks a snapshot of a system. see swarm::log::system() down below
 		static const int EVT_EJECTION		= 2;	// marks an ejection event
+		static const int EVT_ENCOUNTER		= 3;	// marks an encounter event
 
 
 		template<typename L, typename T1>
@@ -310,7 +314,7 @@ GENERIC PTR_T(SCALAR(T8)) event(L &l, const int recid, const double T, const int
 			body *bodies = swarm::log::event(l, EVT_SNAPSHOT, sys.time(), sys.id() , sys.state() , sys.nbod(), gpulog::array<body>(sys.nbod()));
 			if(bodies != NULL) // buffer overflow hasn't happened
 			{
-				for(int bod=0; bod != sys.nbod(); bod++)
+				for(int bod=0; bod < sys.nbod(); bod++)
 				{
 					bodies[bod].set(bod,sys[bod]);
 				}
@@ -362,7 +366,7 @@ namespace gpulog
 
 				// write out N bodies
 				swarm::body *bodies = (swarm::body *)(ptr + start);
-				for(int i=0; i != N; i++)
+				for(int i=0; i < N; i++)
 				{
 					bodies[i].set(i,br.ens[br.sys][br.bod[i]]);
 				}

@@ -47,6 +47,8 @@ class generic: public integrator {
 		launch_templatized_integrator(this);
 	}
 
+      // WARNING: Not tested yet.  Shouldn't we overide the shared memory needed, taking into account the gravitation, propagator and monitor class?
+      //        int  shmemSize()
 
 	template<class T>
 	__device__ void kernel(T compile_time_param){

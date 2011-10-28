@@ -177,7 +177,7 @@ int main(int argc,  char **argv)
 
 	DEBUG_OUTPUT(2,"Initialize logging system to null output ");
 	{
-		config logcfg; logcfg["log writer"] = "null";
+		config logcfg; logcfg["log_writer"] = "null";
 		logman.init(logcfg);
 	}
 

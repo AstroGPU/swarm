@@ -86,6 +86,13 @@ namespace swarm
  		bool operator()(const swarmdb::index_entry &a, const swarmdb::index_entry &b) const { return a.sys < b.sys || (a.sys == b.sys && a.T < b.T) || (a.T == b.T && a.offs < b.offs); }
  	};
 
+#if 0
+ 	struct index_entry_bod_cmp
+ 	{
+	  bool operator()(const swarmdb::index_entry &a, const swarmdb::index_entry &b) const       { return a.body < b.body || (a.sys == b.sys && a.body ==  b.body && a.T < b.T ) || (a.T == b.T && a.sys == b.sys && a.offs < b.offs); }
+ 	};
+#endif
+
 	bool get_file_info(uint64_t &timestamp, uint64_t &filesize, const std::string &fn)
 	{
 		struct stat sb;
@@ -328,7 +335,7 @@ namespace swarm
 	}
 
 	swarmdb::result::result(const swarmdb &db_, const sys_range_t &sys_, const time_range_t &T_)
-		: db(db_), sys(sys_), T(T_)
+	  : db(db_), sys(sys_), T(T_)
 	{
 		using namespace boost;
 
@@ -357,6 +364,38 @@ namespace swarm
 		atprev = at;
 	}
 
+
+#if 0
+  	swarmdb::result::result(const swarmdb &db_, const sys_range_t &sys_, const body_range_t &body_, const time_range_t &T_)	  : db(db_), sys(sys_), body(body_), T(T_)
+	{
+		using namespace boost;
+
+		if(sys.first == sys.last || !T)
+		{
+			// find the sys index range
+			swarmdb::index_entry dummy;
+			dummy.sys = sys.first; begin = std::lower_bound(db.idx_sys.begin, db.idx_sys.end, dummy, bind( &index_entry::sys, _1 ) < bind( &index_entry::sys, _2 ));
+			dummy.sys = sys.last;  end   = std::upper_bound(db.idx_sys.begin, db.idx_sys.end, dummy, bind( &index_entry::sys, _1 ) < bind( &index_entry::sys, _2 ));
+		}
+		else if(T)
+		{
+			// find the first T in the range
+			swarmdb::index_entry dummy;
+			dummy.T = T.first; begin = std::lower_bound(db.idx_time.begin, db.idx_time.end, dummy, bind( &index_entry::T, _1 ) < bind( &index_entry::T, _2 ));
+			dummy.T = T.last;  end   = std::upper_bound(db.idx_time.begin, db.idx_time.end, dummy, bind( &index_entry::T, _1 ) < bind( &index_entry::T, _2 ));
+		}
+		else
+		{
+			// stream through everything, time first
+			begin = db.idx_time.begin;
+			end   = db.idx_time.end;
+		}
+
+		at = begin;
+		atprev = at;
+	}
+#endif
+
 	gpulog::logrecord swarmdb::result::next()
 	{
 		if(at < end)
@@ -366,8 +405,9 @@ namespace swarm
 
 		while(at < end)
 		{
-			if(!T.in(at->T))     { at++; continue; }
-			if(!sys.in(at->sys)) { at++; continue; }
+			if(!T.in(at->T))       { at++; continue; }
+			if(!sys.in(at->sys))   { at++; continue; }
+			//			if(!body.in(at->body)) { at++; continue; }
 
 			return gpulog::logrecord(db.mmdata.data() + (at++)->offs);
 		}

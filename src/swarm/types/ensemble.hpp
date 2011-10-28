@@ -183,6 +183,7 @@ class EnsembleBase {
 		GENERIC double& time() const { return _sys[0].time(); }
 		//! Activity state
 		GENERIC bool is_active() const { return _sys[0].state() == Sys::SYSTEM_ACTIVE; }
+		GENERIC bool is_inactive() const { return _sys[0].state() == Sys::SYSTEM_INACTIVE; }
 		GENERIC bool is_disabled() const { return _sys[0].state() == Sys::SYSTEM_DISABLED; }
 		GENERIC int& state() const { return _sys[0].state(); }
 		GENERIC void set_active() const { _sys[0].state() = Sys::SYSTEM_ACTIVE; }
@@ -401,13 +402,22 @@ class EnsembleBase {
 		return operator[] ( sys ).is_active();
 	}
 	GENERIC bool is_inactive(const int& sys) const { 
-		return ! operator[] ( sys ).is_active();
+		return ! operator[] ( sys ).is_inactive();
+	}
+	GENERIC bool is_disabled(const int& sys) const { 
+		return ! operator[] ( sys ).is_disabled();
 	}
 	GENERIC void set_active(const int& sys) { 
-		operator[] ( sys ).state() = Sys::SYSTEM_ACTIVE;
+	  operator[] ( sys ).set_active();
+	  //		operator[] ( sys ).state() = Sys::SYSTEM_ACTIVE;
 	}
 	GENERIC void set_inactive(const int& sys) { 
-		operator[] ( sys ).state() = Sys::SYSTEM_INACTIVE;
+	  operator[] ( sys ).set_inactive();
+	  //		operator[] ( sys ).state() = Sys::SYSTEM_INACTIVE;
+	}
+	GENERIC void set_disabled(const int& sys) { 
+	  operator[] ( sys ).set_disabled();
+	  //		operator[] ( sys ).state() = Sys::SYSTEM_DISABLED;
 	}
 
 

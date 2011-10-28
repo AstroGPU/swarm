@@ -24,10 +24,10 @@
 double improve_mean_to_eccentric_annomaly_guess(const double e, const double M, const double x)
 {
   // Based on Mercury
-  //  double sx, cx;
-  //  sincos(x,&sx,&cx);
-      double sx = sin(x);
-      double cx = cos(x);
+    double sx, cx;
+    sincos(x,&sx,&cx);
+  //    double sx = sin(x);
+  //    double cx = cos(x);
       double es = e*sx;
       double ec = e*cx;
       double f = x-es-M;

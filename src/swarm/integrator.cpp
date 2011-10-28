@@ -29,13 +29,19 @@
 
 namespace swarm {
 
-	const int integrator::_default_max_iterations = 100000;
-	const int integrator::_default_max_attempts = 100;
+	const int integrator::_default_max_iterations = 10000;
+	const int integrator::_default_max_attempts   = 1000000;
 
 	void integrator::set_log_manager(log::Pmanager& l){
 		_logman = l;
 		_log = l->get_hostlog();
 	}
+
+        gpulog::host_log* integrator::get_host_log(){
+	  //	  return _logman->get_hostlog();
+	  return _log;
+	}
+
 	void gpu::integrator::set_log_manager(log::Pmanager& l){
 		Base::set_log_manager(l);
 		set_log(l->get_gpulog());
@@ -58,15 +64,31 @@ namespace swarm {
 			if( ens[i].is_active() ) count_running++;
 		return count_running;
 	}
-	void activate_all_systems(defaultEnsemble ens) {
+	int number_of_not_disabled_systems(defaultEnsemble ens) {
+		int count_running = 0;
 		for(int i = 0; i < ens.nsys() ; i++)
-			if(ens[i].state() == ensemble::Sys::SYSTEM_INACTIVE )
-				ens[i].set_active();
+			if( !ens[i].is_disabled() ) count_running++;
+		return count_running;
+	}
+	void activate_all_systems(defaultEnsemble& ens) {
+		for(int i = 0; i < ens.nsys() ; i++)
+		  {
+			if(!ens[i].is_active())
+			  ens[i].set_active();
+		  }
+	}
+	void activate_inactive_systems(defaultEnsemble& ens) {
+		for(int i = 0; i < ens.nsys() ; i++)
+		  {
+			if(ens[i].is_inactive())
+			  ens[i].set_active();
+		  }
 	}
 
 	void integrator::integrate() {
-		activate_all_systems(_ens);
-		for(int i = 0; i < _max_attempts; i++){
+		activate_inactive_systems(_ens);
+		for(int i = 0; i < _max_attempts; i++)
+		  {
 			launch_integrator();
 			_logman->flush();
 			if( number_of_active_systems(_ens) == 0 )
@@ -75,9 +97,10 @@ namespace swarm {
 	};
 
 	void gpu::integrator::integrate() {
-		activate_all_systems(_ens);
+		activate_inactive_systems(_ens);
 		upload_ensemble();
-		for(int i = 0; i < _max_attempts; i++){
+		for(int i = 0; i < _max_attempts; i++)
+		  {
 			launch_integrator();
 			_logman->flush();
 			if( number_of_active_systems(_dens) == 0 )

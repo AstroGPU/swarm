@@ -75,6 +75,7 @@ struct GravitationScalars {
   template<int nbod, int gpu_shared_mem_size>  struct SelectWarpSizeGravitation
   {    static const int suggest = 1;  };
 
+#if 0
   // Default warpsize suggestion for small systems (assuming 16k cache)
   template<>  struct SelectWarpSizeGravitation<2,16384>
   {    static const int suggest = 16;  };
@@ -108,6 +109,7 @@ struct GravitationScalars {
   {    static const int suggest = 16;  };
   template<>  struct SelectWarpSizeGravitation<11,49152>
   {    static const int suggest = 16;  };
+#endif
 
 /** 
  * templatized Class working as a function object to 
@@ -390,6 +392,7 @@ class Gravitation {
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
+		// WARNING: Should WARPSIZE be system_per_block in 2 lines below?
 		int b = sysid_in_block / WARPSIZE ;
 		int i = sysid_in_block % WARPSIZE ;
 		int idx = i * sizeof(double) 
@@ -398,6 +401,7 @@ class Gravitation {
 		return &shared_mem[idx];
 	}
 
+    // WARNING: Does not account for larger memory usage due to coalesced arrys.  
 	static __device__ void * unused_shared_data_pointer(const int system_per_block) {
 		extern __shared__ char shared_mem[];
 		int idx = system_per_block * shmem_per_system();
@@ -412,6 +416,7 @@ class Gravitation {
   template<int nbod, int gpu_shared_mem_size>  struct SelectWarpSizeGravitationAccOnly
   {    static const int suggest = 1;  };
 
+#if 0
   // Default warpsize suggestion for small systems (assuming 16k cache)
   template<>  struct SelectWarpSizeGravitationAccOnly<2,16384>
   {    static const int suggest = 16;  };
@@ -461,6 +466,7 @@ class Gravitation {
   {    static const int suggest = 16;  };
   template<>  struct SelectWarpSizeGravitationAccOnly<16,49152>
   {    static const int suggest = 16;  };
+#endif
 
 /*! 
  * templatized Class to calculate acceleration and jerk in parallel
@@ -650,6 +656,7 @@ class GravitationAccOnly {
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
+		// WARNING: Should WARPSIZE be system_per_block in 2 lines below?
 		int b = sysid_in_block / WARPSIZE ;
 		int i = sysid_in_block % WARPSIZE ;
 		int idx = i * sizeof(double) 
@@ -658,6 +665,7 @@ class GravitationAccOnly {
 		return &shared_mem[idx];
 	}
 
+    // WARNING: Does not account for larger memory usage due to coalesced arrys.  
 	static __device__ void * unused_shared_data_pointer(const int system_per_block) {
 		extern __shared__ char shared_mem[];
 		int idx = system_per_block * shmem_per_system();

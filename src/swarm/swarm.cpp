@@ -394,7 +394,12 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	query.add_options()
 		("time,t", po::value<time_range_t>(), "range of times to query")
 		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("keplerian,k",po::value<std::string>(), "output in Keplerian coordinates")
+		("body,b", po::value<sys_range_t>(), "range of bodies to query")
+		("keplerian,k", "output in Keplerian coordinates")
+		("astrocentric", "output coordinates in astrocentric frame")
+		("barycentric", "output coordinates in barycentric frame")
+		("origin", "output coordinates in origin frame [default w/ Cartesian]")
+		("jacobi", "output coordinates in Jacobi frame [default w/ Keplerian]")
 		("logfile,f", po::value<std::string>(), "the log file to query");
 
 	po::options_description positional("Positional Options");
@@ -518,23 +523,45 @@ int main(int argc, char* argv[]){
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
 
 		time_range_t T;
-		sys_range_t sys;
+		sys_range_t sys, body_range;
 		if (argvars_map.count("time")) { T = argvars_map["time"].as<time_range_t>(); }
 		if (argvars_map.count("system")) { sys = argvars_map["system"].as<sys_range_t>(); }
-		if (argvars_map.count("keplerian"))
-			if(argvars_map["keplerian"].as<string>() == string("jacobi") )
-				query::set_keplerian_output(query::jacobi);
-			else if(argvars_map["keplerian"].as<string>() == string("astrocentric") )
-				query::set_keplerian_output(query::astrocentric);
-			else if(argvars_map["keplerian"].as<string>() == string("barycentric") )
-				query::set_keplerian_output(query::barycentric);
+		if (argvars_map.count("body")) { body_range = argvars_map["body"].as<sys_range_t>(); }
+		if (argvars_map.count("keplerian")) { query::set_keplerian_output(); }
+		if (argvars_map.count("origin")) { query::set_coordinate_system(query::origin); }
+		if (argvars_map.count("astrocentric")) { query::set_coordinate_system(query::astrocentric); }
+		if (argvars_map.count("barycentric")) { query::set_coordinate_system(query::barycentric); }
+		if (argvars_map.count("jacobi")) { query::set_coordinate_system(query::jacobi); }
+
 
         std::cout.flush(); 
-		cerr << "Systems " << sys << " in time range " << T << endl;
+	cerr << "# Systems: " << sys << " Bodies: " << body_range << " Times: " << T << endl;
+	if (argvars_map.count("keplerian")) 
+	  { std::cerr << "# Output in Keplerian coordinates  "; }
+	else { std::cerr << "# Output in Cartesian coordinates  "; }
+#if 0
+	switch(query::planets_coordinate_system)
+	  {
+		case astrocentric:
+		  std::cerr << "(astrocentric)";
+		  break;
+		case barycentric:
+		  std::cerr << "(barycentric)";
+		  break;
+		case jacobi:
+		  std::cerr << "(jacobi)";
+		  break;
+		case origin:
+		  std::cerr << "(origin)";
+		  break;
+	  }
+#endif
+	std::cerr << "\n";
+
 
 		std::string datafile(argvars_map["logfile"].as<std::string>());
 
-		query::execute(datafile, T, sys);
+		query::execute(datafile, T, sys, body_range);
 	}
 
 	else if(command == "generate" ) {

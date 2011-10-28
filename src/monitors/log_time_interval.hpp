@@ -31,7 +31,6 @@ struct log_time_interval_params {
 
 /** Monitor that logs the entire state of systems at periodic intervals of approximately "log_interval"
  *  Systems may be integrated for more than log interval before another log entry is written.
- *  Always returns signal of false.  
  *  Assumes integration results in increasing time.
  * 
  *  \ingroup monitors

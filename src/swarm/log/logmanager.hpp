@@ -45,6 +45,9 @@ namespace swarm { namespace log {
 		gpulog::device_log* pdlog;
 		//! Writer plugin to output to a file
 		Pwriter log_writer;
+
+	        // TODO: Add to CMake parameters
+	        static const int default_buffer_size = 50*1024*1024;
 		public:
 
 		enum { memory = 0x01, if_full = 0x02 };
@@ -55,7 +58,7 @@ namespace swarm { namespace log {
 		 * - Select plugin for writer
 		 * - Configure writer plugin
 		 */
-		void init(const config&, int host_buffer_size = 50*1024*1024, int device_buffer_size = 50*1024*1024);
+		void init(const config&, int host_buffer_size = default_buffer_size, int device_buffer_size = default_buffer_size);
 
 		/*! Stream the log from host_log and device_log to the output.
 		 * - Replay lprintf

@@ -72,11 +72,12 @@ bool validate_configuration(config& cfg){
   bool valid = true;                 // Indicates whether cfg parameters are valid
   int nsystems = cfg.optional("nsys",1000);
   int nbodypersystem = cfg.optional("nbod",3);
-  int bs = cfg.optional("block_size",SHMEM_WARPSIZE);
+  // WARNING: blocksize isn't being used as the block size.  Trying to remove this.
+//  int bs = cfg.optional("blocksize",16);
 
   // Check that parameters from command line are ok
-  if((bs<SHMEM_WARPSIZE)||(bs>64)) valid =false;
-  if( bs % SHMEM_WARPSIZE != 0 ) valid = false;
+//  if((bs<ENSEMBLE_WARPSIZE)||(bs>64)) valid =false;
+//  if( bs % ENSEMBLE_WARPSIZE != 0 ) valid = false;
   if(!(nsystems>=1)||!(nsystems<=256000)) valid = false;
   if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
 
@@ -91,10 +92,12 @@ void outputConfigSummary(std::ostream& o,swarm::config& cfg) {
 		<< "# Max time step\t" << cfg["max_time_step"] << "\n"
 		<< "# No. Systems\t" << cfg["nsys"] << "\n"
 		<< "# No. Bodies\t" << cfg["nbod"] << "\n"
-		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
+//		<< "# Blocksize\t" << cfg["blocksize"] << "\n"
 		<< std::endl;
 }
 
+// WARNING:  Is it really wise to provide all of these by default in utils?
+//           This makes it easy to use a default value by accident
 config default_config() {
 	config cfg;
 	cfg["nsys"] = 16;
@@ -103,7 +106,7 @@ config default_config() {
 	cfg["time_step"] = "0.001";       // time step
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
-	cfg["blocksize"] = "16";
+//	cfg["blocksize"] = "16";
 	cfg["log_writer"] = "null";
 	return cfg;
 }

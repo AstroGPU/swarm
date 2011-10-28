@@ -37,8 +37,9 @@ Pmanager& manager::default_log() {
 	static Pmanager default_manager(new manager());
 	static bool is_initialized = false;
 	if( !is_initialized ){
-		config cfg; cfg["log writer"] = "null";
-		default_manager->init(cfg);
+		config cfg; cfg["log_writer"] = "null";
+		//		default_manager->init(cfg);
+		default_manager->init(cfg,0,0);
 		is_initialized = true;
 	}
 	return default_manager;
@@ -55,8 +56,9 @@ void manager::init(const config& cfg, int host_buffer_size, int device_buffer_si
 
 void manager::shutdown()
 {
-	config cfg; cfg["log writer"] = "null";
-	swarm::log::manager::init(cfg);
+	config cfg; cfg["log_writer"] = "null";
+	//	swarm::log::manager::init(cfg);
+	swarm::log::manager::init(cfg,0,0);
 }
 
 void manager::flush(int flags)
