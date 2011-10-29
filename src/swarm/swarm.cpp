@@ -288,20 +288,28 @@ void validate(boost::any& v, const std::vector<std::string>& values
 
 	parameter_range p;
 	static boost::regex assign("^(\\w+)=(.+)$");
-	static boost::regex range("^(.+)\\.\\.(.+)$");
-	static boost::regex list("^([^,]+)(?:,([^,]+))+$");
-	boost::smatch match;
+	static boost::regex range("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
+	static boost::regex rangeinc("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
+	static boost::regex list("^([a-zA-Z0-9\\.]+)(?:,([a-zA-Z0-9\\.]+))+$");
+	static boost::regex item("([a-zA-Z0-9\\.]+)");
+	boost::smatch match, items;
 	if (boost::regex_match(s, match, assign)) {
 		p.parameter = match[1];
 		string value_range = match[2];
 		boost::smatch range_match, list_match;
-		if (boost::regex_match( value_range , range_match, range )) {
+		if (boost::regex_match( value_range , range_match, rangeinc )) {
+			p.values.push_back(range_match[1]);
+			p.values.push_back(range_match[3]);
+			p.values.push_back(range_match[2]);
+			p.interpolate = true;
+		}else if (boost::regex_match( value_range , range_match, range )) {
 			p.values.push_back(range_match[1]);
 			p.values.push_back(range_match[2]);
 			p.interpolate = true;
 		}else if (boost::regex_match( value_range , list_match, list )) {
-			for(int i =1 ; i < list_match.size(); i++)
-				p.values.push_back(list_match[i]);
+			boost::sregex_iterator items( value_range.begin(), value_range.end() , item ), end;
+			for(;items != end; items++)
+				p.values.push_back((*items)[0]);
 			p.interpolate = false;
 		}else {
 			throw po::validation_error("Range is invalid");
@@ -312,11 +320,6 @@ void validate(boost::any& v, const std::vector<std::string>& values
 }
 
 void benchmark(const parameter_range& pr){ 
-	// Reference settings
-	if(!validate_configuration(cfg) ) ERROR( "Invalid configuration" );
-	load_generate_ensemble();
-	outputConfigSummary(std::cout,cfg);
-	reference_integration();
 
 
 	// Go through the loop
@@ -326,10 +329,17 @@ void benchmark(const parameter_range& pr){
 
 	string param = pr.parameter;
 	vector<string> values = pr.values;
+
+	if(!(param == "input" || param == "nsys" || param == "nbod" || cfg.count("reinitialize")))
+		load_generate_ensemble();
+	outputConfigSummary(std::cout,cfg);
+	if(verify_mode)
+		reference_integration();
+
 	if(pr.interpolate)  {
 		// Numeric range
 		double from = atof(values[0].c_str()), to = atof(values[1].c_str());
-		double increment = 1;
+		double increment = (values.size() == 3) ? atof(values[2].c_str()) : 1;
 
 		for(double i = from; i <= to ; i+= increment ){
 			std::ostringstream stream;

@@ -61,25 +61,26 @@ typedef long double_int;
  *
  * 
  */
-template< int _WARPSIZE, int _NUM_ATTRIBUTES = NUM_PLANET_ATTRIBUTES >
+template< int _CHUCK_SIZE, int _NUM_BODY_ATTRIBUTES = NUM_PLANET_ATTRIBUTES, int _NUM_SYS_ATTRIBUTES = NUM_SYSTEM_ATTRIBUTES >
 class EnsembleBase {
 	public:
-	static const int WARPSIZE = _WARPSIZE;
-	static const int NUM_ATTRIBUTES = _NUM_ATTRIBUTES;
+	static const int CHUCK_SIZE = _CHUCK_SIZE;
+	static const int NUM_BODY_ATTRIBUTES = _NUM_BODY_ATTRIBUTES;
+	static const int NUM_SYS_ATTRIBUTES = _NUM_SYS_ATTRIBUTES;
 
 	//! Concrete structure of Body 
 	struct Body {
 		struct Component {
-			double _pos[WARPSIZE];
-			double _vel[WARPSIZE];
+			double _pos[CHUCK_SIZE];
+			double _vel[CHUCK_SIZE];
 			GENERIC double& pos() { return _pos[0]; } 
 			GENERIC double& vel() { return _vel[0]; } 
 			GENERIC const double& pos() const { return _pos[0]; } 
 			GENERIC const double& vel() const { return _vel[0]; } 
 		} component[3];
 
-		double _mass[WARPSIZE];
-		double _attribute[NUM_ATTRIBUTES][WARPSIZE];
+		double _mass[CHUCK_SIZE];
+		double _attribute[NUM_BODY_ATTRIBUTES][CHUCK_SIZE];
 
 		//! Mass of the body
 		GENERIC double& mass() { return _mass[0];  }
@@ -95,7 +96,6 @@ class EnsembleBase {
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 
 		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
-
 		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
 
 		//! Distance of the planet to (0,0,0) 
@@ -126,11 +126,13 @@ class EnsembleBase {
 
 	//! Per system parameters: time and .
 	struct Sys {
-		double _time[WARPSIZE];
+		double _time[CHUCK_SIZE];
 		
 		struct {
 			int state;	int id;
-		} _bunch[WARPSIZE];
+		} _bunch[CHUCK_SIZE];
+
+		double _attribute[NUM_SYS_ATTRIBUTES][CHUCK_SIZE];
 
 		GENERIC double& time() { return _time[0];  }
 		GENERIC const double& time() const { return _time[0];  }
@@ -138,6 +140,8 @@ class EnsembleBase {
 		GENERIC const int& state()const { return _bunch[0].state;  }
 		GENERIC int& id() { return _bunch[0].id; }
 		GENERIC const int& id() const { return _bunch[0].id; }
+		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
+		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
 
 		/*! Constanst that are used as values for state variable
 		 *  Value 0 is the active state, it means that the 
@@ -257,19 +261,19 @@ class EnsembleBase {
 	};
 
 	//! Size of Body[] array required for an ensemble of size nbod,nsys
-  // WARNING: Aren't these too high when nsys is a multiple of WARPSIZE?
+  // WARNING: Aren't these too high when nsys is a multiple of CHUCK_SIZE?
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
-		return (nsys + WARPSIZE) / WARPSIZE * nbod ;
+		return (nsys + CHUCK_SIZE) / CHUCK_SIZE * nbod ;
 	}
 
 	//! Size of Sys[] array required for an ensemble of size nsys
-  // WARNING: Aren't these too high when nsys is a multiple of WARPSIZE?
+  // WARNING: Aren't these too high when nsys is a multiple of CHUCK_SIZE?
 	GENERIC static size_t sys_element_count(const int& nsys){
-		return (nsys + WARPSIZE) / WARPSIZE ;
+		return (nsys + CHUCK_SIZE) / CHUCK_SIZE ;
 	}
 
-	typedef CoalescedStructArray< Body, double, WARPSIZE> BodyArray;
-	typedef CoalescedStructArray< Sys, double, WARPSIZE> SysArray;
+	typedef CoalescedStructArray< Body, double, CHUCK_SIZE> BodyArray;
+	typedef CoalescedStructArray< Sys, double, CHUCK_SIZE> SysArray;
 	typedef typename BodyArray::PItem PBody;
 	typedef typename SysArray::PItem PSys;
 
@@ -306,18 +310,18 @@ class EnsembleBase {
 	 *
 	 * Finds the first body of a system to set as Body* parameter
 	 * The hierarchy is like this:
-	 *    Blocks ( nsys / WARPSIZE )
+	 *    Blocks ( nsys / CHUCK_SIZE )
 	 *    Bodies ( nbod )
-	 *    Warps  ( nsys % WARPSIZE )
+	 *    Warps  ( nsys % CHUCK_SIZE )
 	 *
 	 *    body index should come in the middle to 
 	 *    provide efficient dynamic addressing.
 	 *
 	 */
 	GENERIC SystemRef operator[] (const int & i) { 
-		const int sysinblock= i % WARPSIZE;
-		const int blockid = i / WARPSIZE;
-		const int idx = blockid * _nbod * WARPSIZE +  sysinblock;
+		const int sysinblock= i % CHUCK_SIZE;
+		const int blockid = i / CHUCK_SIZE;
+		const int idx = blockid * _nbod * CHUCK_SIZE +  sysinblock;
 		return SystemRef(_nbod,i,&_body[idx], &_sys[i] ) ;
 	};
 
@@ -597,14 +601,14 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 };
 
 //! Base class of all ensembles
-typedef EnsembleBase< ENSEMBLE_WARPSIZE > ensemble;
+typedef EnsembleBase< ENSEMBLE_CHUCK_SIZE > ensemble;
 
 //! Default ensemble class for most of uses
-typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > defaultEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DefaultAllocator > defaultEnsemble;
 //! Ensemble allocated on host memory
-typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DefaultAllocator > hostEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DefaultAllocator > hostEnsemble;
 //! Ensemble allocated on [GPU] device memory
-typedef EnsembleAlloc< ENSEMBLE_WARPSIZE , DeviceAllocator > deviceEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DeviceAllocator > deviceEnsemble;
 
 typedef hostEnsemble cpu_ensemble;
 typedef deviceEnsemble gpu_ensemble;

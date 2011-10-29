@@ -68,10 +68,10 @@ GENERIC int shmem_per_system(int nbod) {
 template< class T> 
 GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 	extern __shared__ char shared_mem[];
-	int b = sysid_in_block() / SHMEM_WARPSIZE ;
-	int i = sysid_in_block() % SHMEM_WARPSIZE ;
+	int b = sysid_in_block() / SHMEM_CHUCK_SIZE ;
+	int i = sysid_in_block() % SHMEM_CHUCK_SIZE ;
 	int idx = i * sizeof(double) 
-		+ b * SHMEM_WARPSIZE 
+		+ b * SHMEM_CHUCK_SIZE 
 		* shmem_per_system(T::n);
 	return &shared_mem[idx];
 }
@@ -84,61 +84,13 @@ class integrator : public gpu::integrator  {
 
 	public:
 	integrator(const config &cfg) : Base(cfg) {
-	// TODO: Should we allow integrator to provide its own default block size?
-	//       Or is this about memory mangagment, so not integrator specific?
-	  const int nbod = cfg.require("nbod",0);
-	_system_per_block = cfg.optional("systems_per_block",default_system_per_block(nbod));
-	assert(_system_per_block>=1);
-	assert(_system_per_block<=max_system_per_block(nbod));
-
+		// TODO: We may adjust systems_per_block to a lower value at launch time
+		_system_per_block = cfg.optional("systems_per_block",16);
 	}
-
-          static int max_shmem_per_mpu()  {
-	  const int max_shmem = MIN_SHMEM_SIZE;
-#if 0
-	  // TODO: Should we make this dynamic?
-	  // WARNING: Technically what matters is ammount of shared memory per multiprocessor allocated at time of kernel call, not total shared memory per MPUT
-	  int cuda_dev_id = -1;
-	  cuxErrCheck( cudaGetDevice(&cuda_dev_id) );
-	  assert(cuda_dev_id>=0);
-	  cudaDeviceProp deviceProp;
-	  cuxErrCheck( cudaGetDeviceProperties(&deviceProp, cuda_dev_id) );
-	  const int max_shmem = deviceProp.sharedMemPerBlock;
-#endif
-	  return max_shmem;
-	}
-
-
-        static int max_system_per_block(const int nbod)  {
-	  //	  const int nbod = _hens.nbod();
-	  const int max_shmem = max_shmem_per_mpu();
-
-	// WARNING: Assumes that integrator does not use shared memory beyond what is used by standard optimized Gravitation class.  
-	// Can integrators like hermite_adap override this?
-	  const int max_system_per_block = max_shmem/shmem_per_system(nbod);
-	  // WARNING: Does not account for larger memory usage due to coalesced arrys.  Is this the reason I had to set WARPSIZE=1 in gravitation?
-	  assert(max_system_per_block>=1);
-	  return max_system_per_block;
-	}
-
-        static int default_system_per_block(const int nbod)  {
-	  //	  const int nbod = _hens.nbod();
-	  const int max_shmem = max_shmem_per_mpu();
-	  //	  return 16;
-	// WARNING: Assumes that integrator does not use shared memory beyond what is used by standard optimized Gravitation class.  
-	// Can integrators like hermite_adap override this?
-	  const int max_system_per_block_with_two_blocks = max_shmem/(2*shmem_per_system(nbod));
-	  const int default_system_per_block = std::max(1,max_system_per_block_with_two_blocks);
-	  // WARNING: Does not account for larger memory usage due to coalesced arrys.  Is this the reason I had to set WARPSIZE=1 in gravitation?
-	  std::cerr << "# default_system_per_block = " << default_system_per_block << " nbod = " << nbod << " max_shmem= " << max_shmem << " shmem_per_system(nbod)= " << shmem_per_system(nbod) << "\n";
-	  return default_system_per_block;
-	}
-
 
 
 	dim3 gridDim(){
-		// TODO:  Is this one too many blocks if nsys%system_per_block==0?
-		const int nblocks = ( _hens.nsys() + system_per_block() ) / system_per_block();
+		const int nblocks = ( _hens.nsys() + system_per_block() - 1 ) / system_per_block();
 		dim3 gD;
 		gD.z = 1;
 		find_best_factorization(gD.x,gD.y,nblocks);

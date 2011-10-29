@@ -215,7 +215,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 	    keplerian_t orbit;
 	    calc_keplerian_for_cartesian(orbit.a, orbit.e, orbit.i, orbit.O, orbit.w, orbit.M, b.x, b.y,b.z,b.vx,b.vy,b.vz,mass );
 	    const double rad2deg = 180./M_PI;
-	    snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg  % 9.5lg % 9.5lg % 9.5lg  % 9.5lg % 9.5lg % 9.5lg   ***WARNING: NOT ACCURATE***", lr.msgid(), time, sys, body_id, b.mass, orbit.a, orbit.e , orbit.i*rad2deg, orbit.O*rad2deg, orbit.w *rad2deg, orbit.M*rad2deg);
+	    snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg  % 9.5lg % 9.5lg % 9.5lg  % 9.5lg % 9.5lg % 9.5lg   ***WARNING: NOT ACCURATE***", lr.msgid(), T, sys, body_id, b.mass, orbit.a, orbit.e , orbit.i*rad2deg, orbit.O*rad2deg, orbit.w *rad2deg, orbit.M*rad2deg);
 	  }
 	else
 	  {

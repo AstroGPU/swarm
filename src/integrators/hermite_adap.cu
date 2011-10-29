@@ -26,7 +26,7 @@
 
 namespace swarm {
 
-template<int W = SHMEM_WARPSIZE>
+template<int W = SHMEM_CHUCK_SIZE>
 struct DoubleCoalescedStruct {
 	typedef double scalar_t;
 	double _value[W];
@@ -132,8 +132,8 @@ class hermite_adap: public integrator {
 	}
 	int  shmemSize(){
 		const int nbod = _hens.nbod();
-		// Round up number of systems in a block to the next multiple of SHMEM_WARPSIZE
-		int spb = ((system_per_block()+SHMEM_WARPSIZE-1)/SHMEM_WARPSIZE) * SHMEM_WARPSIZE;
+		// Round up number of systems in a block to the next multiple of SHMEM_CHUCK_SIZE
+		int spb = ((system_per_block()+SHMEM_CHUCK_SIZE-1)/SHMEM_CHUCK_SIZE) * SHMEM_CHUCK_SIZE;
 		return spb *  shmem_per_system(nbod);
 	}
 
@@ -141,10 +141,10 @@ class hermite_adap: public integrator {
 template< class T> 
 static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 	extern __shared__ char shared_mem[];
-	int b = sysid_in_block() / SHMEM_WARPSIZE ;
-	int i = sysid_in_block() % SHMEM_WARPSIZE ;
+	int b = sysid_in_block() / SHMEM_CHUCK_SIZE ;
+	int i = sysid_in_block() % SHMEM_CHUCK_SIZE ;
 	int idx = i * sizeof(double) 
-		+ b * SHMEM_WARPSIZE 
+		+ b * SHMEM_CHUCK_SIZE 
 		* shmem_per_system(T::n);
 	return &shared_mem[idx];
 }

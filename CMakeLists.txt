@@ -22,9 +22,10 @@ SET(CUDA_NVCC_FLAGS
 SET(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda CACHE PATH "Path to CUDA SDK directory")
 
 SET(NUM_PLANET_ATTRIBUTES 1 CACHE STRING "Number of attributes per planet [1..10]")
+SET(NUM_SYSTEM_ATTRIBUTES 1 CACHE STRING "Number of attributes per system [1..10]")
 SET(MAX_NBODIES 6 CACHE STRING "Maximum number of bodies per system [3..10]")
-SET(ENSEMBLE_WARPSIZE 16 CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
-SET(SHMEM_WARPSIZE 16 CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
+SET(ENSEMBLE_CHUCK_SIZE 16 CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
+SET(SHMEM_CHUCK_SIZE 16 CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
 SET(MIN_SHMEM_SIZE 17280 CACHE STRING "Minimum ammount of shared memory per block in bytes to be assumed at compile time")
 SET(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs CACHE PATH "Where to put documentation output")
 

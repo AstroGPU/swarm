@@ -31,16 +31,16 @@ namespace bppt {
  *  This for each pair we keep an acc. The values are
  *  not final values, they are intermediate values calculated by
  *  calc_pair and should be accumulated using the correct algorithm
- *  to produce acceleration. WARPSIZE can be 1. Usually it is
+ *  to produce acceleration. CHUCK_SIZE can be 1. Usually it is
  *  set to 16 for optimizing coalesced reads from memory.
  *
  */
 template<int W>
 struct GravitationAccOnlyScalars {
-	static const int WARPSIZE = W;
+	static const int CHUCK_SIZE = W;
 	typedef double scalar_t; 
 
-	double _acc[WARPSIZE];
+	double _acc[CHUCK_SIZE];
 
 	// Accessors
 	GENERIC double& acc() { return _acc[0];  }
@@ -53,17 +53,17 @@ struct GravitationAccOnlyScalars {
  *  This for each pair we keep an acc and a jerk. The values are
  *  not final values, they are intermediate values calculated by
  *  calc_pair and should be accumulated using the correct algorithm
- *  to produce acceleration and jerk. WARPSIZE can be 1. Usually it is
+ *  to produce acceleration and jerk. CHUCK_SIZE can be 1. Usually it is
  *  set to 16 for optimizing coalesced reads from memory.
  *
  */
 template<int W>
 struct GravitationScalars {
-	static const int WARPSIZE = W;
+	static const int CHUCK_SIZE = W;
 	typedef double scalar_t; 
 
-	double _acc[WARPSIZE];
-	double _jerk[WARPSIZE];
+	double _acc[CHUCK_SIZE];
+	double _jerk[CHUCK_SIZE];
 
 	// Accessors
 	GENERIC double& acc() { return _acc[0];  }
@@ -134,13 +134,13 @@ struct GravitationScalars {
  * data and calculates the acc/jerk for each body.
  *
  */
-//template<int nbod, int WARPSIZE = SHMEM_WARPSIZE>
-  template<int nbod, int WARPSIZE = SelectWarpSizeGravitation<nbod,MIN_SHMEM_SIZE>::suggest >
+//template<int nbod, int CHUCK_SIZE = SHMEM_CHUCK_SIZE>
+  template<int nbod, int CHUCK_SIZE = SelectWarpSizeGravitation<nbod,MIN_SHMEM_SIZE>::suggest >
 class Gravitation {
 	public:
 	const static int pair_count = (nbod*(nbod-1))/2;
 
-	typedef GravitationScalars<WARPSIZE> shared_data [pair_count][3];
+	typedef GravitationScalars<CHUCK_SIZE> shared_data [pair_count][3];
 
 	private:
 	ensemble::SystemRef& sys;
@@ -387,16 +387,16 @@ class Gravitation {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		//		return pair_count * 3  * 2 * sizeof(double);
 		// TODO: Test
-		 return pair_count * 3  * sizeof(GravitationScalars<WARPSIZE>)/WARPSIZE;
+		 return pair_count * 3  * sizeof(GravitationScalars<CHUCK_SIZE>)/CHUCK_SIZE;
 	}
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
-		// WARNING: Should WARPSIZE be system_per_block in 2 lines below?
-		int b = sysid_in_block / WARPSIZE ;
-		int i = sysid_in_block % WARPSIZE ;
+		// WARNING: Should CHUCK_SIZE be system_per_block in 2 lines below?
+		int b = sysid_in_block / CHUCK_SIZE ;
+		int i = sysid_in_block % CHUCK_SIZE ;
 		int idx = i * sizeof(double) 
-			+ b * WARPSIZE 
+			+ b * CHUCK_SIZE 
 			* shmem_per_system();
 		return &shared_mem[idx];
 	}
@@ -475,12 +475,12 @@ class Gravitation {
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
  */
 
-  template<int nbod, int WARPSIZE = SelectWarpSizeGravitationAccOnly<nbod,MIN_SHMEM_SIZE>::suggest >
+  template<int nbod, int CHUCK_SIZE = SelectWarpSizeGravitationAccOnly<nbod,MIN_SHMEM_SIZE>::suggest >
 class GravitationAccOnly {
 	public:
 	const static int pair_count = (nbod*(nbod-1))/2;
 
-	typedef GravitationAccOnlyScalars<WARPSIZE> shared_data [pair_count][3];
+	typedef GravitationAccOnlyScalars<CHUCK_SIZE> shared_data [pair_count][3];
 
 	private:
 	ensemble::SystemRef& sys;
@@ -651,16 +651,16 @@ class GravitationAccOnly {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * sizeof(double);
 		// TODO: Test
-		// return pair_count * 3  * sizeof(GravitationScalars<WARPSIZE>)/WARPSIZE;
+		// return pair_count * 3  * sizeof(GravitationScalars<CHUCK_SIZE>)/CHUCK_SIZE;
 	}
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
-		// WARNING: Should WARPSIZE be system_per_block in 2 lines below?
-		int b = sysid_in_block / WARPSIZE ;
-		int i = sysid_in_block % WARPSIZE ;
+		// WARNING: Should CHUCK_SIZE be system_per_block in 2 lines below?
+		int b = sysid_in_block / CHUCK_SIZE ;
+		int i = sysid_in_block % CHUCK_SIZE ;
 		int idx = i * sizeof(double) 
-			+ b * WARPSIZE 
+			+ b * CHUCK_SIZE 
 			* shmem_per_system();
 		return &shared_mem[idx];
 	}

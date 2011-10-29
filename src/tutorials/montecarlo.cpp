@@ -429,6 +429,7 @@ void catch_ctrl_c()
 
 int main(int argc, char* argv[] ) 
 {
+
   // We keep it simple, later on one can use boost::program_options to 
   // have more options
   // but now we only use two configuration files. It is because the 

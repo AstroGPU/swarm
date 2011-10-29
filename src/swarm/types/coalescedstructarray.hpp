@@ -36,13 +36,13 @@ namespace swarm {
  * by grouping the structure elements together. However, it requires that all
  * the elements of the structure should be of the same size.
  *
- * The Item should provide WARPSIZE and scalar_t
+ * The Item should provide CHUCK_SIZE and scalar_t
  * for offset calculation
  */
-template<class Item, typename _Scalar = typename Item::scalar_t, int _WARPSIZE = Item::WARPSIZE >
+template<class Item, typename _Scalar = typename Item::scalar_t, int _CHUCK_SIZE = Item::CHUCK_SIZE >
 struct CoalescedStructArray {
 public:
-	static const int WARPSIZE = _WARPSIZE;
+	static const int CHUCK_SIZE = _CHUCK_SIZE;
 	typedef Item* PItem;
 	typedef _Scalar scalar_t;
 
@@ -55,8 +55,8 @@ public:
 	GENERIC CoalescedStructArray(PItem array, size_t block_count)
 		:_array(array),_block_count(block_count){}
 	GENERIC Item& operator[] ( const int & i ) {
-		size_t block_idx = i / WARPSIZE;
-		size_t idx = i % WARPSIZE;
+		size_t block_idx = i / CHUCK_SIZE;
+		size_t idx = i % CHUCK_SIZE;
 		scalar_t * blockaddr = (scalar_t*) (get() + block_idx);
 		return * (Item *) ( blockaddr + idx );
 	}
@@ -64,7 +64,7 @@ public:
 		return _block_count ;
 	}
 	GENERIC int size()const{
-		return _block_count * WARPSIZE;
+		return _block_count * CHUCK_SIZE;
 	}
 	GENERIC Item * get() {
 		return _array;
