@@ -20,6 +20,7 @@ Minimum Hardware requirements:
 
 Required software packages:
  - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 3.2 or later 
+ - GCC 4.4 : CUDA has problems with most recent versions of GCC. Check the CUDA manual for the supported version of GCC.
  - <a href="http://www.boost.org/">Boost</a> 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
  - <a href="http://www.doxygen.org/">Doxygen</a> (optional)

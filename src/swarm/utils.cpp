@@ -76,8 +76,8 @@ bool validate_configuration(config& cfg){
 //  int bs = cfg.optional("blocksize",16);
 
   // Check that parameters from command line are ok
-//  if((bs<ENSEMBLE_CHUCK_SIZE)||(bs>64)) valid =false;
-//  if( bs % ENSEMBLE_CHUCK_SIZE != 0 ) valid = false;
+//  if((bs<ENSEMBLE_CHUNK_SIZE)||(bs>64)) valid =false;
+//  if( bs % ENSEMBLE_CHUNK_SIZE != 0 ) valid = false;
   if(!(nsystems>=1)||!(nsystems<=256000)) valid = false;
   if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
 

@@ -25,21 +25,24 @@
 namespace swarm {
 
 template<class N>
-GENERIC N square(const N& x) { return x*x; }
 
-typedef long double_int;
+//! \todo This should be moved to a global header file
+GENERIC N square(const N& x) { return x*x; }
 
 /*! ensemble data structure containing nbody systems.
  *  
  *  Internal Usage:
  *  Contains an ensemble of nsys() systems each containing nbod() bodies.
  *  use operator [] to peek into the data structure:
- *   - First [] to access a specific system
- *   - Second [] to access a specific body
- *   - Third [] to access a specific coordinate component
+ *   - Index into ensemble to access a specific system
+ *   - Index into system to access a specific body
+ *   - Index into body to access a specific coordinate component
+ *   - Each coordinate component has pos (position) and vel (velocity)
  *
  *  Example:
  *  \code
+ *  ensemble ens;
+ *
  *  ens[0][1].mass() = 1.0;  // Set mass of body 1 in system #0
  *  ens[2][1][0].pos() = 4;  // Set x cooridante of position of body #1 in system #2
  *  ens[3][2][1].vel() = 3;  // Set y coordinate of velocity of body #2 in system #3
@@ -48,9 +51,10 @@ typedef long double_int;
  *  \endcode
  *
  *  Public Usage:
- *  There are accessors: nsys(), nbod() for each ensemble;
- *      time(), state(), id(), number() for each system (pass sys); and
- *      get_body(), set_body(), mass(), attribute(), x(), y(), z(), vx(), vy(), vz() ... for each body (pass sys, bod)
+ *  There are accessors:
+ *    - ensemble:  nsys(), nbod()
+ *    - system  :  time(), state(), id(), number() (pass system id as argument)
+ *    - body    : get_body(), set_body(), mass(), attribute(), x(), y(), z(), vx(), vy(), vz() ... for each body (pass system id and body number as argument)
  *
  *  Two utility functions are provided for ease of use: calc_total_energy(sys) and get_barycenter(sys)
  *
@@ -59,44 +63,69 @@ typedef long double_int;
  *  for parameter definition in functions and should be passed as a reference.
  *  To create an ensemble use one of \ref defaultEnsemble, \ref deviceEnsemble or \ref hostEnsemble
  *
+ * The bodies and systems can have extra attributes. The constants used here
+ * for number of attributes are set in the configuration file which is 
+ * set by CMake. You can change these values using the CMake system.
  * 
  */
-template< int _CHUCK_SIZE, int _NUM_BODY_ATTRIBUTES = NUM_PLANET_ATTRIBUTES, int _NUM_SYS_ATTRIBUTES = NUM_SYSTEM_ATTRIBUTES >
+template< int _CHUNK_SIZE, int _NUM_BODY_ATTRIBUTES = NUM_PLANET_ATTRIBUTES, int _NUM_SYS_ATTRIBUTES = NUM_SYSTEM_ATTRIBUTES >
 class EnsembleBase {
 	public:
-	static const int CHUCK_SIZE = _CHUCK_SIZE;
+
+	//! CHUNK_SIZE for Coalesced access. c.f CoalescedStructArray
+	static const int CHUNK_SIZE = _CHUNK_SIZE;
+
+	//! Number of extra attributes
 	static const int NUM_BODY_ATTRIBUTES = _NUM_BODY_ATTRIBUTES;
+
+	//! Number of extra attributes per system
 	static const int NUM_SYS_ATTRIBUTES = _NUM_SYS_ATTRIBUTES;
 
-	//! Concrete structure of Body 
+	/*! Concrete structure of Body 
+	 *  This class is specifically designed to be used with
+	 *  CoalescedStruct array. One instance of this body will
+	 *  contain information for CHUNK_SIZE bodies. However,
+	 *  The accessors only return information for the first
+	 *  element of each array. For instantiation outside ensemble
+	 *  the CHUNK_SIZE should be set to 1.
+	 *
+	 */
 	struct Body {
 		struct Component {
-			double _pos[CHUCK_SIZE];
-			double _vel[CHUCK_SIZE];
+			//! position for this component
+			double _pos[CHUNK_SIZE];
+			//! velocity for this component
+			double _vel[CHUNK_SIZE];
+			//! normal accessor for position
 			GENERIC double& pos() { return _pos[0]; } 
+			//! normal accessor for velocity
 			GENERIC double& vel() { return _vel[0]; } 
+			//! constant accessor for position
 			GENERIC const double& pos() const { return _pos[0]; } 
+			//! constant accessor for velocity
 			GENERIC const double& vel() const { return _vel[0]; } 
 		} component[3];
 
-		double _mass[CHUCK_SIZE];
-		double _attribute[NUM_BODY_ATTRIBUTES][CHUCK_SIZE];
+		double _mass[CHUNK_SIZE];
+		double _attribute[NUM_BODY_ATTRIBUTES][CHUNK_SIZE];
 
 		//! Mass of the body
 		GENERIC double& mass() { return _mass[0];  }
-		//! Mass of the body
+
+		//! Mass of the body (constant accessor)
 		GENERIC const double& mass() const { return _mass[0];  }
+
 		//! Index into components 0 is x, 1 is y, 2 is z
 		//! Example b[0].pos() is x-coordinate of position 
 		//! and b[3].vel() is z-coordinate of velocity.
 		GENERIC Component& operator[] (const int & i) { return component[i]; };
-		//! Index into components 0 is x, 1 is y, 2 is z
-		//! Example b[0].pos() is x-coordinate of position 
-		//! and b[3].vel() is z-coordinate of velocity.
+
+		//! Constant accessor for indexing into body. c.f. to regular accessor
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 
-		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
+		//! Accessing extra attributes of the array.
 		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
+		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
 
 		//! Distance of the planet to (0,0,0) 
 		GENERIC double radius_squared() { 
@@ -104,6 +133,7 @@ class EnsembleBase {
 				+ square(operator[](1).pos()) 
 				+ square(operator[](2).pos());
 		}
+
 		//! Magnitude of velocity
 		GENERIC double speed_squared() {
 			return square(operator[](0).vel()) 
@@ -124,22 +154,34 @@ class EnsembleBase {
 
 	};
 
-	//! Per system parameters: time and .
+	/*! \brief Structure for quantities stored per system.
+	 * This structure is specifically designed for efficient
+	 * coalesced access and should only be used
+	 * with CoalescedStructArray.
+	 *
+	 */
 	struct Sys {
-		double _time[CHUCK_SIZE];
+		double _time[CHUNK_SIZE];
 		
 		struct {
 			int state;	int id;
-		} _bunch[CHUCK_SIZE];
+		} _bunch[CHUNK_SIZE];
 
-		double _attribute[NUM_SYS_ATTRIBUTES][CHUCK_SIZE];
+		double _attribute[NUM_SYS_ATTRIBUTES][CHUNK_SIZE];
 
+		//! wall clock time for the system
 		GENERIC double& time() { return _time[0];  }
 		GENERIC const double& time() const { return _time[0];  }
+
+		//! Activity state of the system. c.f. ActivationStates
 		GENERIC int& state() { return _bunch[0].state;  }
 		GENERIC const int& state()const { return _bunch[0].state;  }
+
+		//! Unique identifier of the system. c.f. SysRef::id
 		GENERIC int& id() { return _bunch[0].id; }
 		GENERIC const int& id() const { return _bunch[0].id; }
+
+		//! Access extra attributes of the system.
 		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
 		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
 
@@ -166,9 +208,14 @@ class EnsembleBase {
 
 
 
-	//! Reference to a system within an ensemble
-	//! Usage: SystemRef s = ens[i];
-	struct SystemRef {
+	/*! Reference to a system within an ensemble. 
+	 *  The real system is the Sys data structure. Since we want to keep the Sys
+	 *  data structure simple and use it only for memory layout. We will use this
+	 *  class for referencing a Sys. This class is solely used for the accessors and
+	 *  it only contains pointers to the ensemble and the system.
+	 *  Usage: SystemRef s = ens[i];
+	 */
+	class SystemRef {
 		//! Number of bodies, copied from ensemble
 		const int _nbod;
 		//! Serial number of the system in the ensemble
@@ -177,38 +224,62 @@ class EnsembleBase {
 		Body* _body;
 		//! Pointer to system parameters
 		Sys* _sys;
+	public:
 
 		//! Only should be used by ensemble
 		GENERIC SystemRef(const int& nbod,const int& number,Body* body,Sys* sys):_nbod(nbod),_number(number),_body(body),_sys(sys){}
 
+
 		//! Access a body within the system
 		GENERIC Body& operator[](const int & i ) const { return _body[i]; };
+		
 		//! Current time of the system
 		GENERIC double& time() const { return _sys[0].time(); }
-		//! Activity state
+		
+		//! Query if the system is active
 		GENERIC bool is_active() const { return _sys[0].state() == Sys::SYSTEM_ACTIVE; }
+		
+		//! Query if the system is inactive
 		GENERIC bool is_inactive() const { return _sys[0].state() == Sys::SYSTEM_INACTIVE; }
+		
+		//! Query if the system is disabled
 		GENERIC bool is_disabled() const { return _sys[0].state() == Sys::SYSTEM_DISABLED; }
+
+		//! Get the ActivationState of the system. c.f. ActivationStates
 		GENERIC int& state() const { return _sys[0].state(); }
+
+		//! Mark the system as active
 		GENERIC void set_active() const { _sys[0].state() = Sys::SYSTEM_ACTIVE; }
+
+		//! Mark the system as inactive
 		GENERIC void set_inactive() const { _sys[0].state() = Sys::SYSTEM_INACTIVE; }
+
+		//! Mark the system as disabled
 		GENERIC void set_disabled() const { _sys[0].state() = Sys::SYSTEM_DISABLED; }
-		//! The id of the current system it is the unique identifier 
-		//! It is different from number, which is the array index of the 
-		//! system in the current ensemble.
+
+		/*! Unique identifier of the system. The identifier is generated
+		 * by any tool that generates the ensemble and is preserved during
+		 * integration and reshuffling of the systems. It is used to match
+		 * systems after integration with their initial conditions
+		 * It is different from number, which is the array index of the 
+		 * system in the current ensemble.
+		 */
 		GENERIC int& id() const { return _sys[0].id(); }
 		//! Number of bodies in this system
 		GENERIC const int& nbod()const{ return _nbod;	}
 		//! Serial number of the system in the ensemble
 		GENERIC const int& number()const{ return _number;	}
 
+		//! extra attribute of the system
+		GENERIC double& attribute(const int& i) const { return _sys[0].attribute(i); }
+
 		//! Distance between planet i and j in the system
 		//! For a faster version c.f. \ref distance_squared_between(i,j)
-		GENERIC double distance_between(const int& i , const int & j ) {
+		GENERIC double distance_between(const int& i , const int & j ) const {
 			return sqrt(distance_squared_between(i,j));
 		}
 		//! Distance squared between planet i and j in the system.
-		GENERIC double distance_squared_between(const int& i , const int & j ) {
+		GENERIC double distance_squared_between(const int& i , const int & j )const {
 			const Body& b1 = _body[i], & b2 = _body[j];
 			return square(b1[0].pos()-b2[0].pos())
 				+ square(b1[1].pos()-b2[1].pos())
@@ -229,18 +300,39 @@ class EnsembleBase {
 				s[i][1].vel() = _body[i][1].vel();
 				s[i][2].vel() = _body[i][2].vel();
 				s[i].mass() = _body[i].mass();
+				for(int j = 0; j < NUM_BODY_ATTRIBUTES; j++){
+					s[i].attribute(j) = _body[i].attribute(j);
+				}
+			}
+			for(int j = 0; j < NUM_SYS_ATTRIBUTES; j++){
+				s.attribute(j) = attribute(j);
 			}
 			s.time() = time();
 			s.state() = state();
 			s.id() = id();
+		}
+
+		//! Total energy (potential+kinetic) of a system
+		GENERIC double calc_total_energy() const {
+			double K = 0.0, U = 0.0;
+
+			for(int i = 0; i < _nbod; i++) 
+				K += 0.5 * _body[i].mass() * _body[i].speed_squared();
+
+			for(int i = 0; i < _nbod; i++) 
+				for(int j = 0; j < _nbod; j++) 
+					U += - _body[i].mass() * _body[j].mass() * distance_between(i,j);
+
+			return K + U;
 		}
 	};
 
 	//! Constant encapsulation of SystemRef
 	//! If the ens is constant use:
 	//! SystemRefConst s = ens[i];
-	struct SystemRefConst {
+	class SystemRefConst {
 		SystemRef _ref;
+	public:
 
 		// Constructor
 		GENERIC SystemRefConst(const SystemRef& ref):_ref(ref){}
@@ -254,46 +346,50 @@ class EnsembleBase {
 		GENERIC bool is_disabled() const { return _ref.is_disabled(); }
 		GENERIC const int& state() const { return _ref.state(); }
 		GENERIC const int& id() const { return _ref.id(); }
+		GENERIC const double& attribute(const int& i) const { return _sys[0].attribute(i); }
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 		GENERIC void copyTo( const SystemRef& r ) { _ref.copyTo( r ) ; }
+		GENERIC double calc_total_energy() const { _ref.calc_total_energy(); }
 	};
 
 	//! Size of Body[] array required for an ensemble of size nbod,nsys
-  // WARNING: Aren't these too high when nsys is a multiple of CHUCK_SIZE?
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
-		return (nsys + CHUCK_SIZE) / CHUCK_SIZE * nbod ;
+		return (nsys + CHUNK_SIZE-1) / CHUNK_SIZE * nbod ;
 	}
 
 	//! Size of Sys[] array required for an ensemble of size nsys
-  // WARNING: Aren't these too high when nsys is a multiple of CHUCK_SIZE?
 	GENERIC static size_t sys_element_count(const int& nsys){
-		return (nsys + CHUCK_SIZE) / CHUCK_SIZE ;
+		return (nsys + CHUNK_SIZE-1) / CHUNK_SIZE ;
 	}
 
-	typedef CoalescedStructArray< Body, double, CHUCK_SIZE> BodyArray;
-	typedef CoalescedStructArray< Sys, double, CHUCK_SIZE> SysArray;
+	//! Type of array that we want to use for Body.
+	typedef CoalescedStructArray< Body, double, CHUNK_SIZE> BodyArray;
+	//! Type of array that we want to use for Sys.
+	typedef CoalescedStructArray< Sys, double, CHUNK_SIZE> SysArray;
 	typedef typename BodyArray::PItem PBody;
 	typedef typename SysArray::PItem PSys;
 
 	protected:
+	//! Number of bodies
 	int _nbod;
+	//! Number of systems
 	int _nsys;
-	//! Coalesced array of Body(s)
+	//! Coalesced array of Body
 	BodyArray _body;
-	//! Coalesced array of Sys(s)
+	//! Coalesced array of Sys
 	SysArray _sys;
 
-	public:
-
-
-
-	public:
 	//! Trivial constructor, creates an invalid ensemble
+	//! \todo This is not safe and should be removed. ensemble is almost an abstract
+	//! class and should not have a constructor anyway.
 	GENERIC EnsembleBase():_nbod(0),_nsys(0),_body(0,0),_sys(0,0) {};
+
 	//! Create an ensemble from pre-allocated body_array and sys_array arrays.
 	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,PBody body_array, PSys sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
+
+	public:
 
 	//! Number of bodies per system
 	GENERIC const int& nbod()const{ return _nbod;	}
@@ -310,18 +406,18 @@ class EnsembleBase {
 	 *
 	 * Finds the first body of a system to set as Body* parameter
 	 * The hierarchy is like this:
-	 *    Blocks ( nsys / CHUCK_SIZE )
+	 *    Blocks ( nsys / CHUNK_SIZE )
 	 *    Bodies ( nbod )
-	 *    Warps  ( nsys % CHUCK_SIZE )
+	 *    Warps  ( nsys % CHUNK_SIZE )
 	 *
 	 *    body index should come in the middle to 
 	 *    provide efficient dynamic addressing.
 	 *
 	 */
 	GENERIC SystemRef operator[] (const int & i) { 
-		const int sysinblock= i % CHUCK_SIZE;
-		const int blockid = i / CHUCK_SIZE;
-		const int idx = blockid * _nbod * CHUCK_SIZE +  sysinblock;
+		const int sysinblock= i % CHUNK_SIZE;
+		const int blockid = i / CHUNK_SIZE;
+		const int idx = blockid * _nbod * CHUNK_SIZE +  sysinblock;
 		return SystemRef(_nbod,i,&_body[idx], &_sys[i] ) ;
 	};
 
@@ -413,15 +509,12 @@ class EnsembleBase {
 	}
 	GENERIC void set_active(const int& sys) { 
 	  operator[] ( sys ).set_active();
-	  //		operator[] ( sys ).state() = Sys::SYSTEM_ACTIVE;
 	}
 	GENERIC void set_inactive(const int& sys) { 
 	  operator[] ( sys ).set_inactive();
-	  //		operator[] ( sys ).state() = Sys::SYSTEM_INACTIVE;
 	}
 	GENERIC void set_disabled(const int& sys) { 
 	  operator[] ( sys ).set_disabled();
-	  //		operator[] ( sys ).state() = Sys::SYSTEM_DISABLED;
 	}
 
 
@@ -461,6 +554,12 @@ class EnsembleBase {
 	// Utilities
 	//
 	
+
+	/*! Deprecated function: this function uses a very bad signature and too many 
+	 * arguments. It is used to find a barycenter for first max_body_id planets in the
+	 * system. If max_body_id is not specified, then the result is the barycenter for
+	 * the whole planetary system.
+	 */
 	GENERIC void get_barycenter(const int& sys, double& x, double& y, double& z, double& vx, double& vy, double& vz, const int& max_body_id = MAX_NBODIES) const 
 	{
 
@@ -489,35 +588,25 @@ class EnsembleBase {
 
 	//! Total energy (potential+kinetic) of a system
 	GENERIC double calc_total_energy( int sys ) const {
-		double E = 0.;
-		for (int bod1 = 0; bod1 != nbod(); bod1++)
-		{
-			double m1; double x1[3], v1[3];
-			get_body(sys, bod1, m1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2]);
-			E += 0.5 * m1 * (v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
-
-			for (int bod2 = 0; bod2 < bod1; bod2++)
-			{
-				double m2; double x2[3], v2[3];
-				get_body(sys, bod2, m2, x2[0], x2[1], x2[2], v2[0], v2[1], v2[2]);
-				double dist = sqrt((x2[0] - x1[0]) * (x2[0] - x1[0]) + (x2[1] - x1[1]) * (x2[1] - x1[1]) + (x2[2] - x1[2]) * (x2[2] - x1[2]));
-
-				E -= m1 * m2 / dist;
-			}
-		}
-		return E;
+		SystemRefConst s = operator[] ( sys );
+		return s.calc_total_energy();
 	}
 
+	//! Calculate the total energy of a system and store it in E.
+	//! \todo unsafe function
 	GENERIC void calc_total_energy(double* E) const {
 		for (int sys = 0; sys != nsys(); sys++)
 			E[sys] = calc_total_energy(sys);
 	}
 
+	//! A simple data structure to calculate statistical measures on a range of values.
 	struct range_t {
 		double average, min, max,median;
 		range_t(const double& a,const double& m, const double& M, const double& d)
 			:average(a),min(m),max(M),median(d){}
 
+		//! Scan the array defined by iteratiors begin and end and return statistical
+		//! meausers as a range_t struct.
 		template<class RandomAccessIterator>
 		static range_t calculate(RandomAccessIterator begin, RandomAccessIterator end){
 			size_t n = end - begin;
@@ -548,7 +637,11 @@ class EnsembleBase {
 
 };
 
-//! Allocator based version of ensemble containing memory management routines
+/*! Allocator based version of ensemble containing memory management routines
+ * It takes an allocator as a parameter and uses the allocator for 
+ * allocate, deallocate and copying the ensemble. The allocated memories are
+ * protected by shared pointers.
+ */
 template< int W , template<class T> class _Allocator >
 struct EnsembleAlloc : public EnsembleBase<W> {
 	typedef EnsembleBase<W> Base;
@@ -601,16 +694,19 @@ struct EnsembleAlloc : public EnsembleBase<W> {
 };
 
 //! Base class of all ensembles
-typedef EnsembleBase< ENSEMBLE_CHUCK_SIZE > ensemble;
+typedef EnsembleBase< ENSEMBLE_CHUNK_SIZE > ensemble;
 
 //! Default ensemble class for most of uses
-typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DefaultAllocator > defaultEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUNK_SIZE , DefaultAllocator > defaultEnsemble;
 //! Ensemble allocated on host memory
-typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DefaultAllocator > hostEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUNK_SIZE , DefaultAllocator > hostEnsemble;
 //! Ensemble allocated on [GPU] device memory
-typedef EnsembleAlloc< ENSEMBLE_CHUCK_SIZE , DeviceAllocator > deviceEnsemble;
+typedef EnsembleAlloc< ENSEMBLE_CHUNK_SIZE , DeviceAllocator > deviceEnsemble;
 
+
+//! Provided for backward compatibility
 typedef hostEnsemble cpu_ensemble;
+//! Provided for backward compatibility
 typedef deviceEnsemble gpu_ensemble;
 
 }

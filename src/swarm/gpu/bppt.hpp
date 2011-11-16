@@ -68,10 +68,10 @@ GENERIC int shmem_per_system(int nbod) {
 template< class T> 
 GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 	extern __shared__ char shared_mem[];
-	int b = sysid_in_block() / SHMEM_CHUCK_SIZE ;
-	int i = sysid_in_block() % SHMEM_CHUCK_SIZE ;
+	int b = sysid_in_block() / SHMEM_CHUNK_SIZE ;
+	int i = sysid_in_block() % SHMEM_CHUNK_SIZE ;
 	int idx = i * sizeof(double) 
-		+ b * SHMEM_CHUCK_SIZE 
+		+ b * SHMEM_CHUNK_SIZE 
 		* shmem_per_system(T::n);
 	return &shared_mem[idx];
 }

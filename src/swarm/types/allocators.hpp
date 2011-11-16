@@ -16,7 +16,25 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 /*! \file allocators.hpp
- *  \brief Routines to allocate memory using different APIs and copy between them
+ *  \brief Routines to allocate memory using different APIs and copy 
+ *  between them
+ *  
+ *  The classes provide a generalized interface for different memory 
+ *  allocators. This is similar to what C++ library uses. The difference
+ *  is, device memory allocators allocate a memory that is not accessible
+ *  to the CPU. So in addition to allocations we need copy routines between
+ *  allocators. 
+ *
+ *  Every allocator provides three basic actions:
+ *   - create
+ *   - copy
+ *   - free
+ *
+ *  The copy routine inside the allocator only copies inside the same memory
+ *  hierarchy. For memory transfers between domains, we need to use the
+ *  function template alloc_copy. alloc_copy is specialized for different
+ *  combinations of source and destination to use specific CUDA calls for
+ *  copying.
  *
  *  Current allocators are:
  *   - C++ new/delete
@@ -29,6 +47,8 @@
 #pragma once
 
 //! Default allocator that uses C++ new/delete
+//! This class uses standard C++ routines for allocation
+//! and memory manipulation: new[], delete[] and std::copy.
 template< class T >
 struct DefaultAllocator {
 	typedef T Elem;
@@ -47,6 +67,10 @@ struct DefaultAllocator {
 };
 
 //! CUDA device memory allocator that uses cudaMalloc,cudaMemcpy,cudaFree
+//! It creates a pointer that is allocated on the device. The pointer
+//! cannot be used by the caller and should only be passed to a CUDA 
+//! kernel. The copy uses cudaMemcpy to transfer data between 2 device
+//! arrays.
 template< class T >
 struct DeviceAllocator {
 	typedef T Elem;
@@ -70,6 +94,10 @@ struct DeviceAllocator {
 
 
 //! CUDA host memory allocator uses cudaMallocHost,cudaMemcpy,cudaFreeHost
+//! Host memory allocator is similar to malloc. The pointers point to 
+//! memory that can be used by C++. However, CUDA documentation claims that
+//! copying to device memory from a CUDA allocated host array is faster than
+//! memory allocated using malloc.
 template< class T >
 struct HostAllocator {
 	typedef T Elem;
@@ -92,6 +120,11 @@ struct HostAllocator {
 };
 
 //! CUDA host memory allocator similar to HostAllocator using device mapped memory
+//! A Mapped memory is accessible on host and device. However, the pointers are
+//! different and this complicated everything. According to CUDA manual, version
+//! 4.0 of CUDA SDK uses unified pointers so there in to need to 
+//! map the pointer. In that case, The pointer obtained using this allocator
+//! can be passed to a kernel.
 template< class T >
 struct MappedHostAllocator : public HostAllocator<T> {
 	static T *  alloc(size_t s) {  
@@ -100,6 +133,11 @@ struct MappedHostAllocator : public HostAllocator<T> {
 		return p;
 	}
 
+	/*!
+	 * This is a non-conforming method for getting the Device Pointer
+	 * This method is only needed when dealing with device with compute
+	 * capabality less than 2.0
+	 */
 	static T* getDevicePointer(T* hp){
 		T* dp;
 		cudaGetDevicePointer(&dp,hp,0);
@@ -107,6 +145,9 @@ struct MappedHostAllocator : public HostAllocator<T> {
 	}
 };
 
+
+//! Simple copy between the same allocator. Uses the copy
+//! method of the allocator.
 template< class A, class T> 
 void alloc_copy(A,A, T* begin, T* end, T* dst){
 	A::copy(begin,end,dst);

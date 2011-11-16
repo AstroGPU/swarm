@@ -40,12 +40,7 @@ void config::initialize(const char* const key_value_pairs[][2],const int n){
 	
 }
 
-/*!
-   \brief  load a configuration file
 
-   @param[out] cfg configuration class
-   @param[in] fn file name sting
- */
 config config::load(const std::string &fn, config cfg)
 {
 	std::ifstream in(fn.c_str());

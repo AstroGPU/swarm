@@ -26,7 +26,7 @@ int optimized_system_per_block(const int thread_per_system,const int shmem_per_s
 	// Can integrators like hermite_adap override this?
 	const int max_system_per_block_with_two_blocks = max_shmem/(2*shmem_per_system);
 	const int default_system_per_block = std::max(1,max_system_per_block_with_two_blocks);
-	// WARNING: Does not account for larger memory usage due to coalesced arrys.  Is this the reason I had to set CHUCK_SIZE=1 in gravitation?
+	// WARNING: Does not account for larger memory usage due to coalesced arrys.  Is this the reason I had to set CHUNK_SIZE=1 in gravitation?
 	std::cerr << "# default_system_per_block = " << default_system_per_block << " nbod = " << nbod << " max_shmem= " << max_shmem << " shmem_per_system(nbod)= " << shmem_per_system(nbod) << "\n";
 	return default_system_per_block;
 }
