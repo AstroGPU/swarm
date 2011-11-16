@@ -19,26 +19,68 @@
 #include "bppt.hpp"
 
 
-namespace swarm {
+namespace swarm { namespace gpu { namespace bppt {
 
-namespace gpu {
-namespace bppt {
-
-    template< template<class T> class Propagator, template<class L> class Monitor >
-  //  template< template<class T, class G> class Propagator, template<class L> class Monitor >
+/**
+ * \brief Generic integrator for rapid creation of new integrators.
+ *
+ * The common functionality for a body-pair-per-thread GPU integrator is
+ * put in this class. The core functionality of integration is provided by Propagator
+ * template and the core functionality for logging and deactivation is provided by Monitor.
+ * Inside the integration loop, Propagator and Monitor are used for the action work.
+ *
+ * Both Propagator and Monitor are supposed to have a struct "params". The params will be
+ * initialized with the config. During integration, params is passed to the Propagator or
+ * Monitor to set up initial values.
+ *
+ * Propagator is expected to expose three methods:
+ *  - init: called before the integration loop (Usually empty)
+ *  - advance: called inside the integration loop (Supposed to advance position, velocity and time)
+ *  - shutdown: called after the integration loop (Usually empty)
+ *
+ * Monitor is expected to implement the "operator()" and act like a function object.
+ * It is called inside the integration loop and is supposed to examine the state of the system.
+ * Write notes to the log if necessary and deactivate the system if it does not need to integrated
+ * anymore.
+ *
+ * For an example of how to use this Generic integrator refer to Euler integrator.
+ *
+ * \todo _time_step does not belog to here and it is not used here. The better place for 
+ * _time_step is inside the Propagator
+ *
+ * An extention of this class proposed to take a Gravitation class as a template. It 
+ * Is not implemented yet.
+ *
+ * one suggestion for the template line is:
+ *  template< template<class T, class G> class Propagator, template<class L> class Monitor, class G >
+ * and G is supposed to be the Gravitation class.
+ */
+template< template<class T> class Propagator, template<class L> class Monitor >
 class generic: public integrator {
 	typedef integrator base;
+
+	//! Monitor is instantiated to write to GPU log.
 	typedef Monitor<gpulog::device_log> monitor_t;
+
+	//! Parameters of the monitor, should be initialized from config file
 	typedef typename monitor_t::params mon_params_t;
-  // WARNING:  Why is this hardcoded to 3?  Shouldn't it be the number of bodies?
-    //	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
-        typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
+
+	//! We don't really know number of bodies right now and it does not matter.
+	//! parameters of the Propagator should be initialized with config file. But
+	//! The only way to access Propagator class is to instantiate it with something.
+	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
+
 	private:
 	double _time_step;
 	mon_params_t _mon_params;
 	prop_params_t _prop_params;
 
 	public:
+	/**
+	 * The integrator is initialized from the configuration
+	 * The generic integrator does not require any configuration parameters.
+	 * The configuration parameters are passed to Monitor::params and Propagator::params.
+	 */
 	generic(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg),_prop_params(cfg) {
 		_time_step = cfg.require("time_step", 0.0);
 	}
@@ -47,9 +89,15 @@ class generic: public integrator {
 		launch_templatized_integrator(this);
 	}
 
-      // WARNING: Not tested yet.  Shouldn't we overide the shared memory needed, taking into account the gravitation, propagator and monitor class?
-      //        int  shmemSize()
 
+	/**
+	 * \brief Integrator the system using the provided Propagator and Monitor.
+	 *  This is the meat of things. We put all the common functionality in here
+	 *  It basically initializes shared memory. Creates a gravitation object.
+	 *  Finds the system to integrate. Runs the main integration loop.
+	 *  Inside the loop, Propagator and Monitor are called alternatively
+	 *
+	 */
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 		if(sysid()>=_dens.nsys()) return;
@@ -60,19 +108,21 @@ class generic: public integrator {
 		//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 		Gravitation<T::n> calcForces(sys,sysid_in_block());
 
-		// Local variables
-		const int nbod = T::n;
-		// Body number
-		int b = thread_body_idx(nbod);
-		// Component number
-		int c = thread_component_idx(nbod);
-		int ij = thread_in_system();
-		bool body_component_grid = (b < nbod) && (c < 3);
-		bool first_thread_in_system = (thread_in_system() == 0);
+		/////////// Local variables /////////////
+		const int nbod = T::n;               // Number of Bodies
+		int b = thread_body_idx(nbod);       // Body id
+		int c = thread_component_idx(nbod);  // Component id (x=0,y=1,z=2)
+		int ij = thread_in_system();         // Pair id
+
+		// Thread barrier predicates
+		bool body_component_grid = (b < nbod) && (c < 3);         // Barrier to act on bodies and components
+		bool first_thread_in_system = (thread_in_system() == 0);  // Barrier to select only the first thread
 
 
-		// local variables
+		// Setting up Monitor
 		monitor_t montest(_mon_params,sys,*_log) ;
+
+		// Setting up Propagator
 		Propagator<T> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;
@@ -81,7 +131,7 @@ class generic: public integrator {
 		prop.first_thread_in_system = first_thread_in_system;
 
 		////////// INTEGRATION //////////////////////
-		//
+		
 		prop.init();
 		__syncthreads();
 
@@ -110,6 +160,4 @@ class generic: public integrator {
 };
 
 
-}
-}
-}
+} } } // End namespaces bppt, gpu, swarm
