@@ -1,6 +1,9 @@
 
 
-
+/**
+ * Find the amount of shared memory per processor for the default device
+ *
+ */
 int shmem_per_mpu()  {
 	  int cuda_dev_id = -1;
 	  cuxErrCheck( cudaGetDevice(&cuda_dev_id) );

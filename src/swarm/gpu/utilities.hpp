@@ -21,6 +21,14 @@
 
 namespace swarm {
 
+/*!
+ *  \brief Count the number of active systems on GPU without downloading the ensemble.
+ *  It is a very small kernel that iterates through all systems and counts
+ *  The number of active ones. One can optimize the performance of this using
+ *  Prefix-sum algorithm.
+ *
+ *  But this is such a small kernel and it is not very frequently used.
+ */
 int number_of_active_systems(deviceEnsemble ens);
 
 /*!
