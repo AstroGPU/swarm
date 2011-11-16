@@ -275,6 +275,18 @@ struct parameter_range {
 	bool interpolate;
 };
 
+/// Because the signature of the function changed after boost version 1.41
+/// we have to put this guard here
+#if BOOST_VERSION  < 104200
+	void raise_validation_error(const string& s){
+		throw po::validation_error(s);
+	}
+#else
+	void raise_validation_error(const string& s){
+		throw po::validation_error(po::validation_error::invalid_option_value, s);
+	}
+#endif
+
 /// Function called by Boost to parse the range parameter
 void validate(boost::any& v, const std::vector<std::string>& values
 	, parameter_range* , int){
@@ -312,10 +324,10 @@ void validate(boost::any& v, const std::vector<std::string>& values
 				p.values.push_back((*items)[0]);
 			p.interpolate = false;
 		}else {
-			throw po::validation_error("Range is invalid");
+			raise_validation_error("Range is invalid");
 		}
 	}else
-		throw po::validation_error("Wrong parameter-value pair ");
+		raise_validation_error("Wrong parameter-value pair ");
 	v = boost::any(p);
 }
 
