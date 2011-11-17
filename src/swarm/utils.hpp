@@ -31,18 +31,88 @@
 #include "types/config.hpp"
 #include <ostream>
 
+/**
+ * \file utils.hpp
+ * \brief Utility routines that is used by applications
+ *  
+ * These are routines that are not part of the core swarm but
+ * are used quite frequently in applications. For easier use
+ * of swarm, these routines can be very useful.
+ *
+ * They range from input/output routines, generators and trivial statistical
+ * data analysis.
+ *
+ */
+
 #define $__(x,line) (std::cerr << __FUNCTION__ << ":" << line << ": " << #x <<  " = " << (x) << std::endl)
 #define DEBUG_OUTPUT(level,message) ( (DEBUG_LEVEL >= level) ? (std::cerr << __FUNCTION__ << ":" << __LINE__ << ": " << message << std::endl) : std::cerr )
 
 #define INFO_OUTPUT(level,message) ( (DEBUG_LEVEL >= level) ? (std::cerr <<  message ) : std::cerr )
 
+/**
+ * Pretty printing an ensemble::range_t, as a value with tolerance
+ */
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r);
 
-void generate_ensemble(swarm::config& cfg, swarm::cpu_ensemble& ens)  ;
+/** 
+ * Generate an ensemble of random generated star-centeric planetary systems.
+ * The star is at origin and is stationary. The planets are on circular orbits.
+ * The spacing factor is set to 1.4 by default but can be changed via 
+ * cfg["spacing_factor"] config parameter.
+ * Number of systems and number of bodies should be specified through
+ * cfg["nsys"] and cfg["nbod"] parameters.
+ *
+ * \param cfg	Should containt "nsys" and "nbod", optionally "spacing_factor"
+ */
+swarm::hostEnsemble generate_ensemble(swarm::config& cfg);
+
+/** 
+ * Deprecated: Validate the configuration
+ *
+ * The criterias are very general and will cause problems.\TODO This function
+ * needs to be restructured or at least updated
+ */
 bool validate_configuration(swarm::config& cfg);
-double find_max_energy_conservation_error(swarm::ensemble& ens, swarm::ensemble& reference_ensemble ) ;
-swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  ;
+
+/**
+ * Helper function to find the energy conservation error.
+ * The total energy for each system in ens and reference_ens is
+ * calculated individually. Then the difference in energy for each system 
+ * is calculated and divided by energy in refrence_ens. The 
+ * worst (highest) error rate is returned as the result.
+ *
+ * \param ens	 The ensemble to be examined for energy conservation
+ * 	     (after integration)
+ * \param reference_ens	  The ensemble that is used as a reference 
+ * 		(initial conditions)
+ */
+double find_max_energy_conservation_error
+	(swarm::ensemble& ens, swarm::ensemble& reference_ens ) ;
+
+
+/**
+ * Pretty print selected values in a config data structure
+ *
+ */
 void outputConfigSummary(std::ostream& o,swarm::config& cfg);
+
+/**
+ * Default configuration. Prepopulate a config data structure with
+ * some pre-tested configuration values for non-optional parameters.
+ */
 swarm::config default_config() ;
+
+/**
+ * Compare ensembles and find their similarity.
+ * This is used when two ensembles are supposed to be identical (e.g. computed
+ * by the similar process). The difference in position and velocity and
+ * time is calculated and returned in output variables. The function
+ * returns false if the ensembles are not comparable (e.g. different number
+ * of systems or bodies), otherwise the return value is true.
+ *
+ */
 bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_diff, double & vel_diff, double & time_diff ) ;
+
+//! Basic helper function to count the number of systems with SYSTEM_DISABLED status 
 int number_of_disabled_systems(swarm::defaultEnsemble ens) ;
+

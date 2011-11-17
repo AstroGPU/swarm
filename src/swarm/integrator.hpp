@@ -40,6 +40,8 @@ namespace swarm {
  *   all the variables required for basic integrations. User variables
  *   can be added in derived instances.
  *
+ *   GPU integrators should be based on gpu::integrator.
+ *
  *   To add your integrator to swarm library look at plugin development guide.
  *
  */
@@ -140,10 +142,16 @@ class integrator {
 };
 typedef shared_ptr<integrator> Pintegrator;
 
+
+//! Helper function to calculate number of systems with SYSTEM_ACTIVE flag
+int number_of_active_systems(defaultEnsemble ens) ;
+
+
 /*! GPU-based integrators and other GPU tools
  *
  *   All GPU integrators are containted within this namespace.
- *   There are also some helpers like Gravitation are in this namespace.
+ *   Other helper structures and functions like Gravitation 
+ *   are also in this namespace.
  *
  */
 namespace gpu {
@@ -166,7 +174,7 @@ class integrator : public swarm::integrator {
 	//! Copy of ensemble on host (kept in sync with \ref _dens).
 	hostEnsemble& _hens;
 	//! Copy of ensemble on [GPU] device (kept in sync with \ref _hens).
-	//! TODO: use cux auto ptr to make sure we don't have memory leaks
+	//! \TODO: use cux auto ptr to make sure we don't have memory leaks
 	deviceEnsemble _dens;
 
 	//! GPU log object obtained from log manager.
@@ -199,7 +207,6 @@ class integrator : public swarm::integrator {
 	virtual void core_integrate() {
 		launch_integrator();
 		flush_log();
-		//		_logman->flush();
 	}
 
 	//! Read the GPU log object from log manager and set it
@@ -270,5 +277,4 @@ typedef shared_ptr<integrator> Pintegrator;
 
 }
 
-	int number_of_active_systems(defaultEnsemble ens) ;
 }

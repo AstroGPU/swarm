@@ -100,18 +100,28 @@ namespace swarm {
  */
 namespace snapshot {
 
+	//! Data structure used in binary files. This is meant to be
+	//! found at offset 0 of the file.
 	struct header {
 		int nsys, nbod;
 	};
+	//! Data structure used in binary files. parameters for a system.
+	//! This comes right after the header and is followed by nbod number
+	//! of body structs.
 	struct sys {
 		double time;
 		int id;
 		int state;
 	};
+	//! Data structure used in binary files. parameters for each body.
+	//! nbod instances of this struct follows after 
+	//! each sys data structure.
 	struct body {
 		double pos[3], vel[3], mass, attribute[NUM_PLANET_ATTRIBUTES];
 	};
 
+	//! Raised when an error encountered reading a text or binary file.
+	//! Used in load and load_text
 	struct readfileexception : public std::exception {
 		string filename;
 		int lineno;
@@ -122,6 +132,9 @@ namespace snapshot {
 			return ("Error reading " + filename + " : " + message).c_str();
 		}
 	};
+
+	//! Raised when an error encountered writing to a text or binary file.
+	//! Used in save and save_text
 	struct writefileexception : public std::exception {
 		string filename;
 		int lineno;
@@ -133,14 +146,21 @@ namespace snapshot {
 		}
 	};
 
-	/// Load binary snapshot file
-	defaultEnsemble load(const string& filename) throw (readfileexception);
-	/// Loads textual snapshot file
-	defaultEnsemble load_text(const string& filename) throw (readfileexception);
-	/// Save the ensemble to a binary file
-	void save(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
-	/// Save the ensemble as a text file
-	void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileexception);
+	//! Load binary snapshot file
+	defaultEnsemble load(const string& filename) 
+		throw (readfileexception);
+
+	//! Loads textual snapshot file
+	defaultEnsemble load_text(const string& filename) 
+		throw (readfileexception);
+
+	//! Save the ensemble to a binary file
+	void save(defaultEnsemble& ens, const string& filename) 
+		throw (writefileexception);
+
+	//! Save the ensemble as a text file
+	void save_text(defaultEnsemble& ens, const string& filename) 
+		throw (writefileexception);
 
 }
 
