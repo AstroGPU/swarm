@@ -1,0 +1,19 @@
+{
+  "insertOutput": 0, 
+  "parseRegex": "^(?P<file>.+?):(?P<line>\\d+):(?P<content>.*)$", 
+  "doNotOpenOutputWindow": 0, 
+  "icon": "chrome://famfamfamsilk/skin/icons/wrench.png", 
+  "keyboard_shortcut": "F7", 
+  "name": "Build Swarm", 
+  "operateOnSelection": 0, 
+  "value": [
+    "make all"
+  ], 
+  "parseOutput": 1, 
+  "version": "1.0.7", 
+  "env": "", 
+  "showParsedOutputList": 1, 
+  "type": "command", 
+  "cwd": "%p/build", 
+  "runIn": "command-output-window"
+}
