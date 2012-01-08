@@ -96,11 +96,8 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-//		typedef typename Gravitation<T::n>::shared_data grav_t;
-//		GravitationT::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
 		typedef typename GravitationAccOnly<T::n>::shared_data grav_t;
-//		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
-		GravitationAccOnly<T::n> calcForces(sys,sysid_in_block());
+		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -117,11 +114,11 @@ class rkck: public integrator {
 		monitor_t montest(_mon_params,sys,*_log) ;
 
 		// NB: We use the same shared memory for two purpose and overwrite each other
-		extern __shared__ char shared_mem[];
-		char*  system_shmem =( shared_mem + sysid_in_block() * shmem_per_system(nbod) );
-
+		// Since the use of the memory is not interleaved, we can safely use the same
+		// space for both purposes
 		// TODO: used Coalesced array structure
-		double (&shared_mag)[2][nbod][3] = * (double (*)[2][nbod][3]) system_shmem;
+		typedef DoubleCoalescedStruct<> shared_mag_t[2][nbod][3];
+		shared_mag_t& shared_mag = * (shared_mag_t*) system_shared_data_pointer(this,compile_time_param) ;
 
 		double time_step = _max_time_step;
 
@@ -212,8 +209,8 @@ class rkck: public integrator {
 				if( body_component_grid ) {
 
 					sys[b][c].pos() = p6 * p6 , sys[b][c].vel() = v6 * v6;
-					shared_mag[0][b][c] = pos_error * pos_error;
-					shared_mag[1][b][c] = vel_error * vel_error;
+					shared_mag[0][b][c].value() = pos_error * pos_error;
+					shared_mag[1][b][c].value() = vel_error * vel_error;
 
 					__syncthreads();
 					// TODO: Could compute the normalized error using one thread per body and reduction (or atomic max)
@@ -221,11 +218,11 @@ class rkck: public integrator {
 
 						double max_error = 0;
 						for(int i = 0; i < nbod ; i++){
-							double pos_error_mag = shared_mag[0][i][0] + shared_mag[0][i][1] + shared_mag[0][i][2];
+							double pos_error_mag = shared_mag[0][i][0].value() + shared_mag[0][i][1].value() + shared_mag[0][i][2].value();
 							double pos_mag = sys[i][0].pos() + sys[i][1].pos() + sys[i][2].pos();
 							double pe = pos_error_mag / pos_mag ;
 
-							double vel_error_mag = shared_mag[1][i][0] + shared_mag[1][i][1] + shared_mag[1][i][2];
+							double vel_error_mag = shared_mag[1][i][0].value() + shared_mag[1][i][1].value() + shared_mag[1][i][2].value();
 							double vel_mag = sys[i][0].vel() + sys[i][1].vel() + sys[i][2].vel();
 							double ve = vel_error_mag / vel_mag ;
 
@@ -248,15 +245,15 @@ class rkck: public integrator {
 
 						bool accept = ( normalized_error < 1.0 ) || (abs(time_step - new_time_step) < 1e-10) ;
 
-						shared_mag[0][0][0] = accept ? 0.0 : 1.0;
-						shared_mag[0][0][1] = new_time_step;
+						shared_mag[0][0][0].value() = accept ? 0.0 : 1.0;
+						shared_mag[0][0][1].value() = new_time_step;
 					}
 
 				}
 				__syncthreads();
 
-				time_step = shared_mag[0][0][1];
-				accept_step = AdaptationStyle::conditional_accept_step ? (shared_mag[0][0][0] == 0.0) : true;
+				time_step = shared_mag[0][0][1].value();
+				accept_step = AdaptationStyle::conditional_accept_step ? (shared_mag[0][0][0].value() == 0.0) : true;
 				////////////////////////// End of Adaptive time step algorithm  ////////////////////////////////////////////
 			}
 

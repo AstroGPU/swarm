@@ -209,6 +209,10 @@ void output_test() {
 		double pos_diff = 0, vel_diff = 0, time_diff = 0;
 		bool comparison =  compare_ensembles( current_ens, reference_ens , pos_diff, vel_diff, time_diff );
 
+		INFO_OUTPUT(1,"\tPosition difference: " << pos_diff  << endl
+			 << "\tVelocity difference: " << vel_diff  << endl
+			 << "\tTime     difference: " << time_diff << endl );
+
 		if( !comparison || pos_diff > pos_threshold || vel_diff > vel_threshold || time_diff > time_threshold ){
 			INFO_OUTPUT(0, "Test failed" << endl);
 			exit(1);
@@ -216,9 +220,6 @@ void output_test() {
 			INFO_OUTPUT(0, "Test success" << endl);
 		}
 
-		INFO_OUTPUT(1,"\tPosition difference: " << pos_diff  << endl
-			 << "\tVelocity difference: " << vel_diff  << endl
-			 << "\tTime     difference: " << time_diff << endl );
 
 	}else{
 		ERROR("You should provide a test output file");

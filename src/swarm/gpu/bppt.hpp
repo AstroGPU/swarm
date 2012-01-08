@@ -100,15 +100,6 @@ GPUAPI int thread_body_idx(int nbod) {
 	return thread_in_system() % nbod;
 }
 
-/**
- * Helper Function: Logical amount of shared memory needed for force calculations per thread
- * This value is calculated from number of bodies, if this is used in a kernel, the actual
- * amount of shared memory allocated might be different.
- */
-GENERIC int shmem_per_system(int nbod) {
-	const int pair_count = nbod * (nbod - 1) / 2;
-	return pair_count * 3  * 2 * sizeof(double);
-}
 
 /**
  * Kernel Helper Function: Get the pointer to dynamic shared memory allocated for the system.
@@ -116,16 +107,24 @@ GENERIC int shmem_per_system(int nbod) {
  * of SHMEM_CHUNK_SIZE. This uses overlapping data structures to provide coalescing for shared
  * memory.
  */
-template< class T> 
-GPUAPI void * system_shared_data_pointer(T compile_time_param) {
+template< class Impl, class T> 
+GPUAPI void * system_shared_data_pointer(Impl* integ, T compile_time_param) {
 	extern __shared__ char shared_mem[];
 	int b = sysid_in_block() / SHMEM_CHUNK_SIZE ;
 	int i = sysid_in_block() % SHMEM_CHUNK_SIZE ;
 	int idx = i * sizeof(double) 
 		+ b * SHMEM_CHUNK_SIZE 
-		* shmem_per_system(T::n);
+		* Impl::shmem_per_system(T::n);
 	return &shared_mem[idx];
 }
+
+template<int W = SHMEM_CHUNK_SIZE>
+struct DoubleCoalescedStruct {
+	typedef double scalar_t;
+	double _value[W];
+	GENERIC double& value(){ return _value[0]; }
+};
+
 
 /**
  *  \brief Common functionality and skeleton for body-pair-per-thread integrators
@@ -237,6 +236,15 @@ class integrator : public gpu::integrator  {
 		return  _system_per_block ;
 	}
 
+	/**
+	 * Helper Function: Logical amount of shared memory needed for force calculations per thread
+	 * This value is calculated from number of bodies, if this is used in a kernel, the actual
+	 * amount of shared memory allocated might be different.
+	 */
+	static GENERIC int shmem_per_system(int nbod) {
+		const int pair_count = nbod * (nbod - 1) / 2;
+		return pair_count * 3  * 2 * sizeof(double);
+	}
 
 
 };

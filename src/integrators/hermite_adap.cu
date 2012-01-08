@@ -26,12 +26,6 @@
 
 namespace swarm {
 
-template<int W = SHMEM_CHUNK_SIZE>
-struct DoubleCoalescedStruct {
-	typedef double scalar_t;
-	double _value[W];
-	GENERIC double& value(){ return _value[0]; }
-};
 
 namespace gpu {
 namespace bppt {
@@ -50,29 +44,30 @@ class hermite_adap: public integrator {
 	mon_params_t _mon_params;
 
 	public:
-	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.), _mon_params(cfg) {
+	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {
 		_time_step_factor =  cfg.require("time_step_factor", 0.0);
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
-        // WARNING: Is this override working right?
-	static GENERIC int shmem_per_system(int nbod) {
-	   int mem_base = base::shmem_per_system(nbod);
-	   int mem_derived = (2*3*nbod + nbod)*sizeof(double);
-	   return std::max(mem_base,mem_derived);
+	static GENERIC int shmem_per_system(int nbod){
+		return integrator::shmem_per_system(nbod) + nbod*sizeof(double);
 	}
-
-        // WARNING: Is this override working right?
 	int  shmemSize(){
-	   int mem_base = base::shmemSize();
-	   int mem_derived = (system_per_block() * 2*3*_hens.nbod() + system_per_block()*_hens.nbod())*sizeof(double);
-	   return std::max(mem_base,mem_derived);
+		const int nbod = _hens.nbod();
+		// Round up number of systems in a block to the next multiple of SHMEM_CHUNK_SIZE
+		int spb = ((system_per_block()+SHMEM_CHUNK_SIZE-1)/SHMEM_CHUNK_SIZE) * SHMEM_CHUNK_SIZE;
+		return spb *  shmem_per_system(nbod);
 	}
 
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
 
+	template<class T>
+	struct SystemSharedData {
+		typename Gravitation<T::n>::shared_data gravitation;
+		DoubleCoalescedStruct<> time_step_factor[T::n];
+	};
 
 	template<class T>
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
@@ -84,34 +79,21 @@ class hermite_adap: public integrator {
 		bool body_component_grid = (b < T::n) && (c < 3);
 		bool first_thread_in_system = (thread_in_system() == 0);
 
-		// Shared Memory pointer computations here are wrong
-		// The correct shared memory pointer calculation is done in
-		// system_shared_data_pointer(T) in bppt.hpp
-		// The system_shared_data_pointer can compute
-		// extra shared memory for us as long as we define our data
-		// structure using CoalescedDataStructure pattern
-
-		// shared memory for computing time step
-   //            double (&shared_acc_jerk_sq)[2][T::n][3] = * (double (*)[2][T::n][3]) system_shmem_1;
-   //            double (&shared_time_step_factor)[T::n] = * (double (*)[T::n]) system_shmem_2;
-
 		// Put accelerations and jerks for each body and component into shared memory
 		if( body_component_grid ) {
 		    shared.gravitation[b][c].acc() = acc*acc;
 		    shared.gravitation[b][c].jerk() = jerk*jerk;
-	        }
+	    }
 		__syncthreads();
 		// calculate sum of squares of each component for each body
 		// store ratio in shared memory
-		if( (b < T::n) && (c==0) )
-		    {
+		if( (b < T::n) && (c==0) ) {
 		    double acc_mag_sq = shared.gravitation[b][0].acc()+shared.gravitation[b][1].acc()+shared.gravitation[b][2].acc();
 		    double jerk_mag_sq = shared.gravitation[b][0].jerk()+shared.gravitation[b][1].jerk()+shared.gravitation[b][2].jerk();
 		    shared.time_step_factor[b].value() = jerk_mag_sq/acc_mag_sq;
-		    }
+		}
 		__syncthreads();
-		if( first_thread_in_system ) 		    
-		{
+		if( first_thread_in_system ) {
 			double tf = shared.time_step_factor[0].value();
 		    for(int bb=1;bb<T::n;++bb)
 		      	tf += shared.time_step_factor[bb].value();
@@ -119,35 +101,8 @@ class hermite_adap: public integrator {
 		}
 		__syncthreads();
 		return shared.time_step_factor[0].value();
-		}		
+	}		
 
-		template<class T>
-		struct SystemSharedData {
-			typename Gravitation<T::n>::shared_data gravitation;
-			DoubleCoalescedStruct<> time_step_factor[T::n];
-		};
-
-	static GENERIC int shmem_per_system(int nbod){
-		return bppt::shmem_per_system(nbod) + nbod*sizeof(double);
-	}
-	int  shmemSize(){
-		const int nbod = _hens.nbod();
-		// Round up number of systems in a block to the next multiple of SHMEM_CHUNK_SIZE
-		int spb = ((system_per_block()+SHMEM_CHUNK_SIZE-1)/SHMEM_CHUNK_SIZE) * SHMEM_CHUNK_SIZE;
-		return spb *  shmem_per_system(nbod);
-	}
-
-
-template< class T> 
-static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
-	extern __shared__ char shared_mem[];
-	int b = sysid_in_block() / SHMEM_CHUNK_SIZE ;
-	int i = sysid_in_block() % SHMEM_CHUNK_SIZE ;
-	int idx = i * sizeof(double) 
-		+ b * SHMEM_CHUNK_SIZE 
-		* shmem_per_system(T::n);
-	return &shared_mem[idx];
-}
 
 
 	template<class T>
@@ -156,8 +111,8 @@ static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		SystemSharedData* shared_data = (SystemSharedData*) system_shared_data_pointer(compile_time_param);
-		Gravitation<T::n> calcForces(sys, shared_data->gravitation );
+		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
+		Gravitation<T::n> calcForces(sys, shared_data.gravitation );
 
 		// Local variables
 		const int nbod = T::n;
@@ -194,7 +149,7 @@ static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 			}
 
 			
-			// Initial Evaluation
+			// Initial Evaluation, it can be omitted for faster computation
 			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
@@ -251,12 +206,11 @@ static GPUAPI void * system_shared_data_pointer(T compile_time_param) {
 };
 
 
-// WARNING: EBF: commented out to test new stopper
-//integrator_plugin_initializer<hermite_adap< stop_on_ejection > >
-//	hermite_adap_plugin("hermite_adap");
+integrator_plugin_initializer<hermite_adap< monitors::stop_on_ejection > >
+	hermite_adap_plugin("hermite_adap");
 
 integrator_plugin_initializer<hermite_adap< monitors::stop_on_any_large_distance_or_close_encounter > >
-	hermite_adap_plugin("hermite_adap");
+	hermite_adap_plugin_close_encounter("hermite_adap_close_encounter");
 
 
 

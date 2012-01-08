@@ -105,8 +105,7 @@ class generic: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-		//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
-		Gravitation<T::n> calcForces(sys,sysid_in_block());
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		/////////// Local variables /////////////
 		const int nbod = T::n;               // Number of Bodies

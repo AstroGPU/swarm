@@ -59,8 +59,7 @@ class hermite: public integrator {
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
 		typedef typename Gravitation<T::n>::shared_data grav_t;
-//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(compile_time_param) ) );
-		Gravitation<T::n> calcForces(sys,sysid_in_block());
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -157,12 +156,11 @@ class hermite: public integrator {
 };
 
 
-// WARNING: EBF: commented out to test new stopper
-//integrator_plugin_initializer<hermite< stop_on_ejection > >
-//	hermite_plugin("hermite");
+integrator_plugin_initializer<hermite< monitors::stop_on_ejection > >
+	hermite_plugin("hermite");
 
 integrator_plugin_initializer<hermite< monitors::stop_on_any_large_distance_or_close_encounter > >
-	hermite_plugin("hermite");
+	hermite_plugin_encounter("hermite_close_encounter");
 
 integrator_plugin_initializer<hermite< monitors::log_time_interval > >
 	hermite_log_plugin("hermite_log");
