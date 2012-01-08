@@ -12,7 +12,7 @@
   "parseOutput": 1, 
   "version": "1.0.7", 
   "env": "", 
-  "showParsedOutputList": 1, 
+  "showParsedOutputList": 0, 
   "type": "command", 
   "cwd": "%p/build", 
   "runIn": "command-output-window"

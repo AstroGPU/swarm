@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Komodo Project File - DO NOT EDIT -->
 <project id="f7149193-b719-42e8-a75b-32e77f74baf0" kpf_version="5" name="Swarm.komodoproject">
+<livefolder id="2333d79e-3664-493b-a8b0-3a9ad557d1d6" idref="f7149193-b719-42e8-a75b-32e77f74baf0" name="src" url="src">
+</livefolder>
 </project>
