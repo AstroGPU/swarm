@@ -19,110 +19,104 @@
 #include "swarm/gpu/gravitation.hpp"
 #include "monitors/log_time_interval.hpp"
 
-namespace swarm {
+namespace swarm { namespace gpu { namespace bppt {
 
-	namespace gpu {
-		namespace bppt {
-
-			struct MidpointPropagatorParams {
-				double time_step;
-				MidpointPropagatorParams(const config& cfg){
-					time_step = cfg.require("time_step", 0.0);
-				}
-			};
-
-			template<class T>
-//			template<class T, class GravClass>
-				struct MidpointPropagator {
-					typedef MidpointPropagatorParams params;
-
-					params _params;
-
-
-					// Runtime variables
-					ensemble::SystemRef& sys;
-					Gravitation<T::n>& calcForces;
-//					typedef GravClass grav_t;
-//					grav_t& calcForces;
-					int b;
-					int c;
-					int ij;
-					bool body_component_grid;
-					bool first_thread_in_system;
-					double max_timestep;
-
-
-					GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
-							Gravitation<T::n>& calc)
-//							GravitationAccOnly<T::n>& calc)
-//							grav_t& calc)
-						:_params(p),sys(s),calcForces(calc){}
-
-					GPUAPI void init()  { }
-
-					GPUAPI void shutdown() { }
-
-					GPUAPI void advance(){
-						double H = min( max_timestep ,  _params.time_step );
-						double pos = 0, vel = 0;
-
-						if( body_component_grid )
-							pos = sys[b][c].pos() , vel = sys[b][c].vel();
-
-
-						////////// INTEGRATION //////////////////////
-
-						/// Modified midpoint method integrator with n substeps
-						const int n = 4;
-						double h = H / n;
-
-						double p_i , p_im1, p_im2;
-						double v_i,  v_im1, v_im2;
-						double a_im1;
-
-						// Step 0
-						p_i = pos;
-						v_i = vel;
-
-						// Step 1
-						p_im1 = p_i;
-						v_im1 = v_i;
-
-						a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
-
-						p_i = p_im1 + h * v_im1;
-						v_i = v_im1 + h * a_im1;
-
-						// Step 2 .. n
-						for(int i = 2; i <= n; i++){
-							p_im2 = p_im1;
-							p_im1 = p_i;
-							v_im2 = v_im1;
-							v_im1 = v_i;
-
-							a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
-
-							p_i = p_im2 + 2.0 * h * v_im1;
-							v_i = v_im2 + 2.0 * h * a_im1;
-						}
-						double a_i = calcForces.acc(ij,b,c,p_i,v_i);
-
-						pos = 0.5 * ( p_i + p_im1 + h * v_i );
-						vel = 0.5 * ( v_i + v_im1 + h * a_i );
-
-
-						// Finalize the step
-						if( body_component_grid )
-							sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-						if( first_thread_in_system ) 
-							sys.time() += H;
-					}
-				};
-
-			integrator_plugin_initializer< generic< MidpointPropagator, monitors::log_time_interval > >
-				midpoint_prop_plugin("midpoint"
-						,"This is the integrator based on midpoint propagator");
-
-		}
+struct MidpointPropagatorParams {
+	double time_step;
+	MidpointPropagatorParams(const config& cfg){
+		time_step = cfg.require("time_step", 0.0);
 	}
-}
+};
+
+template<class T>
+struct MidpointPropagator {
+	typedef MidpointPropagatorParams params;
+
+	params _params;
+
+
+	// Runtime variables
+	ensemble::SystemRef& sys;
+	Gravitation<T::n>& calcForces;
+	int b;
+	int c;
+	int ij;
+	bool body_component_grid;
+	bool first_thread_in_system;
+	double max_timestep;
+
+
+	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
+			Gravitation<T::n>& calc)
+		:_params(p),sys(s),calcForces(calc){}
+
+	GPUAPI void init()  { }
+
+	GPUAPI void shutdown() { }
+
+	GPUAPI void advance(){
+		double H = min( max_timestep ,  _params.time_step );
+		double pos = 0, vel = 0;
+
+		if( body_component_grid )
+			pos = sys[b][c].pos() , vel = sys[b][c].vel();
+
+
+		////////// INTEGRATION //////////////////////
+
+		/// Modified midpoint method integrator with n substeps
+		const int n = 4;
+		double h = H / n;
+
+		double p_i , p_im1, p_im2;
+		double v_i,  v_im1, v_im2;
+		double a_im1;
+
+		// Step 0
+		p_i = pos;
+		v_i = vel;
+
+		// Step 1
+		p_im1 = p_i;
+		v_im1 = v_i;
+
+		a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+		p_i = p_im1 + h * v_im1;
+		v_i = v_im1 + h * a_im1;
+
+		// Step 2 .. n
+		for(int i = 2; i <= n; i++){
+			p_im2 = p_im1;
+			p_im1 = p_i;
+			v_im2 = v_im1;
+			v_im1 = v_i;
+
+			a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+			p_i = p_im2 + 2.0 * h * v_im1;
+			v_i = v_im2 + 2.0 * h * a_im1;
+		}
+		double a_i = calcForces.acc(ij,b,c,p_i,v_i);
+
+		pos = 0.5 * ( p_i + p_im1 + h * v_i );
+		vel = 0.5 * ( v_i + v_im1 + h * a_i );
+
+
+		// Finalize the step
+		if( body_component_grid )
+			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+		if( first_thread_in_system ) 
+			sys.time() += H;
+	}
+};
+
+integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
+	midpoint_prop_plugin("midpoint"
+			,"This is the integrator based on midpoint propagator");
+
+integrator_plugin_initializer< generic< MidpointPropagator, monitors::log_time_interval > >
+	midpoint_prop_log_plugin("midpoint_log"
+			,"This is the integrator based on midpoint propagator with interval logging");
+
+} } } // End namespace bppt :: gpu :: swarm

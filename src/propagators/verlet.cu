@@ -20,10 +20,7 @@
 
 
 
-namespace swarm {
-
-namespace gpu {
-namespace bppt {
+namespace swarm { namespace gpu { namespace bppt {
 
 struct VerletPropagatorParams {
 	double time_step;
@@ -33,18 +30,14 @@ struct VerletPropagatorParams {
 };
 
 template<class T>
-//template<class T, class GravClass>
 struct VerletPropagator {
 	typedef VerletPropagatorParams params;
 
 	params _params;
 
-
 	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation<T::n>& calcForces;
-//	GravitationAccOnly<T::n>& calcForces;
-//	GravClass& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -55,8 +48,6 @@ struct VerletPropagator {
 
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation<T::n>& calc)
-//			GravitationAccOnly<T::n>& calc)
-//			GravClass& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	GPUAPI void init()  { }
@@ -69,7 +60,6 @@ struct VerletPropagator {
 
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
-
 
 			///////// INTEGRATION STEP /////////////////
 
@@ -93,7 +83,6 @@ struct VerletPropagator {
 
 			//////////////// END of Integration Step /////////////////
 
-
 		// Finalize the step
 		if( body_component_grid )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
@@ -106,6 +95,4 @@ integrator_plugin_initializer< generic< VerletPropagator, monitors::stop_on_ejec
 	verlet_prop_plugin("verlet"
 			,"This is the integrator based on verlet propagator");
 
-}
-}
-}
+} } } // End namespace bppt :: gpu :: swarm
