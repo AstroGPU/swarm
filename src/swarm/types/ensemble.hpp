@@ -320,8 +320,8 @@ class EnsembleBase {
 				K += 0.5 * _body[i].mass() * _body[i].speed_squared();
 
 			for(int i = 0; i < _nbod; i++) 
-				for(int j = 0; j < _nbod; j++) 
-					U += - _body[i].mass() * _body[j].mass() * distance_between(i,j);
+				for(int j = 0; j < i; j++) 
+					U += - _body[i].mass() * _body[j].mass() / distance_between(i,j);
 
 			return K + U;
 		}
