@@ -34,6 +34,7 @@ void stability_test() {
 	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
 	double interval = cfg.optional("interval", (destination_time-begin_time) ) ; 
 	double logarithmic = cfg.optional("logarithmic", 0 ) ; 
+	double allowed_deltaE =  cfg.optional("allowed_deltaE", 0.01 );
 
 	if(destination_time < begin_time ) ERROR("Destination time should be larger than begin time");
 	if(interval < 0) ERROR("Interval cannot be negative");
@@ -61,6 +62,11 @@ void stability_test() {
 
 		int active_systems = ens.nsys() - number_of_disabled_systems( ens );
 		std::cout << effective_time << ", " << max_deltaE << ", " << active_systems << std::endl;
+		
+		if(max_deltaE > allowed_deltaE){
+			INFO_OUTPUT(0, "At least one system is too unstable to conserve energy. dE/E: " << max_deltaE << std::endl );
+			exit(1);
+		}
 
 	}
 
