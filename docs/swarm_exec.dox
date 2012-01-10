@@ -31,28 +31,35 @@ Options:
 
 General Options:
   -c [ --cfg ] arg      Integrator configuration file
+  --defaults            Use default values for required configuration options
   -h [ --help ]         produce help message
   -p [ --plugins ]      list all of the plugins
   -v [ --verbose ] arg  Verbosity level (debug output) 
   -q [ --quiet ]        Suppress all the notifications (for CSV generation)
 
 Integation Options:
-  -d [ --destination time ] arg Destination time to achieve
+  -d [ --destination_time ] arg Destination time to achieve
   -l [ --logarithmic ] arg      Produce times in logarithmic scale
   -n [ --interval ] arg         Energy test intervals
   -i [ --input ] arg            Input file
   -o [ --output ] arg           Output file
-  -I [ --text input ] arg       Text Input file
-  -O [ --text output ] arg      Text Output file
+  -I [ --text_input ] arg       Text Input file
+  -O [ --text_output ] arg      Text Output file
 
 Benchmark Options:
-  --from arg            from integer value
-  --to arg              to integer value
-  --inc arg             increment integer value
+  --range arg           Parameter value range param=v1,v2,v3
 
 Query Options:
   -t [ --time ] arg     range of times to query
   -s [ --system ] arg   range of systems to query
+  -b [ --body ] arg     range of bodies to query
+  -k [ --keplerian ]    output in Keplerian coordinates
+  --astrocentric        output coordinates in astrocentric frame
+  --barycentric         output coordinates in barycentric frame
+  --origin              output coordinates in origin frame [default w/ 
+                        Cartesian]
+  --jacobi              output coordinates in Jacobi frame [default w/ 
+                        Keplerian]
   -f [ --logfile ] arg  the log file to query
 \endverbatim
 
@@ -61,7 +68,15 @@ Query Options:
 
    \subsection General General Options
    Following options are interpreted by swarm regardless of the command used.
-   
+   - --defaults : Use a default configuration for required parameters. The default can be overriden in the command line or by specifiying a configuration file. The default configuration is:
+\verbatim
+integrator=hermite
+nsys=16
+nbod=3
+time_step=0.001
+log_writer=null
+\endverbatim
+
    - -c [ --cfg ] &lt;configuration file&gt;: Specifies path to the file containing configuration for various parts of
    swarm framework. This configuration will be used to configure all modules of Swarm-NG library. Configuration 
    file syntax is:
@@ -155,36 +170,40 @@ swarm integrate -c conf2.cfg -d 100 -n 10 -I INPUT.txt -O OUTPUT.txt
 
 
    \subsubsection BenchmarkOptions Options
-   The following three options can be used with a parameter to specify a range for looping
-   over to make different integration scenarios. 
-   - --from &lt;start number&gt; The first number to try on for the parameter
-   - --to &lt;end number&gt; Last number to try on for the parameter
-   - --inc &lt;increment&gt; Amount that will be added to the parameter after each step
+You have to define a range for benchmarking using --range switch. The parameter to range can be 
+in one of these three forms
+    - param=value1,value2,value3  \ parameter "param" will iterate over the list ("value1","value2","value3")
+    - param=start..finish          \ parameter "param" will iterate over numbers in the interval [start, finish] incrementing by 1.
+    - param=start..inc..finish   \ paramater "param" will iterate over numbers in the interval [start, finish] using the specified increment amount that comes in the middle.
 
    \subsubsection BenchmarkExamples Examples:
    Performs a stress test to a specific integration scenario using generated systems
 \verbatim
-swarm benchmark -c conf.cfg nsys 4000 8000 16000 32000
+swarm benchmark -c conf.cfg --range nsys=4000,8000,16000,32000
 \endverbatim
 
    Integrate an ensemble stored in text format in testcase.txt using three different 
    integrators and compare the time and stability.
 \verbatim
-swarm benchmark -c base.cfg -I testcase.txt integrator hermite euler verlet
+swarm benchmark -c base.cfg -I testcase.txt --range integrator=hermite,rkck_fixed
 \endverbatim
 
    Compare 3 completely different integration scenarios stored in 3 different files
    using the same test data.
 \verbatim
-swarm benchmark -I testcase.txt config case1.cfg case2.cfg case3.cfg
+swarm benchmark -I testcase.txt config=case1.cfg,case2.cfg,case3.cfg
 \endverbatim
 
    Strees test for different number of bodies ranging from 3 to 9.
 \verbatim
-swarm benchmark -c conf.cfg nbod --from 3 --to 9
+swarm benchmark -c conf.cfg nbod=3..9
 \endverbatim
 
-
+   Strees test for different number of systems ranging from 3000 to 9000 by the increment of 1000.
+\verbatim
+swarm benchmark -c conf.cfg nsys=3000..1000..9000
+\endverbatim
+It will run for number of systems equal to 3000, 4000, 5000, 6000, 7000, 8000, 9000.
 
    \subsection Verify verify: Verifying correctness
    Integrate ensembles in different scenarios and compare the results to a reference 
@@ -203,9 +222,9 @@ swarm benchmark -c conf.cfg nbod --from 3 --to 9
    
    \subsubsection VerifyOptions Configuration Options
    These options should be specified in the base configuration:
-   - pos threshold : Tolerated error when comparing positions. Difference between magnitude of positions should be less than threshold for verification to pass.
-   - vel threshold : Tolerated error when comparing velocities. Difference between magnitude of velocities should be less than threshold for verification to pass.
-   - time threshold : Tolerated error when comparing times. Difference between time of systems should be less than threshold amount for verification to pass.
+   - pos_threshold : Tolerated error when comparing positions. Difference between magnitude of positions should be less than threshold for verification to pass.
+   - vel_threshold : Tolerated error when comparing velocities. Difference between magnitude of velocities should be less than threshold for verification to pass.
+   - time_threshold : Tolerated error when comparing times. Difference between time of systems should be less than threshold amount for verification to pass.
 
    \subsubsection VerifyExamples Examples:
 
@@ -213,7 +232,7 @@ swarm benchmark -c conf.cfg nbod --from 3 --to 9
 	 and integrator is set to a CPU integrator, the following line verifies the correctness of
 	 hermite, euler and verlet integrators versus a CPU implementation using data from testcase.txt
 \verbatim
-swarm benchmark -c basecpu.cfg -I testcase.txt integrator hermite euler verlet
+swarm benchmark -c basecpu.cfg -I testcase.txt integrator=hermite,rkck_fixed
 \endverbatim
 
 
@@ -221,9 +240,12 @@ swarm benchmark -c basecpu.cfg -I testcase.txt integrator hermite euler verlet
 
 
    \subsection Query query: Examine log files
-   - -s [ --system ] &lt;range&gt;
-   - -t [ --time ] &lt;range&gt;
-   - -f [ --logfile ] &lt;file name&gt;
+   - -f [ --logfile ] &lt;file name&gt; Input binary log file
+   - -s [ --system ] &lt;range&gt; Range of the systems that should appear in the query report
+   - -b [ --body ] &lt;range&gt; Range of the bodies that should appear in the query report
+   - -t [ --time ] &lt;range&gt; Time range that for the query report
+   - -k [ --keplerian ]: If specified, enables the Keplerian output (default is Cartesian)
+   - [ --astrocentric, --barycentric, --origin, --jacobi ]: Choice of coordinate frames.
 
 
    \subsection Test test: Integration testing

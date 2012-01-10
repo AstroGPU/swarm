@@ -28,21 +28,56 @@ is considered.
 
 
 <TABLE>
-<TR><TD> Name </TD><TD> Default Value </TD><TD>Used In</TD><TD> Description </TD> </TR>
-<TR><TD> integrator </TD> <TD> hermite </TD><TD>Integrator Instantiation</TD> <TD> Name of The integrator plugin used for integration</TD> </TR>
-<TR><TD> destination time </TD><TD>  10 pi </TD><TD>Swarm Executable</TD><TD> Marker for end of integration, all systems integrated and synchronized to this time </TD></TR>
-<TR><TD> time step  </TD><TD> 0.0001 </TD><TD>Fixed step integrators</TD>  </TD></TR>
-<TR><TD> min time step </TD> <TD> </TD><TD>Adaptive step integrators</TD> <TD> Smallest step size allowed in adaptive mode </TD> </TR>
-<TR><TD> max time step </TD> <TD> </TD><TD>Adaptive step integrators</TD> <TD> largest step size allowed in adaptive mode </TD> </TR>
-<TR><TD> input  </TD><TD>    </TD><TD>Swarm Executable</TD><TD>  Binary input file    </TD></TR>
-<TR><TD> output  </TD><TD>    </TD><TD>Swarm Executable</TD><TD> Binary output file    </TD></TR>
-<TR><TD> text input  </TD><TD>    </TD><TD>Swarm Executable</TD><TD>  Text input file    </TD></TR>
-<TR><TD> text output  </TD><TD>    </TD><TD>Swarm Executable</TD><TD> Text output file    </TD></TR>
-<TR><TD>log output</TD><TD>       </TD><TD>  Logging Subsystem   </TD><TD>Name of the output file where the log is stored     </TD></TR>
-<TR><TD>log writer</TD><TD>  null  </TD><TD> Logging Subsystem    </TD><TD>Output method used for logging: "null" is to discard output, "binary" writes binary files.</TD></TR>
-<TR><TD>error tolerance </TD><TD>       </TD><TD>Adaptive step integrators</TD><TD> Amount of error allowed for adaptive integration   </TD></TR>
-<TR><TD>     </TD><TD>       </TD><TD>     </TD><TD>     </TD></TR>
-<TR><TD>     </TD><TD>       </TD><TD>     </TD><TD>     </TD></TR>
+<TR><TH>Module </TH> <TH> Name </TH><TH> Default Value </TH><TH> Description </TH> </TR>
+
+<TR><TD rowspan="3" > Swarm Executable (Utils) </TD> <TD> nsys </TD><TD> </TD> <TD> Number of system when auto-generating the ensemble </TD> </TR>
+<TR><TD> nbod </TD><TD> </TD>  <TD> Number of bodies when auto-generating the ensemble </TD> </TR>
+<TR><TD> spacing_factor </TD><TD> 1.4 </TD>  <TD> Number of bodies when auto-generating the ensemble </TD> </TR>
+
+<TR><TD rowspan="11" >Swarm Executable</TD> <TD> destination_time </TD><TD>  10 pi </TD><TD> Marker for end of integration, all systems 
+integrated and synchronized to this time </TD></TR>
+<TR><TD> interval   </TD><TD>  disabled     </TD><TD>  Intervals testing of stability of the system   </TD></TR>
+<TR><TD> logarithmic    </TD><TD>   disabled  </TD><TD> Logarithmic base for exponentially growing intervals (used for stability graphs in logarithmic scale)  </TD></TR>
+
+<TR><TD> allowed_deltaE </TD><TD> 0.01 </TD>  <TD> Maximum deviation error from energy preservation allowed. If the maixmum energy conservation error is bigger than the number specified then the integration is stopped and marked as failed (Primarily used for automated stability test)</TD></TR>
+<TR><TD> pos_threshold    </TD><TD>   1e-10    </TD><TD>  Maximum deviation allowed for position magnitude when comparing an ensemble against the reference   </TD></TR>
+<TR><TD> vel_threshold    </TD><TD>   1e-10    </TD><TD>  Maximum deviation allowed for velocity magnitude when comparing an ensemble against the reference   </TD></TR>
+<TR><TD> time_threshold    </TD><TD>  1e-4     </TD><TD>  Maximum deviation allowed for system time when comparing an ensemble against the reference   </TD></TR>
+
+<TR><TD> input  </TD><TD>    </TD><TD>  Binary input file    </TD></TR>
+<TR><TD> output  </TD><TD>    </TD><TD> Binary output file    </TD></TR>
+<TR><TD> text_input  </TD><TD>    </TD><TD>  Text input file    </TD></TR>
+<TR><TD> text_output  </TD><TD>    </TD><TD> Text output file    </TD></TR>
+
+
+<TR><TD rowspan="5" >  SwarmNG library   </TD><TD> integrator </TD> <TD> hermite </TD> <TD> Name of The integrator plugin used for integration</TD> </TR>
+<TR><TD> system_per_block    </TD><TD>   SHMEM_CHUNK_SIZE    </TD><TD>  Number of systems in a CUDA block    </TD></TR>
+<TR><TD> CUDA_DEVICE    </TD><TD> 0       </TD><TD> Number of the CUDA devices to use (Only used if there are more than one GPUs on a system)  </TD></TR>
+<TR><TD> max_iterations   </TD><TD>       </TD><TD> Maximum number of iterations in the integration kernel internal loop    </TD></TR>
+<TR><TD> max_attempts    </TD><TD>       </TD><TD> Maximum number of attempts on running the integration kernel to finish the integration   </TD></TR>
+
+
+
+
+
+<TR><TD>Fixed step integrators</TD> <TD> time_step  </TD><TD> 0.0001 </TD> </TD></TR>
+<TR><TD rowspan="2">Adaptive step integrators</TD><TD> min_time_step </TD> <TD> </TD> <TD> Smallest step size allowed in adaptive mode </TD> </TR>
+<TR><TD> max_time_step </TD> <TD> </TD> <TD> largest step size allowed in adaptive mode </TD> </TR>
+<TR> <TD> Adaptive step Hermite Integrator </TD><TD> time_step_factor </TD> <TD> </TD> <TD> A factor that determines the effect of energy estimate on the time step </TD> </TR>
+<TR><TD>Adaptive step Runge-Kutta integrator</TD><TD> error_tolerance </TD><TD>       </TD><TD> Amount of error allowed for adaptive integration   </TD></TR>
+
+
+<TR><TD rowspan="2" >  Logging Subsystem   </TD><TD> log_writer</TD><TD>  null  </TD><TD>Output method used for logging: "null" is to discard output, "binary" writes binary files.</TD></TR>
+<TR> <TD> log_output</TD><TD>       </TD><TD>Name of the output file where the log is stored     </TD></TR>
+
+
+<TR><TD>  Log interval monitor   </TD><TD> log_interval    </TD><TD>       </TD><TD>  The fixed interval time at which the system is logged (if enabled)  </TD></TR>
+<TR><TD> Stop-on-Ejection monitor   </TD><TD> rmax    </TD><TD>   +Infinity    </TD><TD>  Maximum allowed distance between a planet and the sun before the planet is marked as ejected  </TD></TR>
+<TR><TD>  Stop-On-Collision monitor   </TD><TD> collision_radius    </TD><TD>   0    </TD><TD>   The closest that two planets can get without triggerring a collision  </TD></TR>
+<TR><TD>  Stop-On-Any Large distance  monitor    </TD><TD>  stop_on_rmax   </TD><TD>    </TD><TD> Should the monitor stop integration if there is a large distance    </TD></TR>
+<TR><TD>  Stop-On-Close-Approach monitor   </TD><TD>  close_approach   </TD><TD>   0    </TD><TD>     </TD></TR>
+
+
 </TABLE>
 
 
