@@ -82,7 +82,10 @@ struct EulerPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< EulerPropagator, monitors::stop_on_ejection > >
+typedef gpulog::device_log L;
+using namespace monitors;
+
+integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L> > >
 	euler_prop_plugin("euler"
 			,"This is the integrator based on euler propagator");
 

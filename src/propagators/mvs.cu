@@ -167,13 +167,13 @@ struct MVSPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< MVSPropagator, monitors::stop_on_ejection > >
+typedef gpulog::device_log L;
+using namespace monitors;
+
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L> > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
 
-integrator_plugin_initializer< generic< MVSPropagator, monitors::log_time_interval > >
-	mvs_log_prop_plugin("mvs_log"
-			,"This is the integrator based on mvs propagator");
 
 }
 }

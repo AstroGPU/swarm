@@ -111,12 +111,12 @@ struct MidpointPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< MidpointPropagator, monitors::stop_on_ejection > >
+typedef gpulog::device_log L;
+using namespace monitors;
+
+integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L> > >
 	midpoint_prop_plugin("midpoint"
 			,"This is the integrator based on midpoint propagator");
 
-integrator_plugin_initializer< generic< MidpointPropagator, monitors::log_time_interval > >
-	midpoint_prop_log_plugin("midpoint_log"
-			,"This is the integrator based on midpoint propagator with interval logging");
 
 } } } // End namespace bppt :: gpu :: swarm

@@ -18,9 +18,10 @@
 #include "swarm/common.hpp"
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
+
 #include "monitors/until_time_end.hpp"
 #include "monitors/stop_on_ejection.hpp"
-#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
+#include "monitors/composites.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "monitors/combine.hpp"
 
@@ -37,10 +38,10 @@ namespace swarm {
  *   This integrator can be used as an example of CPU integrator
  *
  */
-template< template<class L> class Monitor >
+template< class Monitor >
 class hermite_cpu : public integrator {
 	typedef integrator base;
-	typedef Monitor<gpulog::host_log> monitor_t;
+	typedef Monitor monitor_t;
 	typedef typename monitor_t::params mon_params_t;
 	private:
 	double _time_step;
@@ -180,17 +181,28 @@ class hermite_cpu : public integrator {
 	}
 };
 
+typedef gpulog::host_log L;
+using namespace monitors;
 
-// WARNING: EBF: commented out to test new stopper
-//integrator_plugin_initializer< hermite_cpu< stop_on_ejection > >
-//	hermite_cpu_plugin("hermite_cpu");
+integrator_plugin_initializer<
+		hermite_cpu< stop_on_ejection<L> >
+	> hermite_cpu_plugin("hermite_cpu");
 
 
-integrator_plugin_initializer< hermite_cpu< monitors::stop_on_any_large_distance_or_close_encounter > >
-	hermite_cpu_plugin("hermite_cpu");
+/*integrator_plugin_initializer<
+		hermite_cpu< combine< L, stop_on_ejection<L>, stop_on_close_encounter<L> > >
+	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
-integrator_plugin_initializer<hermite_cpu< monitors::log_time_interval > >
-	hermite_cpu_log_plugin("hermite_cpu_log");
+integrator_plugin_initializer<
+		hermite_cpu< stop_on_crossing_orbit_or_close_approach<L> >
+	> hermite_cpu_plugin_crossing_orbit_or_close_approach(
+		"hermite_cpu_crossing_orbit_or_close_approach"
+	);
+
+
+integrator_plugin_initializer<
+		hermite_cpu< log_time_interval<L> >
+	> hermite_cpu_log_plugin("hermite_cpu_log");
 
 
 }

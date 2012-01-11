@@ -24,20 +24,16 @@
 #include "monitors/combine.hpp"
 
 
-namespace swarm {
-
-
-namespace gpu {
-namespace bppt {
+namespace swarm { namespace gpu { namespace bppt {
 
 /*! GPU implementation of PEC2 Hermite integrator w/ adaptive time step
  * \ingroup integrators
  *
  */
-template< template<class L> class Monitor >
+template< class Monitor >
 class hermite_adap: public integrator {
 	typedef integrator base;
-	typedef Monitor<gpulog::device_log> monitor_t;
+	typedef Monitor monitor_t;
 	typedef typename monitor_t::params mon_params_t;
 	private:
 	double _time_step_factor, _min_time_step;
@@ -206,14 +202,12 @@ class hermite_adap: public integrator {
 };
 
 
-integrator_plugin_initializer<hermite_adap< monitors::stop_on_ejection > >
-	hermite_adap_plugin("hermite_adap");
-
-integrator_plugin_initializer<hermite_adap< monitors::stop_on_any_large_distance_or_close_encounter > >
-	hermite_adap_plugin_close_encounter("hermite_adap_close_encounter");
+typedef gpulog::device_log L;
+using namespace monitors;
 
 
+integrator_plugin_initializer<
+		hermite_adap< stop_on_ejection<L> >
+	> hermite_adap_plugin("hermite_adap");
 
-}
-}
-}
+} } } // end namespace bppt :: integrators :: swarm

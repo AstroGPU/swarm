@@ -21,10 +21,7 @@
 #include "monitors/stop_on_ejection.hpp"
 
 
-namespace swarm {
-
-namespace gpu {
-namespace bppt {
+namespace swarm { namespace gpu { namespace bppt {
 
 struct FixedTimeStep {
 	const static bool adaptive_time_step = false;
@@ -44,10 +41,10 @@ struct AdaptiveTimeStep {
  *
  *
  */
-template< class AdaptationStyle, template<class L> class Monitor >
+template< class AdaptationStyle, class Monitor >
 class rkck: public integrator {
 	typedef integrator base;
-	typedef  Monitor<gpulog::device_log> monitor_t;
+	typedef  Monitor monitor_t;
 	typedef  typename monitor_t::params mon_params_t;
 	private:
 	double _min_time_step;
@@ -285,12 +282,15 @@ class rkck: public integrator {
 
 };
 
-integrator_plugin_initializer<rkck< AdaptiveTimeStep, monitors::stop_on_ejection> >
-	rkck_adaptive_plugin("rkck_adaptive");
+typedef gpulog::device_log L;
+using namespace monitors;
 
-integrator_plugin_initializer<rkck< FixedTimeStep, monitors::stop_on_ejection> >
-	rkck_Fixed_plugin("rkck_fixed");
+integrator_plugin_initializer<
+		rkck< AdaptiveTimeStep, stop_on_ejection<L> >
+	> rkck_adaptive_plugin("rkck_adaptive");
 
-}
-}
-}
+integrator_plugin_initializer<
+		rkck< FixedTimeStep, stop_on_ejection<L> >
+	> rkck_Fixed_plugin("rkck_fixed");
+
+} } } // end namespace bppt :: integrators :: swarm

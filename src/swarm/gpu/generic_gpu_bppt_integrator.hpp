@@ -55,12 +55,12 @@ namespace swarm { namespace gpu { namespace bppt {
  *  template< template<class T, class G> class Propagator, template<class L> class Monitor, class G >
  * and G is supposed to be the Gravitation class.
  */
-template< template<class T> class Propagator, template<class L> class Monitor >
+template< template<class T> class Propagator, class Monitor >
 class generic: public integrator {
 	typedef integrator base;
 
 	//! Monitor is instantiated to write to GPU log.
-	typedef Monitor<gpulog::device_log> monitor_t;
+	typedef Monitor monitor_t;
 
 	//! Parameters of the monitor, should be initialized from config file
 	typedef typename monitor_t::params mon_params_t;

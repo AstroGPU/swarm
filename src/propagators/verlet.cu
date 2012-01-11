@@ -91,7 +91,10 @@ struct VerletPropagator {
 	}
 };
 
-integrator_plugin_initializer< generic< VerletPropagator, monitors::stop_on_ejection > >
+typedef gpulog::device_log L;
+using namespace monitors;
+
+integrator_plugin_initializer< generic< VerletPropagator, stop_on_ejection<L> > >
 	verlet_prop_plugin("verlet"
 			,"This is the integrator based on verlet propagator");
 
