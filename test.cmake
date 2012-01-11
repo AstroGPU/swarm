@@ -1,52 +1,20 @@
 # Use ${SAMPLES} if you need to reference any sample input or configuration file
 
 ENABLE_TESTING()
-MACRO(TEST_INTEGRATOR title nbod)
-	ADD_TEST(NAME Verify_${title}_${nbod}_Bodies
-		COMMAND swarm test -c ${SAMPLES}/${title}.cfg -I ${SAMPLES}/test.${nbod}.in.txt -O ${SAMPLES}/test.${nbod}.out.txt -v 100 nbod=${nbod}) 
-ENDMACRO(TEST_INTEGRATOR)
 
-
-MACRO(TEST_INTEGRATOR_STABILITY title nbod nsys)
-	ADD_TEST(NAME Test_Stability_${title}_${nsys}_Systems_${nbod}_Bodies
-		COMMAND swarm integrate -v 100 -c ${SAMPLES}/${title}.cfg -d 100 -n 10 nbod=${nbod} nsys=${nsys} ) 
-ENDMACRO(TEST_INTEGRATOR_STABILITY)
-
+MACRO(TEST_SCENARIO title config)
+ADD_TEST(NAME ${title}_${config} 
+	COMMAND swarm test -c ${TESTDIR}/${title}/${config}.cfg -I ${TESTDIR}/${title}/in.txt -O ${TESTDIR}/${title}/out.txt)
+ENDMACRO(TEST_SCENARIO)
 
 ############ ACTUAL TEST Cases Begin Here
 
 ADD_TEST(NAME basic COMMAND swarm integrate --defaults )
-TEST_INTEGRATOR(CPU 3)
 
-##### Test Integrator X nbod for pre-calculated scenarios
-SET(integrators Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step Euler Midpoint Verlet)
-LIST(LENGTH integrators integ_list_length)
-SET(i 0)
-WHILE(i LESS ${integ_list_length})
-	LIST(GET integrators ${i} item)
-	SET(nbod 3)
-	WHILE(NOT nbod GREATER ${MAX_NBODIES})
-		TEST_INTEGRATOR(${item} ${nbod})
-		MATH( EXPR nbod "${nbod} + 1")
-	ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
-	MATH( EXPR i "${i} + 1" )
-ENDWHILE(i LESS ${integ_list_length})
-
-#### Test Integrator X nbod for stability
-SET(integrators Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step )
-LIST(LENGTH integrators integ_list_length)
-SET(i 0)
-WHILE(i LESS ${integ_list_length})
-	LIST(GET integrators ${i} item)
-	SET(nbod 3)
-	WHILE(NOT nbod GREATER ${MAX_NBODIES})
-		TEST_INTEGRATOR_STABILITY(${item} ${nbod} 1000)
-		MATH( EXPR nbod "${nbod} + 1")
-	ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
-	MATH( EXPR i "${i} + 1" )
-ENDWHILE(i LESS ${integ_list_length})
+INCLUDE(test_integrators.cmake)
 
 
+TEST_SCENARIO(sample CPU)
 
 ## Add your test cases after this line (or include a file containing test cases)
 
