@@ -33,6 +33,15 @@ struct combine_monitors_params {
 
 /** Template to allow developer to join two monitors
  *  Signal is true if either monitor returns true.
+ *
+ *  The order of the monitors is important. They are executed in order and
+ *  in case of stoppers it can affect the execution. If the first one flags
+ *  the system as disabled and the second one flags it as inactive then there is
+ *  a problem.
+ *
+ *  It can be used in an expression to join more than two monitors
+ *  Example:
+ *  combined< combined< Monitor1, Monitor2> , Monitor3 >
  *  \ingroup monitors
  */
 template< template <class log_t> class Monitor1, 

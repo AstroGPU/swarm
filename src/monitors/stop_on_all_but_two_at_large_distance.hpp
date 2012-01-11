@@ -49,6 +49,7 @@ class stop_on_all_but_two_at_large_distance {
 
 	GPUAPI void operator () () { 
 
+		// Check for distance from origin
 		int num_body_near_origin = 0, id1 = -1, id2 = -2;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
 			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
@@ -61,6 +62,7 @@ class stop_on_all_but_two_at_large_distance {
 		if( num_body_near_origin > 2 )
 			_sys.set_disabled();
  
+		// Check for distance from other bodies
 		int num_body_far_from_all = 0;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
 			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
