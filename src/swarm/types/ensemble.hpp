@@ -140,6 +140,9 @@ class EnsembleBase {
 				+ square(operator[](1).vel()) 
 				+ square(operator[](2).vel());
 		}
+		
+		GENERIC double radius() { return sqrt(radius_squared()); }
+		GENERIC double speed() { return sqrt(speed_squared()); }
 
 		//! Get all position and velocities at once
 		GENERIC void get(double& x,double & y, double & z
