@@ -17,10 +17,7 @@
  ************************************************************************/
 #pragma once
 
-#include <limits>
-
-namespace swarm {
-  namespace monitors {
+namespace swarm {  namespace monitors {
 
 struct stop_on_collision_param {
 	double dmin_squared;
@@ -108,7 +105,4 @@ class stop_on_collision {
 	
 };
 
-}
-
-
-}
+} } // end namespace monitors :: swarm

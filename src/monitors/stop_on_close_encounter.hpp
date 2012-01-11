@@ -19,8 +19,7 @@
 
 #include <limits>
 
-namespace swarm {
-  namespace monitors {
+namespace swarm { namespace monitors {
 
 struct stop_on_close_encounter_param {
 	double dmin;
@@ -46,11 +45,9 @@ class stop_on_close_encounter {
 
 	private:
 	params _p;
-
 	ensemble::SystemRef& _sys;
 	log_t& _log;
 
-	int _counter;
 
 	public:
 
@@ -90,6 +87,4 @@ class stop_on_close_encounter {
 	
 };
 
-}
-
-}
+} } // end namespace monitors :: swarm

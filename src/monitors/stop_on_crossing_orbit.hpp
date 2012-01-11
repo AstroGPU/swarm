@@ -41,7 +41,6 @@ class stop_on_crossing_orbit {
 
 	private:
 	params _p;
-
 	ensemble::SystemRef& _sys;
 	log_t& _log;
 	
