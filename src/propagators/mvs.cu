@@ -17,7 +17,6 @@
  ************************************************************************/
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
-#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 

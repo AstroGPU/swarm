@@ -19,11 +19,9 @@
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
 
-#include "monitors/until_time_end.hpp"
+#include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
-#include "monitors/log_time_interval.hpp"
-#include "monitors/combine.hpp"
 
 
 namespace swarm {

@@ -26,7 +26,7 @@ struct stop_on_crossing_orbit_params {
 	{	}
 };
 
-double sqr(const double& d){
+GPUAPI double sqr(const double& d){
   return d*d;
 }
 
