@@ -19,7 +19,7 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
-#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
+//#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "monitors/combine.hpp"
 
@@ -159,8 +159,10 @@ using namespace monitors;
 integrator_plugin_initializer<hermite< stop_on_ejection<L> > >
 	hermite_plugin("hermite");
 
+/*
 integrator_plugin_initializer<hermite< stop_on_any_large_distance_or_close_encounter<L> > >
 	hermite_plugin_encounter("hermite_close_encounter");
+*/
 
 
 } } } // end namespace bppt :: integrators :: swarm

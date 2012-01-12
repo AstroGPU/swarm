@@ -490,7 +490,7 @@ int main(int argc, char* argv[] )
   //  to run for a long time
   reactivate_systems(ens);
   // EBF Experiment trying to expose host log.
-  swarm::log::ensemble(*(log::manager::default_log()->get_hostlog()),ens);
+  swarm::log::ensemble(*(swarm::log::manager::default_log()->get_hostlog()),ens);
   integ->flush_log();
 
   catch_ctrl_c();
@@ -512,7 +512,7 @@ int main(int argc, char* argv[] )
     std::cerr << active_ones << "\n";
 
     // EBF Experiment trying to expose host log.  
-    swarm::log::ensemble(*(log::manager::default_log()->get_hostlog()),ens);
+    swarm::log::ensemble(*(swarm::log::manager::default_log()->get_hostlog()),ens);
     integ->flush_log();
 
     // 3. Now we need to get rid of the inactive ones. There 
