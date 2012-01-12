@@ -11,7 +11,8 @@ struct mapping_t {
 	off_t offset;
 };
 
-const size_t SSIZE_MAX = 10240;
+#undef SSIZE_MAX
+const size_t SSIZE_MAX = 10240UL;
 
 std::map<size_t,mapping_t> mappings;
 
