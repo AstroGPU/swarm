@@ -6,11 +6,14 @@
 #  1. There are sample input/output files only up to 9 bodies/system
 #  2. Configurations for running each integrator should be provided
 
+SET(TEST_integrator_nbod TRUE CACHE BOOL "Test all integrators versus all number of bodies")
+SET(TEST_stability TRUE CACHE BOOL "Test stability of all integrators")
+
 # List of integrators (name of configuration file) that are tested versus all number of bodies
 SET(TEST_integrator_nbod_list CPU Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested vs. nbod")
 
 # List of integrators (name of configuration file) that are tested for stability (run for long time)
-SET(TEST_integrator_TEST_stability_list Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested for stability")
+SET(TEST_stability_list Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested for stability")
 
 # Number of systems generated for the stability test
 SET(TEST_stability_nsys 16 CACHE STRING "Number of systems for stability test")
@@ -33,28 +36,31 @@ MACRO(TEST_INTEGRATOR_STABILITY title nbod nsys)
 ENDMACRO(TEST_INTEGRATOR_STABILITY)
 
 ##### Test Integrator X nbod for pre-calculated scenarios #######################################
-LIST(LENGTH TEST_integrator_nbod_list integ_list_length)
-SET(i 0)
-WHILE(i LESS ${integ_list_length})
-	LIST(GET TEST_integrator_nbod_list ${i} item)
-	SET(nbod 3)
-	WHILE(NOT nbod GREATER ${MAX_NBODIES})
-		TEST_INTEGRATOR(${item} ${nbod})
-		MATH( EXPR nbod "${nbod} + 1")
-	ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
-	MATH( EXPR i "${i} + 1" )
-ENDWHILE(i LESS ${integ_list_length})
+IF(TEST_integrator_nbod)
+	LIST(LENGTH TEST_integrator_nbod_list integ_list_length)
+	SET(i 0)
+	WHILE(i LESS ${integ_list_length})
+		LIST(GET TEST_integrator_nbod_list ${i} item)
+		SET(nbod 3)
+		WHILE(NOT nbod GREATER ${MAX_NBODIES})
+			TEST_INTEGRATOR(${item} ${nbod})
+			MATH( EXPR nbod "${nbod} + 1")
+		ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
+		MATH( EXPR i "${i} + 1" )
+	ENDWHILE(i LESS ${integ_list_length})
+ENDIF()
 
 #### Test Integrator X nbod for stability ######################################################
-LIST(LENGTH TEST_integrator_TEST_stability_list integ_list_length)
-SET(i 0)
-WHILE(i LESS ${integ_list_length})
-	LIST(GET TEST_integrator_TEST_stability_list ${i} item)
-	SET(nbod 3)
-	WHILE(NOT nbod GREATER ${MAX_NBODIES})
-		TEST_INTEGRATOR_STABILITY(${item} ${nbod} ${TEST_stability_nsys})
-		MATH( EXPR nbod "${nbod} + 1")
-	ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
-	MATH( EXPR i "${i} + 1" )
-ENDWHILE(i LESS ${integ_list_length})
-
+IF(TEST_stability)
+	LIST(LENGTH TEST_stability_list integ_list_length)
+	SET(i 0)
+	WHILE(i LESS ${integ_list_length})
+		LIST(GET TEST_stability_list ${i} item)
+		SET(nbod 3)
+		WHILE(NOT nbod GREATER ${MAX_NBODIES})
+			TEST_INTEGRATOR_STABILITY(${item} ${nbod} ${TEST_stability_nsys})
+			MATH( EXPR nbod "${nbod} + 1")
+		ENDWHILE(NOT nbod GREATER ${MAX_NBODIES})
+		MATH( EXPR i "${i} + 1" )
+	ENDWHILE(i LESS ${integ_list_length})
+ENDIF()
