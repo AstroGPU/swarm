@@ -30,3 +30,13 @@ ADD_CUSTOM_TARGET(benchmark)
 
 BENCHMARK_INTEGRATOR(Hermite)
 BENCHMARK_INTEGRATOR(Hermite_Adaptive)
+
+SET(cfg Hermite)
+SET(nbod 3)
+
+ADD_CUSTOM_TARGET(benchmark_block_${cfg}
+	COMMAND swarm benchmark --range systems_ber_block=1,2,4,8,16,32 nsys=16000 nbod=${nbod} -c ${BENCHMARK_DIR}/${cfg}.cfg)
+ADD_DEPENDENCIES(benchmark_block_${cfg} swarm)
+ADD_DEPENDENCIES(benchmark benchmark_block_${cfg})	
+
+

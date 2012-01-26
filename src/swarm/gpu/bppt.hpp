@@ -143,7 +143,7 @@ class integrator : public gpu::integrator  {
 	integrator(const config &cfg) : Base(cfg) {
 		// TODO: We should check that system_per_block is a multiple of 
 		// SHMEM_CHUNK_SIZE to avoid errors
-		_system_per_block = cfg.optional("systems_per_block",16);
+		_system_per_block = cfg.optional("system_per_block",16);
 	}
 
 	///////////////////////// CUDA Grid Parameters ///////////////////////////////////////////
