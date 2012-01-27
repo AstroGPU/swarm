@@ -19,11 +19,9 @@
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
 
-#include "monitors/until_time_end.hpp"
+#include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
-#include "monitors/log_time_interval.hpp"
-#include "monitors/combine.hpp"
 
 
 namespace swarm {
@@ -104,13 +102,12 @@ class hermite_cpu : public integrator {
 
 	void integrate_system(ensemble::SystemRef sys){
 		const int nbod = sys.nbod();
-		const int nbod_max = 10;
-		double pre_pos[nbod_max][3];
-		double pre_vel[nbod_max][3];
-		double acc0[nbod_max][3];
-		double acc1[nbod_max][3];
-		double jerk0[nbod_max][3];
-		double jerk1[nbod_max][3];
+		double pre_pos[nbod][3];
+		double pre_vel[nbod][3];
+		double acc0[nbod][3];
+		double acc1[nbod][3];
+		double jerk0[nbod][3];
+		double jerk1[nbod][3];
 
 		calcForces(sys,acc0,jerk0);
 
@@ -194,9 +191,9 @@ integrator_plugin_initializer<
 	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
 integrator_plugin_initializer<
-		hermite_cpu< stop_on_crossing_orbit_or_close_approach<L> >
-	> hermite_cpu_plugin_crossing_orbit_or_close_approach(
-		"hermite_cpu_crossing_orbit_or_close_approach"
+		hermite_cpu< stop_on_ejection_or_close_encounter<L> >
+	> hermite_cpu_plugin_ejection_or_close_encounter(
+		"hermite_cpu_ejection_or_close_encounter"
 	);
 
 

@@ -41,6 +41,12 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 	header h; sys s; body b;
 
 	readfromFILE(f,h,filename);
+
+	if(h.nsysattr > ensemble::NUM_SYS_ATTRIBUTES)
+		throw readfileexception(filename, "The file requires more system attributes than the library can handle");
+	if(h.nbodattr > ensemble::NUM_BODY_ATTRIBUTES)
+		throw readfileexception(filename, "The file requires more planet attributes than the library can handle");
+
 	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
 
 	for(int i = 0; i < h.nsys; i++){
@@ -50,6 +56,9 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 
 		sr.id() = s.id;
 		sr.time() = s.time; sr.state() = s.state;
+
+		for(int l = 0; l < h.nsysattr ; l++)
+			sr.attribute(l) = s.attribute[l];
 
 		for(int j = 0; j < h.nbod; j++){
 			readfromFILE(f,b,filename);
@@ -61,8 +70,8 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 			sr[j][0].vel() = b.vel[0];
 			sr[j][1].vel() = b.vel[1];
 			sr[j][2].vel() = b.vel[2];
-			for(int i = 0; i < NUM_PLANET_ATTRIBUTES; i++)
-				sr[j].attribute(i) = b.attribute[i];
+			for(int l = 0; l < h.nbodattr ; l++)
+				sr[j].attribute(l) = b.attribute[l];
 		}
 	}
 	fclose(f);
@@ -71,7 +80,7 @@ defaultEnsemble load(const string& filename) throw (readfileexception){
 
 
 const char* DEFAULT_IO_TAG = "SwarmDataFile";
-const int CURRENT_IO_VERSION = 1;
+const int CURRENT_IO_VERSION = 2;
 
 defaultEnsemble load_text(const string& filename) throw (readfileexception){
 	FILE* f = fopen(filename.c_str(),"r");
@@ -88,13 +97,22 @@ defaultEnsemble load_text(const string& filename) throw (readfileexception){
 	if(version != CURRENT_IO_VERSION )
 		throw readfileexception(filename, "Incorrect version");
 
-	fscanf(f,"%i %i\n\n\n",&h.nbod,&h.nsys);
+	fscanf(f,"%i %i %i %i\n\n\n",&h.nbod,&h.nsys,&h.nsysattr, &h.nbodattr);
+	if(h.nsysattr > ensemble::NUM_SYS_ATTRIBUTES)
+		throw readfileexception(filename, "The file requires more system attributes than the library can handle");
+	if(h.nbodattr > ensemble::NUM_BODY_ATTRIBUTES)
+		throw readfileexception(filename, "The file requires more planet attributes than the library can handle");
+
 	hostEnsemble ens = hostEnsemble::create(h.nbod,h.nsys);
+
 
 	for(int i = 0; i < h.nsys; i++){
 		ensemble::SystemRef sr = ens[i];
 
 		fscanf(f,"%i %le %i\n", &sr.id(), &sr.time(), &sr.state());
+
+		for(int l = 0; l < h.nsysattr; l++)
+			fscanf(f, "%le ", &sr.attribute(l));
 
 		for(int j = 0; j < h.nbod; j++){
 			fscanf(f,"\t%le\n\t%le %le %le\n\t%le %le %le\n\n",
@@ -106,6 +124,8 @@ defaultEnsemble load_text(const string& filename) throw (readfileexception){
 					&sr[j][1].vel(),
 					&sr[j][2].vel()
 				   );
+			for(int l = 0; l < h.nbodattr; l++)
+				fscanf(f, "%le", &sr[j].attribute(l));
 		}
 	}
 	fclose(f);
@@ -118,6 +138,7 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 	header h; sys s; body b;
 
 	h.nsys = ens.nsys(), h.nbod = ens.nbod();
+	h.nsysattr = ensemble::NUM_SYS_ATTRIBUTES, h.nbodattr = ensemble::NUM_BODY_ATTRIBUTES;
 
 	writetoFILE(f,h,filename);
 
@@ -126,6 +147,10 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 		ensemble::SystemRef sr = ens[i];
 		s.id = sr.id();
 		s.time = sr.time(), s.state = sr.state(); 
+
+
+		for(int l = 0; l < h.nsysattr ; l++)
+			s.attribute[l] = sr.attribute(l);
 
 		writetoFILE(f,s,filename);
 
@@ -137,8 +162,8 @@ void save(defaultEnsemble& ens, const string& filename)  throw (writefileexcepti
 			b.vel[1] = sr[j][1].vel();
 			b.vel[2] = sr[j][2].vel();
 			b.mass = sr[j].mass();
-			for(int i = 0; i < NUM_PLANET_ATTRIBUTES; i++)
-				b.attribute[i] = sr[j].attribute(i);
+			for(int l = 0; l < h.nbodattr ; l++)
+				b.attribute[l] = sr[j].attribute(l);
 
 			writetoFILE(f,b,filename);
 		}
@@ -152,15 +177,19 @@ void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileex
 
 
 	fprintf(f, "%s %i\n" , DEFAULT_IO_TAG, CURRENT_IO_VERSION );
-	fprintf(f,"%i %i\n\n\n", ens.nbod(), ens.nsys() );
+	fprintf(f,"%i %i %i %i\n\n\n", ens.nbod(), ens.nsys(), ensemble::NUM_SYS_ATTRIBUTES, ensemble::NUM_BODY_ATTRIBUTES );
 
 	for(int i = 0; i < ens.nsys(); i++){
 
 		ensemble::SystemRef sr = ens[i];
 		fprintf(f,"%i %.15le %i\n", sr.id(), sr.time(), sr.state()); 
 
+		for(int l = 0; l < ensemble::NUM_SYS_ATTRIBUTES; l++)
+			fprintf(f,"%.15le ", sr.attribute(l));
+		fprintf(f, "\n");
+
 		for(int j = 0; j < ens.nbod(); j++){
-			fprintf(f,"\t%.15le\n\t%.15le %.15le %.15le\n\t%.15le %.15le %.15le\n\n",
+			fprintf(f,"\t%.15le\n\t%.15le %.15le %.15le\n\t%.15le %.15le %.15le\n\t",
 					sr[j].mass(),
 					sr[j][0].pos(),
 					sr[j][1].pos(),
@@ -169,6 +198,9 @@ void save_text(defaultEnsemble& ens, const string& filename)  throw (writefileex
 					sr[j][1].vel(),
 					sr[j][2].vel()
 				   );
+			for(int l = 0; l < ensemble::NUM_BODY_ATTRIBUTES; l++)
+				fprintf(f,"%.15le ", sr[j].attribute(l));
+			fprintf(f, "\n\n");
 		}
 
 		fprintf(f,"\n");

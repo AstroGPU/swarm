@@ -19,9 +19,7 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
-//#include "monitors/stop_on_any_large_distance_or_close_encounter.hpp"
-#include "monitors/log_time_interval.hpp"
-#include "monitors/combine.hpp"
+#include "monitors/composites.hpp"
 
 
 namespace swarm { namespace gpu { namespace bppt {

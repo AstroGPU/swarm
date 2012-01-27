@@ -11,8 +11,8 @@ struct mapping_t {
 	off_t offset;
 };
 
-//const size_t SSIZE_MAX = 10240;
-//static const long unsigned int SSIZE_MAX = 10240UL;
+#undef SSIZE_MAX
+const size_t SSIZE_MAX = 10240UL;
 
 std::map<size_t,mapping_t> mappings;
 
@@ -27,8 +27,8 @@ void *fakemmap(void *addr, size_t length, int prot, int flags, int fd, off_t off
 	// Read the contents of the file into memory
 	int l = 0;
 	for(int i = 0; i < 10000; i++){
-		//int s = read(fd,caddr+l,min(length-l,SSIZE_MAX)); 
-		int s = read(fd,caddr+l,min(length-l,10240UL)); 
+	  int s = read(fd,caddr+l,min(length-l,SSIZE_MAX)); 
+	  //int s = read(fd,caddr+l,min(length-l,10240UL)); 
 		if(s==-1){
 			return MAP_FAILED;
 		}else if(s==0)
@@ -57,8 +57,8 @@ int fakemsync(void *addr, size_t length, int flags) {
 	// Write memory to file
 	int l = 0;
 	for(int i = 0; i < 10000; i++){
-		//int s = write(fd,caddr+l,min(length-l,SSIZE_MAX)); 
-		int s = write(fd,caddr+l,min(length-l,10240UL)); 
+	  int s = write(fd,caddr+l,min(length-l,SSIZE_MAX)); 
+	  //int s = write(fd,caddr+l,min(length-l,10240UL)); 
 		if(s==-1)
 			return -1;
 		else if( s == 0)
