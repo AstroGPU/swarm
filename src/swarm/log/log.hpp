@@ -272,4 +272,18 @@ GENERIC void ensemble(L &l, const swarm::ensemble &ens)
 		system(l, ens[sys]);
 }
 
+/**
+ * Store a snapshot of all non-disabled systems within the ensemble (convenience).
+ */
+template<typename L>
+GENERIC void ensemble_enabled(L &l, const swarm::ensemble &ens)
+{
+        for(int sys = 0; sys < ens.nsys(); sys++)
+           {
+           if(ens[sys].is_enabled())
+             system(l, ens[sys]);
+           }
+}
+
+
 } } 
