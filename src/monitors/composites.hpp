@@ -30,7 +30,7 @@ namespace swarm { namespace monitors {
  *
  */
 template <class L> 
-struct stop_on_crossing_orbit_or_close_approach {
+struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
 	struct params {
 		typename stop_on_ejection<L>        ::params ej;
 		typename stop_on_close_encounter<L> ::params ce;
@@ -40,7 +40,7 @@ struct stop_on_crossing_orbit_or_close_approach {
 			:ej(cfg), ce(cfg), co(cfg) {}
 	};
 	
-	GPUAPI stop_on_crossing_orbit_or_close_approach
+	GPUAPI stop_on_ejection_or_close_encounter_or_crossing_orbit
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l), co(p.co,s,l) 	{}
 	
@@ -52,6 +52,33 @@ private:
 	stop_on_ejection<L>        ej;
 	stop_on_close_encounter<L> ce;
 	stop_on_crossing_orbit<L>  co;
+};
+
+
+/** Combination of stop_on_ejcetion and stop_on_close_encounter
+ *
+ */
+template <class L> 
+struct stop_on_ejection_or_close_encounter {
+	struct params {
+		typename stop_on_ejection<L>        ::params ej;
+		typename stop_on_close_encounter<L> ::params ce;
+		
+		params(const config& cfg)
+			:ej(cfg), ce(cfg) {}
+	};
+	
+	GPUAPI stop_on_ejection_or_close_encounter
+		(const params& p,ensemble::SystemRef& s,L& l)
+		: ej(p.ej,s,l), ce(p.ce,s,l) 	{}
+	
+	GPUAPI void operator () () {
+		ej(); ce(); ;
+	}
+	
+private:
+	stop_on_ejection<L>        ej;
+	stop_on_close_encounter<L> ce;
 };
 
 } } // end namespace monitors :: swarm

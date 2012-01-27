@@ -248,6 +248,9 @@ class EnsembleBase {
 		//! Query if the system is disabled
 		GENERIC bool is_disabled() const { return _sys[0].state() == Sys::SYSTEM_DISABLED; }
 
+		//! Query if the system is enabled
+	        GENERIC bool is_enabled() const { return !is_disabled(); }
+
 		//! Get the ActivationState of the system. c.f. ActivationStates
 		GENERIC int& state() const { return _sys[0].state(); }
 
@@ -347,6 +350,7 @@ class EnsembleBase {
 		GENERIC const double& time() const { return _ref.time(); }
 		GENERIC bool is_active() const { return _ref.state() == Sys::SYSTEM_ACTIVE; }
 		GENERIC bool is_disabled() const { return _ref.is_disabled(); }
+		GENERIC bool is_enabled() const { return !_ref.is_disabled(); }
 		GENERIC const int& state() const { return _ref.state(); }
 		GENERIC const int& id() const { return _ref.id(); }
 		GENERIC const double& attribute(const int& i) const { return _sys[0].attribute(i); }
@@ -508,6 +512,9 @@ class EnsembleBase {
 		return ! operator[] ( sys ).is_inactive();
 	}
 	GENERIC bool is_disabled(const int& sys) const { 
+		return ! operator[] ( sys ).is_disabled();
+	}
+	GENERIC bool is_enabled(const int& sys) const { 
 		return ! operator[] ( sys ).is_disabled();
 	}
 	GENERIC void set_active(const int& sys) { 
