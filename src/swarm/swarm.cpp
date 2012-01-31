@@ -5,6 +5,7 @@
 #include "query.hpp"
 #include "snapshot.hpp"
 #include "stopwatch.h"
+#include "gpu/device_settings.hpp"
 
 int DEBUG_LEVEL  = 0;
 
@@ -517,6 +518,7 @@ int main(int argc, char* argv[]){
 
 	// Initialize Swarm
 	swarm::init(cfg);
+	print_device_information();
 	srand(time(NULL));
 
 	// Set some variables

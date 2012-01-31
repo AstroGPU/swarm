@@ -142,6 +142,11 @@ struct launch_template_choose {
 	template<class integ_pair>
 	static void choose(integ_pair p){
 		compile_time_params_t<N> compile_time_param;
+//		$PRINT( "Launch Kernel " << p.first->gridDim().x << "x" << p.first->gridDim().y 
+//				<< "=" << (p.first->gridDim().x * p.first->gridDim().y) <<  ",  "
+//				<< p.first->threadDim().x << "x" << p.first->threadDim().y 
+//				<< "=" << (p.first->threadDim().x * p.first->threadDim().y) <<  ",  "
+//				<< ", " << p.first->shmemSize() );
 		generic_kernel<<<p.first->gridDim(), p.first->threadDim(), p.first->shmemSize() >>>(p.second,compile_time_param);
 	}
 };

@@ -32,6 +32,7 @@
 #include "integrator.hpp"
 #include "plugin.hpp"
 #include "utils.hpp"
+#include "gpu/device_settings.hpp"
 
 /// \defgroup integrators Integrators
 /// \defgroup propagators Propagators
@@ -53,11 +54,10 @@ inline void init(const config &cfg) {
 	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
 
 	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
-	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
-	if( dev >= 0 && dev < devcnt )
-		cudaErrCheck( cudaSetDevice(dev) );
-	else
-		std::cerr << "Cannot select the CUDA device. GPU integrators are disabled" << std::endl;
+
+	select_cuda_device(dev);
+
+
 
 	swarm::log::manager::default_log()->init(cfg);
 }
