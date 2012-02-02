@@ -24,12 +24,16 @@ namespace swarm {
 
 struct stop_on_any_large_distance_params {
 	double rmax;
-	bool stop;
+        bool deactivate_on, log_on, verbose_on;
 	stop_on_any_large_distance_params(const config &cfg)
 	{
 		rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
-		stop = cfg.optional("stop_on_rmax",false);
+		deactivate_on = cfg.optional("deactivate_on_any_large_distance",false);
+		log_on = cfg.optional("log_on_any_large_distance",false);
+		verbose_on = cfg.optional("verbose_on_any_large_distance",false);
 	}
+
+
 };
 
 /** Simple monitor that logs when any one body is separated from 
@@ -52,18 +56,23 @@ class stop_on_any_large_distance {
 	log_t& _log;
 
 	public:
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
 
 	GPUAPI void operator () () { 
+	  if(!is_any_on()) return;
 
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
 			if(_sys.radius_squared(b) > _params.rmax * _params.rmax )
 				is_any_body_far_from_origin = true;
 		}
-		if(!is_any_body_far_from_origin) _sys.set_disabled();
-					
+		if(!is_any_body_far_from_origin) return;
+		bool need_to_log = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius_squared(b) <= _params.rmax * _params.rmax ) {
+			if(_sys.radius_squared(b) >= _params.rmax * _params.rmax ) {
 				bool is_far_from_every_body = true;
 				for(int bb = 0 ; bb < _sys.nbod(); bb ++ )
 					if(b != bb) {
@@ -72,17 +81,26 @@ class stop_on_any_large_distance {
 							is_far_from_every_body = false;
 					}
 				if(is_far_from_every_body) {
-					lprintf(_log, "Distance from all bodies exceeds rmax: _sys=%d, bod=%d, T=%lg r=%lg rmax=%lg.\n"
-						, _sys.number(), b, _sys.time() , sqrt(r2), _params.rmax);
-					log::system(_log, _sys);
-					if(_params.stop) a_sys.set_disabled();
+				  if(is_verbose_on() )
+					lprintf(_log, "Distance from all bodies exceeds rmax: _sys=%d, bod=%d, T=%lg r=%lg rmax=%lg.\n", _sys.number(), b, _sys.time() , sqrt(r2), _params.rmax);
+				  if(is_log_on() )
+				    need_to_log = true;
+
+				  if(is_deactivate_on() )
+					a_sys.set_disabled();
 				}
 			}
 		}
+		if(need_to_log)
+		   log::system(_log, _sys);		  
 	}
 
 	GPUAPI stop_on_any_large_distance(const params& p,ensemble::SystemRef& s,log_t& l)
-		:_params(p),_sys(s),_log(l),_counter(0){}
+		:_params(p),_sys(s),_log(l)
+#if 0
+		,_counter(0)
+#endif
+                {}
 	
 };
 

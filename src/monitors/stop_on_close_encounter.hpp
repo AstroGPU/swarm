@@ -23,12 +23,13 @@ namespace swarm { namespace monitors {
 
 struct stop_on_close_encounter_param {
 	double dmin;
+  bool deactivate_on, log_on, verbose_on;
 	stop_on_close_encounter_param(const config &cfg)
 	{
-		if(!cfg.count("close_approach"))
-			dmin = 0.;
-		else
-			dmin = atof(cfg.at("close_approach").c_str());
+		dmin = cfg.optional("close_approach",false);
+		deactivate_on = cfg.optional("deactivate_on_close_encounter",false);
+		log_on = cfg.optional("log_on_close_encounter",false);
+		verbose_on = cfg.optional("verbose_on_close_encounter",false);
 	}
 };
 
@@ -44,12 +45,18 @@ class stop_on_close_encounter {
 	typedef stop_on_close_encounter_param params;
 
 	private:
-	params _p;
+	params _params;
 	ensemble::SystemRef& _sys;
 	log_t& _log;
 
 
 	public:
+
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+
 
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
@@ -58,9 +65,10 @@ class stop_on_close_encounter {
 		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
 		//		bool close_encounter = d < _p.dmin * rH;
 		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM);
-		bool close_encounter = d*d*d < _p.dmin*_p.dmin*_p.dmin * rH3;
+		bool close_encounter = d*d*d < _params.dmin*_params.dmin*_params.dmin * rH3;
 
 		if( close_encounter )
+		  if(is_verbose_on() )
 			lprintf(_log, "Close apporach detected: "
 					"sys=%d, T=%f j=%d i=%d  d=%lg.\n"
 					, _sys.number(), _sys.time(), j, i,d);
@@ -69,6 +77,7 @@ class stop_on_close_encounter {
 	}
 
 	GPUAPI void operator () () { 
+	  if(!is_any_on()) return;
 		bool stopit = false;
 
 		// Chcek for close encounters
@@ -77,13 +86,15 @@ class stop_on_close_encounter {
 				stopit = stopit || check_close_encounters(b,d); 
 
 		if(stopit) {
+		  if(is_log_on())
 			log::system(_log, _sys);
+		  if(is_deactivate_on())
 			_sys.set_disabled();
 		}
 	}
 
 	GPUAPI stop_on_close_encounter(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l){}
+	    :_params(p),_sys(s),_log(l){}
 	
 };
 

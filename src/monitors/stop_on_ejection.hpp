@@ -24,9 +24,13 @@ namespace swarm {
 
 struct stop_on_ejection_params {
 	double rmax;
+        bool deactivate_on, log_on, verbose_on;
 	stop_on_ejection_params(const config &cfg)
 	{
 		rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
+		deactivate_on = cfg.optional("deactivate_on_ejection",false);
+		log_on = cfg.optional("log_on_ejection",false);
+		verbose_on = cfg.optional("verbose_on_ejection",false);
 	}
 };
 
@@ -51,6 +55,11 @@ class stop_on_ejection {
 	public:
 
 	
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+
 	public:
 
 	/** \todo This function does not look right. It compares 
@@ -72,12 +81,14 @@ class stop_on_ejection {
 		double epp = 0.5*speed_sq*r/_sys[b].mass()-1.;
 		if( fabs(epp) < 1e-4 ) {
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
-			lprintf(_log, "Orbit is nearly parabolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
+			if(is_verbose_on() )
+			  lprintf(_log, "Orbit is nearly parabolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
 			stopit = true;
 		}else if ( epp > 0 ){
 			double energy = 0.5*speed_sq-_sys[b].mass()/r;
-			lprintf(_log, "Orbit is hyperbolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
+			if(is_verbose_on() )
+			  lprintf(_log, "Orbit is hyperbolic: _sys=%d, bod=%d, T=%lg r=%lg energy=%lg energy*r/GM=%lg.\n"
 					, _sys.number(), b, _sys.time() , r, energy, epp );
 			// TODO: Make sure that planet is not near another body
 			// This is very unlikely to be an issue, provided that rmax
@@ -89,6 +100,7 @@ class stop_on_ejection {
 	}
 	
 	GPUAPI void operator () () { 
+	  if(!is_any_on()) return;
 		bool stopit = false;
 
 		// Check each body
@@ -96,7 +108,9 @@ class stop_on_ejection {
 			stopit = stopit || test_body(b);
 
 		if(stopit) {
+		  if(is_log_on())
 			log::system(_log, _sys);
+		  if(is_deactivate_on())
 			_sys.set_disabled();
 		}
 

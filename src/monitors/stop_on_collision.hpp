@@ -21,10 +21,16 @@ namespace swarm {  namespace monitors {
 
 struct stop_on_collision_param {
 	double dmin_squared;
+  bool deactivate_on, log_on, verbose_on;
+
 	stop_on_collision_param(const config &cfg)
 	{
 	  dmin_squared = cfg.optional("collision_radius",0.);
 	  dmin_squared *= dmin_squared;
+
+	  deactivate_on = cfg.optional("deactivate_on_collision",false);
+	  log_on = cfg.optional("log_on_collision",false);
+	  verbose_on = cfg.optional("verbose_on_collision",false);
 	}
 };
 
@@ -48,6 +54,13 @@ class stop_on_collision {
 	int _counter;
 
 	public:
+
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+
+
 
 #if 0 // still under development
   GPUAPI bool check_close_encounter_possible(const int& i, const int& j, double dt){
@@ -77,17 +90,18 @@ class stop_on_collision {
 		bool close_encounter = d_squared < _p.dmin_squared;
 
 		if( close_encounter )
+		  if(is_verbose_on() )
 			lprintf(_log, "Collision detected: "
 					"sys=%d, T=%f j=%d i=%d  d=%lg.\n"
 				, _sys.number(), _sys.time(), j, i,sqrt(d_squared));
-
 		return close_encounter;
 	}
 
   
   
-	GPUAPI void operator () () { 
-		bool stopit = false;
+	GPUAPI void operator () () { 	
+	  if(!is_any_on()) return;
+	bool stopit = false;
 
 		// Chcek for close encounters
 		for(int b = 1; b < _sys.nbod(); b++)
@@ -95,7 +109,9 @@ class stop_on_collision {
 				stopit = stopit || check_close_encounters(b,d); 
 
 		if(stopit) {
+		  if(is_log_on())
 			log::system(_log, _sys);
+		  if(is_deactivate_on())
 			_sys.set_disabled();
 		}
 	}
