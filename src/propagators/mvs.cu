@@ -68,7 +68,7 @@ struct MVSPropagator {
 
 	__device__ bool is_in_body_component_grid_no_star()
 //        { return ( body_component_grid && (b!=0) ); }	
-        { return ( (b < nbod) && (c < 3) && (b!=0) ); }	
+        { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
 
 	__device__ bool is_first_thread_in_system()
 //        { return first_thread_in_system; }	
@@ -82,7 +82,7 @@ struct MVSPropagator {
 		acc_bc = calcForces.acc_planets(ij,b,c);
                 }
 
-	__device__ void convert_std_to_helio_pos_bary_vel_coord()  { 
+	GPUAPI void convert_std_to_helio_pos_bary_vel_coord()  { 
 	        double pc0;
 		double sump = 0., sumv = 0., mtot = 0.;
 		if( is_in_body_component_grid() )
@@ -121,7 +121,7 @@ struct MVSPropagator {
 	}
 
 
-	__device__ void convert_helio_pos_bary_vel_to_std_coord ()  
+	GPUAPI void convert_helio_pos_bary_vel_to_std_coord ()  
 	{ 
 	  double sump = 0., sumv = 0., mtot;
 	  double m0, pc0, vc0;
@@ -185,9 +185,9 @@ struct MVSPropagator {
 			   drift_step(hby2);
 
 			   // Unnecessary
-			 __syncthreads();
-			acc_bc = calcForces.acc_planets(ij,b,c);
-			 __syncthreads();
+//			 __syncthreads();
+//			acc_bc = calcForces.acc_planets(ij,b,c);
+//			 __syncthreads();
 
 			// Step 2: Kick Step
 			if( is_in_body_component_grid_no_star() ) 
@@ -202,7 +202,6 @@ struct MVSPropagator {
 			__syncthreads();
 
 			// TODO: check for close encounters here
-
 			acc_bc = calcForces.acc_planets(ij,b,c);
 
 			// Step 4: Kick Step
