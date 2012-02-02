@@ -101,6 +101,7 @@ class Gravitation {
 	typedef GravitationScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
+	public: // hack to make this public to test whether it's worth using shared memory for some small steps
 	ensemble::SystemRef& sys;
 	shared_data &shared;
 
