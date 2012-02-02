@@ -46,12 +46,15 @@ struct MVSPropagator {
 //	GravClass& calcForces;	
 	int b;
 	int c;
+	// \todo Replace with functions.  Remove from generic integrator?  Put functions in base class?
 	int ij;
 	bool body_component_grid;
 	bool first_thread_in_system;
+
 	double sqrtGM;
 	double max_timestep;
 
+	double acc_bc;
 
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation<T::n>& calc)
@@ -59,14 +62,32 @@ struct MVSPropagator {
 //			GravClass calc)
 		:_params(p),sys(s),calcForces(calc){}
 
+	__device__ bool is_in_body_component_grid()
+//        { return body_component_grid; }	
+        { return  ((b < nbod) && (c < 3)); }	
+
+	__device__ bool is_in_body_component_grid_no_star()
+//        { return ( body_component_grid && (b!=0) ); }	
+        { return ( (b < nbod) && (c < 3) && (b!=0) ); }	
+
+	__device__ bool is_first_thread_in_system()
+//        { return first_thread_in_system; }	
+        { return (thread_in_system()==0); }	
+
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 	GPUAPI void init()  { 
 		sqrtGM = sqrt(sys[0].mass());
+		convert_std_to_helio_pos_bary_vel_coord();
+		__syncthreads();
+		acc_bc = calcForces.acc_planets(ij,b,c);
+                }
 
-		if( body_component_grid )
+	__device__ void convert_std_to_helio_pos_bary_vel_coord()  { 
+	        double pc0;
+		double sump = 0., sumv = 0., mtot = 0.;
+		if( is_in_body_component_grid() )
 		{
-			double sump = 0., sumv = 0., mtot = 0.;
-
+			pc0 = sys[0][c].pos();
 			// Find Center of mass and momentum
 			for(int j=0;j<nbod;++j) {
 				const double mj = sys[j].mass();
@@ -74,52 +95,83 @@ struct MVSPropagator {
 				sump += mj*sys[j][c].pos();
 				sumv += mj*sys[j][c].vel();
 			}
+		sumv /= mtot;
+		}
+		__syncthreads();
 
+		if( is_in_body_component_grid() )
+		{
 			if(b==0) // For sun
-				sys[b][c].vel() = sumv/mtot, 
-					sys[b][c].pos() = sump/mtot;
+			{
+			sys[b][c].vel() = sumv;
+			sys[b][c].pos() = sump/mtot;
+			}
 			else     // For planets
-				sys[b][c].vel() -= sumv/mtot,
-					sys[b][c].pos() -= sys[0][c].pos();
+			{
+			sys[b][c].vel() -= sumv;
+			sys[b][c].pos() -= pc0;
+			}
 		}
 
 	}
 
 	/// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
 	GPUAPI void shutdown() { 
-		if ( body_component_grid ) {
+	convert_helio_pos_bary_vel_to_std_coord ();
+	}
 
-			double sump = 0., sumv = 0., mtot;
-			double m0, pc0, vc0;
-			m0 = sys[0].mass();
-			pc0 = sys[0][c].pos();
-			vc0 = sys[0][c].vel();
-			mtot = m0;
-			for(int j=1;j<nbod;++j)
+
+	__device__ void convert_helio_pos_bary_vel_to_std_coord ()  
+	{ 
+	  double sump = 0., sumv = 0., mtot;
+	  double m0, pc0, vc0;
+		if ( is_in_body_component_grid() ) 
+		{
+		  m0 = sys[0].mass();
+		  pc0 = sys[0][c].pos();
+		  vc0 = sys[0][c].vel();
+		  mtot = m0;
+		  for(int j=1;j<nbod;++j)
 			{
 				const double mj = sys[j].mass();
 				mtot += mj;
 				sump += mj*sys[j][c].pos();
 				sumv += mj*sys[j][c].vel();
 			}
+		sump /= mtot;
+		}
+		__syncthreads();
 
-
-			if(b==0) // For sun only
-				sys[b][c].pos() -= sump/mtot,
-					sys[b][c].vel() -= sumv/m0;
-			else
-				sys[b][c].pos() += pc0 - sump/mtot,
-					sys[b][c].vel() += vc0;
-
+		if ( is_in_body_component_grid() ) 
+		   {
+		   if(b==0) // For sun only
+			{
+			sys[b][c].pos() -= sump;
+			sys[b][c].vel() -= sumv/m0;
+			}
+		   else
+			{
+			sys[b][c].pos() += pc0 - sump;
+			sys[b][c].vel() += vc0;
+			}
 		}
 
 	}
 
-	GPUAPI void drift_step(const double hby2) {
-		double mv = 0;
-		for(int j=1;j<nbod;++j)
-			mv += sys[j].mass() * sys[j][c].vel();
+	GPUAPI void drift_step(const double hby2) 
+	{
+	      if(b==0)
+	        {
+		sys[b][c].pos() += hby2*sys[b][c].vel();
+		}
+	      else
+	        {
+	      	double mv = 0;
+	      	for(int j=1;j<nbod;++j)
+	      		mv += sys[j].mass() * sys[j][c].vel();
+
 		sys[b][c].pos() += mv*hby2/sys[0].mass();
+		}
 	}
 
 
@@ -128,40 +180,41 @@ struct MVSPropagator {
 		double H = min( max_timestep ,  _params.time_step );
 		double hby2 = 0.5 * H;
 
-		double acc = calcForces.acc_planets(ij,b,c);
-
-		// Only operate on planets and not sun
-		if( body_component_grid && b != 0 ) {
-
-
 			// Step 1
-			drift_step(hby2);
+			if ( is_in_body_component_grid() ) 
+			   drift_step(hby2);
+
+			   // Unnecessary
+			 __syncthreads();
+			acc_bc = calcForces.acc_planets(ij,b,c);
+			 __syncthreads();
 
 			// Step 2: Kick Step
-			sys[b][c].vel() += hby2 * acc;
+			if( is_in_body_component_grid_no_star() ) 
+			   sys[b][c].vel() += hby2 * acc_bc;
+
+			__syncthreads();
 
 			// 3: Kepler Drift Step (Keplerian orbit about sun/central body)
-			drift_kepler( sys[b][0].pos()
-					     ,sys[b][1].pos()
-						 ,sys[b][2].pos()
+			if( (ij>0) && (ij<nbod)  ) 
+			    drift_kepler( sys[ij][0].pos(),sys[ij][1].pos(),sys[ij][2].pos(),sys[ij][0].vel(),sys[ij][1].vel(),sys[ij][2].vel(),sqrtGM, H );
 
-					     ,sys[b][0].vel()
-					     ,sys[b][1].vel()
-						 ,sys[b][2].vel()
-
-						 ,sqrtGM, H
-					);
+			__syncthreads();
 
 			// TODO: check for close encounters here
 
+			acc_bc = calcForces.acc_planets(ij,b,c);
+
 			// Step 4: Kick Step
-			sys[b][c].vel() += hby2 * acc;
+			if( is_in_body_component_grid_no_star() ) 
+			   sys[b][c].vel() += hby2 * acc_bc;
+			__syncthreads();
 
 			// Step 5
-			drift_step(hby2);
-		}
+			if ( is_in_body_component_grid() ) 
+			  drift_step(hby2);
 
-		if( first_thread_in_system ) 
+		if( is_first_thread_in_system() ) 
 			sys.time() += H;
 	}
 };
