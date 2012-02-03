@@ -21,6 +21,13 @@
 
 namespace swarm { namespace monitors {
 
+/* Parameters for stop_on_crossing_orbit monitor
+ * deactivate_on_crossing (bool): 
+ * log_on_crossing (bool): 
+ * verbose_on_crossing (bool): 
+ *
+ * \ingroup monitors_param
+ */ 
 struct stop_on_crossing_orbit_params {
   bool deactivate_on, log_on, verbose_on;
   stop_on_crossing_orbit_params(const config &cfg)
@@ -71,13 +78,12 @@ class stop_on_crossing_orbit {
 
 		a = -0.5*_GM/energy;
 		double fac = 1.-h2/(_GM*a);
-		e = (fac>1.e-8) ? sqrt(fac) : 0.;
+		e = (fac>1.e-8) ? sqrtf(fac) : 0.;
 	}
 
     /**
 	 * Function to check for crossing orbits of planet i and j.
-	 * It assumes that planet i is closer to sun than planet j.
-	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
+ssssss	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
 	 * Doesn't account for pericenter directions
 	 * Assumes planets ordered from closest to farthest
 	 *
@@ -88,7 +94,11 @@ class stop_on_crossing_orbit {
 	  calc_a_e(i, a_i, e_i);
 	  calc_a_e(j, a_j, e_j);
 	  
-	  bool is_orbits_crossing = a_i * (1. + e_i)  >  a_j * ( 1. - e_j ) ;
+	  bool is_orbits_crossing;
+	  if(a_i<=a_j)
+	     is_orbits_crossing = a_i * (1. + e_i)  >  a_j * ( 1. - e_j ) ;
+	  else
+	     is_orbits_crossing = a_i * (1. + e_i)  <  a_j * ( 1. - e_j ) ;
 
 	  if( is_orbits_crossing && is_verbose_on())
 		lprintf(_log, "Crossing orbits detected: " 
@@ -98,14 +108,32 @@ class stop_on_crossing_orbit {
 	  return is_orbits_crossing;
 	}
 
-	GPUAPI void operator () () { 
-	  if(!is_any_on()) return;
+#if 1 
+  /// Working on standardized framework for monitors to deal with integrations in non-standard coordinate systems
+	GPUAPI bool test () { 
 	  _triggered = false;
 		// Check for crossing orbits between every pair of planets
-		// the smaller index planet always comes first
 		for(int j = 2; j < _sys.nbod(); j++)
 		  for(int i = 1; i < j; i++)
 			  _triggered = _triggered || check_for_crossing_orbits(i, j);
+		return _triggered;
+	}
+#endif
+
+    //	GPUAPI void operator () () { 
+  GPUAPI void operator () (int thread_in_system) {
+	  if(!is_any_on()) return;
+
+	  if(thread_in_system==0)
+	    {
+	  _triggered = test();
+#if 0
+	  _triggered = false;
+		// Check for crossing orbits between every pair of planets
+		for(int j = 2; j < _sys.nbod(); j++)
+		  for(int i = 1; i < j; i++)
+			  _triggered = _triggered || check_for_crossing_orbits(i, j);
+#endif
 
 		if(_triggered) {
 		  if(is_log_on())
@@ -113,34 +141,21 @@ class stop_on_crossing_orbit {
 		  if(is_deactivate_on())
 			_sys.set_disabled();
 		}
+	    }
 	}
 
-#if 0 
-  /// Working on standardized framework for monitors to deal with integrations in non-standard coordinate systems
-	GPUAPI bool test () { 
-	  _triggered = false;
-		// Check for crossing orbits between every pair of planets
-		// the smaller index planet always comes first
-		for(int j = 2; j < _sys.nbod(); j++)
-		  for(int i = 1; i < j; i++)
-			  _triggered = _triggered || check_for_crossing_orbits(i, j);
-		return _triggered;
-	}
-
-        GPUAPI bool needs_std_coord_always (); 
+        GPUAPI bool needs_std_coord_always () 
         {  return false; }
 
-        GPUAPI bool needs_std_coord_this_case (); 
+        GPUAPI bool needs_std_coord_now () 
         {  return false; }
 
 	GPUAPI bool needs_to_log_system () 
-        {  return (_triggered && log_on); }
+        {  return (_triggered && is_log_on()); }
 
 	GPUAPI bool needs_to_set_state () 
-        {  return (_triggered && deactivate_on); }
+        {  return (_triggered && is_deactivate_on()); }
 
-#endif
-	
 
 	GPUAPI stop_on_crossing_orbit(const params& p,ensemble::SystemRef& s,log_t& l)
 	    :_params(p),_sys(s),_log(l){}

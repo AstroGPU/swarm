@@ -19,6 +19,14 @@
 
 namespace swarm {  namespace monitors {
 
+/* Parameters for stop_on_collision monitor
+ * deactivate_on_collision (bool): 
+ * log_on_collision (bool): 
+ * verbose_on_collision (bool): 
+ * collision_radius (real): default distance or collision if individual radii not avaliable
+ *
+ * \ingroup monitors_param
+ */ 
 struct stop_on_collision_param {
 	double dmin_squared;
   bool deactivate_on, log_on, verbose_on;
@@ -46,7 +54,7 @@ class stop_on_collision {
 	typedef stop_on_collision_param params;
 
 	private:
-	params _p;
+	params _params;
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
@@ -66,7 +74,7 @@ class stop_on_collision {
   GPUAPI bool check_close_encounter_possible(const int& i, const int& j, double dt){
 
     //	  double hill_radius_sq_upper_limit = pow(((_sys.mass(i)+_sys.mass(j))/(3.0*_sys.mass(0))),2.0/3.0)*(std::max(_sys.radius_squared(i),_sys.radius_squared(j)));
-	  double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _p.dmin_squared;
+	  double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
 	  double vesc_sq = 2.0*_sys.mass(0)/std::min(_sys.radius(i),_sys.radius(j));
 	  double d_squared = _sys.distance_squared_between(i,j);
 	  bool close_encounter = (d_squared < vesc_sq*dt*dt + target_radius_sq);
@@ -87,7 +95,8 @@ class stop_on_collision {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d_squared = _sys.distance_squared_between(i,j);
-		bool close_encounter = d_squared < _p.dmin_squared;
+		double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
+		bool close_encounter = d_squared < _target_radius_sq;
 
 		if( close_encounter )
 		  if(is_verbose_on() )
@@ -99,9 +108,13 @@ class stop_on_collision {
 
   
   
-	GPUAPI void operator () () { 	
+  //	GPUAPI void operator () () { 	
+	GPUAPI void operator () (int thread_in_system) 
 	  if(!is_any_on()) return;
-	bool stopit = false;
+	  bool stopit = false;
+
+		if(thread_in_system==0)
+		  {
 
 		// Chcek for close encounters
 		for(int b = 1; b < _sys.nbod(); b++)
@@ -114,10 +127,11 @@ class stop_on_collision {
 		  if(is_deactivate_on())
 			_sys.set_disabled();
 		}
+		  }
 	}
 
 	GPUAPI stop_on_collision(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l),_counter(0){}
+	    :_params(p),_sys(s),_log(l),_counter(0){}
 	
 };
 

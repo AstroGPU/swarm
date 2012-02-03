@@ -22,6 +22,14 @@
 namespace swarm {
   namespace monitors {
 
+/* Parameters for stop_on_ejection monitor
+ * deactivate_on_ejection (bool): 
+ * log_on_ejection (bool): 
+ * verbose_on_ejection (bool): 
+ * rmax (real): minimum distance to check for ejections
+ *
+ * \ingroup monitors_param
+ */ 
 struct stop_on_ejection_params {
 	double rmax;
         bool deactivate_on, log_on, verbose_on;
@@ -62,16 +70,17 @@ class stop_on_ejection {
 
 	public:
 
-	/** \todo This function does not look right. It compares 
-	 * the radius to maximum radius, but it only stops if the
-	 * shape of the orbit is parabolic or hyperbolic I thought 
-	 * we should stop if the planet is too far no matter what
+	/** First, we test whether body b is far from the origin 
+	 * (which may be COM or star) and moving farther away.  
+	 * If both of those are passed, then we check that the
+	 * orbit is parabolic or hyperbolic.
 	 *
 	 */
 	GPUAPI bool test_body(const int& b) {
 
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
-		double r = sqrt(_sys[b].radius_squared());  // WARNING: Deceiving function name
+		//		double r = sqrt(_sys[b].radius_squared());  // WARNING: Deceiving function name
+		double r = _sys[b].radius();  // WARNING: Deceiving function name
 		if( r < _params.rmax ) return false;
 		double rdotv = x*vx+y*vy+z*vz;
 		if( rdotv <= 0. ) return false;
@@ -99,22 +108,27 @@ class stop_on_ejection {
 		return stopit;
 	}
 	
-	GPUAPI void operator () () { 
+  //	GPUAPI void operator () () { 	
+	GPUAPI void operator () (int thread_in_system) 
+          { 
 	  if(!is_any_on()) return;
 		bool stopit = false;
 
-		// Check each body
+		if(thread_in_system==0)
+		  {
+		// Check each body other than central star
 		for(int b = 1; b < _sys.nbod(); b++)
 			stopit = stopit || test_body(b);
 
-		if(stopit) {
-		  if(is_log_on())
+		    if(stopit) 
+		      {
+		      if(is_log_on())
 			log::system(_log, _sys);
-		  if(is_deactivate_on())
+		      if(is_deactivate_on())
 			_sys.set_disabled();
-		}
-
-	}
+		      }
+		  }
+	  }
 
 	
 	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)

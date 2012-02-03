@@ -78,7 +78,7 @@ class hermite: public integrator {
 
 
 		if( first_thread_in_system  )  {
-		    montest();
+		    montest( thread_in_system() );
 		    }
 
 		////////// INTEGRATION //////////////////////
@@ -133,9 +133,8 @@ class hermite: public integrator {
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( first_thread_in_system ) 
 				sys.time() += h;
-
+			montest( thread_in_system() );  
 			if( first_thread_in_system  )  {
-			    montest();
 			    if( sys.time() >= _destination_time ) 
 				sys.set_inactive();
 			}

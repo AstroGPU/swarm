@@ -22,6 +22,14 @@
 namespace swarm {
   namespace monitors {
 
+/* Parameters for stop_on_any_large_distance monitor
+ * deactivate_on_close_encounter (bool): 
+ * log_on_close_encounter (bool): 
+ * verbose_on_close_encounter (bool): 
+ * rmax (real): minimum distance between bodies to trigger
+ *
+ * \ingroup monitors_param
+ */ 
 struct stop_on_any_large_distance_params {
 	double rmax;
         bool deactivate_on, log_on, verbose_on;
@@ -61,8 +69,12 @@ class stop_on_any_large_distance {
         GPUAPI bool is_verbose_on() { return _params.verbose_on; };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
 
-	GPUAPI void operator () () { 
+  //	GPUAPI void operator () () { 
+	GPUAPI void operator () (int thread_in_system) 
 	  if(!is_any_on()) return;
+
+		if(thread_in_system==0)
+		  {
 
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
@@ -93,6 +105,7 @@ class stop_on_any_large_distance {
 		}
 		if(need_to_log)
 		   log::system(_log, _sys);		  
+		  }
 	}
 
 	GPUAPI stop_on_any_large_distance(const params& p,ensemble::SystemRef& s,log_t& l)

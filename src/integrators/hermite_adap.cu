@@ -183,11 +183,13 @@ class hermite_adap: public integrator {
 			if( first_thread_in_system ) 
 				sys.time() += h;
 
-			if( first_thread_in_system && sys.is_active() )  {
-				montest();
+			if( first_thread_in_system && sys.is_active() )  
+				montest( thread_in_system() );
+
+			if( first_thread_in_system )
 				if( sys.time() >= _destination_time ) 
 					sys.set_inactive();
-			}
+
 
 			__syncthreads();
 
