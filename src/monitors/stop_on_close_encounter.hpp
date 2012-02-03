@@ -44,8 +44,9 @@ struct stop_on_close_encounter_param {
 /** Simple monitor to detect close encounters.
  *  Signals and logs if current separation between any two bodies (measured in mutual Hill radii) is less than "close_approach".
  *  WARNING: Does not interpolate between steps
- *  TODO: Need to allow object specific collision radii or collision densities
+ *
  *  \ingroup monitors
+ *  \ingroup monitors_for_planetary_systems
  */
 template<class log_t>
 class stop_on_close_encounter {

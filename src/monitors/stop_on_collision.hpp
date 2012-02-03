@@ -45,7 +45,7 @@ struct stop_on_collision_param {
 /** Simple monitor to detect physical collisions.  
  *  Signals and logs if current separation between any two bodies is less than "collision_radius".
  *  WARNING: Does not interpolate between steps
- *  TODO: Need to allow object specific collision radii or collision densities
+ *
  *  \ingroup monitors
  */
 template<class log_t>

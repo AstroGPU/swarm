@@ -27,6 +27,7 @@ namespace swarm { namespace monitors {
  * verbose_on_crossing (bool): 
  *
  * \ingroup monitors_param
+ *  \ingroup monitors_for_planetary_systems
  */ 
 struct stop_on_crossing_orbit_params {
   bool deactivate_on, log_on, verbose_on;

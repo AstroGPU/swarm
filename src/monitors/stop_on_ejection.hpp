@@ -46,8 +46,9 @@ struct stop_on_ejection_params {
  *	1. distance from the origin by at least rmax,  
  *	2. is moving away from the origin
  *	3. is on a nearly parabolic or hyperbolic orbit from origin (neglecting mutual interactions)
- *	Note that this stopping criteria is specifically written for planetary systems with barycenter at origin.
+ *	Note that this stopping criteria is specifically written for planetary systems with barycenter or star at origin.
  *  \ingroup monitors
+ *  \ingroup monitors_for_planetary_systems
  */
 template<class log_t>
 class stop_on_ejection {

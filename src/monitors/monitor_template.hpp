@@ -50,7 +50,15 @@ class monitor_template {
 
 	public:
 
-	GPUAPI void operator () () { 
+        // Provide these functions, so two monitors can be combined
+        GPUAPI bool is_deactivate_on() { return false; }
+        GPUAPI bool is_log_on() { return false; }
+        GPUAPI bool is_verbose_on() { return false; }
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+
+
+  //	GPUAPI void operator () () { 
+	GPUAPI void operator () (const int thread_in_system) { 
 		// _sys.set_inactive();
 		//_sys.set_disabled();
 		// log::system(_log,_sys);
