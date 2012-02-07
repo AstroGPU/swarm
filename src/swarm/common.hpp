@@ -101,6 +101,8 @@ using boost::shared_ptr;
 //! To debug output a value
 #define $$(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ << " |> " << (x) << std::endl)
 
+#define $PRINT(x) (std::cerr << __FILE__ <<  __LINE__ << ": " << x << std::endl)
+
 //! Show the an expression and its value for debugging
 #define $_(x) (std::cerr << __FILE__ << "(" << __FUNCTION__ << "):" << __LINE__ <<  " " << (#x) << " = " << (x) << std::endl)
 

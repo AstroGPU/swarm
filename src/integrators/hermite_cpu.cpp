@@ -191,9 +191,9 @@ integrator_plugin_initializer<
 	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
 integrator_plugin_initializer<
-		hermite_cpu< stop_on_crossing_orbit_or_close_approach<L> >
-	> hermite_cpu_plugin_crossing_orbit_or_close_approach(
-		"hermite_cpu_crossing_orbit_or_close_approach"
+		hermite_cpu< stop_on_ejection_or_close_encounter<L> >
+	> hermite_cpu_plugin_ejection_or_close_encounter(
+		"hermite_cpu_ejection_or_close_encounter"
 	);
 
 

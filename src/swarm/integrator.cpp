@@ -26,6 +26,7 @@
 #include "log/logmanager.hpp"
 #include "plugin.hpp"
 #include "gpu/utilities.hpp"
+#include "gpu/device_settings.hpp"
 
 namespace swarm {
 
@@ -97,6 +98,13 @@ namespace swarm {
 	};
 
 	void gpu::integrator::integrate() {
+
+		int blocksize = threadDim().x * threadDim().y;
+		if(!check_cuda_limits(blocksize, shmemSize() )){
+			throw runtime_error("The block size settings exceed CUDA requirements");
+		}
+		
+
 		activate_inactive_systems(_ens);
 		upload_ensemble();
 		for(int i = 0; i < _max_attempts; i++)

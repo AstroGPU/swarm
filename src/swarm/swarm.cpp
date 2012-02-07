@@ -5,6 +5,7 @@
 #include "query.hpp"
 #include "snapshot.hpp"
 #include "stopwatch.h"
+#include "gpu/device_settings.hpp"
 
 int DEBUG_LEVEL  = 0;
 
@@ -58,13 +59,13 @@ void stability_test() {
 
 		SYNC;
 		DEBUG_OUTPUT(2, "Check energy conservation" );
-		double max_deltaE = find_max_energy_conservation_error(ens, initial_ens );
+                ensemble::range_t deltaE_range = energy_conservation_error_range(ens, initial_ens );
 
 		int active_systems = ens.nsys() - number_of_disabled_systems( ens );
-		std::cout << effective_time << ", " << max_deltaE << ", " << active_systems << std::endl;
+		std::cout << effective_time << ", " << deltaE_range.max << ", " << deltaE_range.median << ", " << active_systems << std::endl;
 		
-		if(max_deltaE > allowed_deltaE){
-			INFO_OUTPUT(0, "At least one system is too unstable to conserve energy. dE/E: " << max_deltaE << std::endl );
+		if(deltaE_range.median > allowed_deltaE){
+			INFO_OUTPUT(0, "At least half of systems are too unstable to conserve energy. dE/E: " << deltaE_range.median << std::endl );
 			exit(1);
 		}
 
@@ -517,6 +518,7 @@ int main(int argc, char* argv[]){
 
 	// Initialize Swarm
 	swarm::init(cfg);
+	print_device_information();
 	srand(time(NULL));
 
 	// Set some variables

@@ -157,7 +157,7 @@ using namespace monitors;
 integrator_plugin_initializer<hermite< stop_on_ejection<L> > >
 	hermite_plugin("hermite");
 
-integrator_plugin_initializer<hermite< stop_on_crossing_orbit_or_close_approach<L> > >
+integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L> > >
 	hermite_plugin_encounter("hermite_close_encounter");
 
 

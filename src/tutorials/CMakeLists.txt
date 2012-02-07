@@ -1,3 +1,5 @@
 SWARM_ADD_EXECUTABLE(tutorial_simple swarm_tutorial_simple.cpp)
 SWARM_ADD_EXECUTABLE(tutorial_gpu tutorial_gpu.cpp)
 SWARM_ADD_EXECUTABLE(montecarlo montecarlo.cpp kepler.cpp)
+SWARM_ADD_EXECUTABLE(montecarlo_ecclimit montecarlo_ecclimit.cpp kepler.cpp)
+SWARM_ADD_EXECUTABLE(montecarlo_mcmc_outputs montecarlo_mcmc_outputs.cpp kepler.cpp)
