@@ -267,7 +267,7 @@ class rkck: public integrator {
 					sys.time() += h;
 
 				if( first_thread_in_system && sys.is_active() )  {
-					montest();
+					montest(thread_in_system());
 					if( sys.time() >= _destination_time ) 
 						sys.set_inactive();
 				}

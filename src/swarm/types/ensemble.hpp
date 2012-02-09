@@ -272,9 +272,9 @@ class EnsembleBase {
 		 */
 		GENERIC int& id() const { return _sys[0].id(); }
 		//! Number of bodies in this system
-		GENERIC const int& nbod()const{ return _nbod;	}
+		GENERIC const int& nbod() const{ return _nbod;	}
 		//! Serial number of the system in the ensemble
-		GENERIC const int& number()const{ return _number;	}
+		GENERIC const int& number() const{ return _number;	}
 
 		//! extra attribute of the system
 		GENERIC double& attribute(const int& i) const { return _sys[0].attribute(i); }

@@ -31,6 +31,8 @@ namespace swarm {
  */
 int number_of_active_systems(deviceEnsemble ens);
 
+void reactivate_systems(deviceEnsemble ens);
+
 /*!
    \brief Find best factorization
 
