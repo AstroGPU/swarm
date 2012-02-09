@@ -22,11 +22,24 @@
 namespace swarm {
   namespace monitors {
 
+
+/* Parameters for stop_on_all_but_two_at_large_distance monitor
+ * deactivate_on_close_encounter (bool): 
+ * log_on_close_encounter (bool): 
+ * verbose_on_close_encounter (bool): 
+ * rmax (real): minimum distance between bodies to be considered isolated
+ *
+ * \ingroup monitors_param
+ */ 
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;
+        bool deactivate_on, log_on, verbose_on;
 	stop_on_all_but_two_at_large_distance_params(const config &cfg)
 	{
 		double rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
+		deactivate_on = cfg.optional("deactivate_on_all_but_two_at_large_distance",false);
+		log_on = cfg.optional("log_on_all_but_two_at_large_distance",false);
+		verbose_on = cfg.optional("verbose_on_all_but_two_at_large_distance",false)
 	}
 };
 
@@ -46,9 +59,18 @@ class stop_on_all_but_two_at_large_distance {
 	int _counter;
 
 	public:
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
 
-	GPUAPI void operator () () { 
 
+  //	GPUAPI void operator () () { 
+	GPUAPI void operator () (int thread_in_system) 
+	  if(!is_any_on()) return;
+
+		if(thread_in_system==0)
+		  {
 		// Check for distance from origin
 		int num_body_near_origin = 0, id1 = -1, id2 = -2;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
@@ -60,7 +82,7 @@ class stop_on_all_but_two_at_large_distance {
 				}
 		}
 		if( num_body_near_origin > 2 )
-			_sys.set_disabled();
+		  return;
  
 		// Check for distance from other bodies
 		int num_body_far_from_all = 0;
@@ -79,11 +101,15 @@ class stop_on_all_but_two_at_large_distance {
 		}
 		if(num_body_far_from_all+2>=_sys.nbod())
 			{
+			  if(is_verbose_on())
 			lprintf(_log, "No more than two bodies are within rmax of other bodies: _sys=%d, bod1=%d, bod2=%d, T=%lg r=%lg rmax=%lg.\n"
 				, _sys.number(), id1, id2, _sys.time() , r, _params.rmax);
+			  if(is_log_on())
 			log::system(_log, _sys);
-			_sys.set_disabled();
+			  if(is_deactivate_on())
+			  _sys.set_disabled();
 			}
+		  }
 	}
 
 	GPUAPI stop_on_all_but_two_at_large_distance(const params& p,ensemble::SystemRef& s,log_t& l)

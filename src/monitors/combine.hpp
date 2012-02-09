@@ -59,10 +59,19 @@ struct combine {
 	monitor2_t _monitor2;
 
 	public:
+        GPUAPI bool is_deactivate_on() { return _monitor1.is_deactivate_on() || _monitor2.is_deactivate_on(); }
+        GPUAPI bool is_log_on() { return _monitor1.is_log_on() || _monitor2.is_log_on(); }
+        GPUAPI bool is_verbose_on() { return _monitor1.verbose_on() || _monitor2.verbose_on(); };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
 
 	GPUAPI void operator () () { 
 	  _monitor1();
 	  _monitor2();
+	}
+
+	GPUAPI void operator () (const int thread_in_system) { 
+	  _monitor1(thread_in_system);
+	  _monitor2(thread_in_system);
 	}
 
 	GPUAPI combine(const params& p,ensemble::SystemRef& s,log_t& l)

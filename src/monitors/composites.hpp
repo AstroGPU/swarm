@@ -44,9 +44,12 @@ struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l), co(p.co,s,l) 	{}
 	
-	GPUAPI void operator () () {
-		ej(); ce(); co();
-	}
+  //	GPUAPI void operator () ()
+  //         {	  ej(); ce(); co(); }
+
+	GPUAPI void operator () (const int thread_in_system) 
+         {  ej(thread_in_system); ce(thread_in_system); co(thread_in_system);  }
+
 	
 private:
 	stop_on_ejection<L>        ej;
@@ -72,16 +75,18 @@ struct stop_on_ejection_or_close_encounter {
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l) 	{}
 	
-	GPUAPI void operator () () {
-		ej(); ce(); ;
-	}
+  //	GPUAPI void operator () () 
+  //        {  ej(); ce(); }
+
+	GPUAPI void operator () (const int thread_in_system) 
+          {	ej(thread_in_system); ce(thread_in_system); 	}
 	
 private:
 	stop_on_ejection<L>        ej;
 	stop_on_close_encounter<L> ce;
 };
 
-} } // end namespace monitors :: swarm
+  } } // end namespace monitors :: swarm
 
 
 

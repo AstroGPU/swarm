@@ -141,11 +141,35 @@ class generic: public integrator {
 			prop.advance();
 			__syncthreads();
 
+			if(sys.is_active())
+			  {
+			    montest( thread_in_system() );
+			    // montest();
+
+#if 0
+			    bool using_std_coord = false;
+			    bool need_std_coord = montest.phaseone( thread_in_system() );
+			    if(needs_std_coord) 
+			      { 
+				covert_internal_to_std_coord(); 
+				using_std_coord = true; 
+				montest.phasetwo ( thread_in_system() );
+			      }
+
+			    if( montest.needs_to_log_system () )
+			      log::system(_log, _sys);
+
+			    if(using_std_coord)
+			      convert_std_to_internal_coord();
+
+			    if( montest.needs_to_set_state () ) 
+			      _sys.set_disabled();
+
+#endif
+			  }
 			if( first_thread_in_system && sys.is_active() )  {
-				montest();
 				if( sys.time() >= _destination_time ) 
 					sys.set_inactive();
-
 			}
 
 			__syncthreads();

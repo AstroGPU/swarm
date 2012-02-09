@@ -21,11 +21,18 @@
 namespace swarm {
   namespace monitors {
 
+/* Parameters for log_time_interval monitor
+ * log_on_interval (bool): 
+ * log_interval (real): time between sucessive logging
+ * \ingroup monitors_param
+ */ 
 struct log_time_interval_params {
 	double time_interval;
+        bool log_on;
 	log_time_interval_params(const config &cfg)
 	{
 		time_interval = cfg.require("log_interval", 0.0);
+		log_on = cfg.optional("log_on_interval",true);
 	}
 };
 
@@ -50,13 +57,20 @@ class log_time_interval {
 	log_t& _log;
 
 	public:
+        GPUAPI bool is_deactivate_on() { return false; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return false; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
 
-	GPUAPI void operator () () { 
+	GPUAPI void operator () (const int thread_in_system) { 
+	  if( (thread_in_system==0) && is_log_on() )
+	    {
 		if(_sys.time() >= _next_log_time )  {
 			log::system(_log, _sys );
 			_next_log_time += _params.time_interval; 
 			//lprintf(_log,"Logging at %lg\n",_sys.time());
 		}
+	    }
 	}
 
 	GPUAPI log_time_interval(const params& p,ensemble::SystemRef& s,log_t& l)
