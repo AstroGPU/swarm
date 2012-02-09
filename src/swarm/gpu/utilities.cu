@@ -119,7 +119,7 @@ void find_best_factorization(unsigned int &bx, unsigned int &by, int nblocks)
 __global__ 
 void reactivate_systems_kernel( deviceEnsemble ens ){
 	int sysid = ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-	if(sysid>=csys->ens.nsys()) return;
+	if(sysid>=ens.nsys()) return;
 	if(ens[sysid].is_inactive() )
 	   ens[sysid].set_active();
 };

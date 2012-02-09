@@ -1,12 +1,14 @@
 #include "swarm/common.hpp"
 #include "device_settings.hpp"
 
+#if 0
 // Setting prefered cache size the following function
 // can do this but the problem is that since our kernel is really
 // a template functin we don't know the exact name for it
-set_prefere_shared_memory(const char* function_name){
+void set_prefered_shared_memory(const char* function_name){
 	cudaFuncSetCacheConfig( name, cudaFuncCachePreferShared);
 }
+#endif
 
 const int registers_per_thread = 64;
 cudaDeviceProp deviceInfo;
