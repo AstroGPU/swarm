@@ -58,6 +58,9 @@ struct EulerPropagator {
 
 	GPUAPI void shutdown() { }
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	GPUAPI void advance(){
 		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;

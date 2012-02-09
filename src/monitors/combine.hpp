@@ -61,18 +61,47 @@ struct combine {
 	public:
         GPUAPI bool is_deactivate_on() { return _monitor1.is_deactivate_on() || _monitor2.is_deactivate_on(); }
         GPUAPI bool is_log_on() { return _monitor1.is_log_on() || _monitor2.is_log_on(); }
-        GPUAPI bool is_verbose_on() { return _monitor1.verbose_on() || _monitor2.verbose_on(); };
+        GPUAPI bool is_verbose_on() { return _monitor1.is_verbose_on() || _monitor2.is_verbose_on(); };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+        GPUAPI bool is_condition_met () { return _monitor1.is_condition_met() || _monitor2.is_condition_met(); }
+
+        GPUAPI bool need_to_log_system () 
+           { return (_monitor1.need_to_log_system() || _monitor2.need_to_log_system() ); }
+        GPUAPI bool need_to_deactivate () 
+           { return (_monitor1.need_to_deactivate() || _monitor2.need_to_deactivate() ); }
+
+
+	GPUAPI bool pass_one (int thread_in_system) 
+          {  return _monitor1.pass_one(thread_in_system) || _monitor2.pass_one(thread_in_system);  }
+	    
+
+	GPUAPI int pass_two (int thread_in_system) 
+          {  
+	    int s1 = _monitor1.pass_two(thread_in_system);
+	    int s2 = _monitor2.pass_two(thread_in_system); 
+	    if((s1==0)&&(s1==0)) return 0;
+	    else if((s1<0)||(s2<0)) return (s1<s2) ? s1 : s2;
+	    else return (s1>s2) ? s1 : s2;
+	  }
 
 	GPUAPI void operator () () { 
 	  _monitor1();
 	  _monitor2();
 	}
 
+#if 0
 	GPUAPI void operator () (const int thread_in_system) { 
 	  _monitor1(thread_in_system);
 	  _monitor2(thread_in_system);
 	}
+#endif
+        GPUAPI void operator () (const int thread_in_system) 
+          { 
+	    pass_one(thread_in_system);
+	    pass_two(thread_in_system);
+	    if(need_to_log_system() && (thread_in_system==0) )
+	      _monitor1.log_system();
+	  }
 
 	GPUAPI combine(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_monitor1(p.p1,s,l),_monitor2(p.p2,s,l){}

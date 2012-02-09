@@ -47,6 +47,9 @@ class hermite: public integrator {
 	}
 
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
@@ -77,9 +80,9 @@ class hermite: public integrator {
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
-		if( first_thread_in_system  )  {
+//		if( first_thread_in_system  )  {
 		    montest( thread_in_system() );
-		    }
+//		    }
 
 		////////// INTEGRATION //////////////////////
 
@@ -133,10 +136,12 @@ class hermite: public integrator {
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( first_thread_in_system ) 
 				sys.time() += h;
+			__syncthreads();
 			montest( thread_in_system() );  
-			if( first_thread_in_system  )  {
+			__syncthreads();
+			if( sys.is_active() && first_thread_in_system  )  {
 			    if( sys.time() >= _destination_time ) 
-				sys.set_inactive();
+			    {	sys.set_inactive(); }
 			}
 
 			__syncthreads();

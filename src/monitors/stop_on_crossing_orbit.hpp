@@ -54,15 +54,23 @@ class stop_on_crossing_orbit {
 
 	private:
 	params _params;
+        bool condition_met;
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-        bool _triggered;
+
 
 	public:
         GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
         GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_verbose_on() { return _params.verbose_on; };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+        GPUAPI bool is_condition_met () { return ( condition_met ); }
+        GPUAPI bool need_to_log_system () 
+          { return (is_log_on() && is_condition_met() ); }
+        GPUAPI bool need_to_deactivate () 
+          { return ( is_deactivate_on() && is_condition_met() ); }
+
+        GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
 	/**
 	 *  Auxiliary function to calculate (a ,e) for us
@@ -84,7 +92,7 @@ class stop_on_crossing_orbit {
 
     /**
 	 * Function to check for crossing orbits of planet i and j.
-ssssss	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
+ 	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
 	 * Doesn't account for pericenter directions
 	 * Assumes planets ordered from closest to farthest
 	 *
@@ -109,53 +117,60 @@ ssssss	 * WARNING: Only checks if pericenter of outer planet is less apocenter o
 	  return is_orbits_crossing;
 	}
 
-#if 1 
-  /// Working on standardized framework for monitors to deal with integrations in non-standard coordinate systems
-	GPUAPI bool test () { 
-	  _triggered = false;
-		// Check for crossing orbits between every pair of planets
-		for(int j = 2; j < _sys.nbod(); j++)
-		  for(int i = 1; i < j; i++)
-			  _triggered = _triggered || check_for_crossing_orbits(i, j);
-		return _triggered;
-	}
-#endif
-
+#if 0
     //	GPUAPI void operator () () { 
   GPUAPI void operator () (int thread_in_system) {
 	  if(!is_any_on()) return;
 
 	  if(thread_in_system==0)
 	    {
-	  _triggered = test();
-#if 0
-	  _triggered = false;
+	      condition_met = false;
+	      // Check for crossing orbits between every pair of planets
+	      for(int j = 2; j < _sys.nbod(); j++)
+		for(int i = 1; i < j; i++)
+		  condition_met = condition_met || check_for_crossing_orbits(i, j);
+	      
+	      if(condition_met) {
+		if(is_log_on())
+		  log::system(_log, _sys);
+		if(is_deactivate_on())
+		  _sys.set_disabled();
+	      }
+	    }
+          }
+#endif
+
+        GPUAPI void operator () (int thread_in_system) 
+          {
+	    pass_one(thread_in_system);
+	    pass_two(thread_in_system);
+	    if(need_to_log_system() && (thread_in_system==0) )
+	      log::system(_log, _sys);
+	  }
+	    
+
+	GPUAPI bool pass_one (int thread_in_system) 
+          {
+	    condition_met = false;
+	    return true;
+	  }
+	    
+
+	GPUAPI int pass_two (int thread_in_system) 
+          {
+	    if(is_any_on() && (thread_in_system==0) )
+	      {
 		// Check for crossing orbits between every pair of planets
 		for(int j = 2; j < _sys.nbod(); j++)
 		  for(int i = 1; i < j; i++)
-			  _triggered = _triggered || check_for_crossing_orbits(i, j);
-#endif
+		    condition_met = condition_met || check_for_crossing_orbits(i, j);
+		
+		if(condition_met && is_deactivate_on() )
+		  {  _sys.set_disabled(); }
 
-		if(_triggered) {
-		  if(is_log_on())
-			log::system(_log, _sys);
-		  if(is_deactivate_on())
-			_sys.set_disabled();
-		}
-	    }
-	}
-
-        GPUAPI bool needs_std_coord_always () 
-        {  return false; }
-
-        GPUAPI bool needs_std_coord_now () 
-        {  return false; }
-
-	GPUAPI bool needs_to_log_system () 
-        {  return (_triggered && is_log_on()); }
-
-	GPUAPI bool needs_to_set_state () 
-        {  return (_triggered && is_deactivate_on()); }
+	      }
+	    return _sys.state();
+	  }
 
 
 	GPUAPI stop_on_crossing_orbit(const params& p,ensemble::SystemRef& s,log_t& l)

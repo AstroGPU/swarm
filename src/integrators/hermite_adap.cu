@@ -63,6 +63,9 @@ class hermite_adap: public integrator {
 		DoubleCoalescedStruct<> time_step_factor[T::n];
 	};
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	template<class T>
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
 		{
@@ -127,6 +130,7 @@ class hermite_adap: public integrator {
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
+		montest( thread_in_system() );
 
 		////////// INTEGRATION //////////////////////
 
@@ -183,14 +187,13 @@ class hermite_adap: public integrator {
 			if( first_thread_in_system ) 
 				sys.time() += h;
 
-			if( first_thread_in_system && sys.is_active() )  
-				montest( thread_in_system() );
+			montest( thread_in_system() );
 
-			if( first_thread_in_system )
-				if( sys.time() >= _destination_time ) 
-					sys.set_inactive();
+			if( sys.is_active() && first_thread_in_system  )  {
+			   if( sys.time() >= _destination_time ) 
+			    {  	sys.set_inactive();    }
 
-
+					}
 			__syncthreads();
 
 

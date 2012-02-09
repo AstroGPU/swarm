@@ -55,6 +55,7 @@ class stop_on_close_encounter {
 
 	private:
 	params _params;
+        bool need_full_test, condition_met;
 	ensemble::SystemRef& _sys;
 	log_t& _log;
 
@@ -65,6 +66,38 @@ class stop_on_close_encounter {
         GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_verbose_on() { return _params.verbose_on; };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+        GPUAPI bool is_condition_met () { return ( condition_met ); }
+        GPUAPI bool need_to_log_system () 
+          { return (is_log_on() && is_condition_met() ); }
+        GPUAPI bool need_to_deactivate () 
+          { return ( is_deactivate_on() && is_condition_met() ); }
+
+        GPUAPI void log_system()  {  log::system(_log, _sys);  }
+
+	GPUAPI bool pass_one (int thread_in_system) 
+          {
+	    need_full_test = false; 
+	    condition_met = false;
+	    if(is_any_on()&&(thread_in_system==0))
+	      {
+		// Chcek for close encounters
+		for(int b = 2; b < _sys.nbod(); b++)
+		  for(int d = 1; d < b; d++)
+		    condition_met = condition_met || check_close_encounters(b,d); 
+		if( condition_met && is_log_on() )
+		  {  need_full_test = true;  }
+
+	      }
+	    return need_full_test;
+	  }
+	    
+
+	GPUAPI int pass_two (int thread_in_system) 
+          {
+	    if (need_to_deactivate() && (thread_in_system==0) )
+	      {  _sys.set_disabled();  }
+	    return _sys.state();
+	  }
 
 
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
@@ -86,6 +119,15 @@ class stop_on_close_encounter {
 		return close_encounter;
 	}
 
+        GPUAPI void operator () (const int thread_in_system) 
+          { 
+	    pass_one(thread_in_system);
+	    pass_two(thread_in_system);
+	    if(need_to_log_system() && (thread_in_system==0) )
+	      log::system(_log, _sys);
+	  }
+
+#if 0
   //	GPUAPI void operator () ()  
 	GPUAPI void operator () (int thread_in_system) 
   {
@@ -106,7 +148,8 @@ class stop_on_close_encounter {
 			_sys.set_disabled();
 		}
 		  }
-	}
+  }
+#endif
 
 	GPUAPI stop_on_close_encounter(const params& p,ensemble::SystemRef& s,log_t& l)
 	    :_params(p),_sys(s),_log(l){}

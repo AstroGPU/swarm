@@ -209,6 +209,12 @@ struct MVSPropagator {
 
 	}
 
+	GPUAPI void convert_internal_to_std_coord() 
+	{ convert_helio_pos_bary_vel_to_std_coord ();	} 
+        GPUAPI void convert_std_to_internal_coord() 
+	{ convert_std_to_helio_pos_bary_vel_coord_without_shared(); }
+
+
 	GPUAPI void drift_step(const double hby2) 
 	{
 	      if(b==0)

@@ -54,6 +54,9 @@ struct MidpointPropagator {
 
 	GPUAPI void shutdown() { }
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	GPUAPI void advance(){
 		double H = min( max_timestep ,  _params.time_step );
 		double pos = 0, vel = 0;
