@@ -21,6 +21,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
 	double spacing_factor = cfg.optional( "spacing_factor", 1.4 );
+        double planet_mass = cfg.optional( "planet_mass" , .001 );
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
 
@@ -35,7 +36,6 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		// add near-Jupiter-mass planets on nearly circular orbits
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
-			float mass_planet = 0.001; // approximately (mass of Jupiter)/(mass of sun)
 			double rmag = pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 			double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
 			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
@@ -43,7 +43,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 			vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
 
 			// assign body a mass, position and velocity
-			ens.set_body(sys, bod, mass_planet, x, y, z, vx, vy, vz);
+			ens.set_body(sys, bod, planet_mass , x, y, z, vx, vy, vz);
 		}
 		ens[sys].set_active();
 		ens[sys].time() = 0;
@@ -53,18 +53,21 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 }
 
 double find_max_energy_conservation_error(ensemble& ens, ensemble& reference_ensemble ) {
-	std::vector<double> energy_init(reference_ensemble.nsys());
+    return energy_conservation_error_range(ens,reference_ensemble).max;
+}
+ensemble::range_t energy_conservation_error_range(ensemble& ens, ensemble& reference_ensemble ) {
+	std::vector<double> 
+            energy_init(reference_ensemble.nsys())
+            ,energy_final(ens.nsys())
+            ,deltaE(ens.nsys());
+
 	reference_ensemble.calc_total_energy(&energy_init[0]);
-	std::vector<double> energy_final(ens.nsys());
 	ens.calc_total_energy(&energy_final[0]);
-	double max_deltaE = 0.;
+
 	for(int sysid=0;sysid<ens.nsys();++sysid)
-	{
-	
-		double deltaE = fabs ((energy_final[sysid]-energy_init[sysid])/energy_init[sysid] ) ;
-		max_deltaE = max(deltaE, max_deltaE);
-	}
-	return max_deltaE;
+		deltaE[sysid] =  fabs ((energy_final[sysid]-energy_init[sysid])/energy_init[sysid] ) ;
+
+        return ensemble::range_t::calculate( deltaE.begin(), deltaE.end() );
 }
 
 

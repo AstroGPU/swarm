@@ -90,6 +90,8 @@ double find_max_energy_conservation_error
 	(swarm::ensemble& ens, swarm::ensemble& reference_ens ) ;
 
 
+        swarm::ensemble::range_t energy_conservation_error_range(swarm::ensemble& ens, swarm::ensemble& reference_ensemble ) ;
+
 /**
  * Pretty print selected values in a config data structure
  *
