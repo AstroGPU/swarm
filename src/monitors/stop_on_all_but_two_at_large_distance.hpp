@@ -34,6 +34,8 @@ namespace swarm {
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;
         bool deactivate_on, log_on, verbose_on;
+  /*! \param cfg Configuration Paramaters
+   */
 	stop_on_all_but_two_at_large_distance_params(const config &cfg)
 	{
 		double rmax = cfg.optional("rmax",std::numeric_limits<float>::max());

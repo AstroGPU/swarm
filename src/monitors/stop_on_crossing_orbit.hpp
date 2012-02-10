@@ -31,6 +31,8 @@ namespace swarm { namespace monitors {
  */ 
 struct stop_on_crossing_orbit_params {
   bool deactivate_on, log_on, verbose_on;
+  /*! \param cfg Configuration Paramaters
+   */
   stop_on_crossing_orbit_params(const config &cfg)
 	{
 	  deactivate_on = cfg.optional("deactivate_on_crossing",false);

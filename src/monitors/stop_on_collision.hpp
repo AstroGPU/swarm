@@ -31,6 +31,8 @@ struct stop_on_collision_param {
 	double dmin_squared;
   bool deactivate_on, log_on, verbose_on;
 
+  /*! \param cfg Configuration Paramaters
+   */
 	stop_on_collision_param(const config &cfg)
 	{
 	  dmin_squared = cfg.optional("collision_radius",0.);

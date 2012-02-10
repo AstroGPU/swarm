@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file utils.h
+/*! \file utils.hpp
  *   \brief Utility routines for common tasks that most users would need.
  *
  *   Contains:

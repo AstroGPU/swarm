@@ -32,6 +32,8 @@ namespace swarm { namespace monitors {
 struct stop_on_close_encounter_param {
 	double dmin;
   bool deactivate_on, log_on, verbose_on;
+  /*! \param cfg Configuration Paramaters
+   */
 	stop_on_close_encounter_param(const config &cfg)
 	{
 		dmin = cfg.optional("close_approach",false);

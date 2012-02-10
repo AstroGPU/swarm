@@ -34,6 +34,8 @@ namespace swarm {
 struct stop_on_ejection_params {
 	double rmax;
         bool deactivate_on, log_on, verbose_on;
+  /*! \param cfg Configuration Paramaters
+   */
 	stop_on_ejection_params(const config &cfg)
 	{
 		rmax = cfg.optional("rmax",std::numeric_limits<float>::max());
