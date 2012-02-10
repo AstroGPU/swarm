@@ -29,6 +29,7 @@ namespace swarm {
  * rmax (real): minimum distance to check for ejections
  *
  * \ingroup monitors_param
+ * \ingroup monitors_for_planetary_systems
  */ 
 struct stop_on_ejection_params {
 	double rmax;
@@ -57,7 +58,7 @@ class stop_on_ejection {
 
 	private:
 	params _params;
-        bool need_full_test, condition_met;
+        bool condition_met;
 
 	ensemble::SystemRef& _sys;
 	log_t& _log;
@@ -154,7 +155,7 @@ class stop_on_ejection {
 
 	GPUAPI bool pass_one (int thread_in_system) 
           {
-	    need_full_test = false; 
+	    bool need_full_test = false; 
 	    condition_met = false;
 	    if(is_any_on()&&(thread_in_system==0))
 	      {

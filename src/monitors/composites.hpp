@@ -28,6 +28,8 @@ namespace swarm { namespace monitors {
 /** Combination of stop_on_ejcetion, stop_on_close_encounter and
  * stop_on_crossing_orbit
  *
+ * \ingroup monitors_param
+ *
  */
 template <class L> 
 struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
@@ -106,6 +108,9 @@ private:
 
 
 /** Combination of stop_on_ejcetion and stop_on_close_encounter
+ *
+ *
+ * \ingroup monitors_param
  *
  */
 template <class L> 

@@ -28,11 +28,11 @@ namespace swarm {
  */ 
 struct log_time_interval_params {
 	double time_interval;
-        bool log_on;
+  //        bool log_on;
 	log_time_interval_params(const config &cfg)
 	{
 		time_interval = cfg.require("log_interval", 0.0);
-		log_on = cfg.optional("log_on_interval",true);
+		//		log_on = cfg.optional("log_on_interval",true);
 	}
 };
 
@@ -51,6 +51,7 @@ class log_time_interval {
 
 	private:
 	params _params;
+        bool condition_met;
 
 	ensemble::SystemRef& _sys;
 	double _next_log_time;
@@ -58,20 +59,45 @@ class log_time_interval {
 
 	public:
         GPUAPI bool is_deactivate_on() { return false; };
-        GPUAPI bool is_log_on() { return _params.log_on; };
+  //        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_log_on() { return _params.time_interval!=0.; };
         GPUAPI bool is_verbose_on() { return false; };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+        GPUAPI bool is_condition_met () { return ( condition_met ); }
+        GPUAPI bool need_to_log_system () 
+          { return (is_log_on() && is_condition_met() ); }
+        GPUAPI bool need_to_deactivate () 
+          { return ( is_deactivate_on() && is_condition_met() ); }
 
-	GPUAPI void operator () (const int thread_in_system) { 
-	  if( (thread_in_system==0) && is_log_on() )
-	    {
-		if(_sys.time() >= _next_log_time )  {
-			log::system(_log, _sys );
-			_next_log_time += _params.time_interval; 
-			//lprintf(_log,"Logging at %lg\n",_sys.time());
-		}
-	    }
-	}
+        GPUAPI void log_system()  {  log::system(_log, _sys);  }
+	
+        GPUAPI void operator () (const int thread_in_system) 
+          { 
+	    pass_one(thread_in_system);
+	    pass_two(thread_in_system);
+	    if(need_to_log_system() && (thread_in_system==0) )
+	      log_system();
+	  }
+
+	GPUAPI bool pass_one (int thread_in_system) 
+          {
+	    condition_met = false;
+	    if(is_log_on())
+	      {
+		if(_sys.time() >= _next_log_time )  
+		  {
+		    condition_met = true; 
+		    _next_log_time += _params.time_interval; 
+		    //lprintf(_log,"Logging at %lg\n",_sys.time());
+		  }
+	      }
+	    return condition_met;
+	  }
+	    
+
+	GPUAPI int pass_two (int thread_in_system) 
+          {   return _sys.state();  }
+
 
 	GPUAPI log_time_interval(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l),_next_log_time(s.time()){}

@@ -21,6 +21,10 @@
 
 namespace swarm { namespace gpu { namespace bppt {
 
+/*! Paramaters for MidpointPropagator
+ * \ingroup propagator_parameters
+ *
+ */
 struct MidpointPropagatorParams {
 	double time_step;
 	MidpointPropagatorParams(const config& cfg){
@@ -28,6 +32,10 @@ struct MidpointPropagatorParams {
 	}
 };
 
+/*! GPU implementation of modified midpoint method propagator
+ * \ingroup propagators
+ *
+ */
 template<class T>
 struct MidpointPropagator {
 	typedef MidpointPropagatorParams params;

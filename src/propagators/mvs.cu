@@ -23,6 +23,10 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
+/*! Paramaters for MvsPropagator
+ * \ingroup propagator_parameters
+ *
+ */
 struct MVSPropagatorParams {
 	double time_step;
 	MVSPropagatorParams(const config& cfg){
@@ -30,7 +34,11 @@ struct MVSPropagatorParams {
 	}
 };
 
-//template<class T, class GravClass>
+/*! GPU implementation of mixed variables symplectic propagator
+ * \ingroup propagators
+ *
+ * \todo make Gravitation class a template parameter: template<class T, class GravClass>
+ */
 template<class T>
 struct MVSPropagator {
 	typedef MVSPropagatorParams params;
