@@ -17,12 +17,15 @@
  ************************************************************************/
 #include "../common.hpp"
 #include "bppt.hpp"
+#include "device_functions.h"
 
+#define ASSUME_PROPAGATOR_USES_STD_COORDINATES 0
 
 namespace swarm { namespace gpu { namespace bppt {
 
 /**
  * \brief Generic integrator for rapid creation of new integrators.
+ * \ingroup integrators
  *
  * The common functionality for a body-pair-per-thread GPU integrator is
  * put in this class. The core functionality of integration is provided by Propagator
@@ -90,6 +93,9 @@ class generic: public integrator {
 	}
 
 
+  //         __device__ void convert_internal_to_std_coord() {} ;
+  //         __device__ void convert_std_to_internal_coord() {};
+
 	/**
 	 * \brief Integrator the system using the provided Propagator and Monitor.
 	 *  This is the meat of things. We put all the common functionality in here
@@ -141,38 +147,58 @@ class generic: public integrator {
 			prop.advance();
 			__syncthreads();
 
-			if(sys.is_active())
-			  {
-			    montest( thread_in_system() );
-			    // montest();
+			bool thread_needs_std_coord  = false;
+			bool using_std_coord = false;
 
-#if 0
-			    bool using_std_coord = false;
-			    bool need_std_coord = montest.phaseone( thread_in_system() );
-			    if(needs_std_coord) 
-			      { 
-				covert_internal_to_std_coord(); 
-				using_std_coord = true; 
-				montest.phasetwo ( thread_in_system() );
-			      }
 
-			    if( montest.needs_to_log_system () )
-			      log::system(_log, _sys);
-
-			    if(using_std_coord)
-			      convert_std_to_internal_coord();
-
-			    if( montest.needs_to_set_state () ) 
-			      _sys.set_disabled();
-
-#endif
+#if ASSUME_PROPAGATOR_USES_STD_COORDINATES
+			montest( thread_in_system() );
+#else
+			thread_needs_std_coord = montest.pass_one( thread_in_system() );
+#if (__CUDA_ARCH__ >= 200) 
+			// requires arch=compute_sm_20
+			bool block_needs_std_coord = syncthreads_or((int)(thread_needs_std_coord));
+#else
+#warning  Need to make this work for pre-Fermi GPUs.  For now just setting true!
+			//			void *ptr_shared_void = calcForces.unused_shared_data_pointer(system_per_block_gpu());
+			//			int *ptr_shared_int = static_cast<int *>(ptr_shared_void);
+			//			//			int put_back = *ptr_shared_int;
+			//						*ptr_shared_int = 0;
+			//			//			atomicOr(ptr_shared_int,thread_needs_std_coord);
+			//			  //			if(thread_needs_std_coord) (*ptr_shared_int)++;
+			//			__syncthreads();
+			//			bool block_needs_std_coord = static_cast<bool>(*ptr_shared_int);
+			//			*ptr_shared_int = put_back;
+			bool block_needs_std_coord = true;
+#endif			
+			if(block_needs_std_coord) 
+			  { 
+			    prop.convert_internal_to_std_coord(); 
+			    using_std_coord = true; 
 			  }
-			if( first_thread_in_system && sys.is_active() )  {
-				if( sys.time() >= _destination_time ) 
-					sys.set_inactive();
-			}
 
 			__syncthreads();
+			int new_state = montest.pass_two ( thread_in_system() );
+
+			if( montest.need_to_log_system() && (thread_in_system()==0) )
+			  { log::system(*_log, sys); }
+			    
+			__syncthreads();
+			if(using_std_coord)
+			  {
+			    prop.convert_std_to_internal_coord();
+			    using_std_coord = false;
+			  }
+#endif
+			__syncthreads();			  
+
+			if( sys.is_active() && first_thread_in_system )
+			  {
+			    if( sys.time() >= _destination_time ) 
+			      { sys.set_inactive();     }
+			  }
+			__syncthreads();
+
 		}
 
 		prop.shutdown();

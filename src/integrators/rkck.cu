@@ -70,6 +70,9 @@ class rkck: public integrator {
 	}
 
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
@@ -124,7 +127,7 @@ class rkck: public integrator {
 		if( body_component_grid )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
-
+   		montest( thread_in_system() );  
 		////////// INTEGRATION //////////////////////
 
 		for(int iter = 0 ; (iter < _iteration_count) && sys.is_active() ; iter ++ ) {
@@ -266,10 +269,10 @@ class rkck: public integrator {
 				if( first_thread_in_system ) 
 					sys.time() += h;
 
+				montest(thread_in_system());
 				if( first_thread_in_system && sys.is_active() )  {
-					montest(thread_in_system());
 					if( sys.time() >= _destination_time ) 
-						sys.set_inactive();
+					{ sys.set_inactive(); }
 				}
 			}
 

@@ -12,7 +12,7 @@ SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 # Set CUDA Flags and options
 SET(CUDA_NVCC_FLAGS 
 	-gencode arch=compute_20,code=sm_20;
-	-gencode arch=compute_13,code=sm_13;
+#	-gencode arch=compute_13,code=sm_13;
 	-Xcudafe --diag_suppress=subscript_out_of_range;
 	-Xcudafe --diag_suppress=partial_override;
 	-Xcudafe --diag_suppress=initialization_not_reachable;
