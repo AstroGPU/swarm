@@ -22,6 +22,10 @@
 
 namespace swarm { namespace gpu { namespace bppt {
 
+/*! Paramaters for VerletPropagator
+ * \ingroup propagator_parameters
+ *
+ */
 struct VerletPropagatorParams {
 	double time_step;
 	VerletPropagatorParams(const config& cfg){
@@ -29,6 +33,10 @@ struct VerletPropagatorParams {
 	}
 };
 
+/*! GPU implementation of Verlet propagator
+ * \ingroup propagators
+ *
+ */
 template<class T>
 struct VerletPropagator {
 	typedef VerletPropagatorParams params;
@@ -53,6 +61,9 @@ struct VerletPropagator {
 	GPUAPI void init()  { }
 
 	GPUAPI void shutdown() { }
+
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
 
 	GPUAPI void advance(){
 		double h = _params.time_step;
