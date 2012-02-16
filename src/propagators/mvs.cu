@@ -217,12 +217,16 @@ struct MVSPropagator {
 
 	}
 
+	/// Standardized member name to call convert_helio_pos_bary_vel_to_std_coord 
 	GPUAPI void convert_internal_to_std_coord() 
 	{ convert_helio_pos_bary_vel_to_std_coord ();	} 
+
+	/// Standardized member name to call convert_std_to_helio_pos_bary_vel_coord_without_shared()
         GPUAPI void convert_std_to_internal_coord() 
 	{ convert_std_to_helio_pos_bary_vel_coord_without_shared(); }
 
 
+	/// Drift step for MVS integrator
 	GPUAPI void drift_step(const double hby2) 
 	{
 	      if(b==0)
@@ -240,6 +244,7 @@ struct MVSPropagator {
 	}
 
 
+	/// Advance system by one time unit
 	GPUAPI void advance()
 	{
 		double hby2 = 0.5 * min( max_timestep ,  _params.time_step );

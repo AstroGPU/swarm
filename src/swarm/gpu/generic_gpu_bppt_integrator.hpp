@@ -25,6 +25,7 @@ namespace swarm { namespace gpu { namespace bppt {
 
 /**
  * \brief Generic integrator for rapid creation of new integrators.
+ * \ingroup integrators
  *
  * The common functionality for a body-pair-per-thread GPU integrator is
  * put in this class. The core functionality of integration is provided by Propagator
@@ -94,8 +95,6 @@ class generic: public integrator {
 
   //         __device__ void convert_internal_to_std_coord() {} ;
   //         __device__ void convert_std_to_internal_coord() {};
-  __inline__ __device__ bool syncthreads_or(bool pred)
-  {   return (bool)__syncthreads_or((int)pred);  }	
 
 	/**
 	 * \brief Integrator the system using the provided Propagator and Monitor.

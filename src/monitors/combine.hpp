@@ -49,6 +49,9 @@ struct combine {
 
 	typedef Monitor1 monitor1_t;
 	typedef Monitor2 monitor2_t;
+
+
+
 	public:
 	typedef combine_monitors_params<typename monitor1_t::params,typename monitor2_t::params > params;
 
