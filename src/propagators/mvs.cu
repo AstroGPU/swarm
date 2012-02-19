@@ -42,8 +42,6 @@ struct MVSPropagator {
 	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation<T::n>& calcForces;
-//	GravitationAccOnly<T::n>& calcForces;
-//	GravClass& calcForces;	
 	int b;
 	int c;
 	int ij;
@@ -55,11 +53,10 @@ struct MVSPropagator {
 
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation<T::n>& calc)
-//			GravitationAccOnly<T::n>& calc)
-//			GravClass calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
+	/// Shift back and forth is tested and it is indeed symmetric 
 	GPUAPI void init()  { 
 		sqrtGM = sqrt(sys[0].mass());
 

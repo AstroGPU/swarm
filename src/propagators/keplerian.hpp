@@ -29,7 +29,7 @@
 // functions needed for kepstep
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
-__device__ double C_prussing(double y) // equation 2.40a Prussing + Conway
+GPUAPI double C_prussing(double y) // equation 2.40a Prussing + Conway
 {
   if (fabs(y)<1e-4) return 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
   double u = sqrt(fabs(y));
@@ -37,7 +37,7 @@ __device__ double C_prussing(double y) // equation 2.40a Prussing + Conway
   else       return (cosh(u)-1.0)/-y;
 }
 
-__device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
+GPUAPI double S_prussing(double y) // equation 2.40b Prussing +Conway
 {
   if (fabs(y)<1e-4) return 1.0/6.0*(1.0 - y/20.0*(1.0 - y/42.0*(1.0 - y/72.0)));
   double u = sqrt(fabs(y));
@@ -46,7 +46,7 @@ __device__ double S_prussing(double y) // equation 2.40b Prussing +Conway
   else       return (sinh(u) - u)/u3;
 }
 
-__device__ void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussing + Conway
+GPUAPI void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussing + Conway
 {
   if (fabs(y)<1e-4) 
      {
@@ -73,7 +73,7 @@ __device__ void SC_prussing(double y, double& S, double &C) // equation 2.40a Pr
 }
 
 
-__device__ double solvex(double r0dotv0, double alpha,
+GPUAPI double solvex(double r0dotv0, double alpha,
                 double sqrtM1, double r0, double dt)
 {
    const double _N_LAG = 5.0; // integer n, for recommended Laguerre method
@@ -122,8 +122,8 @@ __device__ double solvex(double r0dotv0, double alpha,
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ///////////////////////////////////////////////////////////////
-//__device__ void kepstep(double4 pos, double4 vel, double4* npos, double4* nvel, double deltaTime, double GM)
-__device__ void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx_old, double& vy_old, double& vz_old, const double sqrtGM, const double deltaTime)
+//GPUAPI void kepstep(double4 pos, double4 vel, double4* npos, double4* nvel, double deltaTime, double GM)
+GPUAPI void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx_old, double& vy_old, double& vz_old, const double sqrtGM, const double deltaTime)
 {
    double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
    // WARNING: Using softened potential
