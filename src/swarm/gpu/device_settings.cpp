@@ -5,6 +5,12 @@
 const int registers_per_thread = 64;
 cudaDeviceProp deviceInfo;
 
+int optimized_system_per_block(int chunk_size, int thread_per_system
+		, int shmem_per_system){
+	return blocks_per_mp( chunk_size * thread_per_system, shmem_per_system) 
+		* chunk_size ;
+}
+
 void select_cuda_device(int dev) {
 	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
 	if( dev >= 0 && dev < devcnt )
@@ -29,7 +35,6 @@ void print_device_information(){
 	  
 }
 
-
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	int reg_limit =  deviceInfo.regsPerBlock / (blocksize * registers_per_thread);
 	int shm_limit = deviceInfo.sharedMemPerBlock / shmem_per_block ;
@@ -40,7 +45,9 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	int limit = std::min( warp_limit, std::min( reg_limit , shm_limit ) );
 
 	if(limit == 0)
-		$PRINT( reg_limit << ", " << shm_limit << ", " << warp_limit );
+		$PRINT( "BS: " << blocksize << ", SHM" << shmem_per_block << " -> "
+			<< "Limits: reg="	<< reg_limit << ", shm=" << shm_limit 
+			<< ", warp=" << warp_limit );
 
 	return limit;
 }

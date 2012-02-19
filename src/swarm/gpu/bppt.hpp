@@ -25,6 +25,7 @@
 #include "helpers.hpp"
 #include "utilities.hpp"
 #include "gravitation.hpp"
+#include "device_settings.hpp"
 
 
 namespace swarm {
@@ -137,13 +138,12 @@ class integrator : public gpu::integrator  {
 	protected:
 	//! Number of systems allocated in a block. 
 	//! Should be a multiple of SHMEM_CHUNK_SIZE for better coalescing
-	int _system_per_block;
+	int _override_system_per_block;
 
 	public:
 	integrator(const config &cfg) : Base(cfg) {
-		// TODO: We should check that system_per_block is a multiple of 
-		// SHMEM_CHUNK_SIZE to avoid errors
-		_system_per_block = cfg.optional("system_per_block",16);
+		int spb = cfg.optional("system_per_block",0);
+		_override_system_per_block =(spb % SHMEM_CHUNK_SIZE == 0) ? spb : 0;
 	}
 
 	///////////////////////// CUDA Grid Parameters ///////////////////////////////////////////
@@ -233,7 +233,14 @@ class integrator : public gpu::integrator  {
 	 * in some bank conflicts; the lower the value, higher is the chance of bank conflict.
 	 */
 	virtual int  system_per_block() {
-		return  _system_per_block ;
+		if(_override_system_per_block != 0)
+			return _override_system_per_block;
+		else {
+			int tpc = thread_per_system();
+			int cs = SHMEM_CHUNK_SIZE;
+			int shm =  shmem_per_system(_hens.nbod());
+			return optimized_system_per_block(cs, tpc, shm);
+		}
 	}
 
 	/**
