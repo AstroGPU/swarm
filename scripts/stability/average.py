@@ -6,7 +6,8 @@ import Gnuplot
 
 i = 0
 for line in fileinput.input():
-	columns = map( float , filter( lambda x: len(x) > 1 , line.split(',')))
+	columns = map( float , filter( lambda x: len(x) > 0 , line.split(',')))
+#	print "see this: ",  reduce(lambda x,y: str(x) + ', ' + str(y), columns)
 	if( i == 0 ):
 		total = columns
 		i = 1

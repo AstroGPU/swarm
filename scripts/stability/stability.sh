@@ -2,17 +2,18 @@
 
 # Name of the integrator to do the stability test for
 # The integrator config file should be in samples directory.
-INTEGRATOR=$1
+OUTBASE=$1
+INTEGRATOR=$2
 
 # Range of number of bodies to do stablity test for
 # space sparated list of numbers
-NBODY_RANGE="3 4 5 6"
+NBODY_RANGE=$3
 
 INPUT_GENERATION_CONFIG=stability.cfg
 INTEGRATOR_CFG=samples/$INTEGRATOR.cfg
 
 DESTINATION_TIME=1e+4
-INTERVAL=1e+3
+INTERVAL=1e+1
 
 [ ! -f "$INPUT_GENERATION_CONFIG" ] \
 	&& echo "Config file $INPUT_GENERATION_CONFIG does not exist" \
@@ -28,9 +29,8 @@ echo "# Integrator config [$INTEGRATOR_CFG]: "
 cat $INTEGRATOR_CFG
 
 
-SHORTDATE='date +%Y-%m-%d'
-DATE='date +%Y-%m-%d,%H:%m:%S'
-OUTDIR=${INTEGRATOR}_stability_`$SHORTDATE`
+DATE='date +%Y-%m-%d,%H:%M:%S'
+OUTDIR=${OUTBASE}/${INTEGRATOR}
 mkdir -p $OUTDIR
 
 for i in $NBODY_RANGE
