@@ -22,7 +22,8 @@
 // code adapted from Alice Quillen's Qymsym code 
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ////////////////////////////////////////////////////////////////
-#define MINR 1.0e-5 // minimum radius
+//#define MINR 1.0e-5 // minimum radius
+#define MINR 0.0e-5 // minimum radius
 #define MINDENOM 1e-8  // mininum denominator
 #define SIGN(a) ((a) < 0 ? -1 : 1)
 
