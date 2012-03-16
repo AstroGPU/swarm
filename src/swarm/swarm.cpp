@@ -117,6 +117,7 @@ void load_generate_ensemble(){
 		
 	}else{
 		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
+		srand(time(NULL));
 		initial_ens = generate_ensemble(cfg);
 	}
 }
@@ -139,7 +140,14 @@ bool save_ensemble(){
 		return false;
 }
 
+void init_cuda(){
+	// Initialize Swarm
+	swarm::init(cfg);
+	print_device_information();
+}
+
 void prepare_integrator () {
+	init_cuda();
 	// Initialize Integrator
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
@@ -516,10 +524,6 @@ int main(int argc, char* argv[]){
 	base_cfg = cfg;
 	command = argvars_map["command"].as< string >();
 
-	// Initialize Swarm
-	swarm::init(cfg);
-	print_device_information();
-	srand(time(NULL));
 
 	// Set some variables
 	pos_threshold = cfg.optional("pos_threshold", 1e-10);
@@ -527,10 +531,11 @@ int main(int argc, char* argv[]){
 	time_threshold = cfg.optional("time_threshold", 1e-4);
 
 	// Branch based on COMMAND
-	if(command == "integrate")
+	if(command == "integrate"){
+		init_cuda();
 		run_integration();
 
-	else if(command == "test")
+	}else if(command == "test")
 		output_test();
 
 	else if(command == "benchmark" || command == "verify") {
@@ -596,6 +601,7 @@ int main(int argc, char* argv[]){
 	}
 
 	else if(command == "generate" ) {
+		srand(time(NULL));
 		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
 		current_ens = generate_ensemble(cfg);
 		save_ensemble();
