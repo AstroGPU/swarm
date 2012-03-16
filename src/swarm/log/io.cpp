@@ -26,6 +26,38 @@ swarm::range_MAX swarm::MAX;
 namespace swarm
 {
 
+	/* @file io.cpp
+	 *
+	 * This file contains routines for opening a swarm log file.
+	 * Swarm log file is a binary file with a simple textual header
+	 * and a number of fixed size C structs (gpulog::logrecord).
+	 *
+	 * swarmdb is used to open the log file and query it. API users
+	 * should only interact with swarmdb. 
+	 *
+	 * swarmdb uses indexes for fast retrieval of data. The indexes
+	 * are built the first time file is opened and then cached on
+	 * disk. There are two indexes:
+	 *   1. Time index sorted based on time of records
+	 *   2. System index sorted based on system id of records
+	 * 
+	 * Although sort_binary_output_file function can be used to sort
+	 * the entire data file, there is no reason to do so. Since all
+	 * the accesses to the file go through the index. 
+	 * 
+	 *
+	 *
+	 *
+	 *
+	 */
+
+
+	const char* UNSORTED_HEADER_FULL = "unsorted_output // Unsorted output file";
+	const char* UNSORTED_HEADER_CHECK = "unsorted_output";
+	const char* SORTED_HEADER_FULL = "T_sorted_output // Output file sorted by time";
+	const char* SORTED_HEADER_CHECK = "T_sorted_output";
+	const char* T_INDEX_CHECK = "T_sorted_index";
+	const char* SYS_INDEX_CHECK = "sys_sorted_index";
 
 	void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 	{
@@ -68,13 +100,6 @@ namespace swarm
 		}
 	};
 
-	struct index_creator_base
-	{
-		virtual bool start(const std::string &datafile) = 0;
-		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr) = 0;
-		virtual bool finish() = 0;
-		virtual ~index_creator_base() {};
-	};
 
  	struct index_entry_time_cmp
  	{
@@ -170,11 +195,10 @@ namespace swarm
 		}
 	};
 
-	void index_binary_log_file(std::vector<boost::shared_ptr<index_creator_base> > &ic, const std::string &datafile)
+	void swarmdb::index_binary_log_file(std::vector<boost::shared_ptr<index_creator_base> > &ic, const std::string &datafile)
 	{
 		// open datafile
-		mmapped_swarm_file mm(datafile, "T_sorted_output");
-		gpulog::ilogstream ils(mm.data(), mm.size());
+		gpulog::ilogstream ils(mmdata.data(), mmdata.size());
 		gpulog::logrecord lr;
 
 		// postprocess (this is where the creator may sort or store the index)
@@ -188,7 +212,7 @@ namespace swarm
 		{
 			for(int i=0; i != ic.size(); i++)
 			{
-				ic[i]->add_entry(lr.ptr - mm.data(), lr);
+				ic[i]->add_entry(lr.ptr - mmdata.data(), lr);
 			}
 		}
 
@@ -206,7 +230,7 @@ namespace swarm
 	*/
 	bool sort_binary_log_file(const std::string &outfn, const std::string &infn)
 	{
-		mmapped_swarm_file mm(infn, "unsorted_output");
+		mmapped_swarm_file mm(infn, UNSORTED_HEADER_CHECK);
 		gpulog::ilogstream ils(mm.data(), mm.size());
 		std::vector<idx_t> idx;
 		gpulog::logrecord lr;
@@ -229,7 +253,7 @@ namespace swarm
 
 		// output file header
 		std::ofstream out(outfn.c_str());
-		swarm_header fh("T_sorted_output // Output file sorted by time", 0, datalen);
+		swarm_header fh(SORTED_HEADER_FULL, 0, datalen);
 		out.write((char*)&fh, sizeof(fh));
 
 		// write out the data
@@ -436,7 +460,7 @@ namespace swarm
 		this->datafile = datafile;
 
 		// open the datafile
-		mmdata.open(datafile, "T_sorted_output");
+		mmdata.open(datafile, UNSORTED_HEADER_CHECK);
 
 		// open the indexes
 		open_indexes();
@@ -468,11 +492,11 @@ namespace swarm
 		}
 
 		// open index maps
-		if(!tidx_open && !open_index(idx_time, datafile, ".time.idx", "T_sorted_index"))
+		if(!tidx_open && !open_index(idx_time, datafile, ".time.idx", T_INDEX_CHECK ))
 		{
  			ERROR("Cannot open index file '" + datafile + ".time.idx'");
  		}
-		if(!sysidx_open && !open_index(idx_sys,  datafile, ".sys.idx", "sys_sorted_index"))
+		if(!sysidx_open && !open_index(idx_sys,  datafile, ".sys.idx", SYS_INDEX_CHECK))
 		{
  			ERROR("Cannot open index file '" + datafile + ".sys.idx'");
  		}

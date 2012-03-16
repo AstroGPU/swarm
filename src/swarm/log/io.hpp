@@ -14,6 +14,11 @@
 
 namespace swarm {
 
+	extern const char* UNSORTED_HEADER_FULL;
+	extern const char* UNSORTED_HEADER_CHECK;
+	extern const char* SORTED_HEADER_FULL;
+	extern const char* SORTED_HEADER_CHECK;
+
 	extern struct range_special { } ALL;
 	extern struct range_MAX
 	{
@@ -49,6 +54,14 @@ namespace swarm {
 
 	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
 	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
+
+	struct index_creator_base
+	{
+		virtual bool start(const std::string &datafile) = 0;
+		virtual bool add_entry(uint64_t offs, gpulog::logrecord lr) = 0;
+		virtual bool finish() = 0;
+		virtual ~index_creator_base() {};
+	};
 
 	class swarmdb
 	{
@@ -128,6 +141,8 @@ namespace swarm {
 		{
 			return snapshots(*this, T, Tabserr, Trelerr);
 		}
+	private:
+		void index_binary_log_file(std::vector<boost::shared_ptr<index_creator_base> > &ic, const std::string &datafile);
 	};
 
 	bool sort_binary_log_file(const std::string &outfn, const std::string &infn);

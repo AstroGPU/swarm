@@ -49,20 +49,19 @@ public:
 			ERROR("Could not open '" + rawfn + "' for writing");
 
 		// write header
-		swarm::swarm_header fh("unsorted_output // Unsorted output file");
+		swarm::swarm_header fh(UNSORTED_HEADER_FULL);
 		output->write((char*)&fh, sizeof(fh));
 	}
 
+	/* 
+	 * We postpone sorting the output here. We leave the
+	 * file unsorted as it is. No one knows who 
+	 * will benefit from sorting the file and it is
+	 * very inefficient
+	 */
 	~binary_writer()
 	{
 		output.reset(NULL);
-		if(swarm::sort_binary_log_file(binfn, rawfn))
-		{
-			unlink(rawfn.c_str());
-
-			// just touch it to auto-generate the indices
-			swarm::swarmdb db(binfn);
-		}
 	}
 
 	virtual void process(const char *log_data, size_t length)
