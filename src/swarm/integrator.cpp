@@ -106,6 +106,7 @@ namespace swarm {
 		
 
 		activate_inactive_systems(_ens);
+
 		upload_ensemble();
 		for(int i = 0; i < _max_attempts; i++)
 		  {

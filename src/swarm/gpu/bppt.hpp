@@ -154,7 +154,7 @@ class integrator : public gpu::integrator  {
 	 * out the grid dimentions at the time of launch. This function
 	 * can be overriden by descendants if a different grid is needed
 	 */
-	dim3 gridDim(){
+	virtual dim3 gridDim(){
 		const int nblocks = ( _hens.nsys() + system_per_block() - 1 ) / system_per_block();
 		dim3 gD;
 		gD.z = 1;
@@ -171,7 +171,7 @@ class integrator : public gpu::integrator  {
 	 * However, for most purposes, one may only need to change the 
 	 * system_per_block and thread_per_system.
 	 */
-	dim3 threadDim(){
+	virtual dim3 threadDim(){
 		dim3 tD;
 		tD.x = system_per_block();
 		tD.y = thread_per_system();

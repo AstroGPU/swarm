@@ -228,6 +228,7 @@ class EnsembleBase {
 		//! Pointer to system parameters
 		Sys* _sys;
 	public:
+		typedef SystemRef second_type;
 
 		//! Only should be used by ensemble
 		GENERIC SystemRef(const int& nbod,const int& number,Body* body,Sys* sys):_nbod(nbod),_number(number),_body(body),_sys(sys){}
@@ -397,6 +398,11 @@ class EnsembleBase {
 	GENERIC explicit EnsembleBase(const int& nbod, const int& nsys,PBody body_array, PSys sys_array):_nbod(nbod),_nsys(nsys),_body(body_array,body_element_count(nbod,nsys)),_sys(sys_array,sys_element_count(nsys)){}
 
 	public:
+
+		typedef struct SystemRef value_type;
+		typedef int key_type;
+		typedef int difference_type;
+		typedef int size_type;
 
 	//! Number of bodies per system
 	GENERIC const int& nbod()const{ return _nbod;	}

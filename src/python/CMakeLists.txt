@@ -1,0 +1,7 @@
+FIND_PACKAGE(Boost REQUIRED COMPONENTS python)
+SET(Python_INCLUDE_DIR "/usr/include/python2.6")
+SWARM_ADD_LIBRARY(swarmng_ext SHARED
+	module.cpp
+)
+INCLUDE_DIRECTORIES(${Python_INCLUDE_DIR})
+TARGET_LINK_LIBRARIES(swarmng_ext ${Python_LIBRARIES})

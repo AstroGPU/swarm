@@ -31,7 +31,7 @@ SET(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs CACHE PATH "Where to put
 
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex )
 
 SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so CACHE PATH "Path to libcuda.so")
 
@@ -41,6 +41,13 @@ MACRO(SWARM_ADD_EXECUTABLE target)
 	INCLUDE_DIRECTORIES(${swarm_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 	TARGET_LINK_LIBRARIES(${target} swarmng ${Boost_LIBRARIES})
 ENDMACRO(SWARM_ADD_EXECUTABLE target)
+
+# Macro to build other project based on swarm library
+MACRO(SWARM_ADD_LIBRARY target)
+	ADD_LIBRARY(${target} ${ARGN})
+	INCLUDE_DIRECTORIES(${swarm_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+	TARGET_LINK_LIBRARIES(${target} swarmng ${Boost_LIBRARIES})
+ENDMACRO(SWARM_ADD_LIBRARY target)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)

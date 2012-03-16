@@ -114,6 +114,10 @@ class integrator {
 		_destination_time = destination_time;
 	}
 
+	virtual double get_destination_time()const{
+		return _destination_time;
+	}
+
 	/*! Loads an integrator using the plugin system. 
 	 * value of cfg["integrator"] is used to identify the 
 	 * plugin to be instantiated. The integrator plugin

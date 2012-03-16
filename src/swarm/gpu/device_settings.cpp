@@ -36,11 +36,15 @@ void print_device_information(){
 }
 
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
+	assert(blocksize > 0);
+	assert(registers_per_thread > 0);
+	assert(shmem_per_block > 0);
+	assert(deviceInfo.warpSize > 0 );
 	int reg_limit =  deviceInfo.regsPerBlock / (blocksize * registers_per_thread);
 	int shm_limit = deviceInfo.sharedMemPerBlock / shmem_per_block ;
 	int block_warps = (blocksize+ deviceInfo.warpSize)/deviceInfo.warpSize;
 	int total_warps = deviceInfo.maxThreadsPerBlock / deviceInfo.warpSize;
-	int warp_limit = total_warps / block_warps;
+	int warp_limit = block_warps > 0 ? total_warps / block_warps : 0;
 
 	int limit = std::min( warp_limit, std::min( reg_limit , shm_limit ) );
 
