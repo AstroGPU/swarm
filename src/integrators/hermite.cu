@@ -47,6 +47,9 @@ class hermite: public integrator {
 	}
 
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
@@ -59,13 +62,9 @@ class hermite: public integrator {
 		// Local variables
 		const int nbod = T::n;
 		// Body number
-		int b = thread_body_idx(nbod);
+		const int b = thread_body_idx(nbod);
 		// Component number
-		int c = thread_component_idx(nbod);
-		int ij = thread_in_system();
-		bool body_component_grid = (b < nbod) && (c < 3);
-		bool first_thread_in_system = thread_in_system() == 0;
-
+		const int c = thread_component_idx(nbod);
 
 		// local variables
 		monitor_t montest(_mon_params,sys,*_log) ;
@@ -73,20 +72,21 @@ class hermite: public integrator {
 
 		// local information per component per body
 		double pos = 0.0, vel = 0.0 , acc0 = 0.0, jerk0 = 0.0;
-		if( body_component_grid )
-			pos = sys[b][c].pos() , vel = sys[b][c].vel();
+		if( (b < nbod) && (c < 3) )
+			{ pos = sys[b][c].pos(); vel = sys[b][c].vel(); }
 
 
-		if( first_thread_in_system  )  {
-		    montest();
-		    }
+//		if( thread_in_system()==0  )  {
+		    montest( thread_in_system() );
+//		    }
 
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
-		calcForces(ij,b,c,pos,vel,acc0,jerk0);
+		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
-		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
+		{
 			double h = _time_step;
 
 			if( sys.time() + h > _destination_time ) {
@@ -95,7 +95,7 @@ class hermite: public integrator {
 
 			
 			// Initial Evaluation
-			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
+			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
 			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.0)*jerk0));
@@ -106,38 +106,42 @@ class hermite: public integrator {
 			double acc1,jerk1;
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
+#if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-				//	TODO: Need to test w/ new expressions below
-				//				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
-				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
+#endif
+				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
+				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
 			}
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
+#if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-				//	TODO: Need to test w/ new expressions below
-				// pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
-				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
+#endif
+
+				pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
+				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
 			// Finalize the step
-			if( body_component_grid )
-				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-			if( first_thread_in_system ) 
+			if( (b < nbod) && (c < 3) )
+				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
+			if( thread_in_system()==0 ) 
 				sys.time() += h;
-
-			if( first_thread_in_system  )  {
-			    montest();
+			__syncthreads();
+			montest( thread_in_system() );  
+			__syncthreads();
+			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
-				sys.set_inactive();
+			    {	sys.set_inactive(); }
 			}
 
 			__syncthreads();

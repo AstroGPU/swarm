@@ -23,7 +23,7 @@
 // see http://astro.pas.rochester.edu/~aquillen/qymsym/
 ////////////////////////////////////////////////////////////////
 //#define MINR 1.0e-5 // minimum radius
-#define MINR 0.0e-5 // minimum radius
+#define MINR_IN_1EM8 0 // minimum radius
 #define MINDENOM 1e-8  // mininum denominator
 #define SIGN(a) ((a) < 0 ? -1 : 1)
 
@@ -51,12 +51,14 @@ GPUAPI void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussi
 {
   if (fabs(y)<1e-4) 
      {
-     S = 1.0/6.0*(1.0 - y/20.0*(1.0 - y/42.0*(1.0 - y/72.0)));
-     C = 1.0/2.0*(1.0 - y/12.0*(1.0 - y/30.0*(1.0 - y/56.0)));
+       S = (1.0/6.0)*(1.0 - y*(1.0/20.0)*(1.0 - y*(1.0/42.0)*(1.0 - y*(1.0/72.0))));
+       C = (1.0/2.0)*(1.0 - y*(1.0/12.0)*(1.0 - y*(1.0/30.0)*(1.0 - y*(1.0/56.0))));
      }
   else
      {
-     double u = sqrt(fabs(y));
+       float absy = y;
+       absy = fabs(y);
+     double u = sqrt(absy);
      double u3 = u*u*u;
      if (y>0.0) 
         {
@@ -68,6 +70,35 @@ GPUAPI void SC_prussing(double y, double& S, double &C) // equation 2.40a Prussi
 	{
      	S = (sinh(u) - u)/u3;
      	C = (cosh(u)-1.0)/-y;
+     	}
+     }
+  return;
+}
+
+__device__ void SC_prussing_fast(double y, double& S, double &C) // equation 2.40a Prussing + Conway
+{
+  if (y*y<1e-8) 
+     {
+       S = (1.0/6.0)*(1.0 - y*(1.0/20.0)*(1.0 - y*(1.0/42.0)*(1.0 - y*(1.0/72.0))));
+       C = (1.0/2.0)*(1.0 - y*(1.0/12.0)*(1.0 - y*(1.0/30.0)*(1.0 - y*(1.0/56.0))));
+     }
+  else
+     {
+     float absy = y;
+     absy = fabs(y);
+     float u = sqrtf(absy);
+     float u3 = u*u*u;
+     if (y>0.0) 
+        {
+	  float Sf, Cf;
+	  sincosf(u,&Sf,&Cf); 
+	  S = (u -  Sf)/u3;
+	  C = (1.0- Cf)/ y;
+     	}
+     else
+	{
+	  S = (sinhf(u) - u)/u3;
+	  C = (coshf(u)-1.0)/-y;
      	}
      }
   return;
@@ -86,7 +117,7 @@ GPUAPI double solvex(double r0dotv0, double alpha,
 // better initial guess depends on rperi which would have to be passed
 
    double u=1.0;
-   for(int i=0;i<7;i++){  // 7 iterations is probably overkill
+   for(int i=0;(i<7)&&!((i>2)&&(x+u==x));i++){  // 7 iterations is probably overkill
 			  // as it always converges faster than this
      double x2,x3,alx2,Cp,Sp,F,dF,ddF,z;
      x2 = x*x;
@@ -94,6 +125,11 @@ GPUAPI double solvex(double r0dotv0, double alpha,
      alx2 = alpha*x2;
      // Cp = C_prussing(alx2);
      // Sp = S_prussing(alx2);
+#if 0
+     if(i==0)
+       SC_prussing_fast(alx2,Sp,Cp);  // optimization
+     else
+#endif
      SC_prussing(alx2,Sp,Cp);  // optimization
      F = sig0*x2*Cp + foo*x3*Sp + r0*x - smu*dt; // eqn 2.41 PC
      dF = sig0*x*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42 PC
@@ -104,7 +140,7 @@ GPUAPI double solvex(double r0dotv0, double alpha,
      if (denom ==0.0) denom = MINDENOM;
      u = _N_LAG*F/denom; // equation 2.43 PC
      x -= u;
-     if( (i>=2) && (x+u==x) ) break;      // optimization to allow to exit loop early
+//     if( (i>=2) && (x+u==x) ) break;      // optimization to allow to exit loop early
    }
 //   if (isnan(x)) printf("solvex: is nan\n");
    return x;
@@ -127,8 +163,12 @@ GPUAPI double solvex(double r0dotv0, double alpha,
 GPUAPI void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx_old, double& vy_old, double& vz_old, const double sqrtGM, const double deltaTime)
 {
    double x = x_old, y = y_old, z = z_old, vx = vx_old, vy = vy_old, vz = vz_old;
+#if (MINR_IN_1EM8>0)
    // WARNING: Using softened potential
-   double r0 = sqrt(x*x + y*y + z*z + MINR*MINR); // current radius
+   double r0 = sqrt(x*x + y*y + z*z + MINR_IN_1EM8*MINR_IN_1EM8*1.e-16); // current radius
+#else
+   double r0 = sqrt(x*x + y*y + z*z ); // current radius
+#endif
 //   double r0 = sqrt(x*x + y*y + z*z ); // current radius
    double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
@@ -149,8 +189,14 @@ GPUAPI void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx
    double Cp, Sp;
    SC_prussing(alx2,Sp,Cp);  // optimization
    double r = sig0*x_p*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; // eqn 2.42  PC
+
+#if (MINR_IN_1EM8>0)
 // WARNING: Using softened potentil
-   if (r < MINR) r=MINR;
+   if (r < MINR_IN_1EM8*1.e-8) r=MINR_IN_1EM8*1.e-8;
+#else
+   if(r<0.) r = 0.;
+#endif
+
 // if dt == 0 then f=dgdt=1 and g=dfdt=0
 // f,g functions equation 2.38a  PC
    double f_p= 1.0 - (x2/r0)*Cp;

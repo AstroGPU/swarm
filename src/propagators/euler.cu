@@ -22,6 +22,10 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
+/*! Paramaters for EulerPropagator
+ * \ingroup propagator_parameters
+ *
+ */
 struct EulerPropagatorParams {
 	double time_step;
 	EulerPropagatorParams(const config& cfg){
@@ -29,8 +33,11 @@ struct EulerPropagatorParams {
 	}
 };
 
+/*! GPU implementation of euler propagator
+ * \ingroup propagators
+ *
+ */
 template<class T>
-//template<class T, class GravClass>
 struct EulerPropagator {
 	typedef EulerPropagatorParams params;
 
@@ -57,6 +64,9 @@ struct EulerPropagator {
 	GPUAPI void init()  { }
 
 	GPUAPI void shutdown() { }
+
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
 
 	GPUAPI void advance(){
 		double h = min(_params.time_step, max_timestep);

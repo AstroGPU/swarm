@@ -63,6 +63,9 @@ class hermite_adap: public integrator {
 		DoubleCoalescedStruct<> time_step_factor[T::n];
 	};
 
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	template<class T>
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
 		{
@@ -70,11 +73,9 @@ class hermite_adap: public integrator {
 		int b = thread_body_idx(T::n);
 		// Component number
 		int c = thread_component_idx(T::n);
-		bool body_component_grid = (b < T::n) && (c < 3);
-		bool first_thread_in_system = (thread_in_system() == 0);
 
 		// Put accelerations and jerks for each body and component into shared memory
-		if( body_component_grid ) {
+		if( (b < T::n) && (c < 3) ) {
 		    shared.gravitation[b][c].acc() = acc*acc;
 		    shared.gravitation[b][c].jerk() = jerk*jerk;
 	    }
@@ -87,7 +88,7 @@ class hermite_adap: public integrator {
 		    shared.time_step_factor[b].value() = jerk_mag_sq/acc_mag_sq;
 		}
 		__syncthreads();
-		if( first_thread_in_system ) {
+		if( thread_in_system() == 0 ) {
 			double tf = shared.time_step_factor[0].value();
 		    for(int bb=1;bb<T::n;++bb)
 		      	tf += shared.time_step_factor[bb].value();
@@ -111,12 +112,10 @@ class hermite_adap: public integrator {
 		// Local variables
 		const int nbod = T::n;
 		// Body number
-		int b = thread_body_idx(nbod);
+		const int b = thread_body_idx(nbod);
 		// Component number
-		int c = thread_component_idx(nbod);
-		int ij = thread_in_system();
-		bool body_component_grid = (b < nbod) && (c < 3);
-		bool first_thread_in_system = (thread_in_system() == 0);
+		const int c = thread_component_idx(nbod);
+		const bool body_component_grid = (b < nbod) && (c < 3);
 
 
 		// local variables
@@ -124,14 +123,15 @@ class hermite_adap: public integrator {
 
 		// local information per component per body
 		double pos = 0.0, vel = 0.0 , acc0 = 0.0, jerk0 = 0.0;
-		if( body_component_grid )
+		if( (b < T::n) && (c < 3) )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
+		montest( thread_in_system() );
 
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
-		calcForces(ij,b,c,pos,vel,acc0,jerk0);
+		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 			// Since h is the time step that is used for the step it makes more sense to
@@ -144,7 +144,7 @@ class hermite_adap: public integrator {
 
 			
 			// Initial Evaluation, it can be omitted for faster computation
-			///calcForces(ij,b,c,pos,vel,acc0,jerk0);
+			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
 			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.0)*jerk0));
@@ -155,40 +155,43 @@ class hermite_adap: public integrator {
 			double acc1,jerk1;
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
+#if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-				//	TODO: Need to test w/ new expressions below
-				//				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
-				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
+#endif
+				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
+				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
 			}
 			{
 				// Evaluation
-				calcForces(ij,b,c,pos,vel,acc1,jerk1);
+				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
+#if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-				//	TODO: Need to test w/ new expressions below
-				// pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
-				// vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
+#endif
+				pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
+				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
 			// Finalize the step
-			if( body_component_grid )
+			if( (b < T::n) && (c < 3) )
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-			if( first_thread_in_system ) 
+			if( thread_in_system()==0 ) 
 				sys.time() += h;
 
-			if( first_thread_in_system && sys.is_active() )  {
-				montest();
-				if( sys.time() >= _destination_time ) 
-					sys.set_inactive();
-			}
+			montest( thread_in_system() );
 
+			if( sys.is_active() && thread_in_system()==0  )  {
+			   if( sys.time() >= _destination_time ) 
+			    {  	sys.set_inactive();    }
+
+					}
 			__syncthreads();
 
 

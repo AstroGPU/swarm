@@ -23,6 +23,10 @@ namespace swarm {
 namespace gpu {
 namespace bppt {
 
+/*! Paramaters for MvsPropagator
+ * \ingroup propagator_parameters
+ *
+ */
 struct MVSPropagatorParams {
 	double time_step;
 	MVSPropagatorParams(const config& cfg){
@@ -30,7 +34,11 @@ struct MVSPropagatorParams {
 	}
 };
 
-//template<class T, class GravClass>
+/*! GPU implementation of mixed variables symplectic propagator
+ * \ingroup propagators
+ *
+ * \todo make Gravitation class a template parameter: template<class T, class GravClass>
+ */
 template<class T>
 struct MVSPropagator {
 	typedef MVSPropagatorParams params;
@@ -64,7 +72,7 @@ struct MVSPropagator {
 
 	__device__ bool is_in_body_component_grid_no_star()
 //        { return ( body_component_grid && (b!=0) ); }	
-        { return ( (b < nbod) && (c < 3) && (b!=0) ); }	
+        { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
 
 	__device__ bool is_first_thread_in_system()
 //        { return first_thread_in_system; }	
@@ -72,6 +80,8 @@ struct MVSPropagator {
 
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 	/// Shift back and forth is tested and it is indeed symmetric 
+	/// Initialization tasks executed before entering loop
+        /// Cache sqrtGM, shift coord system, cache acceleration data for this thread's body and component
 	GPUAPI void init()  { 
 		sqrtGM = sqrt(sys[0].mass());
 		convert_std_to_helio_pos_bary_vel_coord();
@@ -79,7 +89,60 @@ struct MVSPropagator {
 		acc_bc = calcForces.acc_planets(ij,b,c);
                 }
 
-	__device__ void convert_std_to_helio_pos_bary_vel_coord()  { 
+	/// Before exiting, convert back to standard cartesian coordinate system
+	GPUAPI void shutdown() { 
+	convert_helio_pos_bary_vel_to_std_coord ();
+	}
+
+	/// Shift to  funky coordinate system (see A. Quillen's qymsym's tobary)
+	GPUAPI void convert_std_to_helio_pos_bary_vel_coord()  
+	{ convert_std_to_helio_pos_bary_vel_coord_without_shared();  }
+
+	/// Shift to  funky coordinate system (see A. Quillen's qymsym's tobary)
+	/// At least when there's not logging that needs frequent shifts, this is too small to bother with shared memory
+	GPUAPI void convert_std_to_helio_pos_bary_vel_coord_with_shared()  { 
+		double sump = 0., sumv = 0., mtot = 0.;
+		if( is_in_body_component_grid() )
+		{
+
+		if( b==0 )
+		{
+			calcForces.shared[1][c].acc() = sys[0][c].pos();
+			// Find Center of mass and momentum
+			for(int j=0;j<nbod;++j) {
+				const double mj = sys[j].mass();
+				mtot += mj;
+				sump += mj*sys[j][c].pos();
+				sumv += mj*sys[j][c].vel();
+			}
+		sumv /= mtot;
+		// There should be a better way to access shared memory
+		// What if we need to change coordinates
+		calcForces.shared[0][c].acc() = sumv;
+		}
+
+		}
+		__syncthreads();
+
+		if( is_in_body_component_grid() )
+		{
+			if(b==0) // For sun
+			{
+			sys[b][c].vel() = sumv;
+			sys[b][c].pos() = sump/mtot;
+			}
+			else     // For planets
+			{
+			sys[b][c].vel() -= calcForces.shared[0][c].acc(); // really sumv from shared;
+			sys[b][c].pos() -= calcForces.shared[1][c].acc(); // really pc0 = original sys[0][c].pos() from shared
+			}
+		}
+
+	}
+
+	
+	/// Shift to  funky coordinate system (see A. Quillen's qymsym's tobary)
+	GPUAPI void convert_std_to_helio_pos_bary_vel_coord_without_shared()  { 
 	        double pc0;
 		double sump = 0., sumv = 0., mtot = 0.;
 		if( is_in_body_component_grid() )
@@ -112,13 +175,10 @@ struct MVSPropagator {
 
 	}
 
-	/// Shift back from funky coordinate system (see A. Quillen's qymsym's tobary)
-	GPUAPI void shutdown() { 
-	convert_helio_pos_bary_vel_to_std_coord ();
-	}
 
 
-	__device__ void convert_helio_pos_bary_vel_to_std_coord ()  
+	/// Shift back from funky coordinate system (see A. Quillen's qymsym's frombary)
+	GPUAPI void convert_helio_pos_bary_vel_to_std_coord ()  
 	{ 
 	  double sump = 0., sumv = 0., mtot;
 	  double m0, pc0, vc0;
@@ -155,6 +215,16 @@ struct MVSPropagator {
 
 	}
 
+	/// Standardized member name to call convert_helio_pos_bary_vel_to_std_coord 
+	GPUAPI void convert_internal_to_std_coord() 
+	{ convert_helio_pos_bary_vel_to_std_coord ();	} 
+
+	/// Standardized member name to call convert_std_to_helio_pos_bary_vel_coord_without_shared()
+        GPUAPI void convert_std_to_internal_coord() 
+	{ convert_std_to_helio_pos_bary_vel_coord_without_shared(); }
+
+
+	/// Drift step for MVS integrator
 	GPUAPI void drift_step(const double hby2) 
 	{
 	      if(b==0)
@@ -172,19 +242,14 @@ struct MVSPropagator {
 	}
 
 
-	GPUAPI void advance(){
-
-		double H = min( max_timestep ,  _params.time_step );
-		double hby2 = 0.5 * H;
+	/// Advance system by one time unit
+	GPUAPI void advance()
+	{
+		double hby2 = 0.5 * min( max_timestep ,  _params.time_step );
 
 			// Step 1
 			if ( is_in_body_component_grid() ) 
 			   drift_step(hby2);
-
-			   // Unnecessary
-			 __syncthreads();
-			acc_bc = calcForces.acc_planets(ij,b,c);
-			 __syncthreads();
 
 			// Step 2: Kick Step
 			if( is_in_body_component_grid_no_star() ) 
@@ -194,12 +259,10 @@ struct MVSPropagator {
 
 			// 3: Kepler Drift Step (Keplerian orbit about sun/central body)
 			if( (ij>0) && (ij<nbod)  ) 
-			    drift_kepler( sys[ij][0].pos(),sys[ij][1].pos(),sys[ij][2].pos(),sys[ij][0].vel(),sys[ij][1].vel(),sys[ij][2].vel(),sqrtGM, H );
-
+			    drift_kepler( sys[ij][0].pos(),sys[ij][1].pos(),sys[ij][2].pos(),sys[ij][0].vel(),sys[ij][1].vel(),sys[ij][2].vel(),sqrtGM, 2.0*hby2 );
 			__syncthreads();
 
 			// TODO: check for close encounters here
-
 			acc_bc = calcForces.acc_planets(ij,b,c);
 
 			// Step 4: Kick Step
@@ -212,7 +275,7 @@ struct MVSPropagator {
 			  drift_step(hby2);
 
 		if( is_first_thread_in_system() ) 
-			sys.time() += H;
+			sys.time() += 2.0*hby2;
 	}
 };
 

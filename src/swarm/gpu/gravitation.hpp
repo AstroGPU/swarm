@@ -101,6 +101,7 @@ class Gravitation {
 	typedef GravitationScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
+	public: // hack to make this public to test whether it's worth using shared memory for some small steps
 	ensemble::SystemRef& sys;
 	shared_data &shared;
 
@@ -347,7 +348,6 @@ class Gravitation {
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
-		// WARNING: Should CHUNK_SIZE be system_per_block in 2 lines below?
 		int b = sysid_in_block / CHUNK_SIZE ;
 		int i = sysid_in_block % CHUNK_SIZE ;
 		int idx = i * sizeof(double) 
@@ -356,10 +356,14 @@ class Gravitation {
 		return &shared_mem[idx];
 	}
 
-    // WARNING: Does not account for larger memory usage due to coalesced arrys.  
+    // WARNING: Need to test that this works (accounting for larger memory usage due to coalesced arrys)
 	static __device__ void * unused_shared_data_pointer(const int system_per_block) {
 		extern __shared__ char shared_mem[];
-		int idx = system_per_block * shmem_per_system();
+		//		int idx = system_per_block * shmem_per_system();
+		int b = system_per_block / CHUNK_SIZE ;
+		int i = system_per_block % CHUNK_SIZE ;
+		if(i!=0) b++;
+		int idx = b * CHUNK_SIZE * shmem_per_system();
 		return &shared_mem[idx];
 	}
 

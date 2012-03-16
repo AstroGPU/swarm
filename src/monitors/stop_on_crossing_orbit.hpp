@@ -21,9 +21,24 @@
 
 namespace swarm { namespace monitors {
 
+/* Parameters for stop_on_crossing_orbit monitor
+ * deactivate_on_crossing (bool): 
+ * log_on_crossing (bool): 
+ * verbose_on_crossing (bool): 
+ *
+ * \ingroup monitors_param
+ * \ingroup monitors_for_planetary_systems
+ */ 
 struct stop_on_crossing_orbit_params {
-	stop_on_crossing_orbit_params(const config &cfg)
-	{	}
+  bool deactivate_on, log_on, verbose_on;
+  /*! \param cfg Configuration Paramaters
+   */
+  stop_on_crossing_orbit_params(const config &cfg)
+	{
+	  deactivate_on = cfg.optional("deactivate_on_crossing",false);
+	  log_on = cfg.optional("log_on_crossing",false);
+	  verbose_on = cfg.optional("verbose_on_crossing",false);
+	}
 };
 
 GPUAPI double sqr(const double& d){
@@ -40,16 +55,29 @@ class stop_on_crossing_orbit {
 	typedef stop_on_crossing_orbit_params params;
 
 	private:
-	params _p;
+	params _params;
+        bool condition_met;
 	ensemble::SystemRef& _sys;
 	log_t& _log;
-	
+
+
 	public:
+        GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
+        GPUAPI bool is_log_on() { return _params.log_on; };
+        GPUAPI bool is_verbose_on() { return _params.verbose_on; };
+        GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
+        GPUAPI bool is_condition_met () { return ( condition_met ); }
+        GPUAPI bool need_to_log_system () 
+          { return (is_log_on() && is_condition_met() ); }
+        GPUAPI bool need_to_deactivate () 
+          { return ( is_deactivate_on() && is_condition_met() ); }
+
+        GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
 	/**
 	 *  Auxiliary function to calculate (a ,e) for us
 	 *  This calculation is also done in test_body from stop_on_ejection
-	 *  But we would like to things simple and separate
+	 *  But we would like to keep things simple and separate
 	 */
 	GPUAPI void calc_a_e(const int& b,double& a,double& e) {
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
@@ -61,13 +89,12 @@ class stop_on_crossing_orbit {
 
 		a = -0.5*_GM/energy;
 		double fac = 1.-h2/(_GM*a);
-		e = (fac>1.e-8) ? sqrt(fac) : 0.;
+		e = (fac>1.e-8) ? sqrtf(fac) : 0.;
 	}
 
     /**
 	 * Function to check for crossing orbits of planet i and j.
-	 * It assumes that planet i is closer to sun than planet j.
-	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
+ 	 * WARNING: Only checks if pericenter of outer planet is less apocenter of inner planet 
 	 * Doesn't account for pericenter directions
 	 * Assumes planets ordered from closest to farthest
 	 *
@@ -78,9 +105,13 @@ class stop_on_crossing_orbit {
 	  calc_a_e(i, a_i, e_i);
 	  calc_a_e(j, a_j, e_j);
 	  
-	  bool is_orbits_crossing = a_i * (1. + e_i)  >  a_j * ( 1. - e_j ) ;
+	  bool is_orbits_crossing;
+	  if(a_i<=a_j)
+	     is_orbits_crossing = a_i * (1. + e_i)  >  a_j * ( 1. - e_j ) ;
+	  else
+	     is_orbits_crossing = a_i * (1. + e_i)  <  a_j * ( 1. - e_j ) ;
 
-	  if( is_orbits_crossing )
+	  if( is_orbits_crossing && is_verbose_on())
 		lprintf(_log, "Crossing orbits detected: " 
 				"sys=%d, T=%lg i=%d j=%d  a_i=%lg e_i=%lg a_j=%lg e_j=%lg.\n"
 				, _sys.number(), _sys.time(),i,j, a_i,e_i, a_j, e_j);
@@ -88,23 +119,64 @@ class stop_on_crossing_orbit {
 	  return is_orbits_crossing;
 	}
 
-	GPUAPI void operator () () { 
-		bool stopit = false;
+#if 0
+    //	GPUAPI void operator () () { 
+  GPUAPI void operator () (int thread_in_system) {
+	  if(!is_any_on()) return;
 
+	  if(thread_in_system==0)
+	    {
+	      condition_met = false;
+	      // Check for crossing orbits between every pair of planets
+	      for(int j = 2; j < _sys.nbod(); j++)
+		for(int i = 1; i < j; i++)
+		  condition_met = condition_met || check_for_crossing_orbits(i, j);
+	      
+	      if(condition_met) {
+		if(is_log_on())
+		  log::system(_log, _sys);
+		if(is_deactivate_on())
+		  _sys.set_disabled();
+	      }
+	    }
+          }
+#endif
+
+        GPUAPI void operator () (int thread_in_system) 
+          {
+	    pass_one(thread_in_system);
+	    pass_two(thread_in_system);
+	    if(need_to_log_system() && (thread_in_system==0) )
+	      log::system(_log, _sys);
+	  }
+	    
+
+	GPUAPI bool pass_one (int thread_in_system) 
+          {
+	    condition_met = false;
+	    return true;
+	  }
+	    
+
+	GPUAPI int pass_two (int thread_in_system) 
+          {
+	    if(is_any_on() && (thread_in_system==0) )
+	      {
 		// Check for crossing orbits between every pair of planets
-		// the smaller index planet always comes first
-		for(int j = 0; j < _sys.nbod(); j++)
-		  for(int i = 0; i < j; i++)
-			  stopit = stopit || check_for_crossing_orbits(i, j);
+		for(int j = 2; j < _sys.nbod(); j++)
+		  for(int i = 1; i < j; i++)
+		    condition_met = condition_met || check_for_crossing_orbits(i, j);
+		
+		if(condition_met && is_deactivate_on() )
+		  {  _sys.set_disabled(); }
 
-		if(stopit) {
-			log::system(_log, _sys);
-			_sys.set_disabled();
-		}
-	}
+	      }
+	    return _sys.state();
+	  }
+
 
 	GPUAPI stop_on_crossing_orbit(const params& p,ensemble::SystemRef& s,log_t& l)
-	    :_p(p),_sys(s),_log(l){}
+	    :_params(p),_sys(s),_log(l){}
 	
 };
 

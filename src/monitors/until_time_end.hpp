@@ -17,6 +17,8 @@
  ************************************************************************/
 #pragma once
 
+// I beleive none of this is used and it can be removed
+#if 0
 #include <limits>
 
 namespace swarm {
@@ -62,3 +64,4 @@ class until_time_end {
 
 
 }
+#endif

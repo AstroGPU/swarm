@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file runtime_error.h
+/*! \file runtime_error.hpp
  *   \brief Error handling for swarm
  *
  *   Generic swarm runtime error is declared as well as
