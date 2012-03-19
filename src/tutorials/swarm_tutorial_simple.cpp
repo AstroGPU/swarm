@@ -38,8 +38,7 @@ const double destination_time = 5 * 2 * M_PI ;
 // Here we put all of our configuration items in a 2D string array.
 const char * config_pairs[6][2] = {  
        { "integrator" , "hermite" }
-      ,{ "time step", "0.001" }
-      ,{ "blocksize" , "16" }
+      ,{ "time_step", "0.001" }
       ,{ "log_writer", "null" } 
       ,{ "nsys" , "4000" } 
       ,{ "nbod" , "3" } 

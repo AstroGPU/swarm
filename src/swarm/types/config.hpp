@@ -63,12 +63,6 @@ key2=value2
  */
 	static config load(const std::string &fn,config cfg = config() );
 
-#if 0
-  static add(std::string& key, std::string& val)
-  {
-    insert( std::pair<std::string,std::string>( key, val ) ) ;
-  }
-#endif
 	//! Is v a valid string
 	static bool valid_value(const std::string& v, std::string) {
 		return v.size() > 0;

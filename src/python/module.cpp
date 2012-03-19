@@ -1,10 +1,15 @@
 #include "swarm/swarm.h"
+#include "swarm/snapshot.hpp"
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
+using std::string;
+using namespace boost::python;
+using boost::noncopyable;
+using namespace swarm;
 
-swarm::gpu::Pintegrator create_gpu_integrator(const swarm::config& cfg){
-	return boost::dynamic_pointer_cast<swarm::gpu::integrator>(swarm::integrator::create(cfg));
+gpu::Pintegrator create_gpu_integrator(const config& cfg){
+	return boost::dynamic_pointer_cast<gpu::integrator>(integrator::create(cfg));
 }
 
 #define PROPERTY_ACCESSOR(CLASS,PROPERTY,TYPE)       \
@@ -13,12 +18,44 @@ swarm::gpu::Pintegrator create_gpu_integrator(const swarm::config& cfg){
 	TYPE get_##PROPERTY( CLASS &r)                   \
 	{ return r.PROPERTY(); }
 
-PROPERTY_ACCESSOR(swarm::ensemble::SystemRef, time, double )
-PROPERTY_ACCESSOR(swarm::ensemble::SystemRef, id  , int    )
+PROPERTY_ACCESSOR(ensemble::SystemRef, time, double )
+PROPERTY_ACCESSOR(ensemble::SystemRef, id  , int    )
 
-PROPERTY_ACCESSOR(swarm::ensemble::Body     , mass, double )
-PROPERTY_ACCESSOR(swarm::ensemble::Body::Component, pos, double )
-PROPERTY_ACCESSOR(swarm::ensemble::Body::Component, vel, double )
+PROPERTY_ACCESSOR(ensemble::Body     , mass, double )
+PROPERTY_ACCESSOR(ensemble::Body::Component, pos, double )
+PROPERTY_ACCESSOR(ensemble::Body::Component, vel, double )
+
+config load_config(const std::string &fn){
+	return config::load(fn);
+}
+
+void set_pos_list(ensemble::Body& b, const list& p ){
+	b[0].pos() = extract<double>(p[0]);
+	b[1].pos() = extract<double>(p[1]);
+	b[2].pos() = extract<double>(p[2]);
+}
+
+list get_pos_list(const ensemble::Body& b){
+	list p;
+	p.append( b[0].pos() );
+	p.append( b[1].pos() );
+	p.append( b[2].pos() );
+	return p;
+}
+
+void set_vel_list(ensemble::Body& b, const list& v ){
+	b[0].vel() = extract<double>(v[0]);
+	b[1].vel() = extract<double>(v[1]);
+	b[2].vel() = extract<double>(v[2]);
+}
+
+list get_vel_list(const ensemble::Body& b){
+	list v;
+	v.append( b[0].vel() );
+	v.append( b[1].vel() );
+	v.append( b[2].vel() );
+	return v;
+}
 
 /* Swarm as a python module
  *
@@ -27,9 +64,6 @@ PROPERTY_ACCESSOR(swarm::ensemble::Body::Component, vel, double )
  *
  */
 BOOST_PYTHON_MODULE(libswarmng_ext) {
-	using namespace boost::python;
-	using boost::noncopyable;
-	using namespace swarm;
 
 	def("init", swarm::init );
 	def("generate_ensemble", generate_ensemble );
@@ -37,6 +71,8 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 
 	class_<config>("Config")
 		.def( map_indexing_suite< config >() )
+		.def("load", &load_config)
+		.staticmethod("load")
 		;
 
 	class_<ensemble::Sys::attributes_t, noncopyable >( "Sys.Attributes", no_init )
@@ -68,8 +104,8 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.def("speed", &ensemble::Body::speed )
 		.def("attributes", &ensemble::Body::attributes, return_value_policy<reference_existing_object>() )
 		.def("__getitem__", &ensemble::Body::getitem, return_value_policy<reference_existing_object>() )
-		//.add_property("pos", &get_pos_list, &set_pos_list ) Not implemented
-		//.add_property("vel", &get_vel_list, &set_vel_list ) Not implemented
+		.add_property("pos", &get_pos_list, &set_pos_list ) 
+		.add_property("vel", &get_vel_list, &set_vel_list ) 
 		;
 
 	/*
@@ -96,8 +132,17 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.add_property("nbod", make_function(&ensemble::nbod , return_value_policy<copy_const_reference>() ) )
 		.def("__getitem__", &ensemble::getitem )
 		;
+
 	class_<defaultEnsemble, bases<ensemble> >("DefaultEnsemble")
+		.def("create", &defaultEnsemble::create )
+		.staticmethod("create")
 		.def( "clone", &defaultEnsemble::clone )
+		.def("save_to_bin", &snapshot::save) 
+		.def("save_to_text", &snapshot::save_text) 
+		.def("load_from_bin", &snapshot::load) 
+		.def("load_from_text", &snapshot::load_text) 
+		.staticmethod("load_from_bin")
+		.staticmethod("load_from_text")
 		;
 	
 
