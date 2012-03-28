@@ -395,6 +395,12 @@ void benchmark(const parameter_range& pr){
 	}
 }
 
+void print_version(){
+	bool amd64 = sizeof(void*) == 8;
+	cout << "Swarm is running as " << (amd64 ? "64bit" : "32bit" ) << endl;
+	exit(0);
+}
+
 void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::positional_options_description pos;
@@ -453,7 +459,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
-		("quiet,q",  "Suppress all the notifications (for CSV generation)");
+		("quiet,q",  "Suppress all the notifications (for CSV generation)")
+		("version,V",  "Print version message");
 	
 	desc.add(general).add(integrate).add(benchmark).add(query);
 
@@ -470,6 +477,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	//// Respond to switches 
 	//
 	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
+	if (vm.count("version")) print_version();
 	if (vm.count("verbose") ) DEBUG_LEVEL = vm["verbose"].as<int>();
 	if (vm.count("quiet") ) DEBUG_LEVEL = -1;
 

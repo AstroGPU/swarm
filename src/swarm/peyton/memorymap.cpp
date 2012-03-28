@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
 #include <iostream>
 #include <cassert>
@@ -97,7 +99,7 @@ void MemoryMap::open(int fd_, size_t length_, size_t offset, int prot, int mapst
 	{
 		map = NULL;
 		close();
-		ERROR(string("Memory mapping of file [") + filename + "] falied. Parameters: length=" + str(length) + ", offset=" + str(offset));
+		ERROR(string("mmap failed:") + strerror(errno) +   " {filename:" +  filename + ",length:" + str(length) + ", offset:" + str(offset)+ "}");
 	}
 }
 
