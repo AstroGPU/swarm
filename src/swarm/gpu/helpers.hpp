@@ -180,7 +180,7 @@ void launch_templatized_integrator(implementation* integ){
 		choose< launch_template_choose, 3, MAX_NBODIES, void, integ_pair > c;
 			c( nbod, p );
 
-		cudaFree(integ);
+		cudaFree(gpu_integ);
 	} else {
 		char b[100];
 		snprintf(b,100,"Invalid number of bodies. (only up to %d bodies per system)",MAX_NBODIES);
