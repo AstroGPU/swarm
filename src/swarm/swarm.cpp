@@ -147,7 +147,6 @@ void init_cuda(){
 }
 
 void prepare_integrator () {
-	init_cuda();
 	// Initialize Integrator
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
@@ -547,6 +546,7 @@ int main(int argc, char* argv[]){
 		output_test();
 
 	else if(command == "benchmark" || command == "verify") {
+		init_cuda();
 		if(command == "verify") 
 			verify_mode = true;
 

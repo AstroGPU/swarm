@@ -32,8 +32,8 @@ void select_cuda_device(int dev) {
 
 
 void print_device_information(){
-	  std::cout << "Device:\t"  << deviceInfo.name  
-		  << " Compute Capabality: " << deviceInfo.computeMode <<   "\n"
+	  std::cerr << "Device:\t"  << deviceInfo.name   << "\n"
+		  //<< " Compute Capabality: " << deviceInfo.computeMode <<   "\n"
 		  << "Global Memory:\t" << deviceInfo.totalGlobalMem/double(1<<30)     << "GB\n"
 		  << "Shared Memory\t"  << deviceInfo.sharedMemPerBlock/1024  << "KB\n"
 		  << "Max Blocksize\t"  << deviceInfo.maxThreadsPerBlock << "\n"
