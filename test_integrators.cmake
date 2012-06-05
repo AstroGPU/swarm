@@ -10,7 +10,7 @@ SET(TEST_integrator_nbod TRUE CACHE BOOL "Test all integrators versus all number
 SET(TEST_stability TRUE CACHE BOOL "Test stability of all integrators")
 
 # List of integrators (name of configuration file) that are tested versus all number of bodies
-SET(TEST_integrator_nbod_list CPU Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested vs. nbod")
+SET(TEST_integrator_nbod_list CPU Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step mvs CACHE LIST "List of integrators to be tested vs. nbod")
 
 # List of integrators (name of configuration file) that are tested for stability (run for long time)
 SET(TEST_stability_list Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested for stability")

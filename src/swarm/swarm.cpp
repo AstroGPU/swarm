@@ -542,10 +542,11 @@ int main(int argc, char* argv[]){
 		init_cuda();
 		run_integration();
 
-	}else if(command == "test")
+	}else if(command == "test"){
+		init_cuda();
 		output_test();
 
-	else if(command == "benchmark" || command == "verify") {
+	}else if(command == "benchmark" || command == "verify") {
 		init_cuda();
 		if(command == "verify") 
 			verify_mode = true;
