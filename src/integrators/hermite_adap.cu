@@ -211,4 +211,9 @@ integrator_plugin_initializer<
 		hermite_adap< stop_on_ejection<L> >
 	> hermite_adap_plugin("hermite_adap");
 
+integrator_plugin_initializer<
+	        hermite_adap< stop_on_ejection_or_close_encounter<L> > >
+	hermite_adap_close_encounter_plugin("hermite_adap_close_encounter");
+
+
 } } } // end namespace bppt :: integrators :: swarm
