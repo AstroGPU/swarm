@@ -54,7 +54,7 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
   if(sysid>maxsysid) maxsysid = sysid;
 
   // set sun to unit mass and at origin
-  double mass_star = draw_value_from_config(cfg,"mass_star",0.00003,100.0);
+  double mass_star = draw_value_from_config(cfg,"mass_star",0.00003,100.);
   double x=0, y=0, z=0, vx=0, vy=0, vz=0;
   ens.set_body(sysidx, 0, mass_star, x, y, z, vx, vy, vz);
 

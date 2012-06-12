@@ -58,6 +58,7 @@ inline void init(const config &cfg) {
 
 	select_cuda_device(dev);
 
+print_device_information();
 
 
 	swarm::log::manager::default_log()->init(cfg);
