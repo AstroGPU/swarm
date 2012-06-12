@@ -49,8 +49,8 @@ struct MidpointPropagator {
 	int b;
 	int c;
 	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
+//	bool body_component_grid;
+//	bool first_thread_in_system;
 	double max_timestep;
 
 
@@ -65,11 +65,23 @@ struct MidpointPropagator {
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
 
+	__device__ bool is_in_body_component_grid()
+//        { return body_component_grid; }	
+        { return  ((b < T::n) && (c < 3)); }	
+
+	__device__ bool is_in_body_component_grid_no_star()
+//        { return ( body_component_grid && (b!=0) ); }	
+        { return ( (b!=0) && (b < T::n) && (c < 3) ); }	
+
+	__device__ bool is_first_thread_in_system()
+//        { return first_thread_in_system; }	
+        { return (thread_in_system()==0); }	
+
 	GPUAPI void advance(){
 		double H = min( max_timestep ,  _params.time_step );
 		double pos = 0, vel = 0;
 
-		if( body_component_grid )
+		if( is_in_body_component_grid() )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
@@ -115,9 +127,9 @@ struct MidpointPropagator {
 
 
 		// Finalize the step
-		if( body_component_grid )
+		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		if( first_thread_in_system ) 
+		if( is_first_thread_in_system() ) 
 			sys.time() += H;
 	}
 };

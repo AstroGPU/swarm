@@ -18,8 +18,9 @@
 
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
+#include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
-
+#include "monitors/log_time_interval.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -116,7 +117,6 @@ class rkck: public integrator {
 		// NB: We use the same shared memory for two purpose and overwrite each other
 		// Since the use of the memory is not interleaved, we can safely use the same
 		// space for both purposes
-		// TODO: used Coalesced array structure
 		typedef DoubleCoalescedStruct<> shared_mag_t[2][nbod][3];
 		shared_mag_t& shared_mag = * (shared_mag_t*) system_shared_data_pointer(this,compile_time_param) ;
 
@@ -294,6 +294,15 @@ integrator_plugin_initializer<
 
 integrator_plugin_initializer<
 		rkck< FixedTimeStep, stop_on_ejection<L> >
-	> rkck_Fixed_plugin("rkck_fixed");
+	> rkck_fixed_plugin("rkck_fixed");
+
+integrator_plugin_initializer<
+	        rkck< FixedTimeStep, stop_on_ejection_or_close_encounter<L> > 
+	> rkck_adaptive_close_encounter_plugin("rkck_adaptive_close_encounter");
+
+integrator_plugin_initializer<
+	        rkck< AdaptiveTimeStep, stop_on_ejection_or_close_encounter<L> > 
+	> rkck_fixed_close_encounter_plugin("rkck_fixed_close_encounter");
+
 
 } } } // end namespace bppt :: integrators :: swarm

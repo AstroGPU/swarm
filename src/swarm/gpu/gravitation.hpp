@@ -17,6 +17,7 @@
  ************************************************************************/
 #pragma once
 
+// TODO: Do we actually use this?
 #include "../types/coalescedstructarray.hpp"
 #include "bppt.hpp"
 
@@ -369,6 +370,8 @@ class Gravitation {
 
 				
 };
+
+
 
 
 /*! 
