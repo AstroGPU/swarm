@@ -44,17 +44,20 @@ ELSEIF(${MAX_NBODIES} LESS 33)
 ELSE()
 	MESSAGE(SEND_ERROR "Unsupported number of bodies: ${MAX_NBODIES}")	
 ENDIF()
-SET(ENSEMBLE_CHUNK_SIZE ${OPTIMIZED_CHUNK_SIZE} )
-#	CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
-SET(SHMEM_CHUNK_SIZE ${OPTIMIZED_CHUNK_SIZE} )
-#	CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
-MESSAGE("Chunk size was automatically set to ${OPTIMIZED_CHUNK_SIZE}")
+SET(ENSEMBLE_CHUNK_SIZE ${OPTIMIZED_CHUNK_SIZE} 
+	CACHE STRING "Warpsize in ensemble for coalesced reads [1,4,8,16,32]")
+SET(SHMEM_CHUNK_SIZE ${OPTIMIZED_CHUNK_SIZE} 
+	CACHE STRING "Warpsize in shared memory for coalesced reads [1,4,8,16,32]")
+
+MESSAGE("Optimal Chunk size:${OPTIMIZED_CHUNK_SIZE}")
+MESSAGE("Current Shared memory Chunk size: ${SHMEM_CHUNK_SIZE}")
+MESSAGE("Current Ensemble Chunk size: ${ENSEMBLE_CHUNK_SIZE}")
 
 
 
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex )
+FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 
 SET(CUDA_CUDA_LIBRARY /usr/lib/nvidia-current/libcuda.so CACHE PATH "Path to libcuda.so")
 
