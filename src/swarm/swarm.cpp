@@ -413,6 +413,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			"\tverify    :  Verify an integrator against a reference integrator\n"
 			"\tquery     :  Query data from a log file\n"
 			"\ttest      :  Test a configuration against input/output files\n"
+			"\ttest-cpu  :  Test a configuration against input/output files without initializing GPU\n"
 			"\tgenerate  :  Generate a new ensemble and save it to output file\n"
 			"\tconvert   :  Read input file and write it to output file (converts to/from text)\n"
 			"\nOptions"
@@ -542,10 +543,12 @@ int main(int argc, char* argv[]){
 		init_cuda();
 		run_integration();
 
-	}else if(command == "test"){
-		init_cuda();
+	}else if(command == "test-cpu"){
+//		init_cuda();  // removed so CPU tests would work, but then broke GPU tests when needed to set cuda device
 		output_test();
-
+	}else if(command == "test"){
+		init_cuda();  
+		output_test();
 	}else if(command == "benchmark" || command == "verify") {
 		init_cuda();
 		if(command == "verify") 
@@ -626,7 +629,7 @@ int main(int argc, char* argv[]){
 	} 
 	
 	else
-		std::cerr << "Valid commands are: integrate, benchmark, verify, test, query, generate " << std::endl;
+		std::cerr << "Valid commands are: integrate, benchmark, verify, test, test-cpu, query, generate " << std::endl;
 
 	return 0;
 }

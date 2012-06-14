@@ -120,8 +120,8 @@ class generic: public integrator {
 		int ij = thread_in_system();         // Pair id
 
 		// Thread barrier predicates
-		bool body_component_grid = (b < nbod) && (c < 3);         // Barrier to act on bodies and components
-		bool first_thread_in_system = (thread_in_system() == 0);  // Barrier to select only the first thread
+		//		bool body_component_grid = (b < nbod) && (c < 3);         // Barrier to act on bodies and components
+		//		bool first_thread_in_system = (thread_in_system() == 0);  // Barrier to select only the first thread
 
 
 		// Setting up Monitor
@@ -132,8 +132,8 @@ class generic: public integrator {
 		prop.b = b;
 		prop.c = c;
 		prop.ij = ij;
-		prop.body_component_grid = body_component_grid;
-		prop.first_thread_in_system = first_thread_in_system;
+		//		prop.body_component_grid = body_component_grid;
+		//		prop.first_thread_in_system = first_thread_in_system;
 
 		////////// INTEGRATION //////////////////////
 		
@@ -192,7 +192,7 @@ class generic: public integrator {
 #endif
 			__syncthreads();			  
 
-			if( sys.is_active() && first_thread_in_system )
+			if( sys.is_active() && prop.is_first_thread_in_system() )
 			  {
 			    if( sys.time() >= _destination_time ) 
 			      { sys.set_inactive();     }

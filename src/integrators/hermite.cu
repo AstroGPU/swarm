@@ -20,6 +20,7 @@
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
+#include "monitors/log_time_interval.hpp"
 
 
 namespace swarm { namespace gpu { namespace bppt {
@@ -162,7 +163,10 @@ integrator_plugin_initializer<hermite< stop_on_ejection<L> > >
 	hermite_plugin("hermite");
 
 integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L> > >
-	hermite_plugin_encounter("hermite_close_encounter");
+	hermite_close_encounter_plugin("hermite_close_encounter");
+
+integrator_plugin_initializer<hermite< log_time_interval<L> > >
+	hermite_log_plugin("hermite_log");
 
 
 } } } // end namespace bppt :: integrators :: swarm

@@ -17,6 +17,10 @@
  ************************************************************************/
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
+#include "swarm/common.hpp"
+#include "monitors/composites.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "monitors/log_time_interval.hpp"
 
 namespace swarm {
 
@@ -52,10 +56,10 @@ struct MVSPropagator {
 	Gravitation<T::n>& calcForces;
 	int b;
 	int c;
-	// \todo Replace with functions.  Remove from generic integrator?  Put functions in base class?
 	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
+	// Replaced with functions.  Remove from generic integrator?  Put functions in base class?
+//	bool body_component_grid;
+//	bool first_thread_in_system;
 
 	double sqrtGM;
 	double max_timestep;
@@ -285,6 +289,16 @@ using namespace monitors;
 integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L> > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
+
+
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L> > > 
+	mvs_close_encounter_prop_plugin("mvs_close_encounter"
+			,"This is the integrator based on mvs propagator");
+
+integrator_plugin_initializer< generic< MVSPropagator, log_time_interval<L>  > >
+	mvs_log_prop_plugin("mvs_log"
+			,"This is the integrator based on mvs propagator");
+
 
 
 }
