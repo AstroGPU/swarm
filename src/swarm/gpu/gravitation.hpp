@@ -238,8 +238,8 @@ class Gravitation {
 	}
 
 	GENERIC void sum(int b,int c,double& acc, double & jerk)const
-	//        { sum_test(b,c,acc,jerk); }
-	        { sum_works(b,c,acc,jerk); }
+	        { sum_test(b,c,acc,jerk); }
+  //        { sum_works(b,c,acc,jerk); }
 
 	/*  
 	 *  Find the acceleration and jerk for a planet.
