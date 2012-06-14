@@ -148,7 +148,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
   for(unsigned int sysid=0;sysid<ens.nsys();++sysid)
     {
       assert(mcmc_input.good());
-#if 0
+#if 1
       std::vector<double> masses(ens.nbod(),0.0);
       for(unsigned int bod=0;bod<ens.nbod();++bod)
 	{
