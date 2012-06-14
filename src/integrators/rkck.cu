@@ -305,4 +305,8 @@ integrator_plugin_initializer<
 	> rkck_fixed_close_encounter_plugin("rkck_fixed_close_encounter");
 
 
+integrator_plugin_initializer< 
+		rkck< FixedTimeStep, stop_on_ejection_or_close_encounter<L> > 
+	> rkck_adaptive_plugin_encounter("rkck_adaptive_close_encounter");
+
 } } } // end namespace bppt :: integrators :: swarm

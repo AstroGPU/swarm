@@ -242,6 +242,9 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
 	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	    }
 #endif      
+=======
+      
+>>>>>>> Stashed changes
 	}  // end loop over bodies
   
       // Shift into barycentric frame
@@ -264,7 +267,7 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
     JACOBI, BARYCENTRIC, ASTROCENTRIC
   } COORDINATE_SYSTEM = BARYCENTRIC;
   const bool use_jacobi = cfg.optional("use_jacobi_output", 0);  
-  if(use_jacobi) COORDINATE_SYSTEM = JACOBI;
+  if(use_jacobi_output) COORDINATE_SYSTEM = JACOBI;
 
   std::streamsize cout_precision_old = os.precision();
   os.precision(10);
@@ -460,7 +463,7 @@ void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vecto
 	  if(disable)
 	    {
 	      if(cfg.count("verbose"))
-		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
+		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " ainit= " << semimajor_axes_init[sys_id][bod-1] << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
 	      break;
 	    }
 	}

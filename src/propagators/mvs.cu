@@ -290,6 +290,11 @@ integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L> > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
 
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L> > >
+	mvs_prop_ce_plugin("mvs_close_encounter"
+			,"This is the integrator based on mvs propagator, monitor stop_on_ejection_or_close_encounter");
+
+
 
 integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L> > > 
 	mvs_close_encounter_prop_plugin("mvs_close_encounter"

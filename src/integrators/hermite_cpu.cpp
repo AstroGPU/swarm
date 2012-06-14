@@ -25,7 +25,7 @@
 
 
 namespace swarm {
-
+   namespace cpu {
 /*! CPU implementation of PEC2 Hermite integrator
  *
  * \ingroup integrators
@@ -178,11 +178,13 @@ class hermite_cpu : public integrator {
 	}
 };
 
+}
+
 typedef gpulog::host_log L;
 using namespace monitors;
 
 integrator_plugin_initializer<
-		hermite_cpu< stop_on_ejection<L> >
+  cpu::hermite_cpu< stop_on_ejection<L> >
 	> hermite_cpu_plugin("hermite_cpu");
 
 
@@ -191,15 +193,16 @@ integrator_plugin_initializer<
 	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
 integrator_plugin_initializer<
-		hermite_cpu< stop_on_ejection_or_close_encounter<L> >
+  cpu::hermite_cpu< stop_on_ejection_or_close_encounter<L> >
 	> hermite_cpu_plugin_ejection_or_close_encounter(
 		"hermite_cpu_ejection_or_close_encounter"
 	);
 
 
 integrator_plugin_initializer<
-		hermite_cpu< log_time_interval<L> >
+  cpu::hermite_cpu< log_time_interval<L> >
 	> hermite_cpu_log_plugin("hermite_cpu_log");
+
 
 
 }
