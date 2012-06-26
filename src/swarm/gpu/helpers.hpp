@@ -183,7 +183,7 @@ void launch_templatized_integrator(implementation* integ){
 		cudaFree(gpu_integ);
 	} else {
 		char b[100];
-		snprintf(b,100,"Invalid number of bodies. (only up to %d bodies per system)",MAX_NBODIES);
+		snprintf(b,100,"Invalid number of bodies. (Swarm-NG was compiled with MAX_NBODIES = %d bodies per system.)",MAX_NBODIES);
 		ERROR(b);
 	}
 

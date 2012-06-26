@@ -247,6 +247,9 @@ class integrator : public gpu::integrator  {
 	 * Helper Function: Logical amount of shared memory needed for force calculations per thread
 	 * This value is calculated from number of bodies, if this is used in a kernel, the actual
 	 * amount of shared memory allocated might be different.
+	 *
+	 * \todo This assumes one particular implementation of Gravitation class.  Rewrite so that different gravitaiton classes (and different integrators) can request different ammounts of shared memory
+	 *
 	 */
 	static GENERIC int shmem_per_system(int nbod) {
 		const int pair_count = nbod * (nbod - 1) / 2;

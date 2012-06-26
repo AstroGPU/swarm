@@ -10,9 +10,12 @@ void set_prefered_shared_memory(const char* function_name){
 }
 #endif
 
-const int registers_per_thread = 64;
+const int registers_per_thread = 64;  
 cudaDeviceProp deviceInfo;
 
+/*
+ * \todo Is it intentional that shmem_per_system isn't multiplied by chunk_size?
+ */
 int optimized_system_per_block(int chunk_size, int thread_per_system
 		, int shmem_per_system){
 	return blocks_per_mp( chunk_size * thread_per_system, shmem_per_system) 
@@ -43,6 +46,9 @@ void print_device_information(){
 	  
 }
 
+/*
+ * \todo is block_warps computed correctly when blocksize is a multiple of warpSize?
+ */
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	assert(blocksize > 0);
 	assert(registers_per_thread > 0);
