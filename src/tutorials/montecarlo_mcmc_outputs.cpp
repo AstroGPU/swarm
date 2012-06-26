@@ -460,7 +460,7 @@ void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vecto
 	  if(disable)
 	    {
 	      if(cfg.count("verbose"))
-		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
+		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " ainit= " << semimajor_axes_init[sys_id][bod-1] << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
 	      break;
 	    }
 	}
