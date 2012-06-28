@@ -27,9 +27,15 @@ void select_cuda_device(int dev) {
 		std::cerr << "Cannot select the CUDA device. GPU integrators are disabled" << std::endl;
 
 	  cudaErrCheck( cudaGetDeviceProperties(&deviceInfo, dev) );
+
+
 }
 
 
+void set_more_cache(){
+	$$$;
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+}
 
 void print_device_information(){
 	  std::cerr << "Device:\t"  << deviceInfo.name   << "\n"
