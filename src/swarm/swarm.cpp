@@ -143,7 +143,7 @@ bool save_ensemble(){
 void init_cuda(){
 	// Initialize Swarm
 	swarm::init(cfg);
-	print_device_information();
+	//	print_device_information();
 }
 
 void prepare_integrator () {

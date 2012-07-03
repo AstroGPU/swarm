@@ -132,7 +132,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 		break;
 	      };
 
-	if(time<=0.) 
+	if((time<=0.) && false)  // was used for debugging at some point
 	  {
 	    if (keplerian_output)
 	      { std::cerr << "# Output in Keplerian coordinates  "; }
