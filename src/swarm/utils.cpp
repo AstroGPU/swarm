@@ -128,22 +128,38 @@ bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_
 	for(int i = 0; i < e1.nsys(); i++) {
 		for(int j = 0; j < e1.nbod() ; j++){
 
+			// Distance between body position in ensemble e1 and e2
 			double dp = sqrt( 
 					  square ( e1[i][j][0].pos() - e2[i][j][0].pos() ) 
 					+ square ( e1[i][j][1].pos() - e2[i][j][1].pos() ) 
 					+ square ( e1[i][j][2].pos() - e2[i][j][2].pos() ) ) ;
 
+			// Average magnitude of the position in e1 and e2
+			double ap = sqrt( 
+					  square ( e1[i][j][0].pos() + e2[i][j][0].pos() ) 
+					+ square ( e1[i][j][1].pos() + e2[i][j][1].pos() ) 
+					+ square ( e1[i][j][2].pos() + e2[i][j][2].pos() ) ) / 2.0 ;
+
+			// Difference between body velocities in ensemble e1 and e2
 			double dv = sqrt( 
 					  square ( e1[i][j][0].vel() - e2[i][j][0].vel() ) 
 					+ square ( e1[i][j][1].vel() - e2[i][j][1].vel() ) 
 					+ square ( e1[i][j][2].vel() - e2[i][j][2].vel() ) ) ;
+
+			// Average magnitude of the velocity in e1 and e2
+			double av = sqrt( 
+					  square ( e1[i][j][0].vel() + e2[i][j][0].vel() ) 
+					+ square ( e1[i][j][1].vel() + e2[i][j][1].vel() ) 
+					+ square ( e1[i][j][2].vel() + e2[i][j][2].vel() ) ) / 2.0 ;
 
 			if ( dp > pos_diff ) pos_diff = dp;
 			if ( dv > vel_diff ) vel_diff = dv;
 
 		}
 
-		double dt = fabs(e1[i].time() - e2[i].time());
+		// Difference between time divided by average of the two
+		double dt = fabs(e1[i].time() - e2[i].time())
+			/(e1[i].time() + e2[i].time())*2;
 		if ( dt > time_diff ) time_diff = dt;
 
 	}
