@@ -17,6 +17,7 @@
  ************************************************************************/
 
 #include "swarm/swarmplugin.h"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 
 

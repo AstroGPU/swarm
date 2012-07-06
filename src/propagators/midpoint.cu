@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
-#include "swarm/gpu/gravitation.hpp"
 #include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 

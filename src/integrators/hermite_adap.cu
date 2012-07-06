@@ -20,6 +20,7 @@
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
 
 
 namespace swarm { namespace gpu { namespace bppt {

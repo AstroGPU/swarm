@@ -24,7 +24,6 @@
 
 #include "helpers.hpp"
 #include "utilities.hpp"
-#include "gravitation.hpp"
 #include "device_settings.hpp"
 
 
