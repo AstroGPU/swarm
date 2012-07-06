@@ -97,8 +97,9 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename GravitationAccOnly<T::n>::shared_data grav_t;
-		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef GravitationAcc<T> Grav;
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;

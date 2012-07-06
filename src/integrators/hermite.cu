@@ -56,9 +56,10 @@ class hermite: public integrator {
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
+		typedef GravitationAccJerk<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;

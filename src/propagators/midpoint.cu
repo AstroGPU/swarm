@@ -36,7 +36,7 @@ struct MidpointPropagatorParams {
  * \ingroup propagators
  *
  */
-template<class T>
+template<class T,class Gravitation>
 struct MidpointPropagator {
 	typedef MidpointPropagatorParams params;
 
@@ -45,7 +45,7 @@ struct MidpointPropagator {
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -55,7 +55,7 @@ struct MidpointPropagator {
 
 
 	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	GPUAPI void init()  { }
@@ -137,7 +137,7 @@ struct MidpointPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L>, GravitationAcc > >
 	midpoint_prop_plugin("midpoint"
 			,"This is the integrator based on midpoint propagator");
 

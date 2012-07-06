@@ -59,7 +59,8 @@ class hermite_adap: public integrator {
 
 	template<class T>
 	struct SystemSharedData {
-		typename Gravitation<T::n>::shared_data gravitation;
+		typedef GravitationAccJerk<T> Grav;
+		typename Grav::shared_data gravitation;
 		DoubleCoalescedStruct<> time_step_factor[T::n];
 	};
 
@@ -105,9 +106,10 @@ class hermite_adap: public integrator {
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
+		typedef GravitationAccJerk<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
 		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
-		Gravitation<T::n> calcForces(sys, shared_data.gravitation );
+		Grav calcForces(sys, shared_data.gravitation );
 
 		// Local variables
 		const int nbod = T::n;

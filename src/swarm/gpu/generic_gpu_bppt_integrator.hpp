@@ -58,7 +58,8 @@ namespace swarm { namespace gpu { namespace bppt {
  *  template< template<class T, class G> class Propagator, template<class L> class Monitor, class G >
  * and G is supposed to be the Gravitation class.
  */
-template< template<class T> class Propagator, class Monitor >
+template< template<class T,class G> class Propagator, class Monitor
+	, template<class T> class Gravitation>
 class generic: public integrator {
 	typedef integrator base;
 
@@ -71,7 +72,9 @@ class generic: public integrator {
 	//! We don't really know number of bodies right now and it does not matter.
 	//! parameters of the Propagator should be initialized with config file. But
 	//! The only way to access Propagator class is to instantiate it with something.
-	typedef  typename Propagator< compile_time_params_t<3> >::params prop_params_t;
+	//
+	typedef compile_time_params_t<3> defpar_t;
+	typedef  typename Propagator< defpar_t, Gravitation<defpar_t> >::params prop_params_t;
 
 	private:
 	double _time_step;
@@ -108,10 +111,12 @@ class generic: public integrator {
 	__device__ void kernel(T compile_time_param){
 		if(sysid()>=_dens.nsys()) return;
 
+		typedef Gravitation<T> GravitationInstance;
+
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef typename GravitationInstance::shared_data grav_t;
+		GravitationInstance calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		/////////// Local variables /////////////
 		const int nbod = T::n;               // Number of Bodies
@@ -128,7 +133,7 @@ class generic: public integrator {
 		monitor_t montest(_mon_params,sys,*_log) ;
 
 		// Setting up Propagator
-		Propagator<T> prop(_prop_params,sys,calcForces);
+		Propagator<T,GravitationInstance> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;
 		prop.ij = ij;

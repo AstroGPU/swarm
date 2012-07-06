@@ -37,7 +37,7 @@ struct EulerPropagatorParams {
  * \ingroup propagators
  *
  */
-template<class T>
+template<class T,class Gravitation>
 struct EulerPropagator {
 	typedef EulerPropagatorParams params;
 
@@ -46,7 +46,7 @@ struct EulerPropagator {
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 //	GravClass& calcForces;
 	int b;
 	int c;
@@ -57,7 +57,7 @@ struct EulerPropagator {
 
 
 	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 //			GravClass& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
@@ -107,7 +107,7 @@ struct EulerPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L>, GravitationAccJerk > >
 	euler_prop_plugin("euler"
 			,"This is the integrator based on euler propagator");
 

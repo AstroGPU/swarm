@@ -37,7 +37,7 @@ struct VerletPropagatorParams {
  * \ingroup propagators
  *
  */
-template<class T>
+template<class T,class Gravitation>
 struct VerletPropagator {
 	typedef VerletPropagatorParams params;
 
@@ -45,7 +45,7 @@ struct VerletPropagator {
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -55,7 +55,7 @@ struct VerletPropagator {
 
 
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	GPUAPI void init()  { }
@@ -117,7 +117,7 @@ struct VerletPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< VerletPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< VerletPropagator, stop_on_ejection<L>, GravitationAcc > >
 	verlet_prop_plugin("verlet"
 			,"This is the integrator based on verlet propagator");
 

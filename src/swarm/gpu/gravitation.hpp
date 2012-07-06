@@ -36,7 +36,7 @@ namespace bppt {
  *
  */
 template<int W>
-struct GravitationAccOnlyScalars {
+struct GravitationAccScalars {
 	static const int CHUNK_SIZE = W;
 	typedef double scalar_t; 
 
@@ -58,7 +58,7 @@ struct GravitationAccOnlyScalars {
  *
  */
 template<int W>
-struct GravitationScalars {
+struct GravitationAccJerkScalars {
 	static const int CHUNK_SIZE = W;
 	typedef double scalar_t; 
 
@@ -94,12 +94,14 @@ struct GravitationScalars {
  * data and calculates the acc/jerk for each body.
  *
  */
-template<int nbod, int CHUNK_SIZE = SHMEM_CHUNK_SIZE>
-class Gravitation {
+template<class T>
+class GravitationAccJerk {
 	public:
+	const static int nbod = T::n;
 	const static int pair_count = (nbod*(nbod-1))/2;
+	const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 
-	typedef GravitationScalars<CHUNK_SIZE> shared_data [pair_count][3];
+	typedef GravitationAccJerkScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
 	public: // hack to make this public to test whether it's worth using shared memory for some small steps
@@ -144,7 +146,7 @@ class Gravitation {
 	 * allocated on shared memory to hold intermediat results.
 	 *
 	 */
-	GENERIC Gravitation(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
+	GENERIC GravitationAccJerk(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
 	/**
 	 *  Step one of the algorithm. All pairs run in parallel. This
@@ -179,7 +181,7 @@ class Gravitation {
 
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	/*
 	 * calculate accleration for a planet ignoring the
 	 * impact of the body 0 (star).
@@ -205,7 +207,7 @@ class Gravitation {
 		return acc_sum;
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	/*  
 	 *  Find the acceleration for a planet.
 	 *
@@ -358,7 +360,7 @@ class Gravitation {
 		}
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc_planets (int ij,int b,int c)const{
 		if(ij < pair_count)
 			calc_pair(ij);
@@ -369,7 +371,7 @@ class Gravitation {
 			return 0;
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -389,7 +391,7 @@ class Gravitation {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		//		return pair_count * 3  * 2 * sizeof(double);
 		// TODO: Test
-		 return pair_count * 3  * sizeof(GravitationScalars<CHUNK_SIZE>)/CHUNK_SIZE;
+		 return pair_count * 3  * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
@@ -426,12 +428,14 @@ class Gravitation {
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
  */
 
-template<int nbod, int CHUNK_SIZE = SHMEM_CHUNK_SIZE >
-class GravitationAccOnly {
+template<class T>
+class GravitationAcc {
 	public:
+	const static int nbod = T::n;
 	const static int pair_count = (nbod*(nbod-1))/2;
+	const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 
-	typedef GravitationAccOnlyScalars<CHUNK_SIZE> shared_data [pair_count][3];
+	typedef GravitationAccScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
 	ensemble::SystemRef& sys;
@@ -461,7 +465,7 @@ class GravitationAccOnly {
 
 	public:
 
-	__device__ GravitationAccOnly(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
+	__device__ GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
 
 	__device__ void calc_pair(int ij)const{
@@ -620,12 +624,14 @@ class GravitationAccOnly {
  * data and calculates the acc/jerk for each body.
  *
  */
-template<int nbod, int CHUNK_SIZE = SHMEM_CHUNK_SIZE>
+template<class T>
 class GravitationLargeN {
 	public:
+		const static int nbod = T::n;
         const static int body_count = nbod;
+		const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 
-        typedef GravitationScalars<CHUNK_SIZE> shared_data [body_count];
+        typedef GravitationAccJerkScalars<CHUNK_SIZE> shared_data [body_count];
 
 	private:
 	public: // hack to make this public to test whether it's worth using shared memory for some small steps
@@ -710,7 +716,7 @@ class GravitationLargeN {
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
 	 *
-	 * \todo Remove once allow propagators to use GravitationAccOnly
+	 * \todo Remove once allow propagators to use GravitationAcc
 	 *
 	 */
          GPUAPI double sum_acc(int b,int c)const{
@@ -766,7 +772,7 @@ class GravitationLargeN {
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
 	 *
-	 * \todo Remove once allow propagators to use GravitationAccOnly
+	 * \todo Remove once allow propagators to use GravitationAcc
 	 *
 	 */
 
@@ -841,7 +847,7 @@ class GravitationLargeN {
 		}
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -853,7 +859,7 @@ class GravitationLargeN {
 		else { return 0; }
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc_planets (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -868,7 +874,7 @@ class GravitationLargeN {
 
 	static GENERIC int shmem_per_system() {
 	  const int body_count = nbod;
-	  return body_count * sizeof(GravitationScalars<CHUNK_SIZE>)/CHUNK_SIZE;
+	  return body_count * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
@@ -921,12 +927,14 @@ class GravitationLargeN {
  * data and calculates the acc/jerk for each body.
  *
  */
-template<int nbod, int CHUNK_SIZE = SHMEM_CHUNK_SIZE>
+template<class T>
 class GravitationMediumN {
 	public:
+	const static int nbod = T::n;
 	const static int pair_count = (nbod*(nbod-1))/2;
+	const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 
-	typedef GravitationScalars<CHUNK_SIZE> shared_data [pair_count][3];
+	typedef GravitationAccJerkScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
 	public: // hack to make this public to test whether it's worth using shared memory for some small steps
@@ -1009,7 +1017,7 @@ class GravitationMediumN {
 
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	/*
 	 * calculate accleration for a planet ignoring the
 	 * impact of the body 0 (star).
@@ -1035,7 +1043,7 @@ class GravitationMediumN {
 		return acc_sum;
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	/*  
 	 *  Find the acceleration for a planet.
 	 *
@@ -1190,7 +1198,7 @@ class GravitationMediumN {
 		}
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc_planets (int ij,int b,int c)const{
 	  //		if(ij < pair_count)
 		if(ij < 3*nbod )
@@ -1202,7 +1210,7 @@ class GravitationMediumN {
 			return 0;
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAccOnly
+  // TODO: Remove once allow propagators to use GravitationAcc
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -1223,7 +1231,7 @@ class GravitationMediumN {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		//		return pair_count * 3  * 2 * sizeof(double);
 		// TODO: Test
-		 return pair_count * 3  * sizeof(GravitationScalars<CHUNK_SIZE>)/CHUNK_SIZE;
+		 return pair_count * 3  * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
 	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {

@@ -43,7 +43,7 @@ struct MVSPropagatorParams {
  *
  * \todo make Gravitation class a template parameter: template<class T, class GravClass>
  */
-template<class T>
+template<class T,class Gravitation>
 struct MVSPropagator {
 	typedef MVSPropagatorParams params;
 	static const int nbod = T::n;
@@ -53,7 +53,7 @@ struct MVSPropagator {
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -67,7 +67,7 @@ struct MVSPropagator {
 	double acc_bc;
 
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	__device__ bool is_in_body_component_grid()
@@ -286,21 +286,23 @@ struct MVSPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L>, GravitationAcc > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L> > >
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L>, GravitationAcc  > >
 	mvs_prop_ce_plugin("mvs_close_encounter"
 			,"This is the integrator based on mvs propagator, monitor stop_on_ejection_or_close_encounter");
 
 
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L> > > 
+integrator_plugin_initializer< generic< MVSPropagator
+	, stop_on_ejection_or_close_encounter<L>, GravitationAcc > > 
 	mvs_close_encounter_prop_plugin("mvs_close_encounter"
 			,"This is the integrator based on mvs propagator");
 
-integrator_plugin_initializer< generic< MVSPropagator, log_time_interval<L>  > >
+integrator_plugin_initializer< generic< MVSPropagator
+	, log_time_interval<L>, GravitationAcc  > >
 	mvs_log_prop_plugin("mvs_log"
 			,"This is the integrator based on mvs propagator");
 
