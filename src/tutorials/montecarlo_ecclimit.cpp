@@ -73,7 +73,7 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
       if(transit_ephemeris)
 	{
 	  double period = draw_value_from_config(cfg,"period",bod,0.2,365250.);
-	  double epoch = draw_value_from_config(cfg,"epoch",bod,0.2,365250.);
+	  double epoch = draw_value_from_config(cfg,"epoch",bod,-365250.,365250.);
 	  a = pow((period/365.25)*(period/365.25)*mass_enclosed,1.0/3.0);
 	  if(bod==ecc_body)
 	    e = draw_value_from_config(cfg,"ecc",bod,0.,1.);
