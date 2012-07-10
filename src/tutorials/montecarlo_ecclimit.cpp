@@ -9,7 +9,8 @@
 #include <fstream>
 #include <math.h>
 #include <signal.h>
-
+#include <ctime>
+#include <unistd.h>
 #include "swarm/swarm.h"
 #include "swarm/snapshot.hpp"
 #include "swarm/log/log.hpp"
@@ -519,6 +520,12 @@ int main(int argc, char* argv[] )
   
   cfg = config::load(integ_configfile);
   
+	int pid = getpid();
+	int seed_default = (int) time(NULL); 
+        seed_default = seed_default ^ (pid + (pid << 15) );
+        int seed = cfg.optional("seed", seed_default);
+	srand(seed);
+
   // 1.read keplerian coordinates from a file
   // 2.generate guesses based on the keplerian coordinates
   // 3.convert keplerian coordinates to an ensemble
@@ -528,7 +535,9 @@ int main(int argc, char* argv[] )
   if( cfg.count("input") ) 
     {    ens = snapshot::load(cfg["input"]);  }
   else
-    {    ens = generate_ensemble_with_randomized_initial_conditions( config::load(initc_configfile) );  }
+    { 
+	ens = generate_ensemble_with_randomized_initial_conditions( config::load(initc_configfile) );  
+	}
 	
   // save the ensemble as a snapshot
   if(cfg.count("initial_snapshot"))
