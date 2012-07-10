@@ -536,7 +536,7 @@ int main(int argc, char* argv[]){
 	// Set some variables
 	pos_threshold = cfg.optional("pos_threshold", 1e-10);
 	vel_threshold = cfg.optional("vel_threshold", 1e-10);
-	time_threshold = cfg.optional("time_threshold", 1e-4);
+	time_threshold = cfg.optional("time_threshold", 1e-10);
 
 	// Branch based on COMMAND
 	if(command == "integrate"){
@@ -549,7 +549,7 @@ int main(int argc, char* argv[]){
 	}else if(command == "test"){
 		init_cuda();  
 		output_test();
-        }else if(command == "benchmark" || command == "verify") {
+	}else if(command == "benchmark" || command == "verify") {
 		init_cuda();
 		if(command == "verify") 
 			verify_mode = true;

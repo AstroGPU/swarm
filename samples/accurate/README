@@ -1,0 +1,4 @@
+These configuration files are tuned for very accurate integration
+of systems. The energy conservation error is tuned to less than
+1e-10 for up to 2 million time units integration.
+
