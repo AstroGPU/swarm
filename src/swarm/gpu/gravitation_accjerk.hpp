@@ -185,34 +185,14 @@ class GravitationAccJerk {
 	}
 				
 
+	static GENERIC int thread_per_system(){
+		return std::max( nbod * 3 , (nbod-1)*nbod/2 ) ;
+	}
 
 	static GENERIC int shmem_per_system() {
-		const int pair_count = nbod * (nbod - 1) / 2;
-		//		return pair_count * 3  * 2 * sizeof(double);
-		// TODO: Test
-		 return pair_count * 3  * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
+		 return sizeof(shared_data)/CHUNK_SIZE;
 	}
 
-	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
-		extern __shared__ char shared_mem[];
-		int b = sysid_in_block / CHUNK_SIZE ;
-		int i = sysid_in_block % CHUNK_SIZE ;
-		int idx = i * sizeof(double) 
-			+ b * CHUNK_SIZE 
-			* shmem_per_system();
-		return &shared_mem[idx];
-	}
-
-    // WARNING: Need to test that this works (accounting for larger memory usage due to coalesced arrys)
-	static __device__ void * unused_shared_data_pointer(const int system_per_block) {
-		extern __shared__ char shared_mem[];
-		//		int idx = system_per_block * shmem_per_system();
-		int b = system_per_block / CHUNK_SIZE ;
-		int i = system_per_block % CHUNK_SIZE ;
-		if(i!=0) b++;
-		int idx = b * CHUNK_SIZE * shmem_per_system();
-		return &shared_mem[idx];
-	}
 
 				
 };

@@ -309,6 +309,14 @@ class GravitationLargeN {
 		return &shared_mem[idx];
 	}
 
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return sizeof(shared_data)/CHUNK_SIZE;
+	}
+
 				
 };
 

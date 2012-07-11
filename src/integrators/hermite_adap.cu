@@ -44,14 +44,9 @@ class hermite_adap: public integrator {
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
-	static GENERIC int shmem_per_system(int nbod){
-		return integrator::shmem_per_system(nbod) + nbod*sizeof(double);
-	}
-	int  shmemSize(){
-		const int nbod = _hens.nbod();
-		// Round up number of systems in a block to the next multiple of SHMEM_CHUNK_SIZE
-		int spb = ((system_per_block()+SHMEM_CHUNK_SIZE-1)/SHMEM_CHUNK_SIZE) * SHMEM_CHUNK_SIZE;
-		return spb *  shmem_per_system(nbod);
+	template<class T>
+	static GENERIC const int shmem_per_system(T compile_time_param){
+		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
 	}
 
 	virtual void launch_integrator() {
@@ -62,7 +57,7 @@ class hermite_adap: public integrator {
 	struct SystemSharedData {
 		typedef GravitationAccJerk<T> Grav;
 		typename Grav::shared_data gravitation;
-		DoubleCoalescedStruct<> time_step_factor[T::n];
+		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
 	};
 
         GPUAPI void convert_internal_to_std_coord() {} 

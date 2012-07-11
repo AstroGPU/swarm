@@ -39,6 +39,7 @@ struct MidpointPropagatorParams {
 template<class T,class Gravitation>
 struct MidpointPropagator {
 	typedef MidpointPropagatorParams params;
+	const static int nbod = T::n;
 
 	params _params;
 
@@ -57,6 +58,14 @@ struct MidpointPropagator {
 	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
+
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
 
 	GPUAPI void init()  { }
 

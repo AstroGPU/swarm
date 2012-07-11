@@ -119,7 +119,7 @@ class rkck: public integrator {
 		// NB: We use the same shared memory for two purpose and overwrite each other
 		// Since the use of the memory is not interleaved, we can safely use the same
 		// space for both purposes
-		typedef DoubleCoalescedStruct<> shared_mag_t[2][nbod][3];
+		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_mag_t[2][nbod][3];
 		shared_mag_t& shared_mag = * (shared_mag_t*) system_shared_data_pointer(this,compile_time_param) ;
 
 		double time_step = _max_time_step;

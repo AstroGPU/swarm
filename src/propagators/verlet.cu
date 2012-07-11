@@ -41,6 +41,7 @@ struct VerletPropagatorParams {
 template<class T,class Gravitation>
 struct VerletPropagator {
 	typedef VerletPropagatorParams params;
+	const static int nbod = T::n;
 
 	params _params;
 
@@ -58,6 +59,14 @@ struct VerletPropagator {
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
+
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
 
 	GPUAPI void init()  { }
 

@@ -83,6 +83,16 @@ struct MVSPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
+
+
+
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 	/// Shift back and forth is tested and it is indeed symmetric 
 	/// Initialization tasks executed before entering loop
@@ -296,16 +306,6 @@ integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close
 			,"This is the integrator based on mvs propagator, monitor stop_on_ejection_or_close_encounter");
 
 
-
-integrator_plugin_initializer< generic< MVSPropagator
-	, stop_on_ejection_or_close_encounter<L>, GravitationAcc > > 
-	mvs_close_encounter_prop_plugin("mvs_close_encounter"
-			,"This is the integrator based on mvs propagator");
-
-integrator_plugin_initializer< generic< MVSPropagator
-	, log_time_interval<L>, GravitationAcc  > >
-	mvs_log_prop_plugin("mvs_log"
-			,"This is the integrator based on mvs propagator");
 
 
 

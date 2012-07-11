@@ -269,12 +269,6 @@ class integrator : public swarm::integrator {
 		_dens.copyTo( _hens );
 	}
 
-	//! Grid dimentions for CUDA kernel launch
-	virtual dim3 gridDim() = 0;
-	//! Block dimentions for CUDA kernel launch
-	virtual dim3 threadDim() = 0;
-	//! Amount of shared memory required for CUDA kernel launch
-	virtual int  shmemSize() = 0;
 };
 typedef shared_ptr<integrator> Pintegrator;
 

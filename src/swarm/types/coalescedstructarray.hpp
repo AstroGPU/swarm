@@ -173,5 +173,11 @@ public:
 	}
 };
 
+template<int W>
+struct DoubleCoalescedStruct {
+	typedef double scalar_t;
+	double _value[W];
+	GENERIC double& value(){ return _value[0]; }
+};
 
 }

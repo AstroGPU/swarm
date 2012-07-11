@@ -45,6 +45,16 @@ struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
 	GPUAPI stop_on_ejection_or_close_encounter_or_crossing_orbit
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l), co(p.co,s,l) 	{}
+
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
 	
   //	GPUAPI void operator () ()
   //         {	  ej(); ce(); co(); }
@@ -126,6 +136,16 @@ struct stop_on_ejection_or_close_encounter {
 	GPUAPI stop_on_ejection_or_close_encounter
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l) 	{}
+
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
 	
   //	GPUAPI void operator () () 
   //        {  ej(); ce(); }

@@ -41,6 +41,7 @@ struct EulerPropagatorParams {
 template<class T,class Gravitation>
 struct EulerPropagator {
 	typedef EulerPropagatorParams params;
+	const static int nbod = T::n;
 
 	params _params;
 
@@ -48,7 +49,6 @@ struct EulerPropagator {
 	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
-//	GravClass& calcForces;
 	int b;
 	int c;
 	int ij;
@@ -59,7 +59,6 @@ struct EulerPropagator {
 
 	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
-//			GravClass& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	GPUAPI void init()  { }
@@ -69,13 +68,21 @@ struct EulerPropagator {
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
 
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
+
 	__device__ bool is_in_body_component_grid()
 //        { return body_component_grid; }	
-        { return  ((b < T::n) && (c < 3)); }	
+        { return  ((b < nbod) && (c < 3)); }	
 
 	__device__ bool is_in_body_component_grid_no_star()
 //        { return ( body_component_grid && (b!=0) ); }	
-        { return ( (b!=0) && (b < T::n) && (c < 3) ); }	
+        { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
 
 	__device__ bool is_first_thread_in_system()
 //        { return first_thread_in_system; }	

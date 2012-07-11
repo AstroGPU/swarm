@@ -77,8 +77,5 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 }
 
 bool check_cuda_limits ( int blocksize, int shmem_per_block ){
-
-        print_device_information();
-
 	return blocks_per_mp(blocksize, shmem_per_block) > 0;
 }

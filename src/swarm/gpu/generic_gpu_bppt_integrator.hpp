@@ -23,6 +23,14 @@
 
 namespace swarm { namespace gpu { namespace bppt {
 
+template<class T>
+GENERIC const T& max3(const T& a, const T& b, const T& c){
+	if( b > a )
+		return c > b ? c : b;
+	else
+		return c > a ? c : a;
+}
+
 /**
  * \brief Generic integrator for rapid creation of new integrators.
  * \ingroup integrators
@@ -95,6 +103,23 @@ class generic: public integrator {
 		launch_templatized_integrator(this);
 	}
 
+
+
+	template<class T>
+	static const int thread_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::thread_per_system();
+		const int prop = Propagator<T,Gravitation<T> >::thread_per_system();
+		const int moni = Monitor::thread_per_system(compile_time_param);
+		return max3( grav, prop, moni);
+	}
+
+	template<class T>
+	static GENERIC const int shmem_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::shmem_per_system();
+		const int prop = Propagator<T,Gravitation<T> >::shmem_per_system();
+		const int moni = Monitor::shmem_per_system(compile_time_param);
+		return max3( grav, prop, moni);
+	}
 
   //         __device__ void convert_internal_to_std_coord() {} ;
   //         __device__ void convert_std_to_internal_coord() {};
