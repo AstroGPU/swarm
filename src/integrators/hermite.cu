@@ -21,7 +21,7 @@
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"
-
+#include "monitors/log_transit.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -57,12 +57,12 @@ class hermite: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-//		typedef typename Gravitation<T::n>::shared_data grav_t;
-//		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef typename Gravitation<T::n>::shared_data grav_t;
+		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 //		typedef typename GravitationMediumN<T::n>::shared_data grav_t;
 //		GravitationMediumN<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
-		typedef typename GravitationLargeN<T::n>::shared_data grav_t;
-		GravitationLargeN<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+//		typedef typename GravitationLargeN<T::n>::shared_data grav_t;
+//		GravitationLargeN<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -172,6 +172,9 @@ integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L> > 
 
 integrator_plugin_initializer<hermite< log_time_interval<L> > >
 	hermite_log_plugin("hermite_log");
+
+integrator_plugin_initializer<hermite< log_transit<L> > >
+	hermite_transit_plugin("hermite_transit");
 
 
 } } } // end namespace bppt :: integrators :: swarm

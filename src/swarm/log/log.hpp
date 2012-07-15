@@ -185,9 +185,17 @@ behind it are quite simple:
 namespace log { /////////////////////////////////////////////////////////////////////////////////////////////
 
 static const int EVT_SNAPSHOT		= 1;	//! marks a snapshot of a system. see swarm::log::system() down below
-static const int EVT_EJECTION		= 2;	//! marks an ejection event
-static const int EVT_ENCOUNTER		= 3;	//! marks an encounter event
-
+static const int EVT_EJECTION		= 2;	//! marks a body has been ejected
+static const int EVT_ENCOUNTER		= 3;	//! marks near a close encounter event
+static const int EVT_COLLISION		= 4;	//! marks near a physical collision
+static const int EVT_COLLISION_CENTRAL	= 5;	//! marks near a collision with central body
+static const int EVT_TRANSIT		= 6;	//! marks near a transit of planet in front of star
+static const int EVT_OCCULTATION	= 7;	//! marks near an occultation of star in front of planet
+static const int EVT_MUTUAL_EVENT	= 8;	//! marks near a mutual event, planet in front of planet
+  // save at least 8 bits for future use
+static const int EVT_USER_1	        = 256;	//! marks user defined event
+static const int EVT_USER_2	        = 257;	//! marks user defined event
+static const int EVT_USER_3	        = 258;	//! marks user defined event
 
 template<typename L, typename T1>
 GENERIC PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)
