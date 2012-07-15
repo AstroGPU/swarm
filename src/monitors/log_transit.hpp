@@ -122,6 +122,7 @@ class log_transit {
 	    double radi = (_sys.num_body_attributes()>=1) ? _sys[i].attribute(0) : 0.;
 	    double radj = (_sys.num_body_attributes()>=1) ? _sys[j].attribute(0) : 0.;
 	    if( min(b2begin,b2begin+dt*db2dt)>square((radi+radj)*(1.+_params.tol)) )
+	    if( min(b2begin-0.5*dt*db2dt,b2begin+0.5*dt*db2dt)>square((radi+radj)*(1.+_params.tol)) )
 	      return false;
 	      
 	    // WARNING: hard coded to assume Hermite Fixed, nbod=3 and Gravitation
@@ -135,23 +136,32 @@ class log_transit {
 	    double d2b2dt2 = 2.*(dv[0]*dv[0]+dv[1]*dv[1]+dx[0]*da[0]+dx[1]*da[1]);
 	    double dt_min_b2 = 0., min_b2 = b2begin;
 	    double dt_try = -db2dt/d2b2dt2;  // find vertex of parabola
-	    if((dt_try<0.) || (dt_try>dt) ) return false;  // ignore if already past or vertex past next step
+	    //	    if((dt_try<0.) || (dt_try>dt) ) return false;  // ignore if already past or vertex past next step
+	    if((dt_try<-0.5*dt) || (dt_try>0.5*dt) ) return false;  // ignore if already past or vertex past next step
+#if 1  // simple extrapolation
+	    //	    db2dt = 2.*(dx[0]*dv[0]+dx[1]*dv[1])+dt_try*(2.0*(dv[0]*dv[0]+dv[1]*dv[1])+dx[0]*da[0]+dx[1]*da[1])+dt_try*dt_try*(3.*(dv[0]*da[0]+dv[1]*da[1])+dx[0]*dj[0]+dx[1]*dj[1]);
+	    //      d2b2dt2 = 
 	    double b2 = b2begin + dt_try*(db2dt + dt_try*0.5*d2b2dt2);
 	    //	    double db2dt += dt*((2.*(dv[0]*dv[0]+dv[1]*dv[1])+dx[0]*da[0])+dt*((2.*(dv[0]*da[0]+dv[1]*da[1]))+dx[0]*da[0]+dx[1]*da[1]));
 	    if(b2<min_b2) { min_b2 = b2; dt_min_b2 = dt_try; }
 	    if(min_b2>square((radi+radj)*(1.+_params.tol))) return false;
 	    //	    dx[0] += dt_min_b2*(dv[0]+dt_min_b2*da[0]);
 	    //	    dx[1] += dt_min_b2*(dv[1]+dt_min_b2*da[1]);
-	    double b = sqrt(min_b2);
+	    double b = (min_b2>0) ? sqrt(min_b2) : 0.;
 	    dv[0] += dt_min_b2*da[0];
 	    dv[1] += dt_min_b2*da[1];
 	    double vproj = sqrt(dv[0]*dv[0]+dv[1]*dv[1]);
-	    if (depth>0.) 
-	      { b /= radi; vproj /= radi; }
-	    else 
-	      { b /= radj; vproj /= radj; }
+#else
+	    // include a propagator in monitor?!? to itterate to get transit time
+#endif
+	    if(_sys.num_body_attributes()>=1) 
+	      {
+		if (depth>0.)  { b /= radi; vproj /= radi; }
+		else      { b /= radj; vproj /= radj; }
+	      }
+	    
 	    int event_id = (depth>0.) ? log::EVT_TRANSIT : log::EVT_OCCULTATION;
-	       log::event(_log,event_id,_sys.time()+dt_min_b2,_sys.id(),b,vproj);
+	    log::event(_log,event_id,_sys.time()+dt_min_b2,_sys.id(),j,b,vproj);
 	    log_system();	    
 	    return true;
 	  }
@@ -159,12 +169,13 @@ class log_transit {
 
 	GPUAPI int pass_two (const int thread_in_system) 
           {   
-            if(is_any_on()&&(thread_in_system==0))
+            if(is_any_on())
               {
                 // Chcek for close encounters
                 for(int b = 1; b < _sys.nbod(); b++)
 		  {
-		    condition_met = condition_met || check_in_transit(0,b,_params.dt);
+		    if(thread_in_system==0)
+		      condition_met = condition_met || check_in_transit(0,b,_params.dt);
 		  }
 	      }
 	    return condition_met;

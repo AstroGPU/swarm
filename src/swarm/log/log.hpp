@@ -184,6 +184,7 @@ behind it are quite simple:
   */
 namespace log { /////////////////////////////////////////////////////////////////////////////////////////////
 
+// Make sure these stay synced with src/swarm/query.cpp
 static const int EVT_SNAPSHOT		= 1;	//! marks a snapshot of a system. see swarm::log::system() down below
 static const int EVT_EJECTION		= 2;	//! marks a body has been ejected
 static const int EVT_ENCOUNTER		= 3;	//! marks near a close encounter event
