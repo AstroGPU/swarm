@@ -186,17 +186,57 @@ namespace log { ////////////////////////////////////////////////////////////////
 
 // Make sure these stay synced with src/swarm/query.cpp
 static const int EVT_SNAPSHOT		= 1;	//! marks a snapshot of a system. see swarm::log::system() down below
+  // Common physical events
 static const int EVT_EJECTION		= 2;	//! marks a body has been ejected
 static const int EVT_ENCOUNTER		= 3;	//! marks near a close encounter event
 static const int EVT_COLLISION		= 4;	//! marks near a physical collision
 static const int EVT_COLLISION_CENTRAL	= 5;	//! marks near a collision with central body
-static const int EVT_TRANSIT		= 6;	//! marks near a transit of planet in front of star
-static const int EVT_OCCULTATION	= 7;	//! marks near an occultation of star in front of planet
-static const int EVT_MUTUAL_EVENT	= 8;	//! marks near a mutual event, planet in front of planet
+  // Common types of observations
+static const int EVT_RV_OBS		= 11;	//! marks near a transit of planet in front of star
+static const int EVT_ASTROM_OBS		= 12;	//! marks near a transit of planet in front of star
+static const int EVT_TIMING_OBS		= 13;	//! marks near a transit of planet in front of star
+static const int EVT_DIRECT_IMAGE_OBS	= 14;	//! marks near a transit of planet in front of star
+static const int EVT_TRANSIT		= 15;	//! marks near a transit of planet in front of star
+static const int EVT_OCCULTATION	= 16;	//! marks near an occultation of star in front of planet
+static const int EVT_MUTUAL_EVENT	= 17;	//! marks near a mutual event, planet in front of planet
+  // let query and writers know which codes are to be used for events
+static const int EVT_FIRST_OBS_CODE	= EVT_RV_OBS;	    //! marks begining of event codes used for observations
+static const int EVT_LAST_OBS_CODE	= EVT_MUTUAL_EVENT; //! marks end of event codes used for observations
+
   // save at least 8 bits for future use
-static const int EVT_USER_1	        = 256;	//! marks user defined event
+  //static const int EVT_USER_1	        = 256;	//! marks user defined event
 static const int EVT_USER_2	        = 257;	//! marks user defined event
 static const int EVT_USER_3	        = 258;	//! marks user defined event
+
+#if 0
+  // Helper class for expected data size
+  // But do we really need these at compile time?
+  template<int N>
+  struct event_data_size 
+  { 
+    int num_ints() { return -1; } 
+    int num_doubles() { return -1; } 
+  };
+
+  template<> struct event_data_size<EVT_RV_OBS>
+  { int num_ints() { return 1; } int num_doubles() { return 1; }   };
+  template<> struct event_data_size<EVT_ASTROM_OBS>
+  { int num_ints() { return 1; } int num_doubles() { return 2; }   };
+  template<> struct event_data_size<EVT_TIMING_OBS>
+  { int num_ints() { return 1; } int num_doubles() { return 1; }   };
+  template<> struct event_data_size<EVT_DIRECT_IMAGE_OBS>
+  { int num_ints() { return 1; } int num_doubles() { return 2; }   };
+  template<> struct event_data_size<EVT_TRANSIT> 
+  { int num_ints() { return 1; } int num_doubles() { return 2; }   };
+  template<> struct event_data_size<EVT_OCCULTATION>
+  { int num_ints() { return 1; } int num_doubles() { return 2; }   };
+  template<> struct event_data_size<EVT_MUTUAL_EVENT>
+  { int num_ints() { return 2; } int num_doubles() { return 2; }   };
+#endif
+
+  // Helper functions for expected data size
+  int num_ints_for_event(const int code);
+  int num_doubles_for_event(const int code);
 
 template<typename L, typename T1>
 GENERIC PTR_T(SCALAR(T1)) event(L &l, const int recid, const double T, const int sys, const T1 &v1)

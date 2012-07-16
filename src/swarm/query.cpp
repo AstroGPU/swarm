@@ -228,7 +228,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 
 
 // EVT_TRANSIT
-std::ostream& record_output_6(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
 {
 	double T;
 	int sys, body_id;
@@ -246,7 +246,7 @@ std::ostream& record_output_6(std::ostream &out, gpulog::logrecord &lr, swarm::b
 
 
 // EVT_OCCULTATION
-std::ostream& record_output_7(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
 {
 	double T;
 	int sys, body_id;
@@ -275,10 +275,10 @@ std::ostream& record_output_7(std::ostream &out, gpulog::logrecord &lr, swarm::b
 	  return record_output_2(out,lr,bod);
 	case 3: // reserved for data for one pair of bodies upon close encounter/collision
 	  return record_output_default(out,lr); // feature still missing
-	case 6: // near a transit of planet in front of star
-	  return record_output_6(out,lr,bod);
-	case 7: // near an occultation of star in front of planet
-	  return record_output_7(out,lr,bod);
+	case 15: // near a transit of planet in front of star
+	  return record_output_15(out,lr,bod);
+	case 16: // near an occultation of star in front of planet
+	  return record_output_16(out,lr,bod);
 	default:
 	  return record_output_default(out,lr);
 	}
