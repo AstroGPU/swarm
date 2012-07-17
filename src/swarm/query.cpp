@@ -245,6 +245,24 @@ std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, swarm::
 }
 
 
+// EVT_RV_OBS
+std::ostream& record_output_11(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+{
+	double T;
+	int sys, body_id;
+	double vz;
+	lr >> T >> sys >> body_id >> vz;
+	if(!body_range.in(body_id)) return out;
+
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg Rv Experimental", lr.msgid(), T, sys, body_id, vz);
+	out << buf;
+
+	return out;
+}
+
+
 // EVT_OCCULTATION
 std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
 {
@@ -275,6 +293,8 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::
 	  return record_output_2(out,lr,bod);
 	case 3: // reserved for data for one pair of bodies upon close encounter/collision
 	  return record_output_default(out,lr); // feature still missing
+	case 11: // star v_z at observation time
+	  return record_output_11(out,lr,bod);
 	case 15: // near a transit of planet in front of star
 	  return record_output_15(out,lr,bod);
 	case 16: // near an occultation of star in front of planet
