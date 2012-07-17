@@ -53,6 +53,8 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
   double mass_star = cfg.optional("mass_star", 1.);
   double x=0, y=0, z=0, vx=0, vy=0, vz=0;
   ens.set_body(sysidx, 0, mass_star, x, y, z, vx, vy, vz);
+  if(ens[sysidx][0].num_attributes()>=1)
+    ens[sysidx][0].attribute(0) = cfg.optional("radius_star", 1.) * 0.00464912633;
 
   double mass_enclosed = mass_star;
   for(unsigned int bod=1;bod<ens.nbod();++bod)
@@ -60,6 +62,10 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
       double mass_planet = draw_value_from_config(cfg,"mass",bod,0.,mass_star);
       mass_enclosed += mass_planet;
       
+      if(ens[sysidx][bod].num_attributes()>=1)
+	ens[sysidx][bod].attribute(0) = draw_value_from_config(cfg,"radius",bod,0.,200.) * 4.26349283e-5;
+
+
       double a, e, i, O, w, M;
       if(transit_ephemeris)
 	{
