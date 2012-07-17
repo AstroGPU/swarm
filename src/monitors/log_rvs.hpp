@@ -91,14 +91,11 @@ struct log_rvs_params {
 
     try
       { 
-	//	double *rvt = (double *)thrust::raw_pointer_cast<double>(rv_times_dev);
-	for(int i=0;i<rv_times_host.size();++i)
+/*	for(int i=0;i<rv_times_host.size();++i)
 	  {
-	    std::cerr << "# Copying " << i << "\n";
-	    //	    rvt[i] = rv_times_host[i];
 	    rv_times_dev[i] = rv_times_host[i];
-	  }
-	//	thrust::copy(rv_times_host.begin(),rv_times_host.end(),rv_times_dev);
+	  } */
+		thrust::copy(rv_times_host.begin(),rv_times_host.end(),rv_times_dev);
       }
     catch(thrust::system_error e)
       {      std::cerr << "Error copy: " << e.what() << std::endl;    }
