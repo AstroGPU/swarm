@@ -83,14 +83,23 @@ struct log_rvs_params {
     // Allocate & upload list of times onto device
     try
       {	
-	rv_times_dev = thrust::device_malloc<double>(num_times);       
 	num_times = rv_times_host.size();
+	rv_times_dev = thrust::device_malloc<double>(num_times);       
       }
     catch(thrust::system_error e)
       { std::cerr << "Error: device_malloc: " << e.what() << std::endl;    }
 
     try
-      { thrust::copy(rv_times_host.begin(),rv_times_host.end(),rv_times_dev); }
+      { 
+	//	double *rvt = (double *)thrust::raw_pointer_cast<double>(rv_times_dev);
+	for(int i=0;i<rv_times_host.size();++i)
+	  {
+	    std::cerr << "# Copying " << i << "\n";
+	    //	    rvt[i] = rv_times_host[i];
+	    rv_times_dev[i] = rv_times_host[i];
+	  }
+	//	thrust::copy(rv_times_host.begin(),rv_times_host.end(),rv_times_dev);
+      }
     catch(thrust::system_error e)
       {      std::cerr << "Error copy: " << e.what() << std::endl;    }
 
