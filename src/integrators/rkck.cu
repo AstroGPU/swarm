@@ -21,6 +21,7 @@
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -100,8 +101,9 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename GravitationAccOnly<T::n>::shared_data grav_t;
-		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef GravitationAcc<T> Grav;
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -116,7 +118,7 @@ class rkck: public integrator {
 		// NB: We use the same shared memory for two purpose and overwrite each other
 		// Since the use of the memory is not interleaved, we can safely use the same
 		// space for both purposes
-		typedef DoubleCoalescedStruct<> shared_mag_t[2][nbod][3];
+		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_mag_t[2][nbod][3];
 		shared_mag_t& shared_mag = * (shared_mag_t*) system_shared_data_pointer(this,compile_time_param) ;
 
 		double time_step = _max_time_step;

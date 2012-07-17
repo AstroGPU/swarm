@@ -17,7 +17,7 @@
  ************************************************************************/
 #pragma once
 
-#include "../swarm/gpu/gravitation.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
 
 #define USE_WORKS 1
 
@@ -71,6 +71,15 @@ class log_transit {
 	log_t& _log;
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return false; };
   //        GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_log_on() { return _params.tol!=0.; };
@@ -105,8 +114,9 @@ class log_transit {
   GPUAPI void calc_transit_time(const int& thread_in_system, const int& i,const int& j, const double& dt, double dx[2], double dv[2], const double& b2begin, double& db2dt, const double& pos_step_end, const double& vel_step_end, double& dt_min_b2,double& b,double & vproj)
   {
     extern __shared__ char shared_mem[];
-    typedef typename swarm::gpu::bppt::Gravitation<nbod>::shared_data grav_t;
-    typedef swarm::gpu::bppt::Gravitation<nbod> calcForces_t;
+	typedef swarm::compile_time_params_t<nbod> par_t;
+    typedef swarm::gpu::bppt::GravitationAccJerk<par_t> calcForces_t;
+    typedef typename calcForces_t::shared_data grav_t;
     calcForces_t calcForces(_sys,*( (grav_t*) (&shared_mem[(swarm::gpu::bppt::sysid_in_block()%SHMEM_CHUNK_SIZE)*sizeof(double)+(swarm::gpu::bppt::sysid_in_block()/SHMEM_CHUNK_SIZE)*SHMEM_CHUNK_SIZE*(nbod*(nbod-1)*3*sizeof(double))]) ) );
 
     const int bid = swarm::gpu::bppt::thread_body_idx(nbod);
@@ -187,8 +197,10 @@ class log_transit {
   GPUAPI void calc_transit_time_works(const int& i,const int& j, const double& dt, const double dx[2], double dv[2], const double& b2begin, double& db2dt,double& dt_min_b2,double& b,double & vproj)
   {
     extern __shared__ char shared_mem[];
-    typedef typename swarm::gpu::bppt::Gravitation<nbod>::shared_data grav_t;
-    swarm::gpu::bppt::Gravitation<nbod> calcForces(_sys,*( (grav_t*) (&shared_mem[(swarm::gpu::bppt::sysid_in_block()%SHMEM_CHUNK_SIZE)*sizeof(double)+(swarm::gpu::bppt::sysid_in_block()/SHMEM_CHUNK_SIZE)*SHMEM_CHUNK_SIZE*(nbod*(nbod-1)*3*sizeof(double))]) ) );
+	typedef swarm::compile_time_params_t<nbod> par_t;
+    typedef swarm::gpu::bppt::GravitationAccJerk<par_t> calcForces_t;
+    typedef typename calcForces_t::shared_data grav_t;
+    calcForces_t calcForces(_sys,*( (grav_t*) (&shared_mem[(swarm::gpu::bppt::sysid_in_block()%SHMEM_CHUNK_SIZE)*sizeof(double)+(swarm::gpu::bppt::sysid_in_block()/SHMEM_CHUNK_SIZE)*SHMEM_CHUNK_SIZE*(nbod*(nbod-1)*3*sizeof(double))]) ) );
 
     // if integrator could have overwritten data in shared memory, need new call to calcforces
     double acc_ix, acc_jx, acc_iy, acc_jy, jerk_ix, jerk_jx, jerk_iy, jerk_jy;

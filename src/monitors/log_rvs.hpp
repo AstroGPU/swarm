@@ -21,8 +21,8 @@
 #include<sstream>
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
-#include "../swarm/gpu/gravitation.hpp"
-#include "../swarm/log/gpulog/lprintf.h"
+#include "swarm/gpu/gravitation_accjerk.hpp"
+#include "swarm/log/gpulog/lprintf.h"
 
 namespace swarm {
   namespace monitors {
@@ -141,6 +141,15 @@ class log_rvs {
 	log_t& _log;
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return false; };
         GPUAPI bool is_log_on() { return _params.tol!=0.; };
         GPUAPI bool is_verbose_on() { return false; };
@@ -181,8 +190,9 @@ class log_rvs {
   GPUAPI double calc_star_vz(const int& thread_in_system, const double& dt)
   {
     extern __shared__ char shared_mem[];
-    typedef typename swarm::gpu::bppt::Gravitation<nbod>::shared_data grav_t;
-    typedef swarm::gpu::bppt::Gravitation<nbod> calcForces_t;
+	typedef swarm::compile_time_params_t<nbod> par_t;
+    typedef swarm::gpu::bppt::GravitationAccJerk<par_t> calcForces_t;
+    typedef typename calcForces_t::shared_data grav_t;
     calcForces_t calcForces(_sys,*( (grav_t*) (&shared_mem[(swarm::gpu::bppt::sysid_in_block()%SHMEM_CHUNK_SIZE)*sizeof(double)+(swarm::gpu::bppt::sysid_in_block()/SHMEM_CHUNK_SIZE)*SHMEM_CHUNK_SIZE*(nbod*(nbod-1)*3*sizeof(double))]) ) );
     
     double acc, jerk;

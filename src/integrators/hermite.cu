@@ -21,6 +21,7 @@
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
 #include "monitors/log_transit.hpp"
 #include "monitors/log_rvs.hpp"
 
@@ -57,13 +58,10 @@ class hermite: public integrator {
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
+		typedef GravitationAccJerk<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
-//		typedef typename GravitationMediumN<T::n>::shared_data grav_t;
-//		GravitationMediumN<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
-//		typedef typename GravitationLargeN<T::n>::shared_data grav_t;
-//		GravitationLargeN<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -177,8 +175,8 @@ integrator_plugin_initializer<hermite< log_time_interval<L> > >
 integrator_plugin_initializer<hermite< log_transit<L> > >
 	hermite_transit_plugin("hermite_transit");
 
-integrator_plugin_initializer<hermite< log_rvs<L> > >
-	hermite_rv_plugin("hermite_rv");
+//integrator_plugin_initializer<hermite< log_rvs<L> > >
+//	hermite_rv_plugin("hermite_rv");
 
 
 } } } // end namespace bppt :: integrators :: swarm
