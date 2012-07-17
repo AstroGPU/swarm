@@ -175,8 +175,10 @@ integrator_plugin_initializer<hermite< log_time_interval<L> > >
 integrator_plugin_initializer<hermite< log_transit<L> > >
 	hermite_transit_plugin("hermite_transit");
 
+#if __CUDA_ARCH__ >= 200
 integrator_plugin_initializer<hermite< log_rvs<L> > >
 	hermite_rv_plugin("hermite_rv");
+#endif
 
 
 } } } // end namespace bppt :: integrators :: swarm

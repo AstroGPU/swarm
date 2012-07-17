@@ -27,6 +27,8 @@
 namespace swarm {
   namespace monitors {
 
+#if __CUDA_ARCH__ >= 200
+
 /* Parameters for log_rvs monitor
  * rv_filesname:       name of file with observation times
  * log_rvs_tol (real): anything !=0 turns on logging; otherwise, not really used
@@ -256,6 +258,8 @@ class log_rvs {
 	  :_params(p),_sys(s),_log(l) {}
 	
 };
+
+#endif
 
   }
 
