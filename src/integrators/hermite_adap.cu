@@ -21,7 +21,7 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
-
+#include "monitors/log_transit.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -213,5 +213,8 @@ integrator_plugin_initializer<
 	        hermite_adap< stop_on_ejection_or_close_encounter<L> > >
 	hermite_adap_close_encounter_plugin("hermite_adap_close_encounter");
 
+
+integrator_plugin_initializer<hermite_adap< log_transit<L> > >
+	hermite_adap_log_plugin("hermite_adap_transit");
 
 } } } // end namespace bppt :: integrators :: swarm
