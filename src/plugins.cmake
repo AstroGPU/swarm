@@ -7,7 +7,9 @@
 ## the source code
 
 # CPU integrators
+if(OPENMP_FOUND)
 ADD_PLUGIN(integrators/hermite_cpu.cpp Hermite_CPU TRUE "Hermite CPU Integrator")
+endif()
 
 # GPU Integrators
 ADD_PLUGIN(integrators/hermite.cu Hermite TRUE  "Hermite w/ Fixed Time step GPU Integrator")
