@@ -7,26 +7,21 @@ swarm - Program for integrating an ensemble of many N-body systems on a GPU
 
 SYMPOSIS
 --------
-*swarm*  CONFIGFILE [Options]
+*swarm*  COMMAND [Options]
 swarm is a useful tool for performing many n-body integrations on a GPU. + 
-swarm uses the swarm GPU logging subsystem to write output files which
-can be analyzed by programs like swarmquery.
+swarm uses the swarm GPU logging subsystem to write output files which 
+can be analyzed by swarm query -f binary_output_file_name [Options].
+--- TODO:  THIS MAN FILE NEEDS TO BE UPDATED FOR SWARM 1.0 ---
 
 DESCRIPTION
 -----------
-This program reads integrator parameters from a configuration file. + 
-
-The program then reads the initial conditions from disk, looking for
-a sequence of files with a common prefix (specified by the ''initial
-conditions'' parameter) followed by a dot and a number (starting from
-zero).
+This program reads integrator parameters and/or initial conditions from a configuration file. + 
 
 The program then integrates each system for the specified time (or
 until an event trigger the integrator to stop for that system),
 optionally saving data to a binary output file.
 
-The swarmquery program can be used to extract information from 
-the binary output file.
+swarm query -f binary_log_file_name [Options] can be used to extract information from the binary output file.
 
 
 CONFIGURATION FILE
