@@ -23,9 +23,10 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 
+#include <omp.h>
 
-namespace swarm {
-   namespace cpu {
+
+namespace swarm { namespace cpu {
 /*! CPU implementation of PEC2 Hermite integrator
  *
  * \ingroup integrators
@@ -178,14 +179,40 @@ class hermite_cpu : public integrator {
 	}
 };
 
-}
+
+
+
 
 typedef gpulog::host_log L;
 using namespace monitors;
 
+
+#ifdef _OPENMP
+template< class Monitor >
+class hermite_omp : public hermite_cpu<Monitor> {
+	public:
+	typedef hermite_cpu<Monitor> base;
+
+	hermite_omp(const config& cfg): base(cfg){}
+	virtual void launch_integrator() {
+#pragma omp parallel for
+		for(int i = 0; i < base::_ens.nsys(); i++){
+			base::integrate_system(base::_ens[i]);
+		}
+	}
+
+
+};
 integrator_plugin_initializer<
-  cpu::hermite_cpu< stop_on_ejection<L> >
+  hermite_omp< stop_on_ejection<L> >
+	> hermite_omp_plugin("hermite_omp");
+#endif
+
+
+integrator_plugin_initializer<
+  hermite_cpu< stop_on_ejection<L> >
 	> hermite_cpu_plugin("hermite_cpu");
+
 
 
 /*integrator_plugin_initializer<
@@ -193,16 +220,16 @@ integrator_plugin_initializer<
 	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
 integrator_plugin_initializer<
-  cpu::hermite_cpu< stop_on_ejection_or_close_encounter<L> >
+  hermite_cpu< stop_on_ejection_or_close_encounter<L> >
 	> hermite_cpu_plugin_ejection_or_close_encounter(
 		"hermite_cpu_ejection_or_close_encounter"
 	);
 
 
 integrator_plugin_initializer<
-  cpu::hermite_cpu< log_time_interval<L> >
+  hermite_cpu< log_time_interval<L> >
 	> hermite_cpu_log_plugin("hermite_cpu_log");
 
 
 
-}
+} } // Close namespaces
