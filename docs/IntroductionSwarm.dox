@@ -66,7 +66,8 @@ demonstrate functionality and how to program with Swarm-NG.
 <li> To learn how to access the Swarm-NG library from you own code, work
   through the series of introductory tutorials in src/tutorials (in
   the following order).
- 	- \ref TutorialSimple
+ 	- \ref TutorialBeginner
+ 	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialStopper
 	- \ref TutorialLogger
@@ -77,8 +78,6 @@ demonstrate functionality and how to program with Swarm-NG.
 <ul>
 <!-- <li> swarm_scatter_demo.cpp:  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li> -->
-<li> swarm.cpp: this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html[]. </li>
 <li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results</li>
 </ul>
 </li>

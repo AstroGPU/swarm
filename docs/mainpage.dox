@@ -15,7 +15,8 @@ planetary systems.
 \b Table \b of \b contents
  - \ref IntroductionSwarm
  - \ref BuildSwarm
- - \ref UsingSwarm
+ - \ref UsingSwarm Overiew of different ways to use Swarm-NG
+ - \ref SwarmExec
  - \b Tutorials \b for \b Developers
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
@@ -24,18 +25,18 @@ planetary systems.
 	- \ref TutorialLogger
 
 
- @section Licensing, Citing & Acknowledging Swarm-NG
-
-Licensing Information
-- Swarm-NG v0.9 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
+ @section LicensingCiting Licensing, Citing & Acknowledging Swarm-NG
 
 Citing Swarm-NG
 - When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper describing Swarm-NG and the Swarm-NG Website.  
 - Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy and arXiv soon!
 
+Licensing Information
+- Swarm-NG v0.9 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
+
 
  @section Acknowledgements
-Swarm-NG is the product of a collaboration between astrophysicists (UF Astronomy department and LSST Corporation ) and UF computer scientists at Prof. Jorg Peters' SurfLab.  The major contributors to the current Swarm-NG codebase are Saleh Dindar, Eric Ford and Mario Juric.
+Swarm-NG is the product of a collaboration between astrophysicists and computer scientists.  The major contributors to the current Swarm-NG codebase are Saleh Dindar, Eric Ford and Mario Juric.
 
 The Swarm-NG library includes code reused or adapted from:
 - the nVidia CUDA SDK (http://www.nvidia.com/object/cuda_home_new.html),
@@ -51,16 +52,19 @@ We are happy to acknowledge financial support from:
 
 We acknowledge additional support from:
 - the University of Florida Astronomy Department (http://astro.ufl.edu/),
+- UF CISE Prof. Jorg Peters' SurfLab (http://www.cise.ufl.edu/research/SurfLab/)
 - UF’s High Performance Computing Center (http://www.hpc.ufl.edu/),
 - the Harvard-Smithsonian Center for Astrophysics (http://www.cfa.harvard.edu/) and the Institute for Theory and Computation (http://www.cfa.harvard.edu/itc/),
 - the Institute for Advanced Study (http://sns.ias.edu/), and
 - nVidia Corporation (http://www.nvidia.com).
 
- @section moreinfo Further Information
- Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
 
- For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
- 
- For more information see http://www.astro.ufl.edu/~eford/code/swarm/
+ @section moreinfo Further Information
+- The project website http://www.astro.ufl.edu/~eford/code/swarm/
+
+- For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
+
+-  Online documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
+
 
 */
