@@ -1,13 +1,12 @@
 Storing the current state of the system (snapshotting) in swarm
 ===============================================================
-Mario Juric
-
+Mario Juric & Eric Ford
 
 * For now the only built-in snapshotting option we offer is to store the
   state of the system every user-specified time interval dT.  While 
-  all integrators support this, the implementation in hermite-based
-  integrators is by hand.  Other integrators like verlet use the 
-  *generic_integrator* framework which makes this nearly automatic.
+  all integrators support this, the implementation in 
+  integrators is by hand.  The implementation of propagators that
+  use the *generic_integrator* framework makes this nearly automatic.
 
 * ensemble structure has been extended with a 2D double precision array,
   Toutput, accessible via time_output(sys, k) method.  For each system, k=0

@@ -3,6 +3,8 @@ Format/rules for configuration file
 
 Description
 -----------
+* TODO:  NEEDS TO BE UPDATED FOR SWARN-NG v1.0
+
 .What is a configuration file?
 The configuration file specifies several parameters, including:  
 - <<anchor-1,choice of integrator and other required parameters>>

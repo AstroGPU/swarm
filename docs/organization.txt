@@ -4,6 +4,8 @@ Swarm-NG Development Team
 v0.1, April 2010: Initial release + 
 Swarm-NG v0.1 (c) Swarm-NG Development Team 2010
 
+* TODO:  NEEDS TO BE UPDATED FOR SWARN-NG v1.0
+
 Main Swarm Directories
 ----------------------
 
