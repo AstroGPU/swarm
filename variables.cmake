@@ -5,7 +5,7 @@ SET(CUDA_NVCC_FLAGS
 	-Xcudafe --diag_suppress=subscript_out_of_range;
 	-Xcudafe --diag_suppress=partial_override;
 	-Xcudafe --diag_suppress=initialization_not_reachable;
-#	-w
+	-w
 	)
 IF(${GENERATE_FERMI})
 	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 

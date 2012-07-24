@@ -160,11 +160,11 @@ class integrator : public gpu::integrator  {
 	 *
 	 */
 	template<class T>
-	static const int thread_per_system(T compile_time_param){
+	static GENERIC int thread_per_system(T compile_time_param){
 		const int nbod = T::n;
 		const int body_comp = nbod * 3;
 		const int pair_count = nbod * (nbod - 1) / 2;
-		return std::max( body_comp, pair_count) ;
+		return (body_comp>pair_count) ? body_comp : pair_count;
 	}
 
 
@@ -177,7 +177,7 @@ class integrator : public gpu::integrator  {
 	 *
 	 */
 	template<class T>
-	static GENERIC const int shmem_per_system(T compile_time_param){
+	static GENERIC int shmem_per_system(T compile_time_param){
 		const int nbod = T::n;
 		const int pair_count = nbod * (nbod - 1) / 2;
 		return pair_count * 3  * 2 * sizeof(double);

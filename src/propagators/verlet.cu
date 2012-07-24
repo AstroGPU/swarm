@@ -28,9 +28,10 @@ namespace swarm { namespace gpu { namespace bppt {
  *
  */
 struct VerletPropagatorParams {
-	double time_step;
+	double max_timestep, max_timestep_global, timestep_scale;
 	VerletPropagatorParams(const config& cfg){
-		time_step = cfg.require("time_step", 0.0);
+		max_timestep_global = cfg.require("max_timestep", 0.0);
+		timestep_scale = cfg.require("timestep_scale", 0.0);
 	}
 };
 
@@ -53,7 +54,7 @@ struct VerletPropagator {
 	int ij;
 	bool body_component_grid;
 	bool first_thread_in_system;
-	double max_timestep;
+	double max_timestep, timestep;
 
 
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
@@ -68,7 +69,18 @@ struct VerletPropagator {
 		 return 0;
 	}
 
-	GPUAPI void init()  { }
+	GPUAPI void init()  
+	{ 
+	   // First half step uses timestep factor from previous itteration, 
+	   // so need to calculate timestep factor before first call to advance
+	   if( is_in_body_component_grid() )
+	   {
+	      double pos = sys[b][c].pos() , vel = sys[b][c].vel();
+	      double acc = calcForces.acc(ij,b,c,pos,vel);
+	      timestep = calc_timestep();		
+	   }
+	   max_timestep = _params.max_timestep_global;
+	}
 
 	GPUAPI void shutdown() { }
 
@@ -87,8 +99,35 @@ struct VerletPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+
+	// calculate the timestep given current positions
+	GPUAPI double calc_timestep() const
+	{
+	// assumes that calcForces has already been called to fill shared memory
+	// if timestep depended on velocities, then would need to update velocities and syncthreads
+
+	double factor = 0.;
+	  for(int i=0;i<nbod;++i)
+	     {
+	     double mi = sys[i].mass();
+
+	     for(int j=1;j<nbod;++j)
+	        {
+	        if(i==j) { continue; }
+		double mj = sys[j].mass();	
+		double oor = calcForces.one_over_r(i,j);
+		factor += (mi+mj)*oor*oor*oor;
+		}
+	     }
+	factor *= _params.timestep_scale*_params.timestep_scale;
+	factor += 1.;
+	factor = rsqrt(factor);
+	factor *= _params.max_timestep_global;
+	return factor;
+	}
+
 	GPUAPI void advance(){
-		double h = _params.time_step;
+		double h = timestep;
 		double pos = 0.0, vel = 0.0;
 
 		if( is_in_body_component_grid() )
@@ -103,12 +142,15 @@ struct VerletPropagator {
 
 			// Calculate acceleration in the middle
 			double acc = calcForces.acc(ij,b,c,pos,vel);
-
+			
 			// First half step for velocities
 			vel = vel + h_first_half * acc;
 
-			// TODO: change half time step based on acc
-			double h_second_half = h_first_half;
+			// Update timestep with positions (and velocities) at end of half-step
+			timestep = calc_timestep();
+
+			// Second half step for velocities
+			double h_second_half = 0.5*timestep;
 
 			// Second half step for positions and velocities
 			vel = vel + h_second_half * acc;

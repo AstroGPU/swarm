@@ -67,7 +67,7 @@ class log_transit {
         bool condition_met;
 
 	ensemble::SystemRef& _sys;
-  //	double _next_log_time;
+
 	log_t& _log;
 
 	public:
@@ -81,7 +81,6 @@ class log_transit {
 			 return 0;
 		}
         GPUAPI bool is_deactivate_on() { return false; };
-  //        GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_log_on() { return _params.tol!=0.; };
         GPUAPI bool is_verbose_on() { return false; };
         GPUAPI bool is_any_on() { return is_deactivate_on() || is_log_on() || is_verbose_on() ; }
@@ -149,8 +148,6 @@ class log_transit {
     for(int iter=0;iter<_params.num_max_iter;++iter)
       {
 	// take trial step towards transit mid-point
-	//	pos = pos_step_end + dt_try*(vel+(dt_try*0.5)*(acc+(dt_try/3.0)*jerk));
-	//	vel = vel_step_end + dt_try*(acc+(dt_try*0.5)*jerk);
 	pos = pos + dt_try*(vel+(dt_try*0.5)*(acc+(dt_try/3.0)*jerk));
 	vel = vel + dt_try*(acc+(dt_try*0.5)*jerk);
 	calcForces(thread_in_system,bid,cid,pos,vel,acc,jerk);
@@ -261,7 +258,7 @@ class log_transit {
 	      vel_step_end = _sys[bid][cid].vel();
 	    }
 
-	    // WARNING: hard coded to assume Hermite Fixed, nbod=3 and Gravitation
+	    // WARNING: hard coded to assume Hermite Fixed, nbod=3..8 and Gravitation
 	    double dt_min_b2, b, vproj;
 	    if((nbod==3) && (nbod<MAX_NBODIES))
 	       {
@@ -272,7 +269,7 @@ class log_transit {
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
-#if 0
+#if 1  // Can be set to zero to reduce compile times when testing
 	     else if((nbod==4) && (nbod<MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 4;

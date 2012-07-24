@@ -45,7 +45,7 @@ class hermite_adap: public integrator {
 	}
 
 	template<class T>
-	static GENERIC const int shmem_per_system(T compile_time_param){
+	static GENERIC int shmem_per_system(T compile_time_param){
 		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
 	}
 
@@ -113,7 +113,7 @@ class hermite_adap: public integrator {
 		const int b = thread_body_idx(nbod);
 		// Component number
 		const int c = thread_component_idx(nbod);
-		const bool body_component_grid = (b < nbod) && (c < 3);
+//		const bool body_component_grid = (b < nbod) && (c < 3);
 
 
 		// local variables
