@@ -17,6 +17,11 @@
  ************************************************************************/
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
+#include "swarm/common.hpp"
+#include "monitors/composites.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm {
 
@@ -39,7 +44,7 @@ struct MVSPropagatorParams {
  *
  * \todo make Gravitation class a template parameter: template<class T, class GravClass>
  */
-template<class T>
+template<class T,class Gravitation>
 struct MVSPropagator {
 	typedef MVSPropagatorParams params;
 	static const int nbod = T::n;
@@ -49,13 +54,13 @@ struct MVSPropagator {
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 	int b;
 	int c;
-	// \todo Replace with functions.  Remove from generic integrator?  Put functions in base class?
 	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
+	// Replaced with functions.  Remove from generic integrator?  Put functions in base class?
+//	bool body_component_grid;
+//	bool first_thread_in_system;
 
 	double sqrtGM;
 	double max_timestep;
@@ -63,7 +68,7 @@ struct MVSPropagator {
 	double acc_bc;
 
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
 	__device__ bool is_in_body_component_grid()
@@ -77,6 +82,16 @@ struct MVSPropagator {
 	__device__ bool is_first_thread_in_system()
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
+
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
+
+
 
 	/// Shift into funky coordinate system (see A. Quillen's qymsym's tobary)
 	/// Shift back and forth is tested and it is indeed symmetric 
@@ -282,9 +297,16 @@ struct MVSPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L>, GravitationAcc > >
 	mvs_prop_plugin("mvs"
 			,"This is the integrator based on mvs propagator");
+
+integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L>, GravitationAcc  > >
+	mvs_prop_ce_plugin("mvs_close_encounter"
+			,"This is the integrator based on mvs propagator, monitor stop_on_ejection_or_close_encounter");
+
+
+
 
 
 }

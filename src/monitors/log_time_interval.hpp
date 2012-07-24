@@ -58,6 +58,15 @@ class log_time_interval {
 	log_t& _log;
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return false; };
   //        GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_log_on() { return _params.time_interval!=0.; };

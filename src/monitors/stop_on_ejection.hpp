@@ -79,6 +79,16 @@ class stop_on_ejection {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
+
 	public:
 
 	/** First, we test whether body b is far from the origin 

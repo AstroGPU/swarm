@@ -20,7 +20,10 @@
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
-
+#include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
+#include "monitors/log_transit.hpp"
+#include "monitors/log_rvs.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -55,9 +58,10 @@ class hermite: public integrator {
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
+		typedef GravitationAccJerk<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename Gravitation<T::n>::shared_data grav_t;
-		Gravitation<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -112,9 +116,10 @@ class hermite: public integrator {
 #if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#endif
+#else
 				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
+#endif
 			}
 			{
 				// Evaluation
@@ -124,10 +129,10 @@ class hermite: public integrator {
 #if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#endif
-
+#else
 				pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
+#endif
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
@@ -162,7 +167,18 @@ integrator_plugin_initializer<hermite< stop_on_ejection<L> > >
 	hermite_plugin("hermite");
 
 integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L> > >
-	hermite_plugin_encounter("hermite_close_encounter");
+	hermite_close_encounter_plugin("hermite_close_encounter");
+
+integrator_plugin_initializer<hermite< log_time_interval<L> > >
+	hermite_log_plugin("hermite_log");
+
+integrator_plugin_initializer<hermite< log_transit<L> > >
+	hermite_transit_plugin("hermite_transit");
+
+#if __CUDA_ARCH__ >= 200
+//integrator_plugin_initializer<hermite< log_rvs<L> > >
+//	hermite_rv_plugin("hermite_rv");
+#endif
 
 
 } } } // end namespace bppt :: integrators :: swarm
