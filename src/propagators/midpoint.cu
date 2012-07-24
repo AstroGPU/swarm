@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
-#include "swarm/gpu/gravitation.hpp"
 #include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -36,27 +36,36 @@ struct MidpointPropagatorParams {
  * \ingroup propagators
  *
  */
-template<class T>
+template<class T,class Gravitation>
 struct MidpointPropagator {
 	typedef MidpointPropagatorParams params;
+	const static int nbod = T::n;
 
 	params _params;
 
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
-	Gravitation<T::n>& calcForces;
+	Gravitation& calcForces;
 	int b;
 	int c;
 	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
+//	bool body_component_grid;
+//	bool first_thread_in_system;
 	double max_timestep;
 
 
 	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
-			Gravitation<T::n>& calc)
+			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
+
+	static GENERIC int thread_per_system(){
+		return nbod * 3;
+	}
+
+	static GENERIC int shmem_per_system() {
+		 return 0;
+	}
 
 	GPUAPI void init()  { }
 
@@ -65,11 +74,23 @@ struct MidpointPropagator {
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
 
+	__device__ bool is_in_body_component_grid()
+//        { return body_component_grid; }	
+        { return  ((b < T::n) && (c < 3)); }	
+
+	__device__ bool is_in_body_component_grid_no_star()
+//        { return ( body_component_grid && (b!=0) ); }	
+        { return ( (b!=0) && (b < T::n) && (c < 3) ); }	
+
+	__device__ bool is_first_thread_in_system()
+//        { return first_thread_in_system; }	
+        { return (thread_in_system()==0); }	
+
 	GPUAPI void advance(){
 		double H = min( max_timestep ,  _params.time_step );
 		double pos = 0, vel = 0;
 
-		if( body_component_grid )
+		if( is_in_body_component_grid() )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
@@ -115,9 +136,9 @@ struct MidpointPropagator {
 
 
 		// Finalize the step
-		if( body_component_grid )
+		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		if( first_thread_in_system ) 
+		if( is_first_thread_in_system() ) 
 			sys.time() += H;
 	}
 };
@@ -125,7 +146,7 @@ struct MidpointPropagator {
 typedef gpulog::device_log L;
 using namespace monitors;
 
-integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L> > >
+integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L>, GravitationAcc > >
 	midpoint_prop_plugin("midpoint"
 			,"This is the integrator based on midpoint propagator");
 

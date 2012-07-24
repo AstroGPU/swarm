@@ -25,10 +25,10 @@ using namespace std;
 config cfg;
 
 /**
- * Read in Jacobi coordinates from a text file
+ * Read in Keplerian coordinates from a text file
  *
  */
-defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config& cfg) 
+defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(const config& cfg) 
 {
   defaultEnsemble ens = defaultEnsemble::create( cfg.require("nbod",0), cfg.require("nsys",0) );
   std::cerr << "# nsystems = " << ens.nsys() << " nbodies/system = " << ens.nbod() << "\n";
@@ -40,7 +40,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
   const bool use_jacobi = cfg.optional("use_jacobi", 0);
 
   //  std::cerr << "# Writing stable system ids\n";
-  ifstream jacobi_input( cfg.optional("input_jacobi", string("mcmc.out")).c_str() ); 
+  ifstream jacobi_input( cfg.optional("input_mcmc_keplerian", string("mcmc.out")).c_str() ); 
 
   for(unsigned int sysid=0;sysid<ens.nsys();++sysid)
     {
@@ -117,12 +117,153 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
 }
 
 
+/**
+ * Read in Cartesian coordinates from a text file
+ *
+ */
+defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(const config& cfg) 
+{
+  defaultEnsemble ens = defaultEnsemble::create( cfg.require("nbod",0), cfg.require("nsys",0) );
+  std::cerr << "# nsystems = " << ens.nsys() << " nbodies/system = " << ens.nbod() << "\n";
+
+  //  std::cerr << "# Set initial time for all systems = ";
+  double time_init = cfg.optional("time_init", 0.0);
+  //  std::cerr << time_init << ".\n";
+
+  const bool use_jacobi = cfg.optional("use_jacobi", 0);
+
+  //  std::cerr << "# Writing stable system ids\n";
+  ifstream mcmc_input( cfg.optional("input_mcmc_cartesian", string("mcmc.out")).c_str() ); 
+
+  assert(mcmc_input.good());
+
+  const int lines_to_skip = cfg.optional("lines_to_skip", 0);
+  for(int i=0;i<lines_to_skip;++i)
+    {
+      assert(mcmc_input.good());
+      char junk[1024];
+      mcmc_input.getline(junk,1024);
+    }
+
+  for(unsigned int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      assert(mcmc_input.good());
+#if 1
+      std::vector<double> masses(ens.nbod(),0.0);
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> masses[bod];
+	}  // end loop over bodies
+
+      ens[sysid].id() = sysid;
+      ens[sysid].time() = time_init;
+      ens[sysid].set_active();
+      double x=0, y=0, z=0, vx=0, vy=0, vz=0;
+      ens.set_body(sysid, 0, masses[0], x, y, z, vx, vy, vz);
+      double mass_enclosed = masses[0];
+      for(unsigned int bod=1;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> x >> y >> z >> vx >> vy >> vz;
+
+	  mass_enclosed += masses[bod];
+	  double mass = use_jacobi ? mass_enclosed : masses[0]+masses[bod];
+	  if(cfg.count("verbose")&&(sysid<10))
+	    std::cout << "# Drawing sysid= " << sysid << " bod= " << bod << ' ' << masses[bod] << "  " << x << ' ' << y << ' ' << z << ' ' << vx << ' ' << vy << ' ' << vz << '\n';
+	  
+	  if(use_jacobi)
+	    {
+	      double bx, by, bz, bvx, bvy, bvz;
+	      ens.get_barycenter(sysid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	      x  += bx;	  y  += by;	  z  += bz;
+	      vx += bvx;  vy += bvy;	  vz += bvz;
+	    }
+	  
+	  // assign body a mass, position and velocity
+	  ens.set_body(sysid, bod, masses[bod], x, y, z, vx, vy, vz);
+
+	  if(cfg.count("verbose")&&(sysid<10))
+	    {
+	      double x_t = ens.x(sysid,bod);
+	      double y_t = ens.y(sysid,bod);
+	      double z_t = ens.z(sysid,bod);
+	      double vx_t = ens.vx(sysid,bod);
+	      double vy_t = ens.vy(sysid,bod);
+	      double vz_t = ens.vz(sysid,bod);
+	      
+	      std::cout << " x= " << x << "=" << x_t << " ";
+	      std::cout << " y= " << y << "=" << y_t << " ";
+	      std::cout << " z= " << z << "=" << z_t << " ";
+	      std::cout << "vx= " << vx << "=" << vx_t << " ";
+	      std::cout << "vy= " << vy << "=" << vy_t << " ";
+	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
+	    }
+#else
+      std::vector<double> masses(ens.nbod(),0.0);
+      double x=0, y=0, z=0, vx=0, vy=0, vz=0;
+      double mass_enclosed = 0.0;
+      ens[sysid].id() = sysid;
+      ens[sysid].time() = time_init;
+      ens[sysid].set_active();
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> masses[bod];
+	  mcmc_input >> x >> y >> z >> vx >> vy >> vz;
+
+	  mass_enclosed += masses[bod];
+	  double mass = use_jacobi ? mass_enclosed : masses[0]+masses[bod];
+	  if(cfg.count("verbose")&&(sysid<10))
+	    std::cout << "# Drawing sysid= " << sysid << " bod= " << bod << ' ' << masses[bod] << "  " << x << ' ' << y << ' ' << z << ' ' << vx << ' ' << vy << ' ' << vz << '\n';
+	  
+	  if(use_jacobi)
+	    {
+	      double bx, by, bz, bvx, bvy, bvz;
+	      ens.get_barycenter(sysid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	      x  += bx;	  y  += by;	  z  += bz;
+	      vx += bvx;  vy += bvy;	  vz += bvz;
+	    }
+	  
+	  // assign body a mass, position and velocity
+	  ens.set_body(sysid, bod, masses[bod], x, y, z, vx, vy, vz);
+
+	  if(cfg.count("verbose")&&(sysid<10))
+	    {
+	      double x_t = ens.x(sysid,bod);
+	      double y_t = ens.y(sysid,bod);
+	      double z_t = ens.z(sysid,bod);
+	      double vx_t = ens.vx(sysid,bod);
+	      double vy_t = ens.vy(sysid,bod);
+	      double vz_t = ens.vz(sysid,bod);
+	      
+	      std::cout << " x= " << x << "=" << x_t << " ";
+	      std::cout << " y= " << y << "=" << y_t << " ";
+	      std::cout << " z= " << z << "=" << z_t << " ";
+	      std::cout << "vx= " << vx << "=" << vx_t << " ";
+	      std::cout << "vy= " << vy << "=" << vy_t << " ";
+	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
+	    }
+#endif      
+	}  // end loop over bodies
+  
+      // Shift into barycentric frame
+      ens.get_barycenter(sysid,x,y,z,vx,vy,vz);
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  ens.set_body(sysid, bod, ens.mass(sysid,bod), 
+		       ens.x(sysid,bod)-x, ens.y(sysid,bod)-y, ens.z(sysid,bod)-z, 
+		       ens.vx(sysid,bod)-vx, ens.vy(sysid,bod)-vy, ens.vz(sysid,bod)-vz);	  
+	}  // end loop over bodies
+
+    } // end loop over systems
+  return ens;
+}
+
+
 void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
     JACOBI, BARYCENTRIC, ASTROCENTRIC
   } COORDINATE_SYSTEM = BARYCENTRIC;
-  const bool use_jacobi = cfg.optional("use_jacobi", 0);  
+  const bool use_jacobi = cfg.optional("use_jacobi_output", 0);  
   if(use_jacobi) COORDINATE_SYSTEM = JACOBI;
 
   std::streamsize cout_precision_old = os.precision();
@@ -319,7 +460,7 @@ void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vecto
 	  if(disable)
 	    {
 	      if(cfg.count("verbose"))
-		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
+		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " ainit= " << semimajor_axes_init[sys_id][bod-1] << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
 	      break;
 	    }
 	}
@@ -433,8 +574,15 @@ int main(int argc, char* argv[] )
   defaultEnsemble ens ; 
   if( cfg.count("input") ) 
     {    ens = snapshot::load(cfg["input"]);  }
+  else if(cfg.count("input_mcmc_keplerian") )
+    {    ens = generate_ensemble_with_initial_conditions_keplerian_from_file( config::load(initc_configfile) );  }
+  else if(cfg.count("input_mcmc_cartesian") )
+    {    ens = generate_ensemble_with_initial_conditions_cartesian_from_file( config::load(initc_configfile) );  }
   else
-    {    ens = generate_ensemble_with_initial_conditions_from_file( config::load(initc_configfile) );  }
+    {
+      std::cerr << "# Must specify one of input [for binary snapshot], input_mcmc_keplerian or input_mcmc_cartesian.\n";
+      return 255;
+    }
 	
   // save the ensemble as a snapshot
   if(cfg.count("initial_snapshot"))
@@ -478,6 +626,7 @@ int main(int argc, char* argv[] )
   integ->flush_log();
 
   catch_ctrl_c();
+  int num_integrate_calls = 0;
   while( number_of_active_systems(ens) > 0 && integration_loop_not_aborted_yet ) {
 
     // 1. Integrate, we could use core_integrate but the general integrate
@@ -486,7 +635,8 @@ int main(int argc, char* argv[] )
     // the middle, there's no point. It also has a nice for loop and can
     // to several kernel calls.
     integ->integrate();
-    
+    ++num_integrate_calls;
+
     // 2. CPU-based tests to identify systems that can be terminated
     int active_ones = number_of_active_systems(ens);
     const double deltaa_frac_threshold = cfg.optional("deltaa_frac_threshold", 0.5);
@@ -497,8 +647,11 @@ int main(int argc, char* argv[] )
     std::cerr << active_ones << "  max|dE/E|= " << max_deltaE << "\n";
 
     // EBF Experiment trying to expose host log.  
-    swarm::log::ensemble_enabled(*(swarm::log::manager::default_log()->get_hostlog()),ens);
-    integ->flush_log();
+    if(num_integrate_calls%10==0)
+      {
+	swarm::log::ensemble_enabled(*(swarm::log::manager::default_log()->get_hostlog()),ens);
+	integ->flush_log();
+      }
 
     // 3. Now we need to get rid of the inactive ones. There 
     // should be some criteria, whatever it is we are

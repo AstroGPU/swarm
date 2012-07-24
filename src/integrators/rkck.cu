@@ -18,8 +18,10 @@
 
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
+#include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
-
+#include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -73,6 +75,9 @@ class rkck: public integrator {
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
 
+	GPUAPI bool is_in_body_component_grid(const int b, const int c, const int nbod) 
+	{ return ((b < nbod) && (c < 3)); }
+
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
@@ -96,19 +101,16 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef typename GravitationAccOnly<T::n>::shared_data grav_t;
-		GravitationAccOnly<T::n> calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		typedef GravitationAcc<T> Grav;
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
 		// Body number
-		int b = thread_body_idx(nbod);
+		const int b = thread_body_idx(nbod);
 		// Component number
-		int c = thread_component_idx(nbod);
-		int ij = thread_in_system();
-		bool body_component_grid = (b < nbod) && (c < 3);
-		bool first_thread_in_system = thread_in_system() == 0;
-
+		const int c = thread_component_idx(nbod);
 
 		// local variables
 		monitor_t montest(_mon_params,sys,*_log) ;
@@ -116,15 +118,14 @@ class rkck: public integrator {
 		// NB: We use the same shared memory for two purpose and overwrite each other
 		// Since the use of the memory is not interleaved, we can safely use the same
 		// space for both purposes
-		// TODO: used Coalesced array structure
-		typedef DoubleCoalescedStruct<> shared_mag_t[2][nbod][3];
+		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_mag_t[2][nbod][3];
 		shared_mag_t& shared_mag = * (shared_mag_t*) system_shared_data_pointer(this,compile_time_param) ;
 
 		double time_step = _max_time_step;
 
 		// local information per component per body
 		double pos = 0, vel = 0 ;
-		if( body_component_grid )
+		if( is_in_body_component_grid(b,c,nbod) )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
    		montest( thread_in_system() );  
@@ -142,42 +143,42 @@ class rkck: public integrator {
 			double p0 = pos, v0 = vel;
 
 			// Step 1
-			double k1_acc = calcForces.acc(ij,b,c,p0,v0);
+			double k1_acc = calcForces.acc(thread_in_system(),b,c,p0,v0);
 			double k1_vel = v0;
 
 			double p1 = pos + h * b1 * k1_vel;
 			double v1 = vel + h * b1 * k1_acc;
 
 			// Step 2
-			double k2_acc = calcForces.acc(ij,b,c,p1,v1);
+			double k2_acc = calcForces.acc(thread_in_system(),b,c,p1,v1);
 			double k2_vel = v1;
 
 			double p2 = pos + h * ( b2[0] * k1_vel + b2[1] * k2_vel );
 			double v2 = vel + h * ( b2[0] * k1_acc + b2[1] * k2_acc );
 
 			// Step 3
-			double k3_acc = calcForces.acc(ij,b,c,p2,v2);
+			double k3_acc = calcForces.acc(thread_in_system(),b,c,p2,v2);
 			double k3_vel = v2;
 
 			double p3 = pos + h * ( b3[0] * k1_vel + b3[1] * k2_vel + b3[2] * k3_vel );
 			double v3 = vel + h * ( b3[0] * k1_acc + b3[1] * k2_acc + b3[2] * k3_acc );
 
 			// Step 4
-			double k4_acc = calcForces.acc(ij,b,c,p3,v3);
+			double k4_acc = calcForces.acc(thread_in_system(),b,c,p3,v3);
 			double k4_vel = v3;
 
 			double p4 = pos + h * ( b4[0] * k1_vel + b4[1] * k2_vel + b4[2] * k3_vel + b4[3] * k4_vel );
 			double v4 = vel + h * ( b4[0] * k1_acc + b4[1] * k2_acc + b4[2] * k3_acc + b4[3] * k4_acc );
 
 			// Step 5
-			double k5_acc = calcForces.acc(ij,b,c,p4,v4);
+			double k5_acc = calcForces.acc(thread_in_system(),b,c,p4,v4);
 			double k5_vel = v4;
 
 			double p5 = pos + h * ( b5[0] * k1_vel + b5[1] * k2_vel + b5[2] * k3_vel + b5[3] * k4_vel + b5[4] * k5_vel );
 			double v5 = vel + h * ( b5[0] * k1_acc + b5[1] * k2_acc + b5[2] * k3_acc + b5[3] * k4_acc + b5[4] * k5_acc );
 
 			// Step 6
-			double k6_acc = calcForces.acc(ij,b,c,p5,v5);
+			double k6_acc = calcForces.acc(thread_in_system(),b,c,p5,v5);
 			double k6_vel = v5;
 
 			double p6 = pos + h * ( b6[0] * k1_vel + b6[1] * k2_vel + b6[2] * k3_vel + b6[3] * k4_vel + b6[4] * k5_vel + b6[5] * k6_vel );
@@ -206,14 +207,15 @@ class rkck: public integrator {
 				const float step_shrink_min_factor = 0.2; 
 
 				//  Calculate the error estimate
-				if( body_component_grid ) {
+				if( is_in_body_component_grid(b,c,nbod) ) {
 
 					sys[b][c].pos() = p6 * p6 , sys[b][c].vel() = v6 * v6;
 					shared_mag[0][b][c].value() = pos_error * pos_error;
 					shared_mag[1][b][c].value() = vel_error * vel_error;
+					}
+				__syncthreads();
 
-					__syncthreads();
-					// TODO: Could compute the normalized error using one thread per body and reduction (or atomic max)
+				if( is_in_body_component_grid(b,c,nbod) ) {					// TODO: Could compute the normalized error using one thread per body and reduction (or atomic max)
 					if ( (c == 0) && (b == 0) ) {
 
 						double max_error = 0;
@@ -264,13 +266,13 @@ class rkck: public integrator {
 				vel = v6;
 
 				// Finalize the step
-				if( body_component_grid )
+				if( is_in_body_component_grid(b,c,nbod) )
 					sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-				if( first_thread_in_system ) 
+				if( (thread_in_system() == 0) ) 
 					sys.time() += h;
 
 				montest(thread_in_system());
-				if( first_thread_in_system && sys.is_active() )  {
+				if( (thread_in_system() == 0) && sys.is_active() )  {
 					if( sys.time() >= _destination_time ) 
 					{ sys.set_inactive(); }
 				}
@@ -294,6 +296,14 @@ integrator_plugin_initializer<
 
 integrator_plugin_initializer<
 		rkck< FixedTimeStep, stop_on_ejection<L> >
-	> rkck_Fixed_plugin("rkck_fixed");
+	> rkck_fixed_plugin("rkck_fixed");
+
+integrator_plugin_initializer<
+	        rkck< FixedTimeStep, stop_on_ejection_or_close_encounter<L> > 
+	> rkck_adaptive_close_encounter_plugin("rkck_adaptive_close_encounter");
+
+integrator_plugin_initializer<
+	        rkck< AdaptiveTimeStep, stop_on_ejection_or_close_encounter<L> > 
+	> rkck_fixed_close_encounter_plugin("rkck_fixed_close_encounter");
 
 } } } // end namespace bppt :: integrators :: swarm

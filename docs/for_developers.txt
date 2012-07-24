@@ -6,6 +6,7 @@ Swarm-NG v0.1 (c) Swarm-NG Development Team 2010
 
 Developing with the swarm-NG library (as is)
 --------------------------------------------
+* TODO:  NEEDS TO BE UPDATED FOR SWARN-NG v1.0
 
 Overview of public interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

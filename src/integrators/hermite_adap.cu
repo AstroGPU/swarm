@@ -20,7 +20,8 @@
 #include "swarm/gpu/bppt.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
-
+#include "swarm/gpu/gravitation_accjerk.hpp"
+#include "monitors/log_transit.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -43,14 +44,9 @@ class hermite_adap: public integrator {
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
-	static GENERIC int shmem_per_system(int nbod){
-		return integrator::shmem_per_system(nbod) + nbod*sizeof(double);
-	}
-	int  shmemSize(){
-		const int nbod = _hens.nbod();
-		// Round up number of systems in a block to the next multiple of SHMEM_CHUNK_SIZE
-		int spb = ((system_per_block()+SHMEM_CHUNK_SIZE-1)/SHMEM_CHUNK_SIZE) * SHMEM_CHUNK_SIZE;
-		return spb *  shmem_per_system(nbod);
+	template<class T>
+	static GENERIC int shmem_per_system(T compile_time_param){
+		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
 	}
 
 	virtual void launch_integrator() {
@@ -59,8 +55,9 @@ class hermite_adap: public integrator {
 
 	template<class T>
 	struct SystemSharedData {
-		typename Gravitation<T::n>::shared_data gravitation;
-		DoubleCoalescedStruct<> time_step_factor[T::n];
+		typedef GravitationAccJerk<T> Grav;
+		typename Grav::shared_data gravitation;
+		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
 	};
 
         GPUAPI void convert_internal_to_std_coord() {} 
@@ -105,9 +102,10 @@ class hermite_adap: public integrator {
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
+		typedef GravitationAccJerk<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
 		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
-		Gravitation<T::n> calcForces(sys, shared_data.gravitation );
+		Grav calcForces(sys, shared_data.gravitation );
 
 		// Local variables
 		const int nbod = T::n;
@@ -115,7 +113,7 @@ class hermite_adap: public integrator {
 		const int b = thread_body_idx(nbod);
 		// Component number
 		const int c = thread_component_idx(nbod);
-		const bool body_component_grid = (b < nbod) && (c < 3);
+//		const bool body_component_grid = (b < nbod) && (c < 3);
 
 
 		// local variables
@@ -210,5 +208,13 @@ using namespace monitors;
 integrator_plugin_initializer<
 		hermite_adap< stop_on_ejection<L> >
 	> hermite_adap_plugin("hermite_adap");
+
+integrator_plugin_initializer<
+	        hermite_adap< stop_on_ejection_or_close_encounter<L> > >
+	hermite_adap_close_encounter_plugin("hermite_adap_close_encounter");
+
+
+integrator_plugin_initializer<hermite_adap< log_transit<L> > >
+	hermite_adap_log_plugin("hermite_adap_transit");
 
 } } } // end namespace bppt :: integrators :: swarm
