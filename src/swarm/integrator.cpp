@@ -99,10 +99,6 @@ namespace swarm {
 
 	void gpu::integrator::integrate() {
 
-		int blocksize = threadDim().x * threadDim().y;
-		if(!check_cuda_limits(blocksize, shmemSize() )){
-			throw runtime_error("The block size settings exceed CUDA requirements");
-		}
 		
 
 		activate_inactive_systems(_ens);

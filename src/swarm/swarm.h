@@ -58,7 +58,13 @@ inline void init(const config &cfg) {
 
 	select_cuda_device(dev);
 
+	if(cfg.optional("more_cache",0)!=0){
+		set_more_cache();
+	}
 
+	if(cfg.optional("verbose",0)!=0){
+	print_device_information();
+        }
 
 	swarm::log::manager::default_log()->init(cfg);
 }

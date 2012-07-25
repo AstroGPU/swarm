@@ -132,7 +132,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 		break;
 	      };
 
-	if(time<=0.) 
+	if((time<=0.) && false)  // was used for debugging at some point
 	  {
 	    if (keplerian_output)
 	      { std::cerr << "# Output in Keplerian coordinates  "; }
@@ -227,18 +227,78 @@ body center_of_mass(const body* bodies, const int nbod ){
 }
 
 
+// EVT_TRANSIT
+std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+{
+	double T;
+	int sys, body_id;
+	double minb, vproj;
+	lr >> T >> sys >> body_id >> minb >> vproj;
+	if(!body_range.in(body_id)) return out;
+
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg %lg Transit Experimental", lr.msgid(), T, sys, body_id, minb, vproj);
+	out << buf;
+
+	return out;
+}
+
+
+// EVT_RV_OBS
+std::ostream& record_output_11(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+{
+	double T;
+	int sys, body_id;
+	double vz;
+	lr >> T >> sys >> body_id >> vz;
+	if(!body_range.in(body_id)) return out;
+
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg Rv Experimental", lr.msgid(), T, sys, body_id, vz);
+	out << buf;
+
+	return out;
+}
+
+
+// EVT_OCCULTATION
+std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+{
+	double T;
+	int sys, body_id;
+	double minb, vproj;
+	lr >> T >> sys >> body_id >> minb >> vproj;
+	if(!body_range.in(body_id)) return out;
+
+        size_t bufsize = 1000;
+        char buf[bufsize];
+	snprintf(buf, bufsize, "%10d %lg  %6d %6d  %lg %lg Occultation Experimental", lr.msgid(), T, sys, body_id, minb, vproj);
+	out << buf;
+
+	return out;
+}
+
 
     std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &bod)
 {
 	int evtid = lr.msgid();
 
+	// Make sure these stay synced with src/swarm/log/log.hpp
 	switch(evtid){
 	case 1: // standard system snapshot
 	  return record_output_1(out,lr,bod);
 	case 2: // data one body upon ejection
 	  return record_output_2(out,lr,bod);
 	case 3: // reserved for data for one pair of bodies upon close encounter/collision
-	  return record_output_default(out,lr);
+	  return record_output_default(out,lr); // feature still missing
+	case 11: // star v_z at observation time
+	  return record_output_11(out,lr,bod);
+	case 15: // near a transit of planet in front of star
+	  return record_output_15(out,lr,bod);
+	case 16: // near an occultation of star in front of planet
+	  return record_output_16(out,lr,bod);
 	default:
 	  return record_output_default(out,lr);
 	}

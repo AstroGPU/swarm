@@ -15,6 +15,14 @@ the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
 \section ReleaseNote Release note 
+<b>version 0.9.0</b>
+This is a pre-release prior to the first stable release.
+It includes many new features and major optimizations, including:
+- Completely new parallelization model, optimized for Fermi GPUs
+- Templatized propagators, monitors and gravitation classes
+- Propagators:  mvs, rkck (both Fixed and Adaptive Timestep)
+- (TODO: add summary of) much more.
+
 <b>version 0.2.0</b>
 
 Needs to fill additional features.
@@ -32,9 +40,9 @@ demonstrate functionality and how to program with Swarm-NG.
 
 \section QuickTips Quick Start Tips
 <ul>
-<li>Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li>
+<li>Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li> or create your own git repository using the latest development version (or latest version from the stable branch) from https://github.com/AstroGPU/swarm
 
-<li> Build the library and example programs with 'make'.  See \ref BuildSwarm "How to build swarm" for an overview of key points or read link:build_system.html[] for even more info. </li>
+<li> Build the library and example programs.  See \ref BuildSwarm "How to build swarm" for an overview of key points or read link:build_system.html[] for even more info. </li>
 
 <li> Do a few quick tests with 'make test'.  See \ref TestSwarm "How to test swarm" for more info.</li>
 
@@ -43,31 +51,23 @@ demonstrate functionality and how to program with Swarm-NG.
   so it can take a long time.  Please be patient.)  Report your
   results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html</li>
 
-<li> Read some <a href="http://www.astro.ufl.edu/~eford/code/swarm/docs/">online documentation</a> (text version in docs subdirectory).</li>
-
 <li> Browse the <a href="http://www.astro.ufl.edu/~eford/code/swarm/doxygen/">online reference manual</a> (You can generate a local copy with ''make doc'').</li>
+
+<li> Read additional text documentation (in the docs subdirecotry).  Much of this still needs to be updated for v0.9.</li>
+
 
 <li> To see how an end user can use 'swarm' as is:
 <ul>
-<li> Take a look at the test 'test/swarm/swarm-run.test'.  If you ran
-   'make test' successfully, then the output will be stored in
-   'test-outputs/swarm/swarm-run.test/output.log'</li>
+<li> For help using the swarm executable, see <a href="SwarmExec.html">here</a>.</li> 
 
-<li> Read link:swarm.html[] and \ref Configuration for a
-   description of swarm, the configuration file format and valid
-   parameters for the 'bin/swarm' program.  (Some of the other demos
-   use a configuration file with the same format, but they may not
-   accept all the parameters.)</li>
-
-<li> To see how end users can access data written by the swarm logging
-   system, use 'swarmquery output_file' or 'swarmquerykeplerian output_file'.  
-   For info on options, run 'swarmquery --help' or 'swarmquerykeplerian --help'.</li>
+<li> For help creating a test file of initial conditions, see <a href="TestFormat.hml"></a></li>
 </ul>
 
 <li> To learn how to access the Swarm-NG library from you own code, work
   through the series of introductory tutorials in src/tutorials (in
   the following order).
- 	- \ref TutorialSimple
+ 	- \ref TutorialBeginner
+ 	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialStopper
 	- \ref TutorialLogger
@@ -76,10 +76,9 @@ demonstrate functionality and how to program with Swarm-NG.
 
 <li> To learn more from examples of non-trivial codes, take a look at the following applications:
 <ul>
-<li> swarm_scatter_demo.cpp:  example that considers
-  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li>
-<li> swarm.cpp: this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html[]. </li>
+<!-- <li> swarm_scatter_demo.cpp:  example that considers
+  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li> -->
+<li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results</li>
 </ul>
 </li>
 

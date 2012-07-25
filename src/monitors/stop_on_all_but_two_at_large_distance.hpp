@@ -62,6 +62,15 @@ class stop_on_all_but_two_at_large_distance {
 	int _counter;
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
         GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_verbose_on() { return _params.verbose_on; };

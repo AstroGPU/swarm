@@ -16,7 +16,7 @@ MACRO(BENCHMARK_INTEGRATOR cfg)
 
 	MACRO(BENCHMARK_INTEGRATOR_NBOD nbod)
 		ADD_CUSTOM_TARGET(benchmark_${cfg}_${nbod}
-			COMMAND swarm benchmark --range nsys=4000,8000,16000,32000 nbod=${nbod} -c ${BENCHMARK_DIR}/${cfg}.cfg)
+			COMMAND swarm benchmark --range nsys=1000,2000,4000,8000,16000 nbod=${nbod} -c ${BENCHMARK_DIR}/${cfg}.cfg)
 		ADD_DEPENDENCIES(benchmark_${cfg}_${nbod} swarm)
 		ADD_DEPENDENCIES(benchmark_${cfg} benchmark_${cfg}_${nbod})	
 	ENDMACRO()

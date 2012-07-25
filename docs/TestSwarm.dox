@@ -3,7 +3,13 @@ namespace swarm {
 /** \page TestSwarm How to test swarm
 
 
-In order to test swarm, you just need to 
+Once the build is done, you can test the installation using:
+
+make test 
+
+If you want to test the computational capacity of your system try:
+
+make benchmark 
 
 */
 
