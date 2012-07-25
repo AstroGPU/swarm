@@ -1,5 +1,6 @@
-SET(GENERATE_FERMI TRUE CACHE BOOL "Whether to generate machine code for Fermi architecture (compute capability 2.0)")
-SET(GENERATE_GT200 FALSE CACHE BOOL "Whether to generate machine code for GT200 architecture (compute capability 1.3)")
+SET(REQUIRED_CUDA_VERSION 3.2)
+SET(GENERATE_FERMI TRUE CACHE BOOL "Wether to generate machine code for Fermi architecture")
+SET(GENERATE_GT200 FALSE CACHE BOOL "Wether to generate machine code for GT200 architecture")
 # Set CUDA Flags and options
 SET(CUDA_NVCC_FLAGS 
 	-Xcudafe --diag_suppress=subscript_out_of_range;

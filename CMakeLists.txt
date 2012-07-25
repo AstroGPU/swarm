@@ -1,7 +1,7 @@
 # Project Settings
 PROJECT(Swarm_NG)
 SET(Swarm_NG_VERSION_MAJOR 0)
-SET(Swarm_NG_VERSION_MINOR 9)
+SET(Swarm_NG_VERSION_MINOR 2)
 
 # CMake Settings
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -29,6 +29,11 @@ INCLUDE(variables.cmake)
 FIND_PACKAGE(CUDA REQUIRED)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
 FIND_PACKAGE(OpenMP)
+
+if(${CUDA_VERSION} VERSION_LESS ${REQUIRED_CUDA_VERSION})
+	MESSAGE(SEND_ERROR "Your CUDA installation is outdated. 
+		Swarm requires CUDA ${REQUIRED_CUDA_VERSION} or later.")
+endif()
 
 if(OPENMP_FOUND)
  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
