@@ -15,13 +15,9 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#include "swarm/common.hpp"
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
-#include "swarm/common.hpp"
-#include "monitors/composites.hpp"
-#include "monitors/stop_on_ejection.hpp"
-#include "monitors/log_time_interval.hpp"
-#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm {
 
@@ -293,18 +289,6 @@ struct MVSPropagator {
 			sys.time() += 2.0*hby2;
 	}
 };
-
-typedef gpulog::device_log L;
-using namespace monitors;
-
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection<L>, GravitationAcc > >
-	mvs_prop_plugin("mvs"
-			,"This is the integrator based on mvs propagator");
-
-integrator_plugin_initializer< generic< MVSPropagator, stop_on_ejection_or_close_encounter<L>, GravitationAcc  > >
-	mvs_prop_ce_plugin("mvs_close_encounter"
-			,"This is the integrator based on mvs propagator, monitor stop_on_ejection_or_close_encounter");
-
 
 
 
