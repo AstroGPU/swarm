@@ -10,14 +10,11 @@ gravity.  Swarm-NG does not replicate existing libraries that
 calculate forces for large-N systems on GPUs, but rather focuses on
 integrating an ensemble of many systems where N is small.  This is of
 particular interest for astronomers who study the chaotic evolution of
-planetary systems.  In the long term, we hope Swarm-NG will allow for
-the efficient parallel integration of user-defined systems of ordinary
-differential equations.
+planetary systems.  
 
 \section ReleaseNote Release note 
 <b>version 0.2.0</b>
 
-Needs to fill additional features.
 This release contains GPU-based integrators for few-body
 systems (\ref gpu::bppt::hermite "hermite", hermite_cpu, \ref gpu::bppt::VerletPropagator "verlet", \ref gpu::bppt::EulerPropagator "euler", \ref gpu::bppt::rkck "rkck").
 
