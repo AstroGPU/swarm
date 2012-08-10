@@ -28,7 +28,7 @@ namespace swarm { namespace gpu { namespace bppt {
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
  */
 template<class T>
-class GravitationAcc {
+class GravitationAcc_GR {
 	public:
 	const static int nbod = T::n;
 	const static int pair_count = (nbod*(nbod-1))/2;
@@ -39,10 +39,18 @@ class GravitationAcc {
 	private:
 	ensemble::SystemRef& sys;
 	shared_data &shared;
+        double c2;
 
 	public:
 
-	__device__ GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
+        // Calculate accelerations, including approximation for weak GR
+        // currently hardwired for G=M_sol=AU=1, year=2pi
+        // \todo read c^2 from parameter file?  read from system attribute?
+        //       set system attribute from parameter file?
+	__device__ GravitationAcc_GR(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared)
+        {	
+	  c2 = 101302340.; 
+        }
 
 
 	__device__ void calc_pair(int ij)const{
@@ -80,6 +88,104 @@ class GravitationAcc {
 		  }
 		return sum;
 	  }
+
+        // Warning untested... 
+        // Based on addition to Mercury from Matthew Payne
+        //  Look at Benitez & Gallardo and references there-in
+        // http://www.springerlink.com/content/d8r26w6610389256/fulltext.pdf
+        //                      -GM
+        // Additional accel =  -----   {(4GM / r - v^2) r + 4(v.r)v}
+        //                     r^3c^2
+        // Is it right to assing all acceleration to planet and none to star?
+	__device__ double sum_acc_gr(int b,int c)const
+                {
+		double acc_sum = 0;
+		double one_over_r;
+		// avoid extra square root, by recalculating 1/r (planet-sun) from shared mem
+		for(int d = 0; d < pair_count; d++)
+		  {
+		    int x = first<nbod>(d), y= second<nbod>(d);
+		    
+		    if( ((x==b)&&(y==0)) ||  ((x==0)&&(y==b)) )
+		      {
+			one_over_r  = shared[d][0].acc()*shared[d][0].acc();
+			one_over_r += shared[d][1].acc()*shared[d][1].acc();
+			one_over_r += shared[d][2].acc()*shared[d][2].acc();
+		      }
+		  }
+		double v2 = 0., v_dot_r = 0.;
+		double dx = (sys[b][0].pos()-sys[0][0].pos());
+		double dv = (sys[b][0].vel()-sys[0][0].vel());
+		v2 += dx*dx;
+		v_dot_r += dx*dv;
+		dx = (sys[b][1].pos()-sys[0][1].pos());
+		dv = (sys[b][1].vel()-sys[0][1].vel());
+		v2 += dx*dx;
+		v_dot_r += dx*dv;
+		dx = (sys[b][2].pos()-sys[0][2].pos());
+		dv = (sys[b][2].vel()-sys[0][2].vel());
+		v2 += dx*dx;
+		v_dot_r += dx*dv;
+		// assumes G=1.
+		double GM = sys[0].mass();
+		double f1 = (4*GM*one_over_r-v2);
+		double f2 = 4*v_dot_r;
+		acc_sum = -f1*(sys[b][c].pos()-sys[0][c].pos())
+		          -f2*(sys[b][c].vel()-sys[0][c].vel());
+		double f0 = GM*one_over_r*one_over_r*one_over_r/c2;
+		acc_sum *= f0;
+		return acc_sum;
+		}
+
+
+                // Warning: untested and known to be incomplete...
+                // Calculates acceleration on planet in barycentric frame due to J2
+                // Would need to figure out how to read j2... parameter file? attribute? parameter files specifying which attribute?
+                // Would need to figure out how to deal with back reaction on star before we use this
+                 __device__ double sum_acc_j2(int b,int c)const
+                {
+		double acc_sum = 0;
+		double one_over_r;
+		double u2;
+		// avoid extra square root, by recalculating 1/r (planet-sun) from shared mem
+		for(int d = 0; d < pair_count; d++)
+		  {
+		    int x = first<nbod>(d), y= second<nbod>(d);
+		    
+		    if( ((x==b)&&(y==0)) ||  ((x==0)&&(y==b)) )
+		      {
+			one_over_r  = shared[d][0].acc()*shared[d][0].acc();
+			one_over_r += shared[d][1].acc()*shared[d][1].acc();
+			one_over_r += shared[d][2].acc()*shared[d][2].acc();
+			u2 = shared[d][2].acc()*shared[d][2].acc() / one_over_r;
+		      }
+		  }
+		double dx = (sys[b][c].pos()-sys[0][c].pos());
+		double mstar = sys[0].mass();
+		double mpl = sys[b].mass();
+		double j2 = sys[b].attribute(1); 
+		double jr2 = j2*one_over_r*one_over_r;
+		double tmp2 = jr2*(7.5*u2-1.5);
+		double tmp3 = jr2*3.;
+#if 0		
+		double jr4 = j4*one_over_r*one_over_r*one_over_r*one_over_r;
+		double u4 = u2*u2;
+		tmp2 += jr4*(39.375*u4 - 26.25*u2 + 1.875);
+		tmp3 += jr4*(17.5*u2-7.5);
+#endif
+#if 0		
+		double jr6 = j6*one_over_r*one_over_r*one_over_r*one_over_r*one_over_r*one_over_r;
+		double u6 = u4*u2;
+		tmp2 += jr6*(187.6875*u6 -216.5625*u4 +59.0625*u2 -2.1875);
+		tmp3 += jr6*(86.625*u4 - 78.75*u2 + 13.125);
+#endif
+		if(c==2) tmp2 -= tmp3;
+		double tmp1 = mstar*one_over_r*one_over_r*one_over_r;
+		acc_sum += dx*tmp1*tmp2;
+		// \todo Need to figure out how to get this to affect sun.
+		double acc_sun_c = -mpl*acc_sum/mstar; 
+		return acc_sum;
+		}
 
 
 
@@ -125,7 +231,8 @@ class GravitationAcc {
 			}
 		}
 
-		return acc_from_sun + acc_from_planets;
+		double acc_gr = sum_acc_gr(b,c);
+		return acc_from_sun + acc_from_planets + acc_gr;
 	}
 
 

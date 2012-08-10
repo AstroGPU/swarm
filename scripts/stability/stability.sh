@@ -5,6 +5,8 @@
 OUTBASE=$1
 INTEGRATOR=$2
 
+EMAIL=saleh@cise.ufl.edu
+
 # Range of number of bodies to do stablity test for
 # space sparated list of numbers
 NBODY_RANGE=$3
@@ -12,8 +14,8 @@ NBODY_RANGE=$3
 INPUT_GENERATION_CONFIG=stability.cfg
 INTEGRATOR_CFG=samples/$INTEGRATOR.cfg
 
-DESTINATION_TIME=1e+4
-INTERVAL=1e+1
+DESTINATION_TIME=2e6
+INTERVAL=1e3
 
 [ ! -f "$INPUT_GENERATION_CONFIG" ] \
 	&& echo "Config file $INPUT_GENERATION_CONFIG does not exist" \
@@ -50,3 +52,10 @@ do
 		-c $INTEGRATOR_CFG > $LOG_FILE
 	echo "Integration is done "	`$DATE`
 done
+
+sendmail $EMAIL <<EOF
+Subject: Swarm Update: $INTEGRATOR is done
+From: stabibility.sh
+To: <$EMAIL>
+Integration for $INTEGRATOR for $NBODY_RANGE is done at `$DATE`
+EOF

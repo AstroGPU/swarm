@@ -41,17 +41,17 @@ struct CoalescedMemberArray {
 	const static int CHUNK_SIZE = _CHUNK_SIZE;
 
 
-	value_type getitem(const size_t& i)const{ 
+	GENERIC value_type getitem(const size_t& i)const{ 
 		return _array[i][0];
 	}
-	void setitem(const size_t& i, const value_type& v){ 
+	GENERIC void setitem(const size_t& i, const value_type& v){ 
 		_array[i][0] = v ;
 	}
 
-	const value_type& operator[](const size_t& i)const{
+	GENERIC const value_type& operator[](const size_t& i)const{
 		return _array[i][0];
 	}
-	value_type& operator[](const size_t& i){
+	GENERIC value_type& operator[](const size_t& i){
 		return _array[i][0];
 	}
 
@@ -420,7 +420,7 @@ class EnsembleBase {
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 		GENERIC void copyTo( const SystemRef& r ) { _ref.copyTo( r ) ; }
-		GENERIC double calc_total_energy() const { _ref.calc_total_energy(); }
+		GENERIC double calc_total_energy() const { return _ref.calc_total_energy(); }
 	};
 
 
