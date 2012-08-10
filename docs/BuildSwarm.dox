@@ -19,7 +19,7 @@ Minimum Hardware requirements:
  - nVidia GPU with compute capabality 1.3 or above (GT200 and Fermi architectures; some features require compute capability 2.0)
 
 Required software packages:
- - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 4.0 or later 
+ - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 3.2 or later 
  - GCC 4.4 : CUDA has problems with most recent versions of GCC. Check the CUDA manual for the supported version of GCC.
  - <a href="http://www.boost.org/">Boost</a> 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later

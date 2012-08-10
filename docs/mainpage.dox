@@ -30,7 +30,8 @@ planetary systems.
 
 Citing Swarm-NG
 - When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper describing Swarm-NG and the Swarm-NG Website.  
-- Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy and arXiv soon!
+- Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy. 
+arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
 
 Licensing Information
 - Swarm-NG v0.9 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
