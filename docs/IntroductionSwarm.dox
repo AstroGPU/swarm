@@ -15,7 +15,11 @@ the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
 \section ReleaseNote Release note 
-<b>version 0.9.0</b>
+<b>Version 1.0</b>
+This is the first stable release of swarm. It includes a user friendly 
+building environment, comprehensive documentations and a test suite.
+
+<b>Version 0.9.0</b>
 This is a pre-release prior to the first stable release.
 It includes many new features and major optimizations, including:
 - Completely new parallelization model, optimized for Fermi GPUs
@@ -23,13 +27,13 @@ It includes many new features and major optimizations, including:
 - Propagators:  mvs, rkck (both Fixed and Adaptive Timestep)
 - (TODO: add summary of) much more.
 
-<b>version 0.2.0</b>
+<b>Version 0.2.0</b>
 
 Needs to fill additional features.
 This release contains GPU-based integrators for few-body
 systems (\ref gpu::bppt::hermite "hermite", hermite_cpu, \ref gpu::bppt::VerletPropagator "verlet", \ref gpu::bppt::EulerPropagator "euler", \ref gpu::bppt::rkck "rkck").
 
-<b>version 0.1.3</b>
+<b>Version 0.1.3</b>
 
 This initial release contains GPU-based integrators for few-body
 systems (hermite_gpu, hermite_cpu, verlet_gpu, verlet_cpu).
@@ -40,32 +44,36 @@ demonstrate functionality and how to program with Swarm-NG.
 
 \section QuickTips Quick Start Tips
 <ul>
-<li>Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li> or create your own git repository using the latest development version (or latest version from the stable branch) from https://github.com/AstroGPU/swarm
+<li>Download swarm-NG:
+	- Stable versin from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li>
+	- Latest development version from git stable branch at: 
+https://github.com/AstroGPU/swarm
 
-<li> Build the library and example programs.  See \ref BuildSwarm "How to build swarm" for an overview of key points or read link:build_system.html[] for even more info. </li>
+<li> Build the library and example programs:
+	- For a quick build of swarm-NG, please see \ref BuildSwarm 
+	"How to build swarm" for key steps.
+	- For customized build of swarm-NG, please read \ref BuildSystem 
+	Build System for instructions on how to set up compiler flags and select 
+	specific components tailored to your needs.
+</li>
 
-<li> Do a few quick tests with 'make test'.  See \ref TestSwarm "How to test swarm" for more info.</li>
+<li> Test swarm-NG by 'make test'.  See \ref TestSwarm "How to test swarm" 
+for more information.</li>
 
-<li> To check the speedup on your system , run 'make benchmark'.  (Warning:
-  This requires performing the integrations on both the CPU and GPU,
-  so it can take a long time.  Please be patient.)  Report your
-  results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html</li>
+<li> Run 'make benchmark' to check the speedup on your system. (Warning: This requires performing the integrations on both the CPU and GPU, so it may take a long time. Please be patient.) Please report your results at 
+http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+</li>
 
-<li> Browse the <a href="http://www.astro.ufl.edu/~eford/code/swarm/doxygen/">online reference manual</a> (You can generate a local copy with ''make doc'').</li>
+<li> Read the <a href="http://www.astro.ufl.edu/~eford/code/swarm/doxygen/">online reference manual</a> (you can generate a local copy with 'make doc'). The additional documentation in text format is available in "docs" subdirectory.
+</li>
 
-<li> Read additional text documentation (in the docs subdirecotry).  Much of this still needs to be updated for v0.9.</li>
+<li> We provide "swarm" executable as an interface to use swarm-NG library.
+	- For help on using the swarm executable as it is, please read <a href="SwarmExec.html">swarm executable</a>. 
+	- For help creating a test file of initial conditions, see <a href="TestFormat.hml">Text Format</a>.
 
-
-<li> To see how an end user can use 'swarm' as is:
-<ul>
-<li> For help using the swarm executable, see <a href="SwarmExec.html">here</a>.</li> 
-
-<li> For help creating a test file of initial conditions, see <a href="TestFormat.hml"></a></li>
-</ul>
-
-<li> To learn how to access the Swarm-NG library from you own code, work
+<li> To learn how to utilize the Swarm-NG library in your own code, please work
   through the series of introductory tutorials in src/tutorials (in
-  the following order).
+  the following order):
  	- \ref TutorialBeginner
  	- \ref TutorialGPU
 	- \ref TutorialPropagator
@@ -74,22 +82,21 @@ demonstrate functionality and how to program with Swarm-NG.
 	- \ref TutorialIntegrator
 </li>
 
-<li> To learn more from examples of non-trivial codes, take a look at the following applications:
+<li> Several example applications are provided to show how to use swarm-NG. Please take a look at the following applications:
 <ul>
 <!-- <li> swarm_scatter_demo.cpp:  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li> -->
-<li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results</li>
+<li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results.
+</li>
 </ul>
 </li>
 
-<li> To learn more about how developers an use the swarm library:
-
+<li> For ambitious developers, please read the following for more information 
+on how to write your own programs using the swarm-NG library:
 <ul>
-<li> Read link:for_developers.html[] for an
-   overview of how to write your own programs which build on Swarm-NG
-   functionality.</li>
-<li> Read link:eventlog.html[] and
-   link:snapshotting.html[] for info on using the
+<li> link:for_developers.html[] for an overview on how to write your own code 
+that builds on Swarm-NG functionality.</li>
+<li> link:eventlog.html[] and link:snapshotting.html[] for information on using the
    swarm output system.</li>
 </li>
 </ul>
