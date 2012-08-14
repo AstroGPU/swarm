@@ -13,6 +13,15 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 
+MACRO(tutorial_python pageName )
+	ADD_CUSTOM_TARGET(document_${pageName}
+	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
+	COMMAND cat ${ARGN} | ${CMAKE_SOURCE_DIR}/scripts/python2doxygen  > ${CMAKE_BINARY_DIR}/docs/${pageName}.dox
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+	ADD_DEPENDENCIES(doc document_${pageName})
+ENDMACRO()
+
 MACRO(tutorial_file pageName )
 	ADD_CUSTOM_TARGET(document_${pageName}
 	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs

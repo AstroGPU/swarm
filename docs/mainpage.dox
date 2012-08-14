@@ -19,12 +19,14 @@ differential equations.
 \b Table \b of \b contents
  - \ref IntroductionSwarm
  - \ref BuildSwarm
- - \ref UsingSwarm
- - \b Tutorials \b for \b Developers
+ - \ref SwarmExec "Using command-line interface"
+ - \b Using \b C++ \b library \b interface
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
+ - \b Using \b Python \b interface
+ 	- \ref TutorialPython
 
  @section moreinfo Further Information
  Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
