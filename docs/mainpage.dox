@@ -24,8 +24,7 @@ differential equations.
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialPropagator
-	- \ref TutorialStopper
-	- \ref TutorialLogger
+	- \ref TutorialMonitor
 
  @section moreinfo Further Information
  Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/

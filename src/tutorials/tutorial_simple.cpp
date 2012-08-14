@@ -111,3 +111,5 @@ int main(int argc, char* argv[]){
 //  -  \ref swarm::log::manager      Most users won't need it because the default log manager is used by all integrators.
 //      But if you need multiple log streams, you need to create your own log manager
 //      and use it in integrators by \ref integrator::set_log_manager.
+//
+// To find the complete listing of this tutorial look at \ref src/tutorials/tutorial_simple.cpp in the source code repository.
