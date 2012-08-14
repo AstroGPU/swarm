@@ -6,13 +6,12 @@
  *
  */
 // \page TutorialBeginner Beginner tutorial for using the API
-// \ingroup Tutorials
 //
 // You can write your own scenarios for integrating ensembles and use parts
 // and pieces of the Swarm-NG library for your C++ application.
 //
 // In this tutorial we go through a simple C++ program to show you how you can
-// use Swarm-NG library. You can find the source file at src/tutorials/swarm_tutorial_simple.cpp
+// use Swarm-NG library. You can find the source file at src/tutorials/tutorial_simple.cpp
 //
 //
 // We start at the first line of the program. You need to include needed headers to use the library.
@@ -36,7 +35,7 @@ using namespace std;
 const double destination_time = 5 * 2 * M_PI ;
 // Swarm uses the configuration data structure to pass most of parameters to creation functions
 // Here we put all of our configuration items in a 2D string array.
-const char * config_pairs[6][2] = {  
+const char * config_pairs[5][2] = {  
        { "integrator" , "hermite" }
       ,{ "time_step", "0.001" }
       ,{ "log_writer", "null" } 

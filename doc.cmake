@@ -12,3 +12,11 @@ else(DOXYGEN_FOUND)
 	documentation")
 endif(DOXYGEN_FOUND)
 
+
+MACRO(tutorial_file filePath pageName)
+	ADD_CUSTOM_TARGET(document_${pageName}
+	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
+	COMMAND ${CMAKE_SOURCE_DIR}/scripts/program2doxygen < ${CMAKE_CURRENT_SOURCE_DIR}/${filePath} > ${CMAKE_BINARY_DIR}/docs/${pageName}.dox
+	)
+	ADD_DEPENDENCIES(doc document_${pageName})
+ENDMACRO()

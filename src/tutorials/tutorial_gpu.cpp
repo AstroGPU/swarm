@@ -4,7 +4,6 @@
  *
  */
 // \page TutorialGPU Advanced tutorial for using GPU integrators
-// \ingroup Tutorials
 //
 //  The basic API gives you control for selecting integrators and
 //  using them. If you need to have more control over the integration
