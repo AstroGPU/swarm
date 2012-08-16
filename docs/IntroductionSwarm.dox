@@ -69,7 +69,7 @@ http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 
 <li> We provide "swarm" executable as an interface to use swarm-NG library.
 	- For help on using the swarm executable as it is, please read <a href="SwarmExec.html">swarm executable</a>. 
-	- For help creating a test file of initial conditions, see <a href="TestFormat.hml">Text Format</a>.
+	- For help creating a test file of initial conditions, see <a href="TextFormat.html">Text Format</a>.
 
 <li> To learn how to utilize the Swarm-NG library in your own code, please work
   through the series of introductory tutorials in src/tutorials (in
