@@ -34,10 +34,6 @@
 #include "utils.hpp"
 #include "gpu/device_settings.hpp"
 
-/// \defgroup integrators Integrators
-/// \defgroup propagators Propagators
-/// \defgroup monitors Monitors
-/// \defgroup monitors_param Monitor Parameters
 
 /*! Swarm-NG library
  *
