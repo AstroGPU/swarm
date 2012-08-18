@@ -56,8 +56,6 @@ GENERIC const T& max3(const T& a, const T& b, const T& c){
  *
  * For an example of how to use this Generic integrator refer to Euler integrator.
  *
- * \todo _time_step does not belog to here and it is not used here. The better place for 
- * _time_step is inside the Propagator
  *
  * An extention of this class proposed to take a Gravitation class as a template. It 
  * Is not implemented yet.
@@ -85,7 +83,6 @@ class generic: public integrator {
 	typedef  typename Propagator< defpar_t, Gravitation<defpar_t> >::params prop_params_t;
 
 	private:
-	double _time_step;
 	mon_params_t _mon_params;
 	prop_params_t _prop_params;
 
@@ -95,8 +92,7 @@ class generic: public integrator {
 	 * The generic integrator does not require any configuration parameters.
 	 * The configuration parameters are passed to Monitor::params and Propagator::params.
 	 */
-	generic(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg),_prop_params(cfg) {
-		_time_step = cfg.require("time_step", 0.0);
+	generic(const config& cfg): base(cfg), _mon_params(cfg),_prop_params(cfg) {
 	}
 
 	virtual void launch_integrator() {
@@ -106,7 +102,7 @@ class generic: public integrator {
 
 
 	template<class T>
-	static const int thread_per_system(T compile_time_param){
+	static GENERIC int thread_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::thread_per_system();
 		const int prop = Propagator<T,Gravitation<T> >::thread_per_system();
 		const int moni = Monitor::thread_per_system(compile_time_param);
@@ -114,7 +110,7 @@ class generic: public integrator {
 	}
 
 	template<class T>
-	static GENERIC const int shmem_per_system(T compile_time_param){
+	static GENERIC int shmem_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::shmem_per_system();
 		const int prop = Propagator<T,Gravitation<T> >::shmem_per_system();
 		const int moni = Monitor::shmem_per_system(compile_time_param);
@@ -173,7 +169,7 @@ class generic: public integrator {
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
 
-			prop.max_timestep = _destination_time - sys.time();
+		        prop.max_timestep = _destination_time - sys.time();
 			prop.advance();
 			__syncthreads();
 
@@ -189,7 +185,7 @@ class generic: public integrator {
 			// requires arch=compute_sm_20
 			bool block_needs_std_coord = syncthreads_or((int)(thread_needs_std_coord));
 #else
-#warning  Need to make this work for pre-Fermi GPUs.  For now just setting true!
+			// \todo Need to make this more intelligent for pre-Fermi GPUs.  For now just setting true, so it always makes the conversion on pre-Fermi GPUs
 			//			void *ptr_shared_void = calcForces.unused_shared_data_pointer(system_per_block_gpu());
 			//			int *ptr_shared_int = static_cast<int *>(ptr_shared_void);
 			//			//			int put_back = *ptr_shared_int;

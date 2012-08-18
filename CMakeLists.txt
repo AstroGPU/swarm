@@ -28,6 +28,18 @@ INCLUDE(variables.cmake)
 # Find the libraries and packages
 FIND_PACKAGE(CUDA REQUIRED)
 FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options regex)
+FIND_PACKAGE(OpenMP)
+
+if(${CUDA_VERSION} VERSION_LESS ${REQUIRED_CUDA_VERSION})
+	MESSAGE(SEND_ERROR "Your CUDA installation is outdated. 
+		Swarm requires CUDA ${REQUIRED_CUDA_VERSION} or later.")
+endif()
+
+if(OPENMP_FOUND)
+ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 
 # Macro to build other executables based on swarm library
@@ -53,6 +65,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINAR
 ADD_SUBDIRECTORY(src)
 
 
+tutorial_python(TutorialPython py/tutorial.py)
 
 INCLUDE(test.cmake)
 INCLUDE(custom.cmake)

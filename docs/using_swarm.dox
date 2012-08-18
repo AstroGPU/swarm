@@ -6,4 +6,12 @@
  * file at bin/swarm. To learn about all commands and switches refer to \ref SwarmExec
  *
  *
+ * Alternatively, you can access Swarm-NG functionality via C++.  
+ * For examples of how to use the Swarm-NG library, see 
+ 	\ref TutorialBeginner, \ref TutorialGPU, and src/tutorials/*.cpp
+ *
+ * Finally, there is an experimental python interface.
+ * For examples of how to use the python interface, see py/*
+ * 
+ * 
  */

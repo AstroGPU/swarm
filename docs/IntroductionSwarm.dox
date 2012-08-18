@@ -14,14 +14,32 @@ planetary systems.  In the long term, we hope Swarm-NG will allow for
 the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
-\section ReleaseNote Release note 
-<b>version 0.2.0</b>
+\section ReleaseNote Release notes
+<b>Version 1.0</b>
+This will be the first stable release of swarm. 
+In addition to optimized GPU kernels, it includes:
+- A user friendly build environment (using CMake), 
+- Comprehensive documentations (using Doxygen), 
+- A test suite to ease development of new features and ensuring Swarm-NG is ready for science, and
+- (TODO: add summary of) much more.
 
-Needs to fill additional features.
-This release contains GPU-based integrators for few-body
-systems (\ref gpu::bppt::hermite "hermite", hermite_cpu, \ref gpu::bppt::VerletPropagator "verlet", \ref gpu::bppt::EulerPropagator "euler", \ref gpu::bppt::rkck "rkck").
+<b>Version 0.9.0</b>
+This is a pre-release prior to the first stable release.
+It includes many new features and major optimizations, including:
+- Major performance improvements, including many optimizations for Fermi GPUs
+- Completely new parallelization model, allowing efficient optimization of smaller ensembles
+- Greater modularity thanks to templatized propagators, monitors and gravitation classes
+- New propagators:  \ref gpu::bppt::MvsPropagator "mvs", \ref gpu::bppt::RkckPropagator "rkck" (both Fixed and Adaptive Timestep)
+- Several example monitor classes
+- (TODO: add summary of) much more.
+This version is described in Dindar et al. 2012 (arXiv:1208.1157)
 
-<b>version 0.1.3</b>
+<b>Version 0.2.0</b>
+
+This release added new GPU-based integrators for few-body systems.
+Swarm-NG now includes:  \ref gpu::bppt::hermite "hermite", hermite_cpu, \ref gpu::bppt::rkck "rkck", \ref gpu::bppt::VerletPropagator "verlet", and \ref gpu::bppt::EulerPropagator "euler".
+
+<b>Version 0.1.3</b>
 
 This initial release contains GPU-based integrators for few-body
 systems (hermite_gpu, hermite_cpu, verlet_gpu, verlet_cpu).
@@ -32,65 +50,58 @@ demonstrate functionality and how to program with Swarm-NG.
 
 \section QuickTips Quick Start Tips
 <ul>
-<li>Download the swarm-NG library from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li>
+<li>Download swarm-NG:
+	- Stable versin from http://www.astro.ufl.edu/~eford/code/swarm/download.html</li>
+	- Latest development version from git stable branch at: 
+https://github.com/AstroGPU/swarm
 
-<li> Build the library and example programs with 'make'.  See \ref BuildSwarm "How to build swarm" for an overview of key points or read link:build_system.html[] for even more info. </li>
+<li> Build the library and example programs:
+	- For a quick build of swarm-NG, please see \ref BuildSwarm 
+	"How to build swarm" for key steps.
+	- For customized build of swarm-NG, please read \ref BuildSystem 
+	Build System for instructions on how to set up compiler flags and select 
+	specific components tailored to your needs.
+</li>
 
-<li> Do a few quick tests with 'make test'.  See \ref TestSwarm "How to test swarm" for more info.</li>
+<li> Test swarm-NG by 'make test'.  See \ref TestSwarm "How to test swarm" 
+for more information.</li>
 
-<li> To check the speedup on your system , run 'make benchmark'.  (Warning:
-  This requires performing the integrations on both the CPU and GPU,
-  so it can take a long time.  Please be patient.)  Report your
-  results at http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html</li>
+<li> Run 'make benchmark' to check the speedup on your system. (Warning: This requires performing the integrations on both the CPU and GPU, so it may take a long time. Please be patient.) Please report your results at 
+http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+</li>
 
-<li> Read some <a href="http://www.astro.ufl.edu/~eford/code/swarm/docs/">online documentation</a> (text version in docs subdirectory).</li>
+<li> Read the <a href="http://www.astro.ufl.edu/~eford/code/swarm/doxygen/">online reference manual</a> (you can generate a local copy with 'make doc'). The additional documentation in text format is available in "docs" subdirectory.
+</li>
 
-<li> Browse the <a href="http://www.astro.ufl.edu/~eford/code/swarm/doxygen/">online reference manual</a> (You can generate a local copy with ''make doc'').</li>
+<li> We provide "swarm" executable as an interface to use swarm-NG library.
+	- For help on using the swarm executable as it is, please read <a href="SwarmExec.html">swarm executable</a>. 
+	- For help creating a test file of initial conditions, see <a href="TestFormat.hml">Text Format</a>.
 
-<li> To see how an end user can use 'swarm' as is:
-<ul>
-<li> Take a look at the test 'test/swarm/swarm-run.test'.  If you ran
-   'make test' successfully, then the output will be stored in
-   'test-outputs/swarm/swarm-run.test/output.log'</li>
-
-<li> Read link:swarm.html[] and \ref Configuration for a
-   description of swarm, the configuration file format and valid
-   parameters for the 'bin/swarm' program.  (Some of the other demos
-   use a configuration file with the same format, but they may not
-   accept all the parameters.)</li>
-
-<li> To see how end users can access data written by the swarm logging
-   system, use 'swarmquery output_file' or 'swarmquerykeplerian output_file'.  
-   For info on options, run 'swarmquery --help' or 'swarmquerykeplerian --help'.</li>
-</ul>
-
-<li> To learn how to access the Swarm-NG library from you own code, work
+<li> To learn how to utilize the Swarm-NG library in your own code, please work
   through the series of introductory tutorials in src/tutorials (in
-  the following order).
- 	- \ref TutorialSimple
-	- \ref TutorialPropagator
-	- \ref TutorialStopper
-	- \ref TutorialLogger
-	- \ref TutorialIntegrator
-</li>
+  the following order):
+ 	- \ref TutorialBeginner
+ 	- \ref TutorialGPU
+	- \ref TutorialPropagator  A propagator class implements a device function (advance) that advance one system by one time step for one system (or at least attempts one timestep).  These can be readiliy combined with the generic_integrator to quickly provide a new GPU-based integration algorithm.
+	- \ref TutorialIntegrator  An integrator class implements a GPU kernel function (kernel) that integrates all active systems in an ensemble systems (often for many timesteps).  While potentially more efficient than the same algorithm written as a propagator, writing an integrator requires more familiarity with GPU programming.
+        - \ref TutorailMonitor     A monitor class inspects a system and has the option of logging (to memory or a buffer that can be easily written to disk) data or indicating a system should be deactivated (i.e., stop integrating the ssytem).  Monitor classes supercede both the Logger and Stopper class. 
+</li
 
-<li> To learn more from examples of non-trivial codes, take a look at the following applications:
+<li> Several example applications are provided to show how to use swarm-NG. Please take a look at the following applications:
 <ul>
-<li> swarm_scatter_demo.cpp:  example that considers
-  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li>
-<li> swarm.cpp: this reads in an ensemble of initial conditions and
-  writes output to binary files.  More information at link:swarm.html[]. </li>
+<!-- <li> swarm_scatter_demo.cpp:  example that considers
+  the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li> -->
+<li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results.
+</li>
 </ul>
 </li>
 
-<li> To learn more about how developers an use the swarm library:
-
+<li> For ambitious developers, please read the following for more information 
+on how to write your own programs using the swarm-NG library:
 <ul>
-<li> Read link:for_developers.html[] for an
-   overview of how to write your own programs which build on Swarm-NG
-   functionality.</li>
-<li> Read link:eventlog.html[] and
-   link:snapshotting.html[] for info on using the
+<li> link:for_developers.html[] for an overview on how to write your own code 
+that builds on Swarm-NG functionality.</li>
+<li> link:eventlog.html[] and link:snapshotting.html[] for information on using the
    swarm output system.</li>
 </li>
 </ul>

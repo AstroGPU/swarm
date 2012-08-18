@@ -64,6 +64,25 @@ class GravitationAcc {
 
 	}
 
+          __device__ double one_over_r(const int b1, const int b2) const
+          {
+	  double sum = 0.;
+
+		for(int d = 0; d < pair_count; d++)
+		  {
+		    int x = first<nbod>(d), y= second<nbod>(d);
+		    if( ((x==b1) && (y==b2)) || (x==b2) && (y==b1))
+		      {
+			sum += shared[d][0].acc()*shared[d][0].acc();
+			sum += shared[d][1].acc()*shared[d][1].acc();
+			sum += shared[d][2].acc()*shared[d][2].acc();
+		      }
+		  }
+		return sum;
+	  }
+
+
+
 	__device__ double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
 
@@ -84,7 +103,7 @@ class GravitationAcc {
 		return acc_sum;
 	}
 
-	__device__ double sum_acc(int b,int c)const{
+	__device__ double sum_acc(int b,int c) const{
 		double acc_from_planets = 0;
 		double acc_from_sun = 0;
 
@@ -175,7 +194,7 @@ class GravitationAcc {
 	}
 
 	static GENERIC int thread_per_system(){
-		return std::max( nbod * 3 , (nbod-1)*nbod/2 ) ;
+	  return ( 3*nbod > (nbod-1)*nbod/2 ) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
 	static GENERIC int shmem_per_system() {

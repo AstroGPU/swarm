@@ -186,7 +186,7 @@ class GravitationAccJerk {
 				
 
 	static GENERIC int thread_per_system(){
-		return std::max( nbod * 3 , (nbod-1)*nbod/2 ) ;
+		return (nbod*3>(nbod-1)*nbod/2) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
 	static GENERIC int shmem_per_system() {

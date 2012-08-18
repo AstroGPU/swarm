@@ -41,17 +41,17 @@ struct CoalescedMemberArray {
 	const static int CHUNK_SIZE = _CHUNK_SIZE;
 
 
-	value_type getitem(const size_t& i)const{ 
+	GENERIC value_type getitem(const size_t& i)const{ 
 		return _array[i][0];
 	}
-	void setitem(const size_t& i, const value_type& v){ 
+	GENERIC void setitem(const size_t& i, const value_type& v){ 
 		_array[i][0] = v ;
 	}
 
-	const value_type& operator[](const size_t& i)const{
+	GENERIC const value_type& operator[](const size_t& i)const{
 		return _array[i][0];
 	}
-	value_type& operator[](const size_t& i){
+	GENERIC value_type& operator[](const size_t& i){
 		return _array[i][0];
 	}
 
@@ -166,6 +166,7 @@ class EnsembleBase {
 		//! Accessing extra attributes of the array.
 		GENERIC double& attribute(const int& i) { return _attributes[i]; }
 		GENERIC const double& attribute(const int& i) const { return _attributes[i]; }
+	        GENERIC int num_attributes() const { return NUM_BODY_ATTRIBUTES; };
 
 		//! Distance of the planet to (0,0,0) 
 		GENERIC double radius_squared() { 
@@ -231,6 +232,7 @@ class EnsembleBase {
 		//! Access extra attributes of the system.
 		GENERIC const double& attribute(const int& i) const { return _attributes[i]; }
 		GENERIC double& attribute(const int& i) { return _attributes[i]; }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
 
 		/*! Constanst that are used as values for state variable
 		 *  Value 0 is the active state, it means that the 
@@ -330,6 +332,8 @@ class EnsembleBase {
 
 		//! extra attribute of the system
 		GENERIC double& attribute(const int& i) const { return _sys[0].attribute(i); }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
+	        GENERIC int num_body_attributes() const { return NUM_BODY_ATTRIBUTES; };
 
 		//! Distance between planet i and j in the system
 		//! For a faster version c.f. \ref distance_squared_between(i,j)
@@ -410,11 +414,13 @@ class EnsembleBase {
 		GENERIC const int& state() const { return _ref.state(); }
 		GENERIC const int& id() const { return _ref.id(); }
 		GENERIC const double& attribute(const int& i) const { return _sys[0].attribute(i); }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
+	        GENERIC int num_body_attributes() const { return NUM_BODY_ATTRIBUTES; };
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 		GENERIC void copyTo( const SystemRef& r ) { _ref.copyTo( r ) ; }
-		GENERIC double calc_total_energy() const { _ref.calc_total_energy(); }
+		GENERIC double calc_total_energy() const { return _ref.calc_total_energy(); }
 	};
 
 

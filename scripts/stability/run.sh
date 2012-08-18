@@ -1,11 +1,13 @@
+#!/bin/bash
 SHORTDATE='date +%Y-%m-%d'
 OUT=stability_`$SHORTDATE`
-NBODY_RANGE=3
+NBODY_RANGE="3 4 5 6"
 base=`dirname $0`
 mkdir -p $OUT
 
 {
-for INT in Hermite_Adaptive Runge_Kutta_Adaptive_Time_Step MVS
+for INT in Hermite
+#_Adaptive Runge_Kutta_Adaptive_Time_Step MVS
 do
 	echo "Starting stability test for $INT"
 	$base/stability.sh $OUT $INT "$NBODY_RANGE"

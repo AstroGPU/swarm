@@ -2,6 +2,8 @@ Performance of Swarm-NG
 =======================
 Eric Ford
 
+* TODO:  NEEDS TO BE UPDATED FOR SWARN-NG v1.0
+
 The executable swarm_tutorial_benchmark can be used to evaluate the performance of swarm for your CPU and GPU.  For details about what benchmark is used and options, see link:swarm_tutorial_benchmark.html[].  
 
 Note that the default values are choosen so that it doesn't take too long.
