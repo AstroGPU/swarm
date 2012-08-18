@@ -15,34 +15,35 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
 #include "swarm/swarmplugin.h"
-#include "monitors/log_time_interval.hpp"
-#include "swarm/gpu/gravitation_acc.hpp"
+
+
 
 namespace swarm { namespace gpu { namespace bppt {
 
-/*! Paramaters for MidpointPropagator
+/*! Paramaters for VerletPropagator
  * \ingroup propagator_parameters
  *
  */
-struct MidpointPropagatorParams {
-	double time_step;
-	MidpointPropagatorParams(const config& cfg){
-		time_step = cfg.require("time_step", 0.0);
+struct VerletPropagatorParams {
+	double max_timestep, max_timestep_global, timestep_scale;
+	VerletPropagatorParams(const config& cfg){
+		max_timestep_global = cfg.require("max_timestep", 0.0);
+		timestep_scale = cfg.require("timestep_scale", 0.0);
 	}
 };
 
-/*! GPU implementation of modified midpoint method propagator
+/*! GPU implementation of Verlet propagator
  * \ingroup propagators
  *
  */
 template<class T,class Gravitation>
-struct MidpointPropagator {
-	typedef MidpointPropagatorParams params;
+struct VerletPropagator {
+	typedef VerletPropagatorParams params;
 	const static int nbod = T::n;
 
 	params _params;
-
 
 	// Runtime variables
 	ensemble::SystemRef& sys;
@@ -50,12 +51,12 @@ struct MidpointPropagator {
 	int b;
 	int c;
 	int ij;
-//	bool body_component_grid;
-//	bool first_thread_in_system;
-	double max_timestep;
+	bool body_component_grid;
+	bool first_thread_in_system;
+	double max_timestep, timestep;
 
 
-	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
+	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
@@ -67,7 +68,18 @@ struct MidpointPropagator {
 		 return 0;
 	}
 
-	GPUAPI void init()  { }
+	GPUAPI void init()  
+	{ 
+	   // First half step uses timestep factor from previous itteration, 
+	   // so need to calculate timestep factor before first call to advance
+	   if( is_in_body_component_grid() )
+	   {
+	      double pos = sys[b][c].pos() , vel = sys[b][c].vel();
+	      double acc = calcForces.acc(ij,b,c,pos,vel);
+	      timestep = calc_timestep();		
+	   }
+	   max_timestep = _params.max_timestep_global;
+	}
 
 	GPUAPI void shutdown() { }
 
@@ -86,69 +98,72 @@ struct MidpointPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+
+	// calculate the timestep given current positions
+	GPUAPI double calc_timestep() const
+	{
+	// assumes that calcForces has already been called to fill shared memory
+	// if timestep depended on velocities, then would need to update velocities and syncthreads
+
+	double factor = 0.;
+	  for(int i=0;i<nbod;++i)
+	     {
+	     double mi = sys[i].mass();
+
+	     for(int j=1;j<nbod;++j)
+	        {
+	        if(i==j) { continue; }
+		double mj = sys[j].mass();	
+		double oor = calcForces.one_over_r(i,j);
+		factor += (mi+mj)*oor*oor*oor;
+		}
+	     }
+	factor *= _params.timestep_scale*_params.timestep_scale;
+	factor += 1.;
+	factor = rsqrt(factor);
+	factor *= _params.max_timestep_global;
+	return factor;
+	}
+
 	GPUAPI void advance(){
-		double H = min( max_timestep ,  _params.time_step );
-		double pos = 0, vel = 0;
+		double h = timestep;
+		double pos = 0.0, vel = 0.0;
 
 		if( is_in_body_component_grid() )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
+			///////// INTEGRATION STEP /////////////////
 
-		////////// INTEGRATION //////////////////////
+			double h_first_half = 0.5 * h;
 
-		/// Modified midpoint method integrator with n substeps
-		const int n = 4;
-		double h = H / n;
+			// First half step for positions
+			pos = pos + h_first_half * vel;
 
-		double p_i , p_im1, p_im2;
-		double v_i,  v_im1, v_im2;
-		double a_im1;
+			// Calculate acceleration in the middle
+			double acc = calcForces.acc(ij,b,c,pos,vel);
+			
+			// First half step for velocities
+			vel = vel + h_first_half * acc;
 
-		// Step 0
-		p_i = pos;
-		v_i = vel;
+			// Update timestep with positions (and velocities) at end of half-step
+			timestep = calc_timestep();
 
-		// Step 1
-		p_im1 = p_i;
-		v_im1 = v_i;
+			// Second half step for velocities
+			double h_second_half = 0.5*timestep;
 
-		a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+			// Second half step for positions and velocities
+			vel = vel + h_second_half * acc;
+			pos = pos + h_second_half * vel;
 
-		p_i = p_im1 + h * v_im1;
-		v_i = v_im1 + h * a_im1;
-
-		// Step 2 .. n
-		for(int i = 2; i <= n; i++){
-			p_im2 = p_im1;
-			p_im1 = p_i;
-			v_im2 = v_im1;
-			v_im1 = v_i;
-
-			a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
-
-			p_i = p_im2 + 2.0 * h * v_im1;
-			v_i = v_im2 + 2.0 * h * a_im1;
-		}
-		double a_i = calcForces.acc(ij,b,c,p_i,v_i);
-
-		pos = 0.5 * ( p_i + p_im1 + h * v_i );
-		vel = 0.5 * ( v_i + v_im1 + h * a_i );
-
+			//////////////// END of Integration Step /////////////////
 
 		// Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 
-			sys.time() += H;
+			sys.time() += h_first_half + h_second_half;
 	}
 };
-
-typedef gpulog::device_log L;
-using namespace monitors;
-
-integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L>, GravitationAcc > >
-	midpoint_prop_plugin("midpoint"
-			,"This is the integrator based on midpoint propagator");
 
 
 } } } // End namespace bppt :: gpu :: swarm

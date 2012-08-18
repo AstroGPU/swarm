@@ -16,31 +16,27 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 #include "swarm/swarmplugin.h"
-#include "swarm/gpu/gravitation_accjerk.hpp"
 
-namespace swarm {
+namespace swarm { namespace gpu { namespace bppt {
 
-namespace gpu {
-namespace bppt {
-
-/*! Paramaters for EulerPropagator
+/*! Paramaters for MidpointPropagator
  * \ingroup propagator_parameters
  *
  */
-struct EulerPropagatorParams {
+struct MidpointPropagatorParams {
 	double time_step;
-	EulerPropagatorParams(const config& cfg){
+	MidpointPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
 };
 
-/*! GPU implementation of euler propagator
+/*! GPU implementation of modified midpoint method propagator
  * \ingroup propagators
  *
  */
 template<class T,class Gravitation>
-struct EulerPropagator {
-	typedef EulerPropagatorParams params;
+struct MidpointPropagator {
+	typedef MidpointPropagatorParams params;
 	const static int nbod = T::n;
 
 	params _params;
@@ -52,21 +48,14 @@ struct EulerPropagator {
 	int b;
 	int c;
 	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
+//	bool body_component_grid;
+//	bool first_thread_in_system;
 	double max_timestep;
 
 
-	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
+	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
-
-	GPUAPI void init()  { }
-
-	GPUAPI void shutdown() { }
-
-        GPUAPI void convert_internal_to_std_coord() {} 
-        GPUAPI void convert_std_to_internal_coord() {}
 
 	static GENERIC int thread_per_system(){
 		return nbod * 3;
@@ -76,49 +65,81 @@ struct EulerPropagator {
 		 return 0;
 	}
 
+	GPUAPI void init()  { }
+
+	GPUAPI void shutdown() { }
+
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}
+
 	__device__ bool is_in_body_component_grid()
 //        { return body_component_grid; }	
-        { return  ((b < nbod) && (c < 3)); }	
+        { return  ((b < T::n) && (c < 3)); }	
 
 	__device__ bool is_in_body_component_grid_no_star()
 //        { return ( body_component_grid && (b!=0) ); }	
-        { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
+        { return ( (b!=0) && (b < T::n) && (c < 3) ); }	
 
 	__device__ bool is_first_thread_in_system()
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
 	GPUAPI void advance(){
-		double h = min(_params.time_step, max_timestep);
-		double pos = 0.0, vel = 0.0;
-		double acc = 0.0, jerk = 0.0;
-		const double third = 1.0/3.0;
-		
+		double H = min( max_timestep ,  _params.time_step );
+		double pos = 0, vel = 0;
+
 		if( is_in_body_component_grid() )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
-		calcForces(ij,b,c,pos,vel,acc,jerk);
-		// Integratore
-		pos = pos +  h*(vel+(h*0.5)*(acc+(h*third)*jerk));
-		vel = vel +  h*(acc+(h*0.5)*jerk);
+		////////// INTEGRATION //////////////////////
+
+		/// Modified midpoint method integrator with n substeps
+		const int n = 4;
+		double h = H / n;
+
+		double p_i , p_im1, p_im2;
+		double v_i,  v_im1, v_im2;
+		double a_im1;
+
+		// Step 0
+		p_i = pos;
+		v_i = vel;
+
+		// Step 1
+		p_im1 = p_i;
+		v_im1 = v_i;
+
+		a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+		p_i = p_im1 + h * v_im1;
+		v_i = v_im1 + h * a_im1;
+
+		// Step 2 .. n
+		for(int i = 2; i <= n; i++){
+			p_im2 = p_im1;
+			p_im1 = p_i;
+			v_im2 = v_im1;
+			v_im1 = v_i;
+
+			a_im1 = calcForces.acc(ij,b,c,p_im1,v_im1);
+
+			p_i = p_im2 + 2.0 * h * v_im1;
+			v_i = v_im2 + 2.0 * h * a_im1;
+		}
+		double a_i = calcForces.acc(ij,b,c,p_i,v_i);
+
+		pos = 0.5 * ( p_i + p_im1 + h * v_i );
+		vel = 0.5 * ( v_i + v_im1 + h * a_i );
 
 
 		// Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 
-			sys.time() += h;
+			sys.time() += H;
 	}
 };
 
-typedef gpulog::device_log L;
-using namespace monitors;
 
-integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L>, GravitationAccJerk > >
-	euler_prop_plugin("euler"
-			,"This is the integrator based on euler propagator");
-
-}
-}
-}
+} } } // End namespace bppt :: gpu :: swarm
