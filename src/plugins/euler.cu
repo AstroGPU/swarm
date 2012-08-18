@@ -15,55 +15,18 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#include "propagators/euler.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
 
-/*! \file swarm.h
- *   \brief Public interface for swarmng library. 
- *
- *   User application intending to use swarm library should include this header file.
- *   This file has most of essential headers needed to use the swarmng library.
- *
-*/
-#pragma once
-
-#include "common.hpp"
-#include "types/ensemble.hpp"
-#include "types/config.hpp"
-#include "log/logmanager.hpp"
-#include "integrator.hpp"
-#include "plugin.hpp"
-#include "utils.hpp"
-#include "gpu/device_settings.hpp"
+typedef gpulog::device_log L;
+using namespace swarm::monitors;
+using namespace swarm::gpu::bppt;
+using swarm::integrator_plugin_initializer;
 
 
-/*! Swarm-NG library
- *
- */
-namespace swarm {
 
-/*! Initialize the swarm library.
- *   This function is included for compatibility. 
- *  It is not mandatory to call this functions but it is
- *  encouraged for forward compatibility.
- */
-inline void init(const config &cfg) { 
-	// Select the proper device
-	const char* devstr = getenv("CUDA_DEVICE");
-	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
+integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L>, GravitationAccJerk > >
+	euler_prop_plugin("euler"
+			,"This is the integrator based on euler propagator");
 
-	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
-
-	select_cuda_device(dev);
-
-	if(cfg.optional("more_cache",0)!=0){
-		set_more_cache();
-	}
-
-	if(cfg.optional("verbose",0)!=0){
-	print_device_information();
-        }
-
-	swarm::log::manager::default_log()->init(cfg);
-}
-
-
-} 

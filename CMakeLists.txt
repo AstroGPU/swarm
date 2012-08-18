@@ -65,6 +65,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINAR
 ADD_SUBDIRECTORY(src)
 
 
+tutorial_python(TutorialPython py/tutorial.py)
 
 INCLUDE(test.cmake)
 INCLUDE(custom.cmake)

@@ -18,94 +18,44 @@
 
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
-#include "monitors/stop_on_ejection.hpp"
-#include "monitors/composites.hpp"
-#include "swarm/gpu/gravitation_accjerk.hpp"
-#include "monitors/log_transit.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
-/*! GPU implementation of PEC2 Hermite integrator w/ adaptive time step
+/*! GPU implementation of PEC2 Hermite integrator
  * \ingroup integrators
  *
  */
-template< class Monitor >
-class hermite_adap: public integrator {
+template< class Monitor , template<class T> class Gravitation >
+class hermite: public integrator {
 	typedef integrator base;
 	typedef Monitor monitor_t;
 	typedef typename monitor_t::params mon_params_t;
 	private:
-	double _time_step_factor, _min_time_step;
+	double _time_step;
 	mon_params_t _mon_params;
 
 	public:
-	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {
-		_time_step_factor =  cfg.require("time_step_factor", 0.0);
-		_min_time_step =  cfg.require("min_time_step", 0.0);
-	}
-
-	template<class T>
-	static GENERIC int shmem_per_system(T compile_time_param){
-		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
+	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
+		_time_step =  cfg.require("time_step", 0.0);
 	}
 
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
 
-	template<class T>
-	struct SystemSharedData {
-		typedef GravitationAccJerk<T> Grav;
-		typename Grav::shared_data gravitation;
-		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
-	};
 
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
-
-	template<class T>
-	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
-		{
-		// Body number
-		int b = thread_body_idx(T::n);
-		// Component number
-		int c = thread_component_idx(T::n);
-
-		// Put accelerations and jerks for each body and component into shared memory
-		if( (b < T::n) && (c < 3) ) {
-		    shared.gravitation[b][c].acc() = acc*acc;
-		    shared.gravitation[b][c].jerk() = jerk*jerk;
-	    }
-		__syncthreads();
-		// calculate sum of squares of each component for each body
-		// store ratio in shared memory
-		if( (b < T::n) && (c==0) ) {
-		    double acc_mag_sq = shared.gravitation[b][0].acc()+shared.gravitation[b][1].acc()+shared.gravitation[b][2].acc();
-		    double jerk_mag_sq = shared.gravitation[b][0].jerk()+shared.gravitation[b][1].jerk()+shared.gravitation[b][2].jerk();
-		    shared.time_step_factor[b].value() = jerk_mag_sq/acc_mag_sq;
-		}
-		__syncthreads();
-		if( thread_in_system() == 0 ) {
-			double tf = shared.time_step_factor[0].value();
-		    for(int bb=1;bb<T::n;++bb)
-		      	tf += shared.time_step_factor[bb].value();
-		    shared.time_step_factor[0].value() = rsqrt(tf)*_time_step_factor+_min_time_step;
-		}
-		__syncthreads();
-		return shared.time_step_factor[0].value();
-	}		
-
-
 
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
-		typedef GravitationAccJerk<T> Grav;
+		typedef Gravitation<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
-		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
-		Grav calcForces(sys, shared_data.gravitation );
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
 		// Local variables
 		const int nbod = T::n;
@@ -113,35 +63,36 @@ class hermite_adap: public integrator {
 		const int b = thread_body_idx(nbod);
 		// Component number
 		const int c = thread_component_idx(nbod);
-//		const bool body_component_grid = (b < nbod) && (c < 3);
-
 
 		// local variables
 		monitor_t montest(_mon_params,sys,*_log) ;
 
+
 		// local information per component per body
 		double pos = 0.0, vel = 0.0 , acc0 = 0.0, jerk0 = 0.0;
-		if( (b < T::n) && (c < 3) )
-			pos = sys[b][c].pos() , vel = sys[b][c].vel();
+		if( (b < nbod) && (c < 3) )
+			{ pos = sys[b][c].pos(); vel = sys[b][c].vel(); }
 
-		montest( thread_in_system() );
+
+//		if( thread_in_system()==0  )  {
+		    montest( thread_in_system() );
+//		    }
 
 		////////// INTEGRATION //////////////////////
 
 		// Calculate acceleration and jerk
 		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
-		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
-			// Since h is the time step that is used for the step it makes more sense to
-			// to calculate time step and assign it to h
-			double h = calc_adaptive_time_step(compile_time_param, shared_data ,acc0,jerk0);
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
+		{
+			double h = _time_step;
 
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
 			}
 
 			
-			// Initial Evaluation, it can be omitted for faster computation
+			// Initial Evaluation
 			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
@@ -159,9 +110,10 @@ class hermite_adap: public integrator {
 #if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#endif
+#else
 				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
+#endif
 			}
 			{
 				// Evaluation
@@ -171,25 +123,26 @@ class hermite_adap: public integrator {
 #if 0 // OLD
 				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
 				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#endif
+#else
 				pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
+#endif
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
 			// Finalize the step
-			if( (b < T::n) && (c < 3) )
-				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+			if( (b < nbod) && (c < 3) )
+				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
+			__syncthreads();
+			montest( thread_in_system() );  
+			__syncthreads();
+			if( sys.is_active() && thread_in_system()==0 )  {
+			    if( sys.time() >= _destination_time ) 
+			    {	sys.set_inactive(); }
+			}
 
-			montest( thread_in_system() );
-
-			if( sys.is_active() && thread_in_system()==0  )  {
-			   if( sys.time() >= _destination_time ) 
-			    {  	sys.set_inactive();    }
-
-					}
 			__syncthreads();
 
 
@@ -199,22 +152,5 @@ class hermite_adap: public integrator {
 
 
 };
-
-
-typedef gpulog::device_log L;
-using namespace monitors;
-
-
-integrator_plugin_initializer<
-		hermite_adap< stop_on_ejection<L> >
-	> hermite_adap_plugin("hermite_adap");
-
-integrator_plugin_initializer<
-	        hermite_adap< stop_on_ejection_or_close_encounter<L> > >
-	hermite_adap_close_encounter_plugin("hermite_adap_close_encounter");
-
-
-integrator_plugin_initializer<hermite_adap< log_transit<L> > >
-	hermite_adap_log_plugin("hermite_adap_transit");
 
 } } } // end namespace bppt :: integrators :: swarm
