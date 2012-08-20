@@ -82,7 +82,7 @@ http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
   the following order):
  	- \ref TutorialBeginner
  	- \ref TutorialGPU
-	- \ref TutorialPropagator  A propagator class implements a device function (advance) that advance one system by one time step for one system (or at least attempts one timestep).  These can be readiliy combined with the generic_integrator to quickly provide a new GPU-based integration algorithm.
+	- \ref TutorialPropagator 
 	- \ref TutorialIntegrator  An integrator class implements a GPU kernel function (kernel) that integrates all active systems in an ensemble systems (often for many timesteps).  While potentially more efficient than the same algorithm written as a propagator, writing an integrator requires more familiarity with GPU programming.
         - \ref TutorailMonitor     A monitor class inspects a system and has the option of logging (to memory or a buffer that can be easily written to disk) data or indicating a system should be deactivated (i.e., stop integrating the ssytem).  Monitor classes supercede both the Logger and Stopper class. 
 </li
