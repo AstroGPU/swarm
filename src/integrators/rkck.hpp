@@ -18,10 +18,6 @@
 
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
-#include "monitors/composites.hpp"
-#include "monitors/stop_on_ejection.hpp"
-#include "monitors/log_time_interval.hpp"
-#include "swarm/gpu/gravitation_acc.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -43,7 +39,7 @@ struct AdaptiveTimeStep {
  *
  *
  */
-template< class AdaptationStyle, class Monitor >
+template< class AdaptationStyle, class Monitor, template<class T> class Gravitation >
 class rkck: public integrator {
 	typedef integrator base;
 	typedef  Monitor monitor_t;
@@ -101,7 +97,7 @@ class rkck: public integrator {
 		if(sysid()>=_dens.nsys()) return;
 		// References to Ensemble and Shared Memory
 		ensemble::SystemRef sys = _dens[sysid()];
-		typedef GravitationAcc<T> Grav;
+		typedef Gravitation<T> Grav;
 		typedef typename Grav::shared_data grav_t;
 		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
 
@@ -287,23 +283,5 @@ class rkck: public integrator {
 
 };
 
-typedef gpulog::device_log L;
-using namespace monitors;
-
-integrator_plugin_initializer<
-		rkck< AdaptiveTimeStep, stop_on_ejection<L> >
-	> rkck_adaptive_plugin("rkck_adaptive");
-
-integrator_plugin_initializer<
-		rkck< FixedTimeStep, stop_on_ejection<L> >
-	> rkck_fixed_plugin("rkck_fixed");
-
-integrator_plugin_initializer<
-	        rkck< FixedTimeStep, stop_on_ejection_or_close_encounter<L> > 
-	> rkck_adaptive_close_encounter_plugin("rkck_adaptive_close_encounter");
-
-integrator_plugin_initializer<
-	        rkck< AdaptiveTimeStep, stop_on_ejection_or_close_encounter<L> > 
-	> rkck_fixed_close_encounter_plugin("rkck_fixed_close_encounter");
 
 } } } // end namespace bppt :: integrators :: swarm

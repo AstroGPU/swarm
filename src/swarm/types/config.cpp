@@ -35,6 +35,7 @@ namespace swarm {
 
 
 void config::initialize(const char* const key_value_pairs[][2],const int n){
+	$_(n);
 	for(int i =0 ; i < n ; i++ )
 		insert( std::pair<std::string,std::string>( key_value_pairs[i][0], key_value_pairs[i][1] ) ) ;
 	

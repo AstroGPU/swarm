@@ -15,55 +15,33 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+#include "integrators/hermite.hpp"
+#include "monitors/composites.hpp"
+#include "monitors/stop_on_ejection.hpp"
+#include "monitors/log_time_interval.hpp"
+#include "swarm/gpu/gravitation_accjerk.hpp"
+#include "monitors/log_transit.hpp"
+#include "monitors/log_rvs.hpp"
 
-/*! \file swarm.h
- *   \brief Public interface for swarmng library. 
- *
- *   User application intending to use swarm library should include this header file.
- *   This file has most of essential headers needed to use the swarmng library.
- *
-*/
-#pragma once
+typedef gpulog::device_log L;
+using namespace swarm::monitors;
+using namespace swarm::gpu::bppt;
+using swarm::integrator_plugin_initializer;
 
-#include "common.hpp"
-#include "types/ensemble.hpp"
-#include "types/config.hpp"
-#include "log/logmanager.hpp"
-#include "integrator.hpp"
-#include "plugin.hpp"
-#include "utils.hpp"
-#include "gpu/device_settings.hpp"
+integrator_plugin_initializer<hermite< stop_on_ejection<L> , GravitationAccJerk > >
+	hermite_plugin("hermite");
 
+integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
+	hermite_close_encounter_plugin("hermite_close_encounter");
 
-/*! Swarm-NG library
- *
- */
-namespace swarm {
+integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
+	hermite_log_plugin("hermite_log");
 
-/*! Initialize the swarm library.
- *   This function is included for compatibility. 
- *  It is not mandatory to call this functions but it is
- *  encouraged for forward compatibility.
- */
-inline void init(const config &cfg) { 
-	// Select the proper device
-	const char* devstr = getenv("CUDA_DEVICE");
-	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
+integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
+	hermite_transit_plugin("hermite_transit");
 
-	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
+#if __CUDA_ARCH__ >= 200
+//integrator_plugin_initializer<hermite< log_rvs<L>  , GravitationAccJerk > >
+//	hermite_rv_plugin("hermite_rv");
+#endif
 
-	select_cuda_device(dev);
-
-	if(cfg.optional("more_cache",0)!=0){
-		set_more_cache();
-	}
-
-	if(cfg.optional("verbose",0)!=0){
-	print_device_information();
-        }
-
-	swarm::log::manager::default_log()->init(cfg);
-}
-
-
-} 

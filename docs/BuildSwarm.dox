@@ -1,9 +1,10 @@
 namespace swarm {
 
-/** \page BuildSwarm How to build swarm
+/** \page BuildSwarm Getting Started with Swarm-NG
 
 
-\section Obtain Obtaining Swarm
+\section Obtain Obtaining source code
+Currently we don't have any binary packages available. 
 You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
@@ -12,71 +13,130 @@ You can obtain Swarm source codes in two different ways:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
 \endverbatim
+If you want to download the stable version from git, use this command
+\verbatim
+$ git clone -b stable  git@github.com:AstroGPU/swarm.git
+\endverbatim
 
 \section Pre Pre-requisites
 Minimum Hardware requirements:
- - 64-bit Linux system
+ - 64-bit CPU
+ - 2GB Memory
  - nVidia GPU with compute capabality 1.3 or above (GT200 and Fermi architectures; some features require compute capability 2.0)
 
-Required software packages:
+Software Requirements:
+ - 64-bit Linux (tested on Ubuntu and RHEL)
+ - Latest CUDA drivers (should match CUDA SDK)
  - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 3.2 or later 
- - GCC 4.4 : CUDA has problems with most recent versions of GCC. Check the CUDA manual for the supported version of GCC.
- - <a href="http://www.boost.org/">Boost</a> 1.33 or later (including program_options, regex)
+ - GCC 4.x (Refer to your CUDA Toolkit manual for the correct version of GCC)
+ - <a href="http://www.boost.org/">Boost</a> libraries 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
- - <a href="http://www.doxygen.org/">Doxygen</a> (optional)
+
+Optional software dependencies:
+ - <a href="http://www.doxygen.org/">Doxygen</a> 
+ - CMake GUI(cmake-gui)
+ - Console CMake(ccmake)
+
+Python development requirements:
+ - Boost Python module
+ - Python 2.5 or later development headers
 
 Installing required packages on Ubuntu
- - Download and Install CUDA Toolkit SDK for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
- - Install the rest of packages using following command:
+ - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
+ - Install the rest of required packages using following command:
 \verbatim
-sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev doxygen cmake-gui
+sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev 
+\endverbatim
+For generating documentation and using the CMake graphical user interface
+\verbatim
+sudo apt-get install doxygen cmake-gui
+\endverbatim
+For python development
+\verbatim
+sudo apt-get install libboost-python-dev python-dev
 \endverbatim
 
+\section Configuration Configuration
+Create a directory for Make files and binaries (it can be anywhere on your system) We call it &lt;build directory&gt; from now. We will refer to source directory as &lt;source directory&gt;.
 
-\section Build Step-by-Step building
+We will use CMake to configure and collect parameters of the system. 
+The procedure is explained for different interfaces of CMake: Command-line, Console, GUI.
 
-\subsection s1 Step 1: Initialize CMake
-Change into source directory ("cd swarm") and execute the following command:
+\subsection CMake Configuration using CMake command line
+
+Change into the build directory and execute the following command:
 \verbatim
-$ cmake .
+$ cmake <source directory>
 \endverbatim
-Do NOT panic if you get error messages.  
 CMake will try to automatically find required packages if they are installed in default location. 
-Otherwise it will give you error messages about missing packages.  See Step 2 for how to resolve these
+Otherwise it will give you error messages about missing packages. In this case, you need to set the paths to software packages that Swarm uses.
 
-\subsection s2 Step 2: Configure Variables and Paths
-
-You may need to change the following variables for CMake for compiling properly:
+You may need to change the following variables for CMake in order for Swarm
+to compile properly:
 
  - \c Boost_INCLUDE_DIR      : Path where Boost headers are installed. [/usr/include/]
  - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
- - \c CUDA_SDK_ROOT_DIR      : Path to the CUDA SDK [/usr/local/cuda, /opt/cuda]
- - \c CMAKE_INSTALL_PREFIX   : Path to cmake
  - \c MAX_NBODIES            : Maximum number of bodies supported by Swarm [3..16; n.b. >=16 work only with selected gravitation classes]
+ - \c GENERATE_FERMI         : To generate CUDA binaries for Fermi architecture, check this option only if you have a Fermi card in your system.
+ - \c GENERATE_GT200 		 : To generate CUDA binaries for GT200 architecture, check this option only if you have a GT200 card in your system.
 
-To change any of the above variables use any of following methods:
- - If CMake GUI is installed and you have X server running, to see a list of variables in a GUI window, type:
- \verbatim cmake-gui . \endverbatim
- - If CMake GUI is installed but no X server access is available, to see a list of variables in an console application type:
- \verbatim ccmake . \endverbatim.  Once variables are set as you like, press "c" to configure, press "e" to exit help, press "g" to generate cmake configuration files.
- - Open \c CMakeCache.txt with a text editor and find the variable and change it
- - To set value of &lt;var&gt; to &lt;value&gt;, type:
- \verbatim cmake . -D<var>=<value> \endverbatim
+The variables may have default values filled in. If there is a default value, you can leave it unchaned. For paths, you need to put the proper path in if the
+value contains the word NOTFOUND.
 
-\subsection s3 Step 3:  Generate Makefiles
-After you set the variables to desired values, run \verbatim cmake . \endverbatim 
-again to generate the Makefiles.
+To see a list of all variables and their values run
+\verbatim cmake <build directory> -L \endverbatim
 
-You may check that Makefiles are present by typing \verbatim make help \endverbatim
+To set value of &lt;var&gt; to &lt;value&gt;, type:
+\verbatim cmake <build directory> -D<var>=<value> \endverbatim
 
-\subsection s4 Step 4: Build 
-To build Swarm type: \verbatim make \endverbatim
-It may take a while to build the binaries.
+To check your configuration and generate make files run 
+\verbatim cmake <build directory> \endverbatim 
+
+If there are errors, go back and change the variables and try again.
+
+Once the Make files are created
+You may check that Makefiles are present by changing into the build directory 
+and executing \verbatim make help \endverbatim
+
+\subsection CCMake Configuration using Console CMake
+CCMake is a console UI interface to CMake. To get started change to the build
+directory and type this command:
+\verbatim
+ccmake <source directory>
+\endverbatim
+
+After the intialization is done, you will see the list of variables. Fill in the
+variables according to \ref CMake .
+
+Hit "c" to configure, if there are errors, go back to the variables page and 
+fix them and start over. 
+
+Once configuration succeded hit "e" to exit configuration page and then hit "g"
+to generate the Make files.
+
+\subsection CMakeGUI Configuration using CMake GUI
+CMake GUI is an X11 interface to CMake. To run CMake GUI, you need an X server running (local or remote).
+
+To get started, change into the build directory and type this command:
+\verbatim
+cmake-gui <source directory>
+\endverbatim
+
+Hit "Configure" button, in the dialogs that follow, choose the default options.
+CMake will check th configuration and may produce errors are in red text in the bottom pane.
+
+Change the variables according to \ref CMake. Hit "Configure" again to apply changes. Make sure there are no errors.
+
+Hit "Generate" when you are done and Makefiles are generated. You can close the CMake GUI window after generate command is done.
+
+\section Compile Compile
+To compile and build binaries type: \verbatim make \endverbatim
+It may take a while to compile CUDA files.
 
 If you need documentation, use the following command:
 \verbatim make doc \endverbatim
 
-\subsection s5 Step 5: Tests
+\section Test Tests and Benchmarks
 
 Once the build is done, you can test the installation using:
 \verbatim make test \endverbatim

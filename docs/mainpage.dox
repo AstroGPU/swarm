@@ -1,29 +1,33 @@
-/** @mainpage Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems
+/** @mainpage Swarm-NG library 
 
- @authors Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, Jianwei Gao, Aaron Boley, Benjamin Nelson, Jorg Peters and the rest of the Swarm-NG development team
+ \brief Swarm-NG is a collection of code to help
+scientists and engineers harness the power of GPUs.  In the early
+releases, Swarm-NG will focus on the integration of an ensemble of
+N-body systems evolving under Newtonian gravity.  There are existing
+libraries to perform the force calculation for large-N systems on
+GPUs.  Swarm-NG does not replicate these, but rather focuses on
+integrating an ensemble of many systems where N is small.  This is of a
+partiular interest for astronomers who study the chaotic evolution of
+planetary systems.  In the long term, we hope Swarm-NG will allow for
+the efficient parallel integration of user-defined systems of ordinary
+differential equations.
 
- \brief The Swarm-NG package helps scientists and engineers harness the power
-of GPUs for high throughput integration of n-body systems.  Swarm-NG focuses 
-on the integration of an ensemble of N-body systems evolving under Newtonian
-gravity.  Swarm-NG does not replicate existing libraries that
-calculate forces for large-N systems on GPUs, but rather focuses on
-integrating an ensemble of many systems where N is small.  This is of
-particular interest for astronomers who study the chaotic evolution of
-planetary systems.  
+
+ \Authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
 
 
 
 \b Table \b of \b contents
  - \ref IntroductionSwarm
  - \ref BuildSwarm
- - \ref UsingSwarm Overiew of different ways to use Swarm-NG
- - \ref SwarmExec
- - \b Tutorials \b for \b Developers
+ - \ref SwarmExec "Using command-line interface"
+ - \b Using \b C++ \b library \b interface
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialPropagator
-	- \ref TutorialStopper
-	- \ref TutorialLogger
+	- \ref TutorialMonitor
+ - \b Using \b Python \b interface
+ 	- \ref TutorialPython
 
 
  @section LicensingCiting Licensing, Citing & Acknowledging Swarm-NG
@@ -62,12 +66,11 @@ We acknowledge additional support from:
 
 
  @section moreinfo Further Information
-- The project website http://www.astro.ufl.edu/~eford/code/swarm/
+ Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
 
-- For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
-
--  Online documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
-
+ For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
+ 
+ For more information see http://www.astro.ufl.edu/~eford/code/swarm/
 
  Source code is hosted on http://github.com/AstroGPU/swarm . 
 
