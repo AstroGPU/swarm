@@ -95,6 +95,9 @@ http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 <!-- <li> swarm_scatter_demo.cpp:  example that considers
   the effect of passing stars on planetary system.  More Info at link:swarm_scatter_demo.html[]</li> -->
 <li> src/tutorials/montecarlo*.cpp: these examples demonstrate how to initial an ensemble from C++ code, integrate the ensembles using the GPU and perform a basic analysis of the results.
+     - \ref montecarlo.cpp
+     - \ref montecarlo_ecclimit.cpp
+     - \ref montecarlo_mcmc_outputs.cpp
 </li>
 </ul>
 </li>
@@ -102,7 +105,7 @@ http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 <li> For ambitious developers, please read the following for more information 
 on how to write your own programs using the swarm-NG library:
 <ul>
-<li> link:for_developers.html[] for an overview on how to write your own code 
+<li> \ref for_developers for an overview on how to write your own code 
 that builds on Swarm-NG functionality.</li>
 <li> link:eventlog.html[] and link:snapshotting.html[] for information on using the
    swarm output system.</li>
