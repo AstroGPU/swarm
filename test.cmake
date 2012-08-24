@@ -13,6 +13,8 @@ ADD_TEST(NAME basic COMMAND swarm integrate --defaults )
 
 INCLUDE(test_integrators.cmake)
 
+INCLUDE(test_monitors.cmake)
+
 # TEST_SCENARIO makes it easy to create scenarios and add it to the system
 # The first argument in the name of the folder and the second argument is the name of the 
 # config file (without extension). Just put in.txt and out.txt in that folder alongside with
