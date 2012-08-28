@@ -20,6 +20,7 @@ gpu::Pintegrator create_gpu_integrator(const config& cfg){
 
 PROPERTY_ACCESSOR(ensemble::SystemRef, time, double )
 PROPERTY_ACCESSOR(ensemble::SystemRef, id  , int    )
+PROPERTY_ACCESSOR(ensemble::SystemRef, state  , int    )
 
 PROPERTY_ACCESSOR(ensemble::Body     , mass, double )
 PROPERTY_ACCESSOR(ensemble::Body::Component, pos, double )
@@ -115,6 +116,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.add_property("time", &get_time, &set_time)
 		.add_property("id", &get_id, &set_id)
 		.add_property("total_energy", &ensemble::SystemRef::total_energy)
+		.add_property("state", &get_state, &set_state)
 		.def("is_active", &ensemble::SystemRef::is_active )
 		.def("is_inactive", &ensemble::SystemRef::is_inactive )
 		.def("is_enabled", &ensemble::SystemRef::is_enabled )
