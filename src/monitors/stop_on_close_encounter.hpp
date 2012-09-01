@@ -36,7 +36,7 @@ struct stop_on_close_encounter_param {
    */
 	stop_on_close_encounter_param(const config &cfg)
 	{
-		dmin = cfg.optional("close_approach",false);
+		dmin = cfg.optional("close_approach",0.0);
 		deactivate_on = cfg.optional("deactivate_on_close_encounter",false);
 		log_on = cfg.optional("log_on_close_encounter",false);
 		verbose_on = cfg.optional("verbose_on_close_encounter",false);
