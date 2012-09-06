@@ -54,9 +54,6 @@ struct MVSPropagator {
 	int b;
 	int c;
 	int ij;
-	// Replaced with functions.  Remove from generic integrator?  Put functions in base class?
-//	bool body_component_grid;
-//	bool first_thread_in_system;
 
 	double sqrtGM;
 	double max_timestep;
@@ -68,15 +65,12 @@ struct MVSPropagator {
 		:_params(p),sys(s),calcForces(calc){}
 
 	__device__ bool is_in_body_component_grid()
-//        { return body_component_grid; }	
         { return  ((b < nbod) && (c < 3)); }	
 
 	__device__ bool is_in_body_component_grid_no_star()
-//        { return ( body_component_grid && (b!=0) ); }	
         { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
 
 	__device__ bool is_first_thread_in_system()
-//        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
 	static GENERIC int thread_per_system(){

@@ -8,8 +8,10 @@
 
 # CPU plugins
 ADD_PLUGIN(plugins/hermite_cpu.cpp Hermite_CPU TRUE "Hermite CPU Integrator")
+ADD_PLUGIN(plugins/mvs_cpu.cpp MVS_CPU TRUE "MVS CPU Integrator")
 if(OPENMP_FOUND)
 	ADD_PLUGIN(plugins/hermite_omp.cpp Hermite_OMP TRUE "Hermite OpenMP Integrator")
+	ADD_PLUGIN(plugins/mvs_omp.cpp MVS_OMP TRUE "MVS OpenMP Integrator")
 endif()
 
 # GPU Integrators
