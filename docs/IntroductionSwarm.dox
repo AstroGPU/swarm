@@ -58,7 +58,7 @@ https://github.com/AstroGPU/swarm
 	- For a quick build of swarm-NG, please see \ref BuildSwarm 
 	"How to build swarm" for key steps.
 	- For customized build of swarm-NG, please read \ref BuildSystem 
-	Build System for instructions on how to set up compiler flags and select 
+	"Build System" for instructions on how to set up compiler flags and select 
 	specific components tailored to your needs.
 </li>
 
