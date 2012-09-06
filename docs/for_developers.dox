@@ -1,0 +1,353 @@
+namespace swarm {
+
+
+/** \page for_developers Getting-Started Guide for Swarm-NG Developers
+
+\section Development DEVELOPMENT WITH THE SWARM-NG LIBRARY (as it is)
+
+\subsection overview Overview of the Public Interface
+<ul>
+  <li> swarm:: namespace for the swarm-NG library </li>
+
+  <li>swarm::ensemble:: an abstract base type for storing an ensemble of
+  n-body systems.  Provides funtions to get and set mass and position
+  of each body in each system, as well as other common operations. </li>
+
+      - swarm::cpu_ensemble: derives from ensemble, provides functionality
+   for ensembles stored on CPU.  Provides <I>copy_from(const gpu_ensemble &)</I>.
+
+      - swarm::gpu_ensemble: derives from ensemble, provides functionality
+   for ensembles stored on GPU.  Provides <I>copy_from(const cpu_ensemble &)</I>.
+
+  <li> swarm::integrator:: An abstract base class with a virtual integrator::integrate() method </li>
+
+  <li> swarm::config:: class for passing configuration parameters to swarm
+  library, integrators including "propagator" and "stopper", and the
+  swarm logging system.  See <a href="Configuration.html">configuration file</a> for
+  information about various parameters. </li>
+
+       - swarm::get_config:: reads a configuration file into a swarm::config object
+
+       - swarm::load_ensemble:: reads a series of data files into a cpu_ensemble
+</ul>
+
+<b>1. Configuration class</b>
+
+<dl>config Configuration can be either directly set in your program or loaded
+from the 'cfg' file. Please refer to <a href="Configuration.html">configuration file</a> for the
+format of parameters.</dl>
+
+\subsubsection setting Setting in source code:
+\verbatim
+  swarm::config cfg;
+  cfg["integrator"] = "gpu_hermite";     // integrator name
+  cfg["runon"] = "gpu";                  // whether to run on cpu or gpu (must match integrator)
+  cfg["precision"] = "1";                // use double precision
+  cfg["integration end"] = "1.";         // stop integrations one reah this time
+  cfg["time step"] = "0.001";            // time step required by gpu_hermite
+\endverbatim
+
+\subsubsection loading Loading from file:
+\verbatim
+  std::string icfgfn = argv[1];           // sets configuration file name from 1st command line arguement 
+  swarm::config cfg;                      // initializes cfg
+  swarm::load_config(cfg,icfgfn)          // loads configuration file name
+\endverbatim
+
+Each parameter appears on its own line in the configuration file in a
+format of 'key = value', for example:
+\verbatim
+integrator = gpu_hermite
+runon = gpu
+precision = 1
+integration end = 1.
+time step = 0.001
+\endverbatim
+
+<b>2. SWARM library initialization</b>
+
+This is required before calling any (non-utility) swarm library functions. 
+Currently it only initializes the swarm logging system.
+\verbatim
+  swarm::init(cfg);
+\endverbatim
+
+<b>3. CPU Ensemble initialization</b>
+
+A CPU ensemble can be either initialzied directly by your program or loaded
+on host to be used with integrators.
+
+\subsubsection initialization Initialization:
+\verbatim
+  unsigned int nsystems = cfg.count("num_systems") ? atoi(cfg.at("num_systems").c_str()) : 1024;  
+  unsigned int nbodyspersystem = cfg.count("num_bodies") ? atoi(cfg.at("num_bodies").c_str()) : 3;
+  swarm::cpu_ensemble ens(nsystems, nbodyspersystem);  // allocates memory for ens to 
+  		      		    // hold nsystems systems each containing nbodyspersystem bodies
+\endverbatim
+
+In this case, you would still need to set the initial conditions using
+the ensemble member functions.  You can set the mass and coordinates
+of a body using the ensemble::set_body function:
+\verbatim
+      ens.set_body(sys, bod, mass, x, y, z, vx, vy, vz);
+\endverbatim
+
+where:
+    - sys: specifies the system index (starting at 0)
+    - bod: specifies the body index (starting at 0)
+    - mass: is the body's mass
+    - x, y, z, vx, vy, and vz: specify the position and velocity of the body.
+Ensemble provides additional functions for ease access to this data.
+See <a href="classswarm_1_1EnsembleBase.html">
+reference manual entry for ensemble</a> for details.
+
+\subsubsection loading Loading
+\verbatim
+  // will look for a sequencce of files containing initial conditions
+  // for each system with this common prefix retreived from the
+  // configuration class cfg
+  std::string ensprefix;                 
+  swarm::get_config(ensprefix, cfg, "initial conditions");
+  swarm::cpu_ensemble ens;                // initialize empty cpu_ensemble
+  swarm::load_ensemble(ensprefix, ens);   // allocate memory and reads in initial conditions based on initial conditions files
+\endverbatim
+
+If "initial conditions" is set to 'data', then load_ensemble would
+look for files with the names 'data.0', 'data.1', 'data.2',
+etc. in the current directory.  Each of those initial condition files
+must be formated as the following:
+
+\verbatim
+Total_number_of_bodies
+Mass_1 x_1 y_1 z_1 vx_1 vy_1 vz_1
+Mass_2 x_2 y_2 z_2 vx_2 vy_2 vz_2
+Mass_3 x_3 y_3 z_3 vx_3 vy_3 vz_3
+.
+.
+. 
+Mass_N x_N y_N z_N vx_N vy_N vz_N
+\endverbatim
+
+
+<b>4. Integrator initialization</b>
+
+An integrator is initialized with the configuration class by:
+\verbatim
+  std::auto_ptr<integrator> integ(integrator::create(cfg));
+\endverbatim
+
+Each integrator provides a factory function of the form
+  <I>extern "C" integrator *create_XXXXX(const config &cfg)</I>, where XXXX is the name of the integrator. That factory function returns an instance of the integrator when called.  
+  <I>integrator::create</I> will figure out which factory to call based
+  on the data in 'cfg'.
+
+<b>5. Setting end times</b>
+
+Set the end times of integration by
+\verbatim
+  ens.set_time_end_all(10.);   // sets all integrations to stop at time 10.
+\endverbatim
+
+or by:
+\verbatim
+  double Tend;
+  swarm::get_config(Tend, cfg, "integration end");
+  for(int sys = 0; sys != ens.nsys(); sys++)
+      ens.time_end(sys) = Tend;
+\endverbatim
+
+<b>6. GPU Ensemble initialization (including upload)</b>
+
+If you want to perform an integration using a GPU, you must
+initialize a gpu_ensemble.  This is normally done based on an existing
+cpu_ensemble object.  (If you are not using a GPU, skip this step.)
+
+\verbatim
+   swarm::gpu_ensemble gpu_ens(ens);	// initializes and uploads data from ens into GPU's memory
+\endverbatim
+
+Data can also be transfered from a cpu_ensemble to a gpu_ensemble
+using the <I>gpu_ensemble(const cpu_ensemble &source)</I> function.
+
+<b>7. Performing the integration</b>
+
+To integrate the systems in your ensemble to time <I>Tend</I>, 
+use the integrate function of the pointer you retreived in step 4.
+If 'cfg' specified a cpu integrator, you would pass a cpu_ensemble.
+\verbatim
+  integ->integrate(cpu_ens, Tend);
+\endverbatim
+
+If cfg specified a cpu integrator, then you'd pass a cpu_ensemble to integrate.
+\verbatim
+  integ->integrate(gpu_ens, Tend);
+\endverbatim
+
+Note that gpu integrators integrate the data on the GPU.  So you will
+need to make sure that you have uploaded the coordinates of the
+systems that you would like to integrate from the CPU to the GPU
+before calling integrate.  In most cases, you will want to download
+the data from the GPU back to the CPU for analysis (see next step).
+
+<b>8. Downloading data from the GPU</b>
+
+If you have a <B>cpu_ensemble</B> object <I>ens</I> and a <B>gpu_ensemble</B> 
+object <I>gpu_ens</I>, you would download the data from the GPU to the CPU with
+\verbatim
+  ens.copy_from(gpu_ens);             
+\endverbatim
+If you are using a CPU integrator, you should skip this step.
+
+
+<b>9. Accessing the state of the systems</b>
+
+You can access the data stored in a cpu_ensemble via numerous member
+functions of ensemble.  An example function used in the tutorials:
+
+\verbatim
+void print_selected_systems_for_demo(swarm::ensemble& ens)
+{
+  using namespace swarm;
+  for(unsigned int systemid = 0; systemid< ens.nsys(); ++systemid)
+    {
+      std::cout << "sys= " << systemid << " time= " << ens.time(systemid) << " nsteps= " << ens.nstep(systemid) << "\n";
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  std::cout << "body= " << bod << ": mass= " << ens.mass(systemid, bod);
+	  std::cout << " position= (" << ens.x(systemid, bod) << ", " <<  ens.y(systemid, bod) << ", " << ens.z(systemid, bod) << ")";
+	  std::cout << " velocity= (" << ens.vx(systemid, bod) << ", " <<  ens.vy(systemid, bod) << ", " << ens.vz(systemid, bod) << ").\n";
+	}
+    }
+  std::cout.flush();
+}
+\endverbatim
+
+For more functions to access the data, see the
+<a href="classswarm_1_1Ensemblebase.html">referene
+manual entry for ensemble</a>.
+
+
+<b>10. Using the swarm logging system</b>
+
+Swarm includes an easy-to-use logging system.  To activate it, use the
+'output' and 'output interval' keywords either in your code or
+via a parameter file before calling the integrator.
+
+\subsubsection initialization Initialization:
+\verbatim
+  swarm::config cfg;
+  cfg["output"] = "binary log";     // specifies output style and file prefix
+  ...
+  double Toutputstep;
+  swarm::get_config(Toutputstep, cfg, "output interval");
+  for(int sys = 0; sys != ens.nsys(); sys++)
+  {
+          ens.time_output(sys, 0) = ens.time(sys); // time of next output, i.e., output immediately on start
+          ens.time_output(sys, 1) = Toutputstep;   // interval between output
+  }
+\endverbatim
+
+\subsubsection loading Loading from file:
+
+Use <I>load_cfg</I> as before, but with a configuration file that includes
+\verbatim
+  output = binary log.bin
+  output interval = 0.1
+\endverbatim
+
+swarm will store the data to an output file <I>log.bin</I>.
+The data can then be accessed via <a href="swarmquery_8cpp.html">swarmquery program</a>
+or user programs that make use of the swarmdb and gpulog classes.  
+
+
+\subsection query Querying Binary Files Written by the Swarm Logging System
+
+The swarmdb and gpulog classes are still experimental and documtation will be forthoming.
+
+For more information on the swarm logging system, see link:eventlog.html[] 
+link:snapshotting.html[].
+
+
+\section addingtolibrary ADDING YOUR OWN INTEGRATOR TO THE SWARM-NG LIBRARY
+
+To add a new integrator, follow these simple steps:
+
+   - create a subdirectory <I>integrators/<integrator_name></I>
+
+   - place any source files your integrator requires to above subdirectory
+
+   - create a Makefile.mk file there, based on example Makefile.mk files
+  found with other integrators (e.g., look at <I>integrators/euler/Makefile.mk</I>)
+
+Your integrator must:
+
+ - derive from integrator class and override its virtual
+  integrator::integrate() method.
+
+ - provide an <I>extern "C" integrator *create_XXXXX(const config &cfg)</I>
+  function (where XXXX is the name of the integrator) that will return
+  an instance of the integrator when called. Example:
+\verbatim
+        // factory
+        extern "C" integrator *create_gpu_euler(const config &cfg)
+        {
+                return new gpu_euler_integrator(cfg);
+        }
+\endverbatim
+
+ - There are additonial requirements for your integrator to work with
+  the gpulogging systems.
+
+Note that we're trying to shift all integrators to use the generic
+integrator framework (see <I>verlet</I>, <I>rk4</I> or <I>rkck</I>).  In this framework you
+merely define a "propagator" for your new integrator.  See <I>euler</I>
+or <I>rk4</I> integrators for simple examples.  
+
+\subsection generic_integrator Generic_Integrator Framework
+
+To be written
+
+
+\section contribution CONTRIBUTING TO THE SWARM-NG LIBRARY
+
+\subsection overview Overview of private interface
+
+We're likely to change the private interfaces in subsequent releases.
+Thus, we strongly encourage people not to use the private interface
+without coordinating with the swarm-NG development team.
+
+
+
+\section limitation LIMITATIONS & BUGS
+
+As noted in the README.txt:
+
+ - swarm is limited to N-body systems with 3-10 bodies.
+
+ - swarm only integrates forward in time.
+
+ - While there are euler, rk4 and rkck integrators, they are in a preliminary
+  form and should not be used.  While there are files for mvs, it is 
+  merely a template at this point
+
+ - E.g., rk4 requires exactly 3 bodies and does not include a cpu version
+
+For an updated list, visit the
+  <a href="http://www.astro.ufl.edu/~eford/code/swarm">Swarm-NG Website</a>
+for updated information on bugs.
+
+
+\section RESOURCES
+
+Other Online Documentation: http://www.astro.ufl.edu/~eford/code/swarm/docs/
+
+Online Reference Manual: http://www.astro.ufl.edu/~eford/code/swarm/doxygen/
+
+Main web site: http://www.astro.ufl.edu/~eford/code/swarm/
+
+Google Group: http://groups.google.com/group/swarm-ng
+
+
+*/
+}
+

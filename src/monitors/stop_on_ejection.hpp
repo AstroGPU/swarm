@@ -187,7 +187,7 @@ class stop_on_ejection {
 
 	GPUAPI int pass_two (int thread_in_system) 
           {
-	    if(is_condition_met() && is_deactivate_on() &&(thread_in_system==0) )
+	    if(is_condition_met() && is_deactivate_on() )
 	      {  _sys.set_disabled(); }
 	    return _sys.state();
 	  }

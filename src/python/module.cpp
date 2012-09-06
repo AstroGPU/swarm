@@ -20,6 +20,7 @@ gpu::Pintegrator create_gpu_integrator(const config& cfg){
 
 PROPERTY_ACCESSOR(ensemble::SystemRef, time, double )
 PROPERTY_ACCESSOR(ensemble::SystemRef, id  , int    )
+PROPERTY_ACCESSOR(ensemble::SystemRef, state  , int    )
 
 PROPERTY_ACCESSOR(ensemble::Body     , mass, double )
 PROPERTY_ACCESSOR(ensemble::Body::Component, pos, double )
@@ -57,6 +58,71 @@ list get_vel_list(const ensemble::Body& b){
 	return v;
 }
 
+ensemble::SystemRef ens_getitem(ensemble& ens, const int& i){
+	if( i >= 0 && i < ens.nsys())
+		return ens.getitem(i);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+
+}
+
+ensemble::Body& sys_getitem(ensemble::SystemRef& sys, const int& i){
+	if( i >= 0 && i < sys.nbod())
+		return sys.getitem(i);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+ensemble::Body::Component& bod_getitem(ensemble::Body& bod,const int& i){
+	if( i >= 0 && i < 3)
+		return bod.getitem(i);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+double sysattr_getitem(ensemble::Sys::attributes_t& sysattr, const int& i){
+	if( i >= 0 && i < NUM_SYSTEM_ATTRIBUTES)
+		return sysattr.getitem(i);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+double bodattr_getitem(ensemble::Body::attributes_t& bodattr, const int& i){
+	if( i >= 0 && i < NUM_PLANET_ATTRIBUTES)
+		return bodattr.getitem(i);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+void sysattr_setitem(ensemble::Sys::attributes_t& sysattr, const int& i, const double& value){
+	if( i >= 0 && i < NUM_SYSTEM_ATTRIBUTES)
+		return sysattr.setitem(i,value);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+void bodattr_setitem(ensemble::Body::attributes_t& bodattr, const int& i, const double& value){
+	if( i >= 0 && i < NUM_PLANET_ATTRIBUTES)
+		return bodattr.setitem(i,value);
+	else{
+		PyErr_SetString(PyExc_IndexError,"");
+		throw_error_already_set();
+	}
+}
+
+
 /* Swarm as a python module
  *
  * The reason for lib prefix is because CMake automatically
@@ -76,13 +142,13 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		;
 
 	class_<ensemble::Sys::attributes_t, noncopyable >( "Sys.Attributes", no_init )
-		.def("__getitem__", &ensemble::Sys::attributes_t::getitem )
-		.def("__setitem__", &ensemble::Sys::attributes_t::setitem )
+		.def("__getitem__", &sysattr_getitem )
+		.def("__setitem__", &sysattr_setitem )
 		;
 
 	class_<ensemble::Body::attributes_t, noncopyable >( "Body.Attributes", no_init )
-		.def("__getitem__", &ensemble::Body::attributes_t::getitem )
-		.def("__setitem__", &ensemble::Body::attributes_t::setitem )
+		.def("__getitem__", &bodattr_getitem )
+		.def("__setitem__", &bodattr_setitem )
 		;
 
 	class_<ensemble::Body::Component >("Body.Components", no_init)
@@ -102,8 +168,8 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.add_property("mass", &get_mass, &set_mass)
 		.def("radius", &ensemble::Body::radius )
 		.def("speed", &ensemble::Body::speed )
-		.def("attributes", &ensemble::Body::attributes, return_value_policy<reference_existing_object>() )
-		.def("__getitem__", &ensemble::Body::getitem, return_value_policy<reference_existing_object>() )
+		.add_property("attributes", make_function(&ensemble::Body::attributes, return_value_policy<reference_existing_object>()) )
+		.def("__getitem__", &bod_getitem, return_value_policy<reference_existing_object>() )
 		.add_property("pos", &get_pos_list, &set_pos_list ) 
 		.add_property("vel", &get_vel_list, &set_vel_list ) 
 		;
@@ -112,25 +178,27 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	 *  All important methods are covered for this class
 	 */
 	class_<ensemble::SystemRef  >("SystemRef", no_init )
+		.def("__len__", &ensemble::SystemRef::nbod , return_value_policy<copy_const_reference>())
 		.add_property("time", &get_time, &set_time)
 		.add_property("id", &get_id, &set_id)
 		.add_property("total_energy", &ensemble::SystemRef::total_energy)
+		.add_property("state", &get_state, &set_state)
+		.add_property("attributes", make_function(&ensemble::SystemRef::attributes, return_value_policy<reference_existing_object>()) )
 		.def("is_active", &ensemble::SystemRef::is_active )
 		.def("is_inactive", &ensemble::SystemRef::is_inactive )
 		.def("is_enabled", &ensemble::SystemRef::is_enabled )
 		.def("set_active", &ensemble::SystemRef::set_active )
 		.def("set_inactive", &ensemble::SystemRef::set_inactive )
 		.def("set_disabled", &ensemble::SystemRef::set_disabled )
-		.def("__getitem__", &ensemble::SystemRef::getitem, return_value_policy<reference_existing_object>() )
-		.def("attributes", &ensemble::SystemRef::attributes, return_value_policy<reference_existing_object>() )
+		.def("__getitem__", &sys_getitem, return_value_policy<reference_existing_object>() )
 
 		;
 
 	class_<ensemble, noncopyable >("Ensemble", no_init )
-		.def("__length__", &ensemble::nsys , return_value_policy<copy_const_reference>() )
+		.def("__len__", &ensemble::nsys , return_value_policy<copy_const_reference>())
 		.add_property("nsys", make_function(&ensemble::nsys , return_value_policy<copy_const_reference>() ) )
 		.add_property("nbod", make_function(&ensemble::nbod , return_value_policy<copy_const_reference>() ) )
-		.def("__getitem__", &ensemble::getitem )
+		.def("__getitem__", &ens_getitem )
 		;
 
 	class_<defaultEnsemble, bases<ensemble> >("DefaultEnsemble")
