@@ -81,6 +81,7 @@ class manager {
 
 	gpulog::device_log* get_gpulog() { return pdlog; }
 	gpulog::host_log* get_hostlog() { return &hlog; }
+        Pwriter get_writer() { return log_writer; }
 
 	//! Default log that is initialized in swarm::init(cfg)
 	//! It is automatically used in \ref integrator.

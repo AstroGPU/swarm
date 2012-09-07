@@ -16,6 +16,8 @@
 #include "random.hpp"
 #include "kepler.hpp"
 
+#include "swarm/log/host_array_writer.hpp"
+
 #define SYNC cudaThreadSynchronize()
 
 
@@ -53,6 +55,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(co
       ens[sysid].set_active();
       double x=0, y=0, z=0, vx=0, vy=0, vz=0;
       ens.set_body(sysid, 0, mass_star, x, y, z, vx, vy, vz);
+      ens[sysid][0].attribute(0) = 0.005; // solar radius
       double mass_enclosed = mass_star;
       for(unsigned int bod=1;bod<ens.nbod();++bod)
 	{
@@ -83,6 +86,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(co
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sysid, bod, mass_planet, x, y, z, vx, vy, vz);
+	  ens[sysid][bod].attribute(0) = 0.;
 
 	  if(cfg.count("verbose")&&(sysid<10))
 	    {
@@ -110,6 +114,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(co
 	  ens.set_body(sysid, bod, ens.mass(sysid,bod), 
 		       ens.x(sysid,bod)-x, ens.y(sysid,bod)-y, ens.z(sysid,bod)-z, 
 		       ens.vx(sysid,bod)-vx, ens.vy(sysid,bod)-vy, ens.vz(sysid,bod)-vz);	  
+	  ens[sysid][bod].attribute(0) = 0.;
 	}  // end loop over bodies
 
     } // end loop over systems
@@ -160,6 +165,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
       ens[sysid].set_active();
       double x=0, y=0, z=0, vx=0, vy=0, vz=0;
       ens.set_body(sysid, 0, masses[0], x, y, z, vx, vy, vz);
+      ens[sysid][0].attribute(0) = 0.005; // solar radius
       double mass_enclosed = masses[0];
       for(unsigned int bod=1;bod<ens.nbod();++bod)
 	{
@@ -180,6 +186,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sysid, bod, masses[bod], x, y, z, vx, vy, vz);
+	  ens[sysid][bod].attribute(0) = 0.0; 
 
 	  if(cfg.count("verbose")&&(sysid<10))
 	    {
@@ -700,5 +707,47 @@ int main(int argc, char* argv[] )
     }
 
   write_stable_systems(ens,ens_init);
+
+#if ACCESS_HOST_ARRAY_OF_TRANSIT_TIMES
+
+  static const int max_num_doubles_per_event = 2;
+  typedef swarm::event_record<max_num_doubles_per_event> event_record_type;
+  typedef std::vector<event_record_type>  event_log_one_system_type;
+  typedef std::vector<event_log_one_system_type>  event_log_one_code_type;
+  std::vector<event_log_one_code_type> event_log;
+
+  event_log_one_code_type data = (static_cast<host_array_writer* >(swarm::log::manager::default_log()->get_writer().get()))->get_event_log_all_systems(0);
+  std::vector<std::vector<std::vector<double> > > transit_times_model(ens_init.nsys(), std::vector<std::vector<double> >(ens_init.nbod()));
+  std::vector<std::vector<std::vector<double> > > transit_durations_model(ens_init.nsys(), std::vector<std::vector<double> >(ens_init.nbod()));
+
+  for(int sysid=0;sysid<data.size();++sysid)
+    {
+      for(int e=0;e<data[sysid].size();++e)
+	{
+	  event_record_type er = data[sysid][e];
+	  int bodid = er.bodid1;
+	  double time = er.time;
+	  double b = er.data[0];
+	  double vproj = er.data[1];
+	  transit_times_model[sysid][bodid].push_back(time);
+	  transit_durations_model[sysid][bodid].push_back(sqrt(1.-b*b)/vproj);
+	}
+    }
+
+  std::cout.precision(10);
+
+  for(int sysid=0;sysid<transit_times_model.size();++sysid)
+    {
+      for(int bodid=0;bodid<transit_times_model[sysid].size();++bodid)
+	{
+	  for(int trid=0;trid<transit_times_model[sysid][bodid].size();++trid)
+	    {
+	      std::cout << "s= " << sysid << " b= " << bodid << " n= " << trid << " t= " << transit_times_model[sysid][bodid][trid] << " D= " << transit_durations_model[sysid][bodid][trid] << " \n";
+	    }
+	}
+    }
+
+#endif
+
 }
 

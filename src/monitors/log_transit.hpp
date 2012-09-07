@@ -124,7 +124,8 @@ class log_transit {
     double acc, jerk;
 #if USING_INTEGRATOR_THAT_OVER_WRITES_SHARED_DATA || 1
         calcForces(thread_in_system,bid,cid,pos,vel,acc,jerk);
-	/*    __syncthreads();
+    __syncthreads();
+	/*
     if(thread_in_system < calcForces_t::pair_count)
      calcForces.calc_pair(thread_in_system);
      __syncthreads(); */
@@ -140,6 +141,8 @@ class log_transit {
     double d3b2dt3 = 6.*(dv[0]*da[0]+dv[1]*da[1])+2.*(dx[0]*dj[0]+dx[1]*dj[1]);
     double dt_try = -db2dt/d2b2dt2;  // find vertex of parabola
     dt_try = -db2dt/(d2b2dt2+0.5*dt_try*d3b2dt3);
+
+    //    printf("begin: b2=%g dx[0]=%g dx[1]=%g dv[0]=%g dv[1]=%g dt_try=%g\n",b2begin,dx[0],dx[1],dv[0],dv[1],dt_try);
     // if((dt_try<0.) || (dt_try>dt) )             // ignore if already past or vertex past next step
     if((dt_try<=-0.5*dt) || (dt_try>0.5*dt) ) // ignore if already past or vertex past next step
       { dt_min_b2 = dt_try; b=-1.; vproj = -1.; return;  }
@@ -191,7 +194,7 @@ class log_transit {
 
   // save one based on simple extrapolation, while working on one that itterates
   template<int nbod>
-  GPUAPI void calc_transit_time_works(const int& i,const int& j, const double& dt, const double dx[2], double dv[2], const double& b2begin, double& db2dt,double& dt_min_b2,double& b,double & vproj)
+  GPUAPI void calc_transit_time_works(const int& i,const int& j, const double& dt, double dx[2], double dv[2], const double& b2begin, double& db2dt,double& dt_min_b2,double& b,double & vproj)
   {
     extern __shared__ char shared_mem[];
 	typedef swarm::compile_time_params_t<nbod> par_t;
@@ -211,22 +214,25 @@ class log_transit {
     double d3b2dt3 = 6.*(dv[0]*da[0]+dv[1]*da[1])+2.*(dx[0]*dj[0]+dx[1]*dj[1]);
     double dt_try = -db2dt/d2b2dt2;  // find vertex of parabola
     dt_try = -db2dt/(d2b2dt2+0.5*dt_try*d3b2dt3);
+
+    //    printf("begin: i=%d j=%d b2=%g dx[0]=%g dx[1]=%g dv[0]=%g dv[1]=%g dt_try=%g (works)\n",i,j,b2begin,dx[0],dx[1],dv[0],dv[1],dt_try);
     //    if((dt_try<0.) || (dt_try>dt) )                // ignore if already past or vertex past next step
     if((dt_try<-0.5*dt) || (dt_try>0.5*dt) ) // ignore if already past or vertex past next step
       { dt_min_b2 = dt_try; b=-1.; vproj = -1.; return;  }
 
     dt_min_b2 = 0.;
     double min_b2 = b2begin;
-    double b2 = b2begin + dt_try*(db2dt + dt_try*0.5*(d2b2dt2+dt_try*d3b2dt3/3.));
-    //dx[0] += dt_min_b2*(dv[0]+dt_min_b2*0.5*(da[0]+dt_min_b2*dj[0]/3.));
-    //dx[1] += dt_min_b2*(dv[1]+dt_min_b2*0.5*(da[1]+dt_min_b2*dj[1]/3.));
-    //double b2 = sqrt(dx[0]*dx[0]+dx[1]*dx[1]);
+    //    double b2 = b2begin + dt_try*(db2dt + dt_try*0.5*(d2b2dt2+dt_try*d3b2dt3/3.));
+    dx[0] += dt_try*(dv[0]+dt_try*0.5*(da[0]+dt_try*dj[0]/3.));
+    dx[1] += dt_try*(dv[1]+dt_try*0.5*(da[1]+dt_try*dj[1]/3.));
+    double b2 = (dx[0]*dx[0]+dx[1]*dx[1]);
     if(b2<min_b2) { min_b2 = b2; dt_min_b2 = dt_try; }
     //    if(min_b2>square((radi+radj)*(1.+_params.tol)))       return false;
     b = (min_b2>0) ? sqrt(min_b2) : -sqrt(-min_b2);
     dv[0] += dt_min_b2*(da[0]+0.5*dt_min_b2*dj[0]);
     dv[1] += dt_min_b2*(da[1]+0.5*dt_min_b2*dj[1]);
     vproj = sqrt(dv[0]*dv[0]+dv[1]*dv[1]);
+    //    printf("end: i=%d j=%d b2=%g dx[0]=%g dx[1]=%g dv[0]=%g dv[1]=%g dt_try=%g\n",i,j,b2,dx[0],dx[1],dv[0],dv[1],dt_try);
   }
 
 
@@ -243,7 +249,7 @@ class log_transit {
 
 	    double radi = (_sys.num_body_attributes()>=1) ? _sys[i].attribute(0) : 0.;
 	    double radj = (_sys.num_body_attributes()>=1) ? _sys[j].attribute(0) : 0.;
-	    if( min(b2begin,b2begin+dt*db2dt)>square((radi+radj)*(1.+_params.tol)) )
+	    //	    if( min(b2begin,b2begin+dt*db2dt)>square((radi+radj)*(1.+_params.tol)) )
 	    if( min(b2begin-0.5*dt*db2dt,b2begin+0.5*dt*db2dt)>square((radi+radj)*(1.+_params.tol)) )
 	      return false;
 
@@ -252,7 +258,6 @@ class log_transit {
 	    const int bid = swarm::gpu::bppt::thread_body_idx(nbod);
 	    const int cid = swarm::gpu::bppt::thread_component_idx(nbod);
 	    double pos_step_end, vel_step_end;
-
 	    if( (bid < nbod) && (cid < 3) ) {
 	      pos_step_end = _sys[bid][cid].pos();
 	      vel_step_end = _sys[bid][cid].vel();
@@ -260,20 +265,22 @@ class log_transit {
 
 	    // WARNING: hard coded to assume Hermite Fixed, nbod=3..8 and Gravitation
 	    double dt_min_b2, b, vproj;
-	    if((nbod==3) && (nbod<MAX_NBODIES))
+	    if((nbod==3) && (nbod<=MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 3;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
 #if 1  // Can be set to zero to reduce compile times when testing
-	     else if((nbod==4) && (nbod<MAX_NBODIES))
+	     else if((nbod==4) && (nbod<=MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 4;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
@@ -283,48 +290,56 @@ class log_transit {
 	       {
 		 const int nbod_hardwired = 5;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
-	     else if((nbod==6) && (nbod<MAX_NBODIES))
+	     else if((nbod==6) && (nbod<=MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 6;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
-	     else if((nbod==7) && (nbod<MAX_NBODIES))
+	     else if((nbod==7) && (nbod<=MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 7;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
-	     else if((nbod==8) && (nbod<MAX_NBODIES))
+	     else if((nbod==8) && (nbod<=MAX_NBODIES))
 	       {
 		 const int nbod_hardwired = 8;
 #if USE_WORKS
+	     if(thread_in_system==0)
 		 calc_transit_time_works<nbod_hardwired> (i,j,dt,dx,dv,b2begin,db2dt,dt_min_b2,b,vproj);
 #else
 		 calc_transit_time<nbod_hardwired> (thread_in_system,i,j,dt,dx,dv,b2begin,db2dt,pos_step_end,vel_step_end,dt_min_b2,b,vproj);
 #endif
 	       }
 #endif
+#if 0
 	     if(vproj<0.) 
 	       {  // ignore if already past or vertex past next step
+#if 0
 		 if( (bid < nbod) && (cid < 3) ) {
 		   _sys[bid][cid].pos() = pos_step_end;
 		   _sys[bid][cid].vel() = vel_step_end;
 		 }
+#endif
 		 return false;
 	       }
-	     if(thread_in_system==0)
+#endif
+	     if((thread_in_system==0) && (vproj>=0.) )
 	       {
 		 if(_sys.num_body_attributes()>=1) 
 		   {
@@ -332,16 +347,25 @@ class log_transit {
 		     else      { b /= radj; vproj /= radj; }
 		   }
 		 
-		 int event_id = (depth>0.) ? log::EVT_TRANSIT : log::EVT_OCCULTATION;
-		 log::event(_log,event_id,_sys.time()+dt_min_b2,_sys.id(),j,b,vproj);
+		 if((dt_min_b2>=-0.5*dt)&&(dt_min_b2<0.5*dt))
+		   {
+		     double tout = _sys.time()+dt_min_b2;
+		     int event_id = (depth>0.) ? log::EVT_TRANSIT : log::EVT_OCCULTATION;
+		     log::event(_log,event_id,tout,_sys.id(),j,b,vproj);
+		     //		     printf("loging: event_id=%d time=%g dt_min_b2=%g time_tr=%g sys=%d bod=%d b=%g v=%g\n",event_id,_sys.time(),dt_min_b2,tout,_sys.id(),j,b,vproj);
+		   }
 	       }
+
 	     // restore values from main integration	
 	    if( (bid < nbod) && (cid < 3) ) {
 	      _sys[bid][cid].pos() = pos_step_end;
 	      _sys[bid][cid].vel() = vel_step_end;
 	    }
 
-	     return true;
+	    if((thread_in_system==0) && (vproj>=0.) )
+	      return true;
+	    else
+	      return false;
 	  }
   
 
@@ -352,12 +376,9 @@ class log_transit {
                 // Chcek for close encounters
                 for(int b = 1; b < _sys.nbod(); b++)
 		  {
-		    // use with _works version
-#if USE_WORKS
-		    		    if(thread_in_system==0) 
-		    		    condition_met = condition_met || 
-#endif
-		    check_in_transit(thread_in_system,0,b,_params.dt);
+		    condition_met = condition_met || 
+		      check_in_transit(thread_in_system,0,b,_params.dt);
+				    
       		  }
 	      }
 	    return condition_met;

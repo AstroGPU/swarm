@@ -27,13 +27,13 @@ namespace swarm {
       case EVT_RV_OBS:
       case EVT_TIMING_OBS:
 	return 1;
-      case EVT_DIRECT_IMAGE_OBS:
-	return 3;
       case EVT_ASTROM_OBS:
       case EVT_TRANSIT:
       case EVT_OCCULTATION:
       case EVT_MUTUAL_EVENT:
 	return 2;
+      case EVT_DIRECT_IMAGE_OBS:
+	return 3;
       default:
 	return 0;
       }
