@@ -73,6 +73,7 @@ namespace gpulog
 			return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
 		#else
 			assert(0); // this must not be called from host code.
+			return 0;
 		#endif
 		}
 

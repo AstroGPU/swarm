@@ -117,6 +117,8 @@ int demo_binarystream()
 	// peyton::io::binary::track_manifest to false. It's turned on by
 	// default.
 	cout << binary::manifest << "\n";
+
+	return 0;
 }
 
 #if 0

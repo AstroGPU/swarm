@@ -200,7 +200,7 @@ body center_of_mass(const body* bodies, const int nbod ){
     std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
 {
 	double T;
-	int sys, body_id;
+	int sys, body_id = 0;
 	swarm::body b;
 	lr >> T >> sys >> b;
 

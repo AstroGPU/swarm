@@ -150,7 +150,9 @@ void prepare_integrator () {
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
 	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
+	int max_iterations = cfg.optional("max_iterations", integrator::_default_max_iterations );
 	integ = integrator::create(cfg);
+	integ->set_max_iterations(max_iterations);
 	integ->set_ensemble(current_ens);
 	integ->set_destination_time ( destination_time );
 	SYNC;

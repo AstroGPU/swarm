@@ -30,7 +30,7 @@
 
 namespace swarm {
 
-	const int integrator::_default_max_iterations = 10000;
+	const int integrator::_default_max_iterations = 10000000;
 	const int integrator::_default_max_attempts   = 1000000;
 
 	void integrator::set_log_manager(log::Pmanager& l){

@@ -22,6 +22,7 @@ ADD_PLUGIN(plugins/rkck_fixed.cu    RKCK_Fixed    TRUE  "Runge-Kutta Fixed time 
 ADD_PLUGIN(plugins/mvs.cu MVS TRUE  "Mixed Variable Symplectic Integrator")
 
 # Experimental
+ADD_PLUGIN(plugins/hermite_prop.cu Hermite_Propagator FALSE  "Propagator version of Hermite w/ Fixed Time step GPU Integrator")
 ADD_PLUGIN(plugins/euler.cu Euler FALSE "Euler Integrator")
 ADD_PLUGIN(plugins/verlet.cu Verlet FALSE "Verlet Integrator")
 ADD_PLUGIN(plugins/midpoint.cu Midpoint FALSE "Midpoint Integrator")
