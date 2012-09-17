@@ -10,9 +10,7 @@ gravity.  Swarm-NG does not replicate existing libraries that
 calculate forces for large-N systems on GPUs, but rather focuses on
 integrating an ensemble of many systems where N is small.  This is of
 particular interest for astronomers who study the chaotic evolution of
-planetary systems.  In the long term, we hope Swarm-NG will allow for
-the efficient parallel integration of user-defined systems of ordinary
-differential equations.
+planetary systems.  
 
 \section ReleaseNote Release notes
 <b>Version 1.0</b>
@@ -60,7 +58,7 @@ https://github.com/AstroGPU/swarm
 	- For a quick build of swarm-NG, please see \ref BuildSwarm 
 	"How to build swarm" for key steps.
 	- For customized build of swarm-NG, please read \ref BuildSystem 
-	Build System for instructions on how to set up compiler flags and select 
+	"Build System" for instructions on how to set up compiler flags and select 
 	specific components tailored to your needs.
 </li>
 

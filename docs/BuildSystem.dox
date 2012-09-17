@@ -1,0 +1,113 @@
+namespace swarm {
+
+/** \page BuildSystem  Advanced Options for Building Swarm
+
+
+Swarm provides options in both configuration and complilation stage. 
+In configuration, CMake tries to automatically find required packages
+if they are installed in default locations. You may override the default
+values using CMake tools. You may select specific compile time options to
+build the swarm components that you desire. Here we discuss the CMake 
+tools for configuration and the advanced compiling options. 
+
+\section cmakeconfig Configration Tools
+In \ref BuildSwarm "How to build swarm" we discussed one of the configuration
+tools by using <b>Console</b>. Here we show two other options. 
+
+\subsection commandline Configuration using CMake command line
+
+Change into the &lt;build directory&gt; and execute the following command:
+\verbatim
+cmake <source directory>
+\endverbatim
+
+It may give error messages if it couldn't find the required packages in their 
+default locations. You can fix the errors by editing the file 'CMakeCache.txt' 
+that cmake generates in the &lt;build directory&gt; and repeat this process 
+until there are no more error messages. 
+
+\subsection gui Configuration using CMake GUI
+CMake GUI is an X11 interface to CMake. To run CMake GUI, you need an X server running 
+on your local machine.
+
+To get started, change into the build directory and type this command:
+\verbatim
+cmake-gui <source directory>
+\endverbatim
+
+Click on "Configure" button, in the dialogs that follow, select the default options.
+CMake will check the configuration and show the error messages if any in red text 
+in the bottom pane. Change the variables according to \ref CMake. Click on "Configure" 
+again to apply changes. Repeat this procedure until there are no more errors.
+
+Click the "Generate" button when you are done and Makefiles will be generated. You can 
+then close the GUI window using the "Close" button.
+
+\section configuration Configuration Options
+
+\subsection compiler Compiler options
+ - CMAKE_CXX_COMPILER, CMAKE_C_FLAGS: to specify the path for C++ and C compilers 
+on your system. Swarm has been tested with GNU g++ and gcc compilers. You are free to 
+try other compilers and report the results back to us. 
+
+ - CMAKE_CXX_FLAGS, CMAKE_C_FLAGS: to specify the compiler flags during the compilation.
+For example: -g for debugging, -O for the level of optimization. Please consult your compiler
+manual for the details. 
+
+ - CMAKE_EXE_LINKER_FLAGS	: to specify the flags for linking object files and 
+libraries.
+
+\subsection cuda CUDA related options
+ - GENERATE_FERMI         : to generate CUDA binaries for Fermi architecture, check 
+this option only if you have a Fermi card in your system.
+
+ - GENERATE_GT200 	     : to generate CUDA binaries for GT200 architecture, 
+check this option only if you have a GT200 card in your system.
+
+\subsection other Miscellaneous options
+
+ - CMAKE_VERBOSE_BUILD : to print out compile details during the build process.
+It is set to OFF by default. You may set it to ON to see the details of compilation
+and debug if compilation fails. 
+
+
+\section compilation Compilation Options
+
+\subsection makeall Build all executables and libraries
+
+To make all swarm executables and swarm-ng libraries in one step, do:
+
+\verbatim
+  make all
+\endverbatim
+
+\subsection maketarget Make individual components
+
+We provide options to build individual components, documentations, and tutorials. To 
+see a list of options, type:
+
+\verbatim
+  make help
+\endverbatim
+
+It lists all the options that you can use with 'make' to build the components
+you desire. For example, 
+
+ - to generate all the documentations, do (Doxygen is required for this option):
+
+\verbatim
+  make doc
+\endverbatim
+
+
+ - to build benchmark, do:
+
+\verbatim
+  make benchmark
+\endverbatim
+
+
+
+*/
+
+}

@@ -205,8 +205,8 @@ static const int EVT_LAST_OBS_CODE	= EVT_MUTUAL_EVENT; //! marks end of event co
 
   // save at least 8 bits for future use
   //static const int EVT_USER_1	        = 256;	//! marks user defined event
-static const int EVT_USER_2	        = 257;	//! marks user defined event
-static const int EVT_USER_3	        = 258;	//! marks user defined event
+  //static const int EVT_USER_2	        = 257;	//! marks user defined event
+  //static const int EVT_USER_3	        = 258;	//! marks user defined event
 
 #if 0
   // Helper class for expected data size

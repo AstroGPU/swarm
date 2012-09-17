@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Eric Ford and the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -15,29 +15,19 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "hermite_cpu.hpp"
+#include "integrators/mvs_omp.hpp"
+//#include "monitors/log_time_interval.hpp"
+#include "monitors/stop_on_ejection.hpp"
+//#include "monitors/composites.hpp"
+
+typedef gpulog::host_log L;
+using namespace swarm::monitors;
+using swarm::integrator_plugin_initializer;
+using namespace swarm::cpu;
+
 #ifdef _OPENMP
-#include <omp.h>
+integrator_plugin_initializer<
+  mvs_omp< stop_on_ejection<L> >
+	> mvs_omp_plugin("mvs_omp");
 #endif
 
-namespace swarm { namespace cpu {
-
-#ifdef _OPENMP
-template< class Monitor >
-class hermite_omp : public hermite_cpu<Monitor> {
-	public:
-	typedef hermite_cpu<Monitor> base;
-
-	hermite_omp(const config& cfg): base(cfg){}
-	virtual void launch_integrator() {
-#pragma omp parallel for
-		for(int i = 0; i < base::_ens.nsys(); i++){
-			base::integrate_system(base::_ens[i]);
-		}
-	}
-
-
-};
-#endif
-
-} } // Close namespaces

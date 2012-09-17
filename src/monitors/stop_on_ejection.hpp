@@ -18,6 +18,7 @@
 #pragma once
 
 #include <limits>
+#include "../swarm/types/config.hpp"
 
 namespace swarm {
   namespace monitors {

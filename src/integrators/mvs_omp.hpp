@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Eric Ford and the Swarm-NG Development Team  *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -15,7 +15,7 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "hermite_cpu.hpp"
+#include "mvs_cpu.hpp"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -24,11 +24,11 @@ namespace swarm { namespace cpu {
 
 #ifdef _OPENMP
 template< class Monitor >
-class hermite_omp : public hermite_cpu<Monitor> {
+class mvs_omp : public mvs_cpu<Monitor> {
 	public:
-	typedef hermite_cpu<Monitor> base;
+	typedef mvs_cpu<Monitor> base;
 
-	hermite_omp(const config& cfg): base(cfg){}
+	mvs_omp(const config& cfg): base(cfg){}
 	virtual void launch_integrator() {
 #pragma omp parallel for
 		for(int i = 0; i < base::_ens.nsys(); i++){

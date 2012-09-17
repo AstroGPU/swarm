@@ -3,13 +3,13 @@ namespace swarm {
 /** \page BuildSwarm Getting Started with Swarm-NG
 
 
-\section Obtain Obtaining source code
-Currently we don't have any binary packages available. 
+\section Obtain Obtaining the source code
+Currently we do not have any binary packages available. 
 You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
 
-- Checkout the latest development versions from Git Repository using the following command:
+- Checkout the latest development version from Git Repository using the following command:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
 \endverbatim
@@ -61,14 +61,14 @@ sudo apt-get install libboost-python-dev python-dev
 
 Compilation of Swarm comprises two steps - Configuration and Compilation. 
 Swarm uses <B>CMAKE</B> system for both. The following instructions are 
-for a quick build of Swarm. BuildSystem Build System describes more advanced 
+for a quick build of Swarm. \ref BuildSystem "Build System" describes more advanced 
 configuration and compilation settings. 
 
 \subsection configure Configure your building environment
 The configuration process allows you to adjust the default compiling options. 
 There are three options to do CMAKE configuration: Command-line, Console, 
 and GUI. Here we discuss Console approach. Command-line and GUI options are 
-described in BuildSystem Build System. 
+described in \ref BuildSystem "Build System". 
 
  - Create a directory for make files and binaries - &lt;build directory&gt;
 
