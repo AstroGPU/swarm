@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <cassert>
