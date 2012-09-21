@@ -69,12 +69,12 @@ Swarm also allows users to make their own tests.
 After running swarm tests, three output files will be generated in 
 &lt;build directory&gt;/Testing/Temporary.
 
-    - \c CTestCostData.txt: 
+    - \c CTestCostData.txt: contains the testing time for each tests in the 
+test suite. 
 
-    - \c LastTest.log: a file that captures the detailed information 
-about each tests, such as the name of the test, test command line, start time and end 
-time, time elapsed, and other run time outputs. In addition, it indicates if a test
-succeeded or failed. 
+    - \c LastTest.log: captures the detailed information about each tests, such 
+as the name of the test, test command line, start time and end time, time elapsed, 
+and other run time outputs. In addition, it indicates if a test succeeded or failed. 
 
     - \c LastTestsFailed.log: lists all the tests that failed during 'make test'
 execution. 
