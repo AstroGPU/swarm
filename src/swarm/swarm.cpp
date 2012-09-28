@@ -318,8 +318,8 @@ void validate(boost::any& v, const std::vector<std::string>& values
 	static boost::regex assign("^(\\w+)=(.+)$");
 	static boost::regex range("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
 	static boost::regex rangeinc("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
-	static boost::regex list("^([a-zA-Z0-9\\.]+)(?:,([a-zA-Z0-9\\.]+))+$");
-	static boost::regex item("([a-zA-Z0-9\\.]+)");
+	static boost::regex list("^([a-zA-Z0-9_\\.]+)(?:,([a-zA-Z0-9_\\.]+))+$");
+	static boost::regex item("([a-zA-Z0-9_\\.]+)");
 	boost::smatch match, items;
 	if (boost::regex_match(s, match, assign)) {
 		p.parameter = match[1];
