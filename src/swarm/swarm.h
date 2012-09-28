@@ -33,7 +33,7 @@
 #include "plugin.hpp"
 #include "utils.hpp"
 #include "gpu/device_settings.hpp"
-
+#include "snapshot.hpp"
 
 /*! Swarm-NG library
  *
