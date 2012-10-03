@@ -178,7 +178,7 @@ class integrator : public swarm::integrator {
 	//! Copy of ensemble on host (kept in sync with \ref _dens).
 	hostEnsemble& _hens;
 	//! Copy of ensemble on [GPU] device (kept in sync with \ref _hens).
-	//! \TODO: use cux auto ptr to make sure we don't have memory leaks
+	//! \todo: use cux auto ptr to make sure we don't have memory leaks
 	deviceEnsemble _dens;
 
 	//! GPU log object obtained from log manager.
