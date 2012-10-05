@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file plugin.hpp
- *   \brief Interface and utility functions for plugin development and plugin management system
+ *   \brief Defines the interface and utility functions for the plugin development 
+ *          and plugin management system
  *
  *   Containts:
  *    - Interface classes for creating new plugins
