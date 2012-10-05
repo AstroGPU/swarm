@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file utils.hpp
- *   \brief Utility routines for common tasks that most users would need.
+ *   \brief Defines utility routines for common tasks that most users would need.
  *
  *   Contains:
  *    - Generating ensembles
