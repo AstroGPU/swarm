@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file util.cpp
+/*! \file utils.cpp
  *    \brief Implements the utility functions for swarm. 
  *
  * @authors Saleh Dindar
