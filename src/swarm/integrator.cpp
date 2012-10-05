@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file integrator.cpp
- *  \brief class integrator 
+ *  \brief Implements member functions for class integrator.
  *
 */
 
