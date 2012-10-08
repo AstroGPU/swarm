@@ -437,9 +437,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::options_description query("Query Options");
 	query.add_options()
-		("time,t", po::value<time_range_t>(), "range of times to query")
-		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("body,b", po::value<sys_range_t>(), "range of bodies to query")
+		("time,t", po::value<query::time_range_t>(), "range of times to query")
+		("system,s", po::value<query::sys_range_t>(), "range of systems to query")
+		("body,b", po::value<query::sys_range_t>(), "range of bodies to query")
 		("keplerian,k", "output in Keplerian coordinates")
 		("astrocentric", "output coordinates in astrocentric frame")
 		("barycentric", "output coordinates in barycentric frame")
@@ -569,6 +569,7 @@ int main(int argc, char* argv[]){
 
 
 	else if(command == "query" ) {
+		using namespace query;
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
 
 		time_range_t T;

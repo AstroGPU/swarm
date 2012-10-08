@@ -1,6 +1,5 @@
 #include "log.hpp"
-namespace swarm {
-  namespace log {
+namespace swarm { namespace log {
 
   int num_ints_for_event(const int code)
   {
@@ -39,5 +38,4 @@ namespace swarm {
       }
   }
 
-  } // namespace log
-} // namespace swarm
+} } // namespace log:: swarm

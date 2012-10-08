@@ -26,7 +26,7 @@
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
   host_array_writer::host_array_writer(const config &cfg) : event_codes_to_log(0), event_log(0)
   {
@@ -121,5 +121,5 @@ namespace swarm {
 writer_plugin_initializer< host_array_writer >
 	host_array_writer_plugin("host_array", "This stores selected events in simple arrays on the host");
 
-}
+} } // namespcae log::swarm
 

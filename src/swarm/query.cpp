@@ -23,6 +23,7 @@
 
 namespace swarm { namespace query {
 
+using log::body;
 
 
 void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
@@ -65,7 +66,7 @@ struct keplerian_t {
 	double a, e, i, O, w , M;
 };
 
-keplerian_t keplerian_for_cartesian ( const swarm::body& b, const swarm::body& center ) 
+keplerian_t keplerian_for_cartesian ( const body& b, const body& center ) 
 { 
   keplerian_t k;
   double x = b.x - center.x;
@@ -106,7 +107,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 }
 
 // EVT_SNAPSHOT
-    std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+    std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr, body_range_t &body_range)
 {
 	double time;
 	int nbod, sys, flags;
@@ -114,7 +115,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 	lr >> time >> sys >> flags >> nbod >> bodies;
 
 	body center;
-	const swarm::body &star = bodies[0];
+	const body &star = bodies[0];
 
 	    switch(planets_coordinate_system)
 	      {
@@ -161,7 +162,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 	for(int bod = 0; bod < nbod; bod++)
 	{
 	  if(!body_range.in(bod)) { continue; }
-	  const swarm::body &b = bodies[bod];
+	  const body &b = bodies[bod];
 	  if(  keplerian_output && (bod==0) ) { continue; }
 	  if(  (planets_coordinate_system==jacobi) && (bod==0) ) { continue; }
 	  if( ( !keplerian_output && (planets_coordinate_system!=jacobi) && (bod> 0) ) ||  
@@ -197,11 +198,11 @@ body center_of_mass(const body* bodies, const int nbod ){
 
 // EVT_EJECTION
 // WARNING: Logging for ejections not yet fully implemented
-    std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+    std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr, body_range_t &body_range)
 {
 	double T;
 	int sys, body_id = 0;
-	swarm::body b;
+	body b;
 	lr >> T >> sys >> b;
 
 	if(!body_range.in(b.body_id)) return out;
@@ -228,7 +229,7 @@ body center_of_mass(const body* bodies, const int nbod ){
 
 
 // EVT_TRANSIT
-std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, body_range_t &body_range)
 {
 	double T;
 	int sys, body_id;
@@ -246,7 +247,7 @@ std::ostream& record_output_15(std::ostream &out, gpulog::logrecord &lr, swarm::
 
 
 // EVT_RV_OBS
-std::ostream& record_output_11(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+std::ostream& record_output_11(std::ostream &out, gpulog::logrecord &lr, body_range_t &body_range)
 {
 	double T;
 	int sys, body_id;
@@ -264,7 +265,7 @@ std::ostream& record_output_11(std::ostream &out, gpulog::logrecord &lr, swarm::
 
 
 // EVT_OCCULTATION
-std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &body_range)
+std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_range_t &body_range)
 {
 	double T;
 	int sys, body_id;
@@ -281,7 +282,7 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::
 }
 
 
-    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, swarm::body_range_t &bod)
+    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, body_range_t &bod)
 {
 	int evtid = lr.msgid();
 
@@ -305,8 +306,8 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, swarm::
 }
 
 
-    //    void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys)
-      void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys, swarm::body_range_t bod = swarm::body_range_t() )
+    //    void execute(const std::string &datafile, time_range_t T, sys_range_t sys)
+      void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() )
 {
 	swarmdb db(datafile);
 	swarmdb::result r = db.query(sys, T);

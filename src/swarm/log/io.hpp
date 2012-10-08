@@ -12,7 +12,37 @@
 #include "fileformat.hpp"
 #include "log.hpp"
 
-namespace swarm {
+namespace swarm { 
+	
+	
+	
+	
+	/**
+	 *
+	 * This namespace contains routines for opening and querying 
+	 * a swarm log file.
+	 * Swarm log file is a binary file with a simple textual header
+	 * and a number of fixed size C structs (gpulog::logrecord).
+	 *
+	 * swarmdb is used to open the log file and query it. API users
+	 * should only interact with swarmdb. 
+	 *
+	 * swarmdb uses indexes for fast retrieval of data. The indexes
+	 * are built the first time file is opened and then cached on
+	 * disk. There are two indexes:
+	 *   1. Time index sorted based on time of records
+	 *   2. System index sorted based on system id of records
+	 * 
+	 * Although sort_binary_output_file function can be used to sort
+	 * the entire data file, there is no reason to do so. Since all
+	 * the accesses to the file go through the index. 
+	 * 
+	 *
+	 *
+	 *
+	 *
+	 */
+	namespace query {
 
 	extern const char* UNSORTED_HEADER_FULL;
 	extern const char* UNSORTED_HEADER_CHECK;
@@ -147,6 +177,6 @@ namespace swarm {
 
 	bool sort_binary_log_file(const std::string &outfn, const std::string &infn);
 
-} // end namespace swarm
+} } // end namespace query:: swarm
 
 #endif

@@ -24,7 +24,7 @@
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 template<int NumData>
 class event_record
@@ -99,7 +99,7 @@ public:
  * io.cpp
  *
  */
-class host_array_writer : public swarm::writer
+class host_array_writer : public writer
 {
 public: 
   static const int max_num_doubles_per_event = 2;
@@ -147,5 +147,5 @@ public:
 //writer_plugin_initializer< host_array_writer >
 //	host_array_writer_plugin("host_array", "This stores selected events in simple arrays on the host");
 
-}
+} } // namespcae log::swarm
 

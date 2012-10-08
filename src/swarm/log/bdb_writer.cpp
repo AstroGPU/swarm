@@ -25,7 +25,7 @@
 
 #include <db_cxx.h>
 
-namespace swarm {
+namespace swarm { namespace log {
 
 using namespace gpulog;
 
@@ -34,7 +34,7 @@ using namespace gpulog;
  *
  *
  */
-class bdb_writer : public swarm::writer
+class bdb_writer : public writer
 {
 	// To do this, first we have to include the BDB in the CMake files
 	// in process, we should make a gpulog::ilogstream out of the data
@@ -64,4 +64,4 @@ public:
 writer_plugin_initializer< bdb_writer >
 	bdb_writer_plugin("bdb", "This is the Berkeley DB writer");
 
-}
+} }

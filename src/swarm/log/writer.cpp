@@ -26,7 +26,7 @@
 
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /*!
    \brief Writer instantiation support
@@ -56,4 +56,4 @@ Pwriter writer::create(const config& cfg)
 
         return w;
 }
-}
+} } // namespace log::swarm
