@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file bdb_writer.cpp
+ *    \brief Defines an I/O interface for writing to files.
+ *
+ *
+ */
+
 #include "../common.hpp"
 
 #include "../types/config.hpp"

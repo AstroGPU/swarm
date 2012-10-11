@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file host_array_writer.cpp 
+ *    \brief Processes the event log data.
+ *
+ *
+ */
+
 #include "host_array_writer.hpp"
 
 #include "../common.hpp"

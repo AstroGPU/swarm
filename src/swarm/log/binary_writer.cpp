@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file binary_writer.cpp
+ *    \brief Defines a writer that writes to Berkeley DB in binary form. 
+ *
+ *
+ */
+
 #include "../common.hpp"
 
 #include "../types/config.hpp"
