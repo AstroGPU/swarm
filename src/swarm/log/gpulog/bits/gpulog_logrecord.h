@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_logrecord.h 
+ *    \brief Defines methods for processing log records. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_logrecord_h__
 #define bits_gpulog_logrecord_h__
 

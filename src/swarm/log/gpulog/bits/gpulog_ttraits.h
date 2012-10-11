@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_ttraits.h 
+ *    \brief Defines system compatible data alignment and convenient macros.
+ *
+ *
+ */
+
 #ifndef bits_gpulog_ttraits_h__
 #define bits_gpulog_ttraits_h__
 

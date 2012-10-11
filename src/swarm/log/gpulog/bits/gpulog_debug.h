@@ -18,6 +18,13 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_debug.h 
+ *    \brief Defines debugging macros. 
+ *
+ *
+ */
+
+
 #ifndef bits_gpulog_debug_h__
 #define bits_gpulog_debug_h__
 

@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_msg_layout.h 
+ *    \brief Defines class templates to enable compile-time calculations
+ *           of log record layout. 
+ *
+ */
+
 #ifndef bits_gpulog_msg_layout_h__
 #define bits_gpulog_msg_layout_h__
 

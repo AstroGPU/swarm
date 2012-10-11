@@ -18,6 +18,13 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_ilogstream.h 
+ *    \brief Handles log stream records. 
+ *
+ *
+ */
+
+
 #ifndef bits_gpulog_ilogstream_h__
 #define bits_gpulog_ilogstream_h__
 

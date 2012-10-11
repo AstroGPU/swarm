@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_types.h 
+ *    \brief Defines the interface for logging data types. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_types_h__
 #define bits_gpulog_types_h__
 

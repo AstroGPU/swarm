@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_align.h 
+ *    \brief Defines CUDA compatible data alignment. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_align_h__
 #define bits_gpulog_align_h__
 
