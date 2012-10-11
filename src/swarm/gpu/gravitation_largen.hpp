@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_largen.hpp
+ *   \brief Defines the class to calculate acceleration and jerk in
+ *          parallel for many-body systems. 
+ */
+
 #pragma once
 
 #include "gravitation_common.hpp"

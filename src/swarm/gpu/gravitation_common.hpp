@@ -15,9 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_common.hpp
+ *   \brief Defines common utility functions for calculating acceleration 
+ *          and jerk of gravitation. 
+ */
+
 #pragma once
 
-// TODO: Do we actually use this?
+// todo: Do we actually use this?
 #include "../types/coalescedstructarray.hpp"
 #include "bppt.hpp"
 

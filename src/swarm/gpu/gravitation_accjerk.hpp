@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_accjerk.hpp
+ *   \brief Defines the class to calculate accerleration and jerk 
+ *          of the gravitation in parallel.
+ *          
+ */
+
 #pragma once
 
 #include "gravitation_common.hpp"

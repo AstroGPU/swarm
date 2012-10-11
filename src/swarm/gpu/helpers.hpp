@@ -16,6 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file helpers.hpp
+ *   \brief Defines utility functions for loop unrolling, select templates
+ *          and launch templatized integrator.
+ *          
+ */
+
 #pragma once
 
 #include "device_settings.hpp"

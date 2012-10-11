@@ -16,6 +16,14 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file bppt.hpp
+ *   \brief Defines the GPU integrator class with one thread for each body-pair.
+ *          also defines the interface to GPU and CUDA. 
+ *
+ *
+ */
+
+
 #pragma once
 
 #include "../integrator.hpp"
