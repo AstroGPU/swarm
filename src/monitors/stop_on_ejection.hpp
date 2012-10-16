@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file stop_on_ejection.hpp
+ *   \brief Defines the monitor that signals and logs when bodies meets 
+ *          ejection criteria. 
+ *
+ */
+
 #pragma once
 
 #include <limits>

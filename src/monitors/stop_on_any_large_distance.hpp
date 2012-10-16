@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file stop_on_any_large_distance.hpp
+ *   \brief Defines the monitor that logs the body that is separated from
+ *          origin and other bodies by at least "rmax". 
+ *
+ */
+
 #pragma once
 
 #include <limits>

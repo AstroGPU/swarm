@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file composites.hpp
+ *   \brief Defines the combination of monitors.
+ *
+ */
+
 #pragma once
 
 #include "combine.hpp"

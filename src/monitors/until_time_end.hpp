@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file until_time_end.hpp
+ *   \brief Defines the monitor that signals the "time_end".
+ *
+ */
+
 #pragma once
 
 // I beleive none of this is used and it can be removed
