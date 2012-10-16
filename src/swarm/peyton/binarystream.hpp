@@ -18,9 +18,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file binarystream.hpp
+ *   \brief Define I/O interface in binary form using boost data types. 
+ *
+ */
+
 /*
-	This file has been copied/modified from Mario Juric's libpeyton.
-*/
+ *	This file has been copied/modified from Mario Juric's libpeyton.
+ */
 
 #ifndef binarystream_h__
 #define binarystream_h__

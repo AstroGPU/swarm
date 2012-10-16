@@ -17,8 +17,13 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "util.hpp"
 
+/*! \file util.cpp
+ *   \brief Implements utility functions for string operations. 
+ *
+ */
+
+#include "util.hpp"
 #include <cstring>
 #include <cstdio>
 #include <cctype>
