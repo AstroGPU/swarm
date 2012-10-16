@@ -16,6 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file hermite_adap.hpp
+ *   \brief Defines GPU implementation of PEC2 Hermite integrator
+ *          with adaptive time step.
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 

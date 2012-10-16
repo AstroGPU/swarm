@@ -16,6 +16,11 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file rkck.hpp
+ *   \brief Implements Runge Kutta Cash Karp integrator. 
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 

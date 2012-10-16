@@ -15,12 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file hermite_cpu.hpp
+ *   \brief Defines CPU implementation of PEC2 Hermite integrator.
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
-
-
-
 
 namespace swarm { namespace cpu {
 /*! CPU implementation of PEC2 Hermite integrator
