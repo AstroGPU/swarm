@@ -16,6 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file coalescedstructarray.hpp
+ *  \brief Defines the array of structures with coalescsed access. 
+ */
+
 #pragma once
 
 
