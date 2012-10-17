@@ -38,8 +38,8 @@
 namespace swarm {
 namespace gpu {
 
-/*! Class of GPU integrators with a thread for each body-pair
- * \addtogroup integrators
+/*!
+ * Class of GPU integrators with a thread for each body-pair. 
  *
  *  Using a thread for each body-pair is to parallelize as much as possible
  *  when integrating an ensemble. The thread assignment is as follows

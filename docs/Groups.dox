@@ -1,0 +1,6 @@
+/*! \defgroup integrators Integrators
+ *  Integrators are used to do the ODE integration in swarm.
+ * 
+ */
+/// \defgroup propagators Propagators
+/// \defgroup monitors Monitors
