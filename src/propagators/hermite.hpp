@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file hermite.hpp
+ *   \brief Defines the GPU version of hermite propagator. 
+ *
+ */
+
+
 #include "swarm/swarmplugin.h"
 
 namespace swarm {
