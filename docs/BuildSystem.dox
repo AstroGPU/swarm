@@ -45,33 +45,57 @@ then close the GUI window using the "Close" button.
 
 \section configuration Configuration Options
 
+\subsection codegen Compile-time constants
+  | Variable           | Description         | Acceptable Values | Default value |
+  |--------------------|---------------------|-------------------|---------------|
+  | *MAX_NBODIES* | Maximum number of bodies per system | 3..10 | 3 |
+  | *NUM_PLANET_ATTRIBUTES<br>NUM_SYSTEM_ATTRIBUTES* | Number of attributes per planet and system, respectively. The attributes are used for application specific values that need to be stored per planet or per system | 1..10 | 1 |
+  | *SHMEM_CHUNK_SIZE<br>ENSEMBLE_CHUNK_SIZE* | The chunk size setting for data structures stored in shared memory and the ensemble data structure. Higher chunk-size aids coalesced reads. However, higher shared-memory chunk size are not available for larger number of bodies. | 1,4,8,16,32 | Automatic based on MAX_NBODIES |
+
 \subsection compiler Compiler options
- - CMAKE_CXX_COMPILER, CMAKE_C_FLAGS: to specify the path for C++ and C compilers 
-on your system. Swarm has been tested with GNU g++ and gcc compilers. You are free to 
-try other compilers and report the results back to us. 
 
- - CMAKE_CXX_FLAGS, CMAKE_C_FLAGS: to specify the compiler flags during the compilation.
-For example: -g for debugging, -O for the level of optimization. Please consult your compiler
-manual for the details. 
-
- - CMAKE_EXE_LINKER_FLAGS	: to specify the flags for linking object files and 
-libraries.
+  | Variable           | Description         | Default value |
+  |--------------------|---------------------|---------------|
+  | *CMAKE_CXX_COMPILER<br>CMAKE_C_COMPILER* |  To specify the path for C++ and C compilers on your system. Swarm has been tested with GNU g++ and gcc compilers. You are free to try other compilers and report the results back to us.  | c++<br>cc |
+  | *CMAKE_EXE_LINKER_FLAGS* | Flags for that are passed to the linker. Normally not needed |          |
+  | *CMAKE_CXX_FLAGS<br>CMAKE_C_FLAGS* | to specify the compiler flags during the compilation. For example: -g for debugging, -O for the level of optimization. Please consult your compiler manual for the details. | | 
+  
 
 \subsection cuda CUDA related options
- - GENERATE_FERMI         : to generate CUDA binaries for Fermi architecture, check 
-this option only if you have a Fermi card in your system.
-
- - GENERATE_GT200 	     : to generate CUDA binaries for GT200 architecture, 
-check this option only if you have a GT200 card in your system.
+  | Variable           | Description         | Default value |
+  |--------------------|---------------------|---------------|
+  | *GENERATE_FERMI*         | to generate CUDA binaries for Fermi architecture, check this option only if you have a Fermi card in your system. | ON |
+  | *GENERATE_GT200* 	       | to generate CUDA binaries for GT200 architecture, check this option only if you have a GT200 card in your system. | OFF |
+  | *CUDA_TOOLKIT_ROOT_DIR* | The directory where CUDA toolkit is installed. Useful when multiple version of CUDA are installed on one system  | /usr/local/cuda |
+  
 
 \subsection other Miscellaneous options
 
- - CMAKE_VERBOSE_BUILD : to print out compile details during the build process.
-It is set to OFF by default. You may set it to ON to see the details of compilation
-and debug if compilation fails. 
+  | Variable           | Description         | Default value |
+  |--------------------|---------------------|---------------|
+  | *CMAKE_VERBOSE_BUILD<br>CUDA_VERBOSE_BUILD*  |  to print out compile details during the build process. You may set turn it ON to see the details of compilation to aid debugging when compilation fails. | OFF<br>OFF |
+
+\subsection plugin Plugin management
+
+Variables that begin with *PLUGIN_* are used to control compilation of plugins. Widely-used plugins are enabled by default. It is advised for the user to turn off 
+unused plugins to reduce compilation time.
 
 
-\section compilation Compilation Options
+\section testing Testing options
+
+Since testing is done through CTest, the CMake testing system. Testing parameters are to be set using CMake variables. These variables
+are used when issuing a "make test" command.
+
+  | Variable           | Description         |
+  |--------------------|---------------------|
+  | *TEST_integrator_nbod*      | Enable testing integrators with different number of bodies |
+  | *TEST_integrator_nbod_list* | List of configurations for integrators to be tested.(must correspond to files in test/integrators/*.cfg) |
+  | *TEST_monitors_nbod*        | Enable testing monitors with different number of bodies |
+  | *TEST_stability*            | Enable stability test for long-term integrations |
+  | *TEST_stability_list*       | List of configurations for integrators to be tested.(must correspond to files in test/integrators/*.cfg) |
+  | *TEST_stability_duration*   | Duration of the integration for stability test |
+  | *TEST_stability_nsys*       | Number of systems to integrator for the stability test |
+
 
 \subsection makeall Build all executables and libraries
 
