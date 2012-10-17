@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs_cpu.cpp
+ *   \brief Initializes the CPU version of the mixed variables symplectic propagator plugins.
+ *
+ */
+
+
 #include "integrators/mvs_cpu.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"

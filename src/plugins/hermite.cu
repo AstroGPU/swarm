@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file hermite.cu
+ *   \brief Initializes the hermite integrator plugins. 
+ *
+ */
+
 #include "integrators/hermite.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
