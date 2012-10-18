@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file mvs_omp.hpp
- *   \brief Defines the OpenMP interface for CPU implementation of mixed 
- *          variables symplectic propagator.
+ *   \brief Defines OpenMP implementation of mixed 
+ *          variables symplectic propagator on CPU.
  *
  */
 
