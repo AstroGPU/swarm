@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file log_rvs.hpp
- *   \brief Defines the monitor that logs time and events at times near a transit for GPU. 
+ *   \brief Defines the monitor that logs time and events at times near a transit on GPU. 
  *
  */
 
