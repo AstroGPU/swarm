@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_all_but_two_at_large_distance.hpp
- *   \brief Defines the monitor that signals and logs when no more than two bodies 
- *          are within a distance "rmax" of origin or another body.
+ *   \brief Defines and implements the monitor that signals and logs when no more 
+ *          than two bodies are within a distance "rmax" of origin or another body.
  *
  */
 

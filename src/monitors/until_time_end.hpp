@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file until_time_end.hpp
- *   \brief Defines the monitor that signals the "time_end".
+ *   \brief Defines and implements the monitor that signals the "time_end".
  *
  */
 
