@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file gravitation_common.hpp
- *   \brief Defines common utility functions for calculating acceleration 
+ *   \brief Defines and implements common utility functions for calculating acceleration 
  *          and jerk of gravitation. 
  */
 

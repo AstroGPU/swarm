@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file gravitation_accjerk.hpp
- *   \brief Defines the class to calculate accerleration and jerk 
+ *   \brief Defines the class and implements the functions to calculate accerleration and jerk 
  *          of the gravitation in parallel.
  *          
  */

@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file bppt.hpp
- *   \brief Defines the GPU integrator class with one thread for each body-pair.
- *          also defines the interface to GPU and CUDA. 
+ *   \brief Defines and implements the GPU integrator class with one thread 
+ *          for each body-pair and the interface to GPU and CUDA. 
  *
  *
  */

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file helpers.hpp
- *   \brief Defines utility functions for loop unrolling, select templates
+ *   \brief Defines and implements the utility functions for loop unrolling, select templates
  *          and launch templatized integrator.
  *          
  */

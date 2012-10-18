@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file device_settings.cpp
- *   \brief Definition Implement the function to set up the GPU related
+ *   \brief Implements the function to set up the GPU related
  *          parameters. 
  *
  */

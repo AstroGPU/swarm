@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file gravitation_mediumn.hpp
- *   \brief Defines the class to calculate acceleration and jerk in
+ *   \brief Defines the class and implements functions to calculate acceleration and jerk in
  *          parallel for many-body systems. 
  *          
  */
