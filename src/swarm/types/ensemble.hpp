@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file ensemble.hpp
- *  \brief Defines ensemble base class. 
+ *  \brief Defines ensemble base class and implements its member functions.  
  *
 */
 

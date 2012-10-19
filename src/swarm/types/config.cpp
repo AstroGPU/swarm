@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file config.cpp
- *  \brief provides several utility  functions for public interface for swarm libaray
+ *  \brief Implements several utility  functions for public interface for swarm libaray
  *
 */
 

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file coalescedstructarray.hpp
- *  \brief Defines the array of structures with coalescsed access. 
+ *  \brief Defines and implements the array of structures with coalescsed access. 
  */
 
 #pragma once
