@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /** \file random.hpp
- *  \brief simple interface to CPU random number generators
+ *  \brief Defines and implements simple interfaces to CPU random number generators
  *
  * \todo use better random nubmer generators (e.g., from boost++)
 */
