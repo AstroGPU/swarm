@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /** \file snapshot2text.cpp
- *  \brief Implement a utility function to save ensemble to a file. 
+ *  \brief Implements a utility to save ensemble to a file. 
  *
  */
 

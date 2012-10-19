@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stability_test_gpu.cpp
- *   \brief A utility for stability test on gpu.
+ *   \brief Implements a utility for stability test on gpu.
  *
  */
 

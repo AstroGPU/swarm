@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file straight_line.cpp
- *   \brief A utility to create a default ensemble. 
+ *   \brief Implements a utility to create a default ensemble. 
  *
  */
 

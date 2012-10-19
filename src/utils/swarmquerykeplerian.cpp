@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Mario Juric and the Swarm-NG Development Team   *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -17,13 +17,8 @@
  ************************************************************************/
 
 /*! \file swarmquerykeplerian.cpp
- *   \brief Program for extracting text information from binary files generated 
+ *   \brief Implements a program for extracting text information from binary files generated 
  *          by swarm GPU logging subsystem. 
- *
- */
- 
-/*
- * @authors Mario Juric
  *
  * swarmquery is a useful tool for extracting information about selected systems at all or selected times.
  * usage: swarmquery datafile [Options]

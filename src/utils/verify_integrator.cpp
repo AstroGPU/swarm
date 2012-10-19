@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file verify_integrator.cpp
- *   \brief A utility to verify integrators against one another. 
+ *   \brief Implements a utility to verify integrators against one another. 
  *
  */
 

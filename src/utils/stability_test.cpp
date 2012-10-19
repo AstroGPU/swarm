@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stability_test.cpp
- *   \brief A utility for stability test.
+ *   \brief Implements a utility for stability test.
  *
  */
 

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file swarm_benchmark.cpp
- *   \brief A utility for running performance benchmark. 
+ *   \brief Implements a utility for running performance benchmark. 
  *
  */
 
