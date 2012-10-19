@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file bdb_writer.cpp
- *    \brief Defines an I/O interface for writing to files.
+ *    \brief Defines and implements an I/O interface for writing to files.
  *
  *
  */

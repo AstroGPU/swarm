@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file host_array_writer.hpp 
- *    \brief Defines a event write plug-in for io.cpp.
+ *    \brief Defines an event writer plug-in for io.cpp.
  *
  *
  */

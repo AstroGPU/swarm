@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file io.hpp
- *  \brief declares swarmdb and range
+ *  \brief Defines swarmdb and range.
  *
 */
 

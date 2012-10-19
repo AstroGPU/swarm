@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file binary_writer.cpp
- *    \brief Defines a writer that writes to Berkeley DB in binary form. 
+ *    \brief Defines and implements a writer that writes to Berkeley DB in binary form. 
  *
  *
  */
