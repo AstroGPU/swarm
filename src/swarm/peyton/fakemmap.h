@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Mario Juric   *
- *   mjuric@astro.Princeton.EDU   *
+ *   Copyright (C) 2005 by Mario Juric                                     *
+ *   mjuric@astro.Princeton.EDU                                            *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 /*! \file fakemmap.h
- *   \brief Header file for faking memory mapping for portability.
+ *   \brief Defines macros and functions for faking memory mapping for portability.
  *
  */
 
