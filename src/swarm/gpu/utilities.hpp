@@ -18,7 +18,7 @@
 
 /*! \file utilities.hpp
  *   \brief Defines a function for counting the number of active ensemble 
- *          systems on GPU and utility functions for finding best factorization
+ *          systems on GPU and utility functions for finding the best factorization
  *          and compute the optimal allowable grid dimensions based on 
  *          the system configuration. 
  */

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file snapshot.cpp
- *   \brief Impletes load and save functions for ensemble files. 
+ *   \brief Implements load and save functions for ensemble files. 
  *
  *
 */

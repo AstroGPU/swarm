@@ -18,7 +18,7 @@
 
 
 /*! \file composites.hpp
- *   \brief Defines the combination of monitors.
+ *   \brief Defines and implements the combination of monitors.
  *
  */
 

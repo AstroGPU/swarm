@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_gr_acc.hpp
- *   \brief Defines the class to calculate acceleration part of the gravitation. 
+ *   \brief Defines the class and implements the functions to calculate 
+ *          acceleration part of the gravitation. 
  *          
  */
 

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stop_on_ejection.hpp
- *   \brief Defines the monitor that signals and logs when bodies meets 
+ *   \brief Defines and implements the monitor that signals and logs when bodies meets 
  *          ejection criteria. 
  *
  */

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file plugin.cpp
- *    \brief Implement the interface and utility functions for plugin system.
+ *    \brief Implements the interface and utility functions for plugin system.
  * 
  *
 */

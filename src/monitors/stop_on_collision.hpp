@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stop_on_collision.hpp
- *   \brief Defines the monitor that detects physical collisions. 
+ *   \brief Defines and implements the monitor that detects physical collisions. 
  *
  */
 

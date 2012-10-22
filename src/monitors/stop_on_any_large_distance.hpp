@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stop_on_any_large_distance.hpp
- *   \brief Defines the monitor that logs the body that is separated from
+ *   \brief Defines and implements the monitor that logs the body that is separated from
  *          origin and other bodies by at least "rmax". 
  *
  */

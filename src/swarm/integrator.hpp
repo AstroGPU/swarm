@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 /*! \file integrator.hpp
- *   \brief Definition of class interface for generic and GPU integrator class
+ *   \brief Defines integrator class for CPU and GPU. 
  *
  *   This is the only file that external applications need to include
  *   if they need to use integrators

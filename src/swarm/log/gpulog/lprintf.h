@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 /*! \file lprintf.h 
- *    \brief Defines CUDA compatible printf API.
+ *    \brief Defines and implements the CUDA compatible printf API.
  *   
  *    
  */

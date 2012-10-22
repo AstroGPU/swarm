@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs.hpp
+ *   \brief Defines the GPU implementation of mixed variables symplectic propagator.
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"

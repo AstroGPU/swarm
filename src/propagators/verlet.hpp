@@ -16,9 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file verlet.hpp
+ *   \brief Defines the GPU implementation of Verlet propagator. 
+ *
+ */
+
 #include "swarm/swarmplugin.h"
-
-
 
 namespace swarm { namespace gpu { namespace bppt {
 

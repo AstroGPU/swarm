@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file snapshot.hpp
- *   \brief Impletes load and save functions for ensemble files. 
+ *   \brief Defines and implements load and save functions for ensemble files. 
  *
  */
 

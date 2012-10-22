@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file generic_gpu_bppt_integrator.hpp
- *   \brief Defines a generic integrator for rapid creation of new
+ *   \brief Defines and implements a generic integrator for rapid creation of new
  *          GPU integrators. 
  *
  */
