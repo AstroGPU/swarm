@@ -26,6 +26,7 @@ differential equations.
 	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
+	- \ref TutorialIntegrator
  - \b Using \b Python \b interface
  	- \ref TutorialPython
 

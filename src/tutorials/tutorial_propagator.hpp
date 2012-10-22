@@ -95,18 +95,28 @@ struct TutorialPropagator {
         { return (thread_in_system()==0); }	
 
 	GPUAPI void advance(){
-		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;
 		double acc = 0.0, jerk = 0.0;
-		const double third = 1.0/3.0;
 		
 		if( is_in_body_component_grid() )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
+		// First step of integration: calculate the accelartion 
+		// (second derivative of position) and jerk (third derivative
+		// of position). The gravitation
+		// algorithm needs all the specified parameters. The acceleration and
+		// jerk are returned in the last two variables (acc,jerk).
 		calcForces(ij,b,c,pos,vel,acc,jerk);
-		// Integrator
-		pos = pos +  h*(vel+(h*0.5)*(acc+(h*third)*jerk));
+
+		// For more precise integrations, we want to end exactly at
+		// the destination_time, that means that h cannot be
+		// greater than max_timestep that is allowed by the wrapper.
+		double h = min(_params.time_step, max_timestep);
+
+		// For this simple integrator, we use explicit Euler integration
+		// equations. More complex equations can be used in practice.
+		pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.0)*jerk));
 		vel = vel +  h*(acc+(h*0.5)*jerk);
 
 
