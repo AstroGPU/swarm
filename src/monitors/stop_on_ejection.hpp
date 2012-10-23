@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_ejection.hpp
- *   \brief Defines and implements the monitor that signals and logs when bodies meets 
- *          ejection criteria. 
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_ejection
+ *          that signals and logs when bodies meets ejection criteria. 
  *
  */
 

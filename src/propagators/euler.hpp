@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file euler.hpp
- *   \brief Defines and implements the Euler propagator.
+ *   \brief Defines and implements \ref swarm::gpu::bppt::EulerPropagator class.
  *
  */
 

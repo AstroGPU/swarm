@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file stopwatch.h
- * \brief Defines stopwatch class for benchmarking cpu & gpu performance
+ * \brief Defines \ref stopwatch class for benchmarking cpu & gpu performance
  * 
  * class stopwath is based on NVIDIA's LinuxStopWatch class
  */

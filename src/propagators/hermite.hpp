@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file hermite.hpp
- *   \brief Defines the GPU version of hermite propagator. 
+ *   \brief Defines swarm::gpu::bppt::hermite - implements the GPU version 
+ *          of hermite propagator. 
  *
  */
 

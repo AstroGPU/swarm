@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file mvs_cpu.hpp
- *   \brief Defines CPU implementation of mixed variables symplectic propagator.
+ *   \brief Defines and implements \ref swarm::cpu::mvs_cpu class - the CPU 
+ *          implementation of mixed variables symplectic propagator.
  *
  */
 

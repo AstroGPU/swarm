@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 /*! \file integrator.hpp
- *   \brief Defines integrator class for CPU and GPU. 
+ *   \brief Defines \ref swarm::integrator class for CPU and GPU. 
  *
  *   This is the only file that external applications need to include
  *   if they need to use integrators

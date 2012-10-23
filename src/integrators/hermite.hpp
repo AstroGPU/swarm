@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file hermite.hpp
- *   \brief Defines GPU implementation of PEC2 Hermite integrator.
+ *   \brief Defines and implements \ref swarm::gpu::bppt::hermite class - the 
+ *          GPU implementation of PEC2 Hermite integrator.
  *
  */
 

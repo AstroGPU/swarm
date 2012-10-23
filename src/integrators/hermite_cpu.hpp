@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file hermite_cpu.hpp
- *   \brief Defines CPU implementation of PEC2 Hermite integrator.
+ *   \brief Defines and implements \ref swarm::cpu::hermite_cpu class - the 
+ *          CPU implementation of PEC2 Hermite integrator.
  *
  */
 

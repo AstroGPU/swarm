@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file rkck.hpp
- *   \brief Implements Runge Kutta Cash Karp integrator. 
+ *   \brief Defines and implements \ref swarm::gpu::bppt:rkck class - the GPU 
+ *          implementation of Runge Kutta Cash Karp integrator. 
  *
  */
 

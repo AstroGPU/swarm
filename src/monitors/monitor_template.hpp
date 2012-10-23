@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file monitor_template.hpp
- *   \brief Defines monitor templates. 
+ *   \brief Defines monitor templates \ref swarm::monitors::monitor_template. 
  *
  */
 

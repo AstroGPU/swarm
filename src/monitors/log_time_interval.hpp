@@ -17,8 +17,9 @@
  ************************************************************************/
 
 /*! \file log_time_interval.hpp
- *   \brief Implements the monitor that logs the entire state of systems at
- *          periodic intervals. 
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_time_interval
+ *          that logs the entire state of systems at periodic intervals. 
+ *  
  */
 
 #pragma once

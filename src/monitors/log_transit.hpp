@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file log_transit.hpp
- *   \brief Defines and implements the monitor that logs time and events at times near a transit.
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_transit
+ *          that logs time and events at times near a transit.
  *
  */
 

@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_any_large_distance.hpp
- *   \brief Defines and implements the monitor that logs the body that is separated from
- *          origin and other bodies by at least "rmax". 
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_any_large_distance
+ *          that logs the body that is separated from origin and other bodies by at least "rmax".        
  *
  */
 
