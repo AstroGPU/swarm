@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_collision.hpp
- *   \brief Defines and implements the monitor that detects physical collisions. 
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_collision
+ *          that detects physical collisions. 
  *
  */
 

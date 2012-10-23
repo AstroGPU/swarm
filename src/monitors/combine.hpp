@@ -18,7 +18,8 @@
 
 
 /*! \file combine.hpp
- *   \brief Defines and implements a template to combine two monitors.
+ *   \brief Defines and implements a template \ref swarm::monitors::combine
+ *          to combine two monitors.
  *
  */
 

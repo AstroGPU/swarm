@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_crossing_orbit.hpp
- *   \brief Defines the monitor that detects crossing orbits for planets. 
+ *   \brief Defines the monitor \ref swarm::monitors::stop_on_crossing_orbit
+ *          that detects crossing orbits for planets. 
  *
  */
 
