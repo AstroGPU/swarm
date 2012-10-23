@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file generic_gpu_bppt_integrator.hpp
- *   \brief Defines and implements a generic integrator for rapid creation of new
- *          GPU integrators. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::generic - a generic 
+ *          integrator for rapid creation of new GPU integrators. 
  *
  */
 

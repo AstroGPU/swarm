@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_gr_acc.hpp
- *   \brief Defines the class and implements the functions to calculate 
- *          acceleration part of the gravitation. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc_GR
+ *          that implements the functions to calculate acceleration part of the gravitation. 
  *          
  */
 

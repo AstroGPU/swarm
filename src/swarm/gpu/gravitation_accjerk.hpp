@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_accjerk.hpp
- *   \brief Defines the class and implements the functions to calculate accerleration and jerk 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAccJerk
+ *          that implements the functions to calculate accerleration and jerk 
  *          of the gravitation in parallel.
  *          
  */

@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_largen.hpp
- *   \brief Defines the class and implements functions to calculate acceleration and jerk in
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationLargeN
+ *          that implements functions to calculate acceleration and jerk in
  *          parallel for many-body systems. 
  */
 
