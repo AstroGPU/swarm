@@ -22,7 +22,7 @@
  */
 
 #include "integrators/hermite_adap.hpp"
-#include "monitors/stop_on_collision.hpp"
+//#include "monitors/stop_on_collision.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
