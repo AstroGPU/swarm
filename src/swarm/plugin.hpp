@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file plugin.hpp
- *   \brief Defines the interface and utility functions for the plugin development 
+ *   \brief Defines \ref swarm::plugin class and \ref swarm::basic_plugin class,
+ *          implements the interface and utility functions for the plugin development 
  *          and plugin management system
  *
  *   Containts:
