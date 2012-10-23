@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file hermite_adap.hpp
- *   \brief Defines GPU implementation of PEC2 Hermite integrator
- *          with adaptive time step.
+ *   \brief Defines and implements \ref swarm::gpu::bppt::hermite_adap class - the  
+ *          GPU implementation of PEC2 Hermite integrator with adaptive time step.
  *
  */
 
