@@ -32,7 +32,13 @@ IF(TEST_monitors_nbod)
 #	TEST_MONITOR(close_orbits MVSEjection 4)
 #	TEST_MONITOR(close_orbits HermiteCloseEncounter 4)
 #	TEST_MONITOR(collision_course HermiteCloseEncounter 4)
-	ADD_MONITOR_TESTCASE(straight_line 3)
-	TEST_MONITOR(straight_line HermiteCloseEncounter 3)
+#	ADD_MONITOR_TESTCASE(straight_line 3)
+#	TEST_MONITOR(straight_line HermiteCloseEncounter 3)
+
+	ADD_MONITOR_TESTCASE(hyperbolic_orbits 3)
+	TEST_MONITOR(hyperbolic_orbits HermiteEjection 3)
+	
+	ADD_MONITOR_TESTCASE(parabolic_collision 3)
+	TEST_MONITOR(parabolic_collision HermiteCloseEncounter 3)
 ENDIF()
 

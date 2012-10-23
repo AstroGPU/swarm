@@ -144,7 +144,7 @@ class stop_on_collision {
 
 		double d_squared = _sys.distance_squared_between(i,j);
 		double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
-		bool close_encounter = d_squared < _target_radius_sq;
+		bool close_encounter = d_squared < target_radius_sq;
 
 		if( close_encounter )
 		  if(is_verbose_on() )

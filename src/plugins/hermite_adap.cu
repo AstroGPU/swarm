@@ -22,6 +22,7 @@
  */
 
 #include "integrators/hermite_adap.hpp"
+#include "monitors/stop_on_collision.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
@@ -39,6 +40,12 @@ integrator_plugin_initializer<
 integrator_plugin_initializer<
 	        hermite_adap< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
 	hermite_adap_close_encounter_plugin("hermite_adap_close_encounter");
+
+/* stop_on_collision does not compile.
+integrator_plugin_initializer<
+	        hermite_adap< stop_on_collision<L>  , GravitationAccJerk > >
+	hermite_adap_collision_plugin("hermite_adap_collision");
+	*/
 
 
 integrator_plugin_initializer<hermite_adap< log_transit<L>  , GravitationAccJerk > >
