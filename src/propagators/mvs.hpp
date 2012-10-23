@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file mvs.hpp
- *   \brief Defines the GPU implementation of mixed variables symplectic propagator.
+ *   \brief Defines \ref swarm::gpu::bppt::MVSPropagator - the GPU implementation 
+ *          of mixed variables symplectic propagator.
  *
  */
 

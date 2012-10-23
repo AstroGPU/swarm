@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file verlet.hpp
- *   \brief Defines the GPU implementation of Verlet propagator. 
+ *   \brief Defines \ref swarm::gpu::bppt::VerletPropagator - the GPU 
+ *          implementation of Verlet propagator. 
  *
  */
 

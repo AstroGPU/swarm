@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file midpoint.hpp
- *   \brief Defines the GPU implementation of modified midpoint method propagator. 
+ *   \brief Defines \ref swarm::gpu::bppt::MidpointPropagator - the GPU 
+ *          implementation of modified midpoint method propagator. 
  *
  */
 
