@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /** \file tutorial_propagator.hpp
- *  \brief A tutorial for making a propagator.
+ *  \brief Defines \ref TutorialPropagator class --
+ *         implements a tutorial for making a propagator.
  *
  */
 

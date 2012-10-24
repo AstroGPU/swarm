@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /** \file tutorial_monitor.hpp
- *  \brief A tutorial for making a monitor.
+ *  \brief Defines \ref swarm::monitors::TutorialMonitor class - 
+ *         implements a tutorial for making a monitor.
  *
  */
 
