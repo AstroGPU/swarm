@@ -33,7 +33,7 @@
 //
 // A propagator class implements a device function that advance 
 // one system by one time step for one system (or at least attempts one 
-// timestep). These can be readiliy combined with the generic_integrator 
+// timestep). These can be readily combined with the generic_integrator 
 // to quickly provide a new GPU-based integration algorithm.
 //
 // This is the header file where you define the new propagator
