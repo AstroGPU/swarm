@@ -22,7 +22,7 @@
  */
 
 
-#include "propagators/hermite.hpp"
+#include "propagators/hermite_propagator.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
 
