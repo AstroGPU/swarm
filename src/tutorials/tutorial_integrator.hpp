@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/** \file tutorial_integrator.hpp
+ *  \brief Defines \ref TutorialIntegrator class - 
+ *         implements a tutorial for making a integrator.
+ *
+ */
+
 // @page TutorialIntegrator Tutorial for implementing an Integrator
 // If you are planning to implement a new ODE integration algorithm for
 // use with Swarm and a propagator is not enough for your needs, you
