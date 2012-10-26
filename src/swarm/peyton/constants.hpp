@@ -18,6 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file constants.hpp
+ *   \brief Defines various constants for calculations. 
+ *
+ */
+
 #ifndef _astro_constants_h
 #define _astro_constants_h
 

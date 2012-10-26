@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file generic_gpu_bppt_integrator.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::generic - a generic 
+ *          integrator for rapid creation of new GPU integrators. 
+ *
+ */
+
 #include "../common.hpp"
 #include "bppt.hpp"
 #include "device_functions.h"

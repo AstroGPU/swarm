@@ -1,6 +1,8 @@
 SET(REQUIRED_CUDA_VERSION 3.2)
 SET(GENERATE_FERMI TRUE CACHE BOOL "Wether to generate machine code for Fermi architecture")
 SET(GENERATE_GT200 FALSE CACHE BOOL "Wether to generate machine code for GT200 architecture")
+SET(GENERATE_KEPLER TRUE CACHE BOOL "Wether to generate machine code for Kepler architecture")
+
 # Set CUDA Flags and options
 SET(CUDA_NVCC_FLAGS 
 	-Xcudafe --diag_suppress=subscript_out_of_range;
@@ -16,6 +18,12 @@ ENDIF()
 IF(${GENERATE_GT200})
 	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
 		-gencode arch=compute_13,code=sm_13;
+		)
+ENDIF()
+
+IF(${GENERATE_KEPLER})
+	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
+		-gencode arch=compute_30,code=sm_30;
 		)
 ENDIF()
 

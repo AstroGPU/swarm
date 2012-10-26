@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -17,6 +17,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+
+/*! \file gpulog_log.h 
+ *    \brief Defines templates for logging system on GPU. 
+ *
+ *
+ */
 
 #ifndef bits_gpulog_log_h__
 #define bits_gpulog_log_h__

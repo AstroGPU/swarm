@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file logmanager.cpp
- *  \brief public interface to swarm logging system
+ *  \brief Implements the public interface to swarm logging system.
  *
 */
 

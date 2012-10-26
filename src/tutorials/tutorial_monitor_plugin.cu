@@ -1,3 +1,19 @@
+/*************************************************************************
+ ************************************************************************
+ * We would like to hear your feedback on using Swarm-NG libraries. 
+ * Please send your comments on this tutorial and Swarm-NG to our mailing
+ * list at: http://groups.google.com/group/swarm-ng.
+ * 
+ ************************************************************************/
+
+
+/** \file tutorial_monitor_plugin.cu
+ *  \brief Initializes the integrator plugin based on tutorial propagator 
+ *         and tutorial monitor. 
+ *
+ */
+
+
 #include "tutorial_propagator.hpp"
 #include "tutorial_monitor.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"

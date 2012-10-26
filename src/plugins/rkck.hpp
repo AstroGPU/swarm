@@ -15,7 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "integrators/rkck.hpp"
+
+/*! \file rkck.hpp
+ *   \brief Includes a list of header files and global structures. 
+ *
+ */
+
+#include "integrators/rkck_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"

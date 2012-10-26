@@ -15,6 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file logmanager.hpp
+ *    \brief Defines the class \ref swarm::log::manager - the logging manager 
+ *           for CPU/GPU logs and writing them to appropriate output. 
+ *
+ *
+ */
+
 #pragma once
 #include "../common.hpp"
 #include "log.hpp"

@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/** \file tutorial_monitor.hpp
+ *  \brief Defines \ref swarm::monitors::TutorialMonitor class - 
+ *         implements a tutorial for making a monitor.
+ *
+ */
+
 /*
  *  This is a simple tutorial used in doxygen pages
  *  should go through program2doxygen before it
@@ -5,8 +29,12 @@
  *  
  *
  */
-// \page TutorialMonitor Tutorial for making a monitor (stopper/logger)
-//
+// @page TutorialMonitor Tutorial for making a monitor (stopper/logger)
+// A “monitor” class is responsible for determining when the system state 
+// should be logged and when the GPU should cease integrating a given system. 
+// If the monitor determines that logging is needed, then the system’s current 
+// state is written to a buffer in the GPU global device memory.
+
 #pragma once
 
 #include <limits>

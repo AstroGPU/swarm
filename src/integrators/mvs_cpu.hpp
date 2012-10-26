@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs_cpu.hpp
+ *   \brief Defines and implements \ref swarm::cpu::mvs_cpu class - the CPU 
+ *          implementation of mixed variables symplectic propagator.
+ *
+ */
+
 #ifndef H_MVS_CPU
 #define H_MVS_CPU
 

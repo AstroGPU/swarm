@@ -15,8 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#pragma once
 
+/*! \file log_time_interval.hpp
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_time_interval
+ *          that logs the entire state of systems at periodic intervals. 
+ *  
+ */
+
+#pragma once
 
 namespace swarm {
   namespace monitors {

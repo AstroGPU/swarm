@@ -18,15 +18,20 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file types.hpp
+ *   \brief Defines data types and inline math routines. 
+ *
+ */
+
 #ifndef _astro_types_h
 #define _astro_types_h
 
 #include <cmath>
 
-/**
-	peyton library imported from another project (Mario Juric)
-	
-*/
+/*
+ *	peyton library imported from another project (Mario Juric)
+ */
+
 namespace peyton {
 
 typedef double MJD;

@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs_omp.hpp
+ *   \brief Defines OpenMP implementation of mixed 
+ *          variables symplectic propagator on CPU.
+ *
+ */
+
 #include "mvs_cpu.hpp"
 #ifdef _OPENMP
 #include <omp.h>

@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file log_rvs.hpp
+ *   \brief Defines and implements the monitor that logs time and events at times near a transit on GPU. 
+ *
+ */
+
 #pragma once
 
 #include<iostream>

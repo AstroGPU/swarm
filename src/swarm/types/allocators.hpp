@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 /*! \file allocators.hpp
- *  \brief Routines to allocate memory using different APIs and copy 
+ *  \brief Defines routines to allocate memory using different APIs and copy 
  *  between them
  *  
  *  The classes provide a generalized interface for different memory 

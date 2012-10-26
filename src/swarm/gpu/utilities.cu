@@ -19,7 +19,7 @@
 /*! \file utilities.cu
  *  \brief provides several utility  functions for public interface for swarm libaray
  *
-*/
+ */
 
 #include "../common.hpp"
 #include "utilities.hpp"

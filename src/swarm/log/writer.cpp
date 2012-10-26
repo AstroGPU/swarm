@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file integrator.cpp
- *  \brief class integrator
+/*! \file writer.cpp
+ *  \brief Implements output writer interface. 
  *
 */
 

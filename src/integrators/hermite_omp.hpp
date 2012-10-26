@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file hermite_omp.hpp
+ *   \brief Defines OpenMP implementation for PEC2 Hermite integrator.
+ *
+ */
+
 #include "hermite_cpu.hpp"
 #ifdef _OPENMP
 #include <omp.h>

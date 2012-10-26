@@ -15,6 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_acc.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc 
+ *          that implements member functions to calculate acceleration part of the gravitation. 
+ *          
+ */
+
+
 #pragma once
 
 #include "gravitation_common.hpp"

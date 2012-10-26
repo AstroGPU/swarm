@@ -18,6 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file macros.h
+ *   \brief Defines macros for convenient array and stream operations. 
+ *
+ */
+
 #ifndef _astro_macros_h
 #define _astro_macros_h
 

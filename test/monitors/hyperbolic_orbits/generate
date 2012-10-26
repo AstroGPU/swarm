@@ -1,0 +1,6 @@
+#!/bin/sh
+
+NBOD=$1
+FILE=$2
+
+bin/swarm generate nsys=128 nbod=$NBOD ejection_factor=2 -O $FILE

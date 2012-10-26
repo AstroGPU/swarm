@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file midpoint.hpp
+ *   \brief Defines \ref swarm::gpu::bppt::MidpointPropagator - the GPU 
+ *          implementation of modified midpoint method propagator. 
+ *
+ */
+
 #include "swarm/swarmplugin.h"
 
 namespace swarm { namespace gpu { namespace bppt {

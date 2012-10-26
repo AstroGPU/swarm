@@ -1,3 +1,17 @@
+/*************************************************************************
+ ************************************************************************
+ * We would like to hear your feedback on using Swarm-NG libraries. 
+ * Please send your comments on this tutorial and Swarm-NG to our mailing
+ * list at: http://groups.google.com/group/swarm-ng.
+ * 
+ ************************************************************************/
+
+/** \file tutorial_propagator_plugin.cu
+ *  \brief A integrator plugin based on tutorial propagator. 
+ *
+ */
+
+
 // This is the .cu file where you define the plugin
 // 
 //

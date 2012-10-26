@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Mario Juric   *
- *   mjuric@astro.Princeton.EDU   *
+ *   Copyright (C) 2005 by Mario Juric                                     *
+ *   mjuric@astro.Princeton.EDU                                            *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,9 +18,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file binarystream.hpp
+ *   \brief Defines I/O interface in binary form using boost data types. 
+ *
+ */
+
 /*
-	This file has been copied/modified from Mario Juric's libpeyton.
-*/
+ *	This file has been copied/modified from Mario Juric's libpeyton.
+ */
 
 #ifndef binarystream_h__
 #define binarystream_h__

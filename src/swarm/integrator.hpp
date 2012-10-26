@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 /*! \file integrator.hpp
- *   \brief Definition of class interface for generic and GPU integrator class
+ *   \brief Defines \ref swarm::integrator class for CPU and GPU. 
  *
  *   This is the only file that external applications need to include
  *   if they need to use integrators
@@ -178,7 +178,7 @@ class integrator : public swarm::integrator {
 	//! Copy of ensemble on host (kept in sync with \ref _dens).
 	hostEnsemble& _hens;
 	//! Copy of ensemble on [GPU] device (kept in sync with \ref _hens).
-	//! \TODO: use cux auto ptr to make sure we don't have memory leaks
+	//! \todo: use cux auto ptr to make sure we don't have memory leaks
 	deviceEnsemble _dens;
 
 	//! GPU log object obtained from log manager.

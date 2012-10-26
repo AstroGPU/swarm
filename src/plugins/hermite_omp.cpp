@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file hermite_omp.cpp
+ *   \brief Initializes the hermite OpenMP integrator plugin. 
+ *
+ */
+
+
+
+
 #include "integrators/hermite_omp.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"

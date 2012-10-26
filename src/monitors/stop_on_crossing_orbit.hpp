@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file stop_on_crossing_orbit.hpp
+ *   \brief Defines the monitor \ref swarm::monitors::stop_on_crossing_orbit
+ *          that detects crossing orbits for planets. 
+ *
+ */
+
 #pragma once
 
 #include <limits>

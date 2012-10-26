@@ -16,6 +16,14 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file bppt.hpp
+ *   \brief Defines and implements the GPU integrator class with one thread 
+ *          for each body-pair and the interface to GPU and CUDA. 
+ *
+ *
+ */
+
+
 #pragma once
 
 #include "../integrator.hpp"
@@ -30,8 +38,8 @@
 namespace swarm {
 namespace gpu {
 
-/*! Class of GPU integrators with a thread for each body-pair
- * \addtogroup integrators
+/*!
+ * Class of GPU integrators with a thread for each body-pair. 
  *
  *  Using a thread for each body-pair is to parallelize as much as possible
  *  when integrating an ensemble. The thread assignment is as follows

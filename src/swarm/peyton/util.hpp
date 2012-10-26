@@ -18,11 +18,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file util.hpp
+ *   \brief Defines string operation utility functions. 
+ *
+ */
+
 #ifndef _astro_util_h
 #define _astro_util_h
 
 #include "macros.h"
-#include "types.hpp"
+#include "astro_types.hpp"
 #include "constants.hpp"
 
 #include <cmath>

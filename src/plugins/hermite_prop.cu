@@ -15,7 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "propagators/hermite.hpp"
+
+/*! \file hermite_prop.cu
+ *   \brief Initializes the hermite propagator integrator plugin. 
+ *
+ */
+
+
+#include "propagators/hermite_propagator.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
 

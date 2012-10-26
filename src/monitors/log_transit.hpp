@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file log_transit.hpp
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_transit
+ *          that logs time and events at times near a transit.
+ *
+ */
+
 #pragma once
 
 #include "swarm/gpu/gravitation_accjerk.hpp"

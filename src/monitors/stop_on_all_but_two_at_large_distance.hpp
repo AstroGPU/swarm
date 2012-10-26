@@ -15,6 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file stop_on_all_but_two_at_large_distance.hpp
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_all_but_two_at_large_distance
+ *          that signals and logs when no more than two bodies are within a distance 
+ *          "rmax" of origin or another body.
+ *
+ */
+
 #pragma once
 
 #include <limits>

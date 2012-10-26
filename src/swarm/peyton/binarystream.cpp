@@ -18,6 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file binarystream.cpp
+ *   \brief Implements the I/O operators and methods.
+ *
+ */
+
  
 #define HAVE_BOOST_IOSTREAMS
 #ifdef HAVE_BOOST_IOSTREAMS

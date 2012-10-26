@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file null_writer.cpp
+ *    \brief Implements a dummy null writer. 
+ *
+ *
+ */
+
+
+
 #include "../common.hpp"
 
 #include "../types/config.hpp"

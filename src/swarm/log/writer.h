@@ -16,6 +16,13 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file writer.h 
+ *    \brief Defines class \ref swarm::writer and implements output writer methods.
+ *
+ *
+ */
+
+
 #pragma once
 #include "../common.hpp"
 #include "../types/config.hpp"

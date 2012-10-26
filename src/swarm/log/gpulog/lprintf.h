@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file lprintf.h 
+ *    \brief Defines and implements the CUDA compatible printf API.
+ *   
+ *    
+ */
+
 #ifndef lprintf_h__
 #define lprintf_h__
 

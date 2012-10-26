@@ -15,8 +15,16 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "../common.hpp"
 
+/*! \file host_array_writer.hpp 
+ *    \brief Defines an event writer plug-in for io.cpp.
+ *
+ *
+ */
+
+
+
+#include "../common.hpp"
 #include "../types/config.hpp"
 #include "../plugin.hpp"
 

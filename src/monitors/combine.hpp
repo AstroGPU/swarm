@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file combine.hpp
+ *   \brief Defines and implements a template \ref swarm::monitors::combine
+ *          to combine two monitors.
+ *
+ */
+
+
 #pragma once
 
 #include <limits>

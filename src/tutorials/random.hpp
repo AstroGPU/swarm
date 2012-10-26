@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file random.h
- *  \brief simple interface to CPU random number generators
+/** \file random.hpp
+ *  \brief Defines and implements simple interfaces to CPU random number generators
  *
  * \todo use better random nubmer generators (e.g., from boost++)
 */

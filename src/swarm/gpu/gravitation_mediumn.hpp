@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_mediumn.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationMediumN
+ *          that implements functions to calculate acceleration and jerk in
+ *          parallel for many-body systems. 
+ *          
+ */
+
+
 #pragma once
 
 #include "gravitation_common.hpp"

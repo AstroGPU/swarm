@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarm.cpp
+ *   \brief Implements the essential routines for general use of Swarmng library. 
+ *
+ *
+*/
+
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -318,8 +342,8 @@ void validate(boost::any& v, const std::vector<std::string>& values
 	static boost::regex assign("^(\\w+)=(.+)$");
 	static boost::regex range("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
 	static boost::regex rangeinc("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
-	static boost::regex list("^([a-zA-Z0-9\\.]+)(?:,([a-zA-Z0-9\\.]+))+$");
-	static boost::regex item("([a-zA-Z0-9\\.]+)");
+	static boost::regex list("^([a-zA-Z0-9_\\.]+)(?:,([a-zA-Z0-9_\\.]+))+$");
+	static boost::regex item("([a-zA-Z0-9_\\.]+)");
 	boost::smatch match, items;
 	if (boost::regex_match(s, match, assign)) {
 		p.parameter = match[1];

@@ -26,6 +26,7 @@ differential equations.
 	- \ref TutorialGPU
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
+	- \ref TutorialIntegrator
  - \b Using \b Python \b interface
  	- \ref TutorialPython
 
@@ -38,7 +39,7 @@ Citing Swarm-NG
 arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
 
 Licensing Information
-- Swarm-NG v0.9 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
+- Swarm-NG v1.0 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
 
 
  @section Acknowledgements
