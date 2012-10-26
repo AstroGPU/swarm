@@ -66,6 +66,8 @@ class integrator {
 	//! log object, obtained from log manager
         //  WARNING: Why do we store a raw pointer here?  
         // Any reason not to just use host_log stored in _logman?
+        // Answer to WARNING: we may have different log streams and each
+        // integrator can use their own log stream
 	gpulog::host_log* _log;
 
 	//! Maximum number of iterations per each integration step. c.f. \ref integrate for usage

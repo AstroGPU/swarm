@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file hermite.hpp
+/*! \file hermite_integrator.hpp
  *   \brief Defines and implements \ref swarm::gpu::bppt::hermite class - the 
  *          GPU implementation of PEC2 Hermite integrator.
  *

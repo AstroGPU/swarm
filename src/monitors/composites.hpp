@@ -37,6 +37,9 @@ namespace swarm { namespace monitors {
  *
  * \ingroup monitors
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 template <class L> 
 struct stop_on_ejection_or_close_encounter_or_crossing_orbit {

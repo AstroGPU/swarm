@@ -21,7 +21,7 @@
  *
  */
 
-#include "integrators/hermite.hpp"
+#include "integrators/hermite_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"

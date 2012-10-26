@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file hermite.hpp
- *   \brief Defines swarm::gpu::bppt::hermite - implements the GPU version 
+/*! \file hermite_propagator.hpp
+ *   \brief Defines swarm::gpu::bppt::HermitePropagator - implements the GPU version 
  *          of hermite propagator. 
  *
  */
@@ -42,6 +42,10 @@ struct HermitePropagatorParams {
 };
 
 /*! GPU implementation of hermite propagator
+ * It is of no practical use since @ref hermite integrator implements
+ * the same functionaliy faster. It is only given for performance comparison
+ * between equivalent propagators and integrators.
+ * 
  * \ingroup propagators
  *
  */

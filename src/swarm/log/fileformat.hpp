@@ -29,11 +29,11 @@ namespace swarm {
 	// Note: the header _MUST_ be padded to 16-byte boundary
 	struct ALIGN(16) swarm_header
 	{
-		char magic[6];		// Magic string to quickly verify this is a swarm file (== 'SWARM\0')
-		char version[2];	// File format version
-		char m_type[76];	// user-defined file content ID/description
-		uint32_t flags;		// user-defined flags
-		uint64_t datalen;	// length of data in the file (0xFFFFFFFFFFFFFFFF for unknown)
+		char magic[6];		//!< Magic string to quickly verify this is a swarm file (== 'SWARM\0')
+		char version[2];	//!< File format version
+		char m_type[76];	//!< user-defined file content ID/description
+		uint32_t flags;		//!< user-defined flags
+		uint64_t datalen;	//!< length of data in the file (0xFFFFFFFFFFFFFFFF for unknown)
 
 		static const uint64_t npos = 0xFFFFFFFFFFFFFFFFLL;
 

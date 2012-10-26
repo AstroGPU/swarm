@@ -58,6 +58,9 @@ struct combine_monitors_params {
  *  Example:
  *  combine_monitors< combine_monitors< Monitor1, Monitor2> , Monitor3 >
  *  \ingroup monitors
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 template< class log_t,  class Monitor1,  class Monitor2 >
 struct combine {

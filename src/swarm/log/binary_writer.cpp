@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file binary_writer.cpp
- *    \brief Defines and implements a writer that writes to Berkeley DB in binary form. 
+ *    \brief Defines and implements a writer that writes to binary files. 
  *
  *
  */
@@ -30,14 +30,13 @@
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /**
- * binary_writer plugin for use in
- * io.cpp
+ *   \brief A writer plugin that writes to binary files. (default writer in swarm)
  *
  */
-class binary_writer : public swarm::writer
+class binary_writer : public writer
 {
 protected:
 	std::auto_ptr<std::ostream> output;
@@ -56,11 +55,11 @@ public:
 			ERROR("Could not open '" + rawfn + "' for writing");
 
 		// write header
-		swarm::swarm_header fh(UNSORTED_HEADER_FULL);
+		swarm::swarm_header fh(query::UNSORTED_HEADER_FULL);
 		output->write((char*)&fh, sizeof(fh));
 	}
 
-	/* 
+	/*
 	 * We postpone sorting the output here. We leave the
 	 * file unsorted as it is. No one knows who 
 	 * will benefit from sorting the file and it is
@@ -82,5 +81,5 @@ public:
 writer_plugin_initializer< binary_writer >
 	binary_writer_plugin("binary", "This is the binary writer");
 
-}
+} }
 

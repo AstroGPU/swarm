@@ -39,6 +39,10 @@ struct VerletPropagatorParams {
 };
 
 /*! GPU implementation of Verlet propagator
+ *
+ *  *EXPERIMENTAL*: This class is not maintained anymore since it is not
+ * of much practical value.
+ * 
  * \ingroup propagators
  *
  */

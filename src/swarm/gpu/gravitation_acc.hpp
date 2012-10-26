@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_acc.hpp
- *   \brief Defines the class and implements member functions to 
- *          calculate acceleration part of the gravitation. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc 
+ *          that implements member functions to calculate acceleration part of the gravitation. 
  *          
  */
 
@@ -52,6 +52,7 @@ class GravitationAcc {
 
 	__device__ GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
+	private:
 
 	__device__ void calc_pair(int ij)const{
 		int i = first<nbod>( ij );
@@ -136,6 +137,7 @@ class GravitationAcc {
 		return acc_from_sun + acc_from_planets;
 	}
 
+	public:
 
 	__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
 		// Write positions to shared (global) memory
@@ -150,7 +152,7 @@ class GravitationAcc {
 		}
 	}
 
-	/*
+	/**
 	 * Different version of acceleration calculation used for 
 	 * MVS integrator. The impact of body 0(sun or star) is 
 	 * ignored because in the integrator it is calculated using
@@ -175,7 +177,7 @@ class GravitationAcc {
 			return 0;
 	}
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration only 
 	 * on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.

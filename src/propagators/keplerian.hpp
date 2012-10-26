@@ -19,19 +19,15 @@
 /*! \file keplerian.hpp
  *   \brief Defines a solver for differential Kepler's equation in universal variable x. 
  *
+ * solving differential Kepler's equation
+ * in universal variable x
+ * using Laguerre method as outlined by Prusing+C eqn 2.43
+ * code adapted from Alice Quillen's Qymsym code 
+ * see http://astro.pas.rochester.edu/~aquillen/qymsym/
+ *
  */
 
-
-////////////////////////////////////////////////////////////////
-// solving differential Kepler's equation
-// in universal variable x
-// using Laguerre method as outlined by Prusing+C eqn 2.43
-// code adapted from Alice Quillen's Qymsym code 
-// see http://astro.pas.rochester.edu/~aquillen/qymsym/
-////////////////////////////////////////////////////////////////
-
-#ifndef H_KEPLERIAN
-#define H_KEPLERIAN
+#pragma once
 
 //#define MINR 1.0e-5 // minimum radius
 #define MINR_IN_1EM8 0 // minimum radius
@@ -233,5 +229,3 @@ GPUAPI void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx
     x_old =  x;  y_old =  y;  z_old =  z;
    vx_old = vx; vy_old = vy; vz_old = vz;
 }
-
-#endif

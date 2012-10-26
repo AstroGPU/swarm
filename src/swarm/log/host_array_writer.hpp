@@ -20,6 +20,9 @@
  *    \brief Defines an event writer plug-in for io.cpp.
  *
  *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ *
  */
 
 
@@ -28,11 +31,10 @@
 #include "../types/config.hpp"
 #include "../plugin.hpp"
 
-//#include<unordered_map>
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 template<int NumData>
 class event_record
@@ -58,7 +60,7 @@ public:
 
 };
 
-// Specialized version for NumData=-1 to allow for variable length
+/// Specialized version for NumData=-1 to allow for variable length
 template<>  class event_record<-1>
 {
 public:
@@ -82,7 +84,7 @@ public:
   {       return data.size();    }
 };
 
-// Specialized version for NumData=0 to allow for no double data (is this needed?)
+/// Specialized version for NumData=0 to allow for no double data (is this needed?)
 template<>  class event_record<0>
 {
 public:
@@ -103,18 +105,19 @@ public:
 };
 
 /**
- * host_array_writer plugin for use in
- * io.cpp
+ *  A writer plugin that keeps the data in the memory.
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
-class host_array_writer : public swarm::writer
+class host_array_writer : public writer
 {
 public: 
   static const int max_num_doubles_per_event = 2;
   typedef event_record<max_num_doubles_per_event> event_record_type;
 protected:
   std::vector<int> event_codes_to_log;
-  //  std::unordered_map<int,int> event_code_index;
   typedef std::vector<event_record_type>  event_log_one_system_type;
   typedef std::vector<event_log_one_system_type>  event_log_one_code_type;
   std::vector<event_log_one_code_type> event_log;
@@ -155,5 +158,5 @@ public:
 //writer_plugin_initializer< host_array_writer >
 //	host_array_writer_plugin("host_array", "This stores selected events in simple arrays on the host");
 
-}
+} } // namespcae log::swarm
 

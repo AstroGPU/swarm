@@ -21,6 +21,9 @@
  *          that signals and logs when no more than two bodies are within a distance 
  *          "rmax" of origin or another body.
  *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ *
  */
 
 #pragma once
@@ -31,13 +34,16 @@ namespace swarm {
   namespace monitors {
 
 
-/* Parameters for stop_on_all_but_two_at_large_distance monitor
+/** Parameters for stop_on_all_but_two_at_large_distance monitor
  * deactivate_on_close_encounter (bool): 
  * log_on_close_encounter (bool): 
  * verbose_on_close_encounter (bool): 
  * rmax (real): minimum distance between bodies to be considered isolated
  *
  * \ingroup monitors_param
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */ 
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;

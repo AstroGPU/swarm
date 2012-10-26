@@ -17,8 +17,9 @@
  ************************************************************************/
 
 /*! \file gravitation_gr_acc.hpp
- *   \brief Defines the class and implements the functions to calculate 
- *          acceleration part of the gravitation. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc_GR
+ *          that implements the functions to calculate acceleration part of the gravitation. 
+ * 
  *          
  */
 
@@ -33,6 +34,8 @@ namespace swarm { namespace gpu { namespace bppt {
  *
  * Similar to Gravitation, but computes only terms for acceleration and not for jerk
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
  */
 template<class T>
 class GravitationAcc_GR {
@@ -50,17 +53,20 @@ class GravitationAcc_GR {
 
 	public:
 
-        // Calculate accelerations, including approximation for weak GR
-        // currently hardwired for G=M_sol=AU=1, year=2pi
-        // \todo read c^2 from parameter file?  read from system attribute?
-        //       set system attribute from parameter file?
-	__device__ GravitationAcc_GR(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared)
+	/**
+     * Calculate accelerations, including approximation for weak GR
+     * currently hardwired for G=M_sol=AU=1, year=2pi
+     * \todo read c^2 from parameter file?  read from system attribute?
+     *       set system attribute from parameter file?
+     */
+	GENERIC GravitationAcc_GR(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared)
         {	
 	  c2 = 101302340.; 
         }
 
+	private:
 
-	__device__ void calc_pair(int ij)const{
+	GENERIC void calc_pair(int ij)const{
 		int i = first<nbod>( ij );
 		int j = second<nbod>( ij );
 		if(i != j){
@@ -96,15 +102,17 @@ class GravitationAcc_GR {
 		return sum;
 	  }
 
-        // Warning untested... 
-        // Based on addition to Mercury from Matthew Payne
-        //  Look at Benitez & Gallardo and references there-in
-        // http://www.springerlink.com/content/d8r26w6610389256/fulltext.pdf
-        //                      -GM
-        // Additional accel =  -----   {(4GM / r - v^2) r + 4(v.r)v}
-        //                     r^3c^2
-        // Is it right to assing all acceleration to planet and none to star?
-	__device__ double sum_acc_gr(int b,int c)const
+	/**
+	 * Warning untested... 
+	 * Based on addition to Mercury from Matthew Payne
+	 *  Look at Benitez & Gallardo and references there-in
+	 * http://www.springerlink.com/content/d8r26w6610389256/fulltext.pdf
+	 *                      -GM
+	 * Additional accel =  -----   {(4GM / r - v^2) r + 4(v.r)v}
+	 *                     r^3c^2
+	 * Is it right to assing all acceleration to planet and none to star?
+	 */
+	GPUAPI double sum_acc_gr(int b,int c)const
                 {
 		double acc_sum = 0;
 		double one_over_r;
@@ -196,7 +204,7 @@ class GravitationAcc_GR {
 
 
 
-	__device__ double sum_acc_planets(int b,int c)const{
+	GENERIC double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
 
 		/// Find the contribution from/to Sun first
@@ -242,8 +250,9 @@ class GravitationAcc_GR {
 		return acc_from_sun + acc_from_planets + acc_gr;
 	}
 
+	public:
 
-	__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
+	GENERIC void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
@@ -256,7 +265,7 @@ class GravitationAcc_GR {
 		}
 	}
 
-	/*
+	/**
 	 * Different version of acceleration calculation used for 
 	 * MVS integrator. The impact of body 0(sun or star) is 
 	 * ignored because in the integrator it is calculated using
@@ -281,7 +290,7 @@ class GravitationAcc_GR {
 			return 0;
 	}
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration only 
 	 * on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.

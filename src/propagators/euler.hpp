@@ -40,6 +40,9 @@ struct EulerPropagatorParams {
 };
 
 /*! GPU implementation of euler propagator
+ * It is of no practical use. Given here as a working example. @ref TutorialPropagator 
+ * is based on this propagator.
+ * 
  * \ingroup propagators
  *
  */

@@ -19,6 +19,9 @@
 /*! \file log_rvs.hpp
  *   \brief Defines and implements the monitor that logs time and events at times near a transit on GPU. 
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 
 #pragma once

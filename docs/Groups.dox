@@ -1,6 +1,21 @@
 /*! \defgroup integrators Integrators
- *  Integrators are used to do the ODE integration in swarm.
+ *  Integrators are used to do the ODE (Ordinary Differential Equations) integration  
+ *  Swarm-NG includes several integrators that build on the common data structures and 
+ *  and work models. This framework makes it easy for a developer to implement a new
+ *  integrator that takes advantage of the highly parallel GPU architecture with minimal
+ *  attention to hardware details. 
  * 
  */
-/// \defgroup propagators Propagators
-/// \defgroup monitors Monitors
+/*! \defgroup propagators Propagators
+ *  A “propagator” class implements a device function that advance one system by one 
+ *  time step for one system. It can be readily combined with the generic_integrator
+ *  to quickly provide a new GPU-based integration algorithm. 
+ */
+
+/*! \defgroup monitors Monitors
+ *  A “monitor” class is responsible for determining when the system state should be 
+ *  logged and when the GPU should cease integrating a given system. If the monitor 
+ *  determines that logging is needed, then the system’s current state is written to 
+ *  a buffer in the GPU global device memory
+ *
+ */

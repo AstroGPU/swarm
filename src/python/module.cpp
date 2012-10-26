@@ -3,6 +3,18 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
+/** @file module.cpp
+ *	@brief Python interface to the Swarm-NG
+ * 
+ * The interface covers only a minimal API that is useful for
+ * trivial tasks. Not good enough for production and it is WIP.
+ * 
+ * This API is not pythonified and implemented in C++ format.
+ * 
+ *  *EXPERIMENTAL*: This class does not run, gives load-time linker errors.
+ * 
+ */
+
 using std::string;
 using namespace boost::python;
 using boost::noncopyable;
@@ -123,7 +135,7 @@ void bodattr_setitem(ensemble::Body::attributes_t& bodattr, const int& i, const 
 }
 
 
-/* Swarm as a python module
+/** Swarm as a python module
  *
  * The reason for lib prefix is because CMake automatically
  * adds lib prefix to the name of the target

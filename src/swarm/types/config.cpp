@@ -25,9 +25,7 @@
 #include "../peyton/util.hpp"
 
 #include "config.hpp"
-//
-// Utilities
-//
+
 using peyton::util::trim;
 
 

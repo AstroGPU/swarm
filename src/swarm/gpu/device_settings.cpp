@@ -52,11 +52,16 @@ void select_cuda_device(int dev) {
 
 }
 
-///
+/**
+ * The intent is to tell CUDA driver to use more cache. But it does
+ * not improve performance all the time. 
+ * 
+ */
 void set_more_cache(){
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 }
 
+///
 void print_device_information(){
 	  std::cerr << "Device:\t"  << deviceInfo.name   << "\n"
 		  //<< " Compute Capabality: " << deviceInfo.computeMode <<   "\n"
@@ -70,7 +75,7 @@ void print_device_information(){
 }
 
 /**
- * \todo is block_warps computed correctly when blocksize is a multiple of warpSize?
+ * @todo is block_warps computed correctly when blocksize is a multiple of warpSize?
  */
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	assert(blocksize > 0);
@@ -93,7 +98,11 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	return limit;
 }
 
-
+/**
+ * Helper function to catch wrong configurations when running a kernel.
+ * It uses the general guidelines from the CUDA Occupancy calculator.
+ * 
+ */
 bool check_cuda_limits ( int blocksize, int shmem_per_block ){
 	return blocks_per_mp(blocksize, shmem_per_block) > 0;
 }

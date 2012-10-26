@@ -36,7 +36,7 @@ template<class N>
 GENERIC N square(const N& x) { return x*x; }
 
 
-/*
+/**
  * To use as an array for members of Body and Sys
  *
  */

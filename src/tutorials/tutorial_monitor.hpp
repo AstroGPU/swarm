@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /** \file tutorial_monitor.hpp
- *  \brief A tutorial for making a monitor.
+ *  \brief Defines \ref swarm::monitors::TutorialMonitor class - 
+ *         implements a tutorial for making a monitor.
  *
  */
 
@@ -28,8 +29,12 @@
  *  
  *
  */
-// \page TutorialMonitor Tutorial for making a monitor (stopper/logger)
-//
+// @page TutorialMonitor Tutorial for making a monitor (stopper/logger)
+// A “monitor” class is responsible for determining when the system state 
+// should be logged and when the GPU should cease integrating a given system. 
+// If the monitor determines that logging is needed, then the system’s current 
+// state is written to a buffer in the GPU global device memory.
+
 #pragma once
 
 #include <limits>

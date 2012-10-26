@@ -20,6 +20,9 @@
  *   \brief Defines the monitor \ref swarm::monitors::stop_on_crossing_orbit
  *          that detects crossing orbits for planets. 
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 
 #pragma once

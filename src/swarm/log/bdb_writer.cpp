@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file bdb_writer.cpp
- *    \brief Defines and implements an I/O interface for writing to files.
+ *    \brief Writer plugin to output the log into a Berkeley-DB database.
  *
  *
  */
@@ -32,16 +32,19 @@
 
 #include <db_cxx.h>
 
-namespace swarm {
+namespace swarm { namespace log {
 
 using namespace gpulog;
 
 /**
- * A writer that writes directly to Berkeley DB databases
+ *  \brief Writer plugin to output the log into a Berkeley-DB database.
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
-class bdb_writer : public swarm::writer
+class bdb_writer : public writer
 {
 	// To do this, first we have to include the BDB in the CMake files
 	// in process, we should make a gpulog::ilogstream out of the data
@@ -71,4 +74,4 @@ public:
 writer_plugin_initializer< bdb_writer >
 	bdb_writer_plugin("bdb", "This is the Berkeley DB writer");
 
-}
+} }

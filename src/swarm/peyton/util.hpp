@@ -27,7 +27,7 @@
 #define _astro_util_h
 
 #include "macros.h"
-#include "types.hpp"
+#include "astro_types.hpp"
 #include "constants.hpp"
 
 #include <cmath>

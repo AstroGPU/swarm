@@ -23,8 +23,9 @@
 
 #pragma once
 
-// todo: Do we actually use this?
+// For using CoalescedStructArray in the gravitation implementations
 #include "../types/coalescedstructarray.hpp"
+
 #include "bppt.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {

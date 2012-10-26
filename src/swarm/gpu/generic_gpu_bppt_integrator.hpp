@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file generic_gpu_bppt_integrator.hpp
- *   \brief Defines and implements a generic integrator for rapid creation of new
- *          GPU integrators. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::generic - a generic 
+ *          integrator for rapid creation of new GPU integrators. 
  *
  */
 
@@ -84,8 +84,7 @@ class generic: public integrator {
 
 	//! We don't really know number of bodies right now and it does not matter.
 	//! parameters of the Propagator should be initialized with config file. But
-	//! The only way to access Propagator class is to instantiate it with something.
-	//
+	//! The only way to access Propagator class is to instantiate it with something.
 	typedef compile_time_params_t<3> defpar_t;
 	typedef  typename Propagator< defpar_t, Gravitation<defpar_t> >::params prop_params_t;
 
@@ -101,6 +100,7 @@ class generic: public integrator {
 	 */
 	generic(const config& cfg): base(cfg), _mon_params(cfg),_prop_params(cfg) {
 	}
+
 
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
@@ -124,8 +124,6 @@ class generic: public integrator {
 		return max3( grav, prop, moni);
 	}
 
-  //         __device__ void convert_internal_to_std_coord() {} ;
-  //         __device__ void convert_std_to_internal_coord() {};
 
 	/**
 	 * \brief Integrator the system using the provided Propagator and Monitor.
@@ -136,7 +134,7 @@ class generic: public integrator {
 	 *
 	 */
 	template<class T>
-	__device__ void kernel(T compile_time_param){
+	GPUAPI void kernel(T compile_time_param){
 		if(sysid()>=_dens.nsys()) return;
 
 		typedef Gravitation<T> GravitationInstance;
