@@ -16,7 +16,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file rkck_integrator.hpp
+/*! \file rkck.hpp
  *   \brief Defines and implements \ref swarm::gpu::bppt:rkck class - the GPU 
  *          implementation of Runge Kutta Cash Karp integrator. 
  *

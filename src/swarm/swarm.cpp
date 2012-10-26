@@ -17,8 +17,15 @@
  ************************************************************************/
 
 /*! \file swarm.cpp
- *   \brief Implements the essential routines for general use of Swarmng library. 
+ *   \brief Generic command-line interface to use all aspects of the Swarm-NG libraries.
+ * 
+ * Command-line interface provides an easy and portable way to use the Swarm-NG routines
+ * without coding. This can be used to interoperate with other algorithms that are 
+ * written in other languages. 
+ * 
+ * For more info c.f. @ref SwarmExec
  *
+ *  @TODO Routines in this file may need documenting
  *
 */
 

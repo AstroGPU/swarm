@@ -20,6 +20,9 @@
  *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_any_large_distance
  *          that logs the body that is separated from origin and other bodies by at least "rmax".        
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 
 #pragma once
@@ -29,13 +32,16 @@
 namespace swarm {
   namespace monitors {
 
-/* Parameters for stop_on_any_large_distance monitor
+/*! Parameters for stop_on_any_large_distance monitor
  * deactivate_on_close_encounter (bool): 
  * log_on_close_encounter (bool): 
  * verbose_on_close_encounter (bool): 
  * rmax (real): minimum distance between bodies to trigger
  *
  * \ingroup monitors_param
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */ 
 struct stop_on_any_large_distance_params {
 	double rmax;

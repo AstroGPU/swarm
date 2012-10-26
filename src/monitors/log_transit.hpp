@@ -20,6 +20,9 @@
  *   \brief Defines and implements the monitor \ref swarm::monitors::log_transit
  *          that logs time and events at times near a transit.
  *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ *
  */
 
 #pragma once

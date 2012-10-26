@@ -318,7 +318,7 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_ra
 
 
     //    void execute(const std::string &datafile, time_range_t T, sys_range_t sys)
-      void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() )
+      void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod)
 {
 	swarmdb db(datafile);
 	swarmdb::result r = db.query(sys, T);

@@ -19,6 +19,7 @@
 /*! \file gravitation_gr_acc.hpp
  *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc_GR
  *          that implements the functions to calculate acceleration part of the gravitation. 
+ * 
  *          
  */
 
@@ -33,6 +34,8 @@ namespace swarm { namespace gpu { namespace bppt {
  *
  * Similar to Gravitation, but computes only terms for acceleration and not for jerk
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
  */
 template<class T>
 class GravitationAcc_GR {

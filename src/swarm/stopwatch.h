@@ -22,8 +22,7 @@
  * class stopwath is based on NVIDIA's LinuxStopWatch class
  */
 
-#ifndef stopwatch_h__
-#define stopwatch_h__
+#pragma once
 
 #include <time.h>
 #include <sys/time.h>
@@ -34,11 +33,11 @@
 class stopwatch
 {
 protected:
-	struct timeval  start_time;	// Start of measurement
-	float  diff_time;		// Time difference between the last start and stop (in ms)
-	float  total_time;		// TOTAL time difference between starts and stops (in ms)
-	bool running;			// flag if the stop watch is running
-	int clock_sessions;		// Number of times clock has been started and stopped (for averaging)
+	struct timeval  start_time;	//!< Start of measurement
+	float  diff_time;		//!< Time difference between the last start and stop (in ms)
+	float  total_time;		//!< TOTAL time difference between starts and stops (in ms)
+	bool running;			//!< flag if the stop watch is running
+	int clock_sessions;		//!< Number of times clock has been started and stopped (for averaging)
 
 public:
 	stopwatch() :
@@ -66,8 +65,8 @@ public:
 		clock_sessions++;
 	}
 
-	// Reset the timer to 0. Does not change the timer running state but does
-	// recapture this point in time as the current start time if it is running.
+	/// Reset the timer to 0. Does not change the timer running state but does
+	/// recapture this point in time as the current start time if it is running.
 	void reset()
 	{
 		diff_time = 0;
@@ -79,13 +78,12 @@ public:
 		}
 	}
 
-	// Time in sec. after start. If the stop watch is still running (i.e. there
-	// was no call to stop()) then the elapsed time is returned added to the
-	// current diff_time sum, otherwise the current summed time difference alone
-	// is returned.
+	/// Time in sec. after start. If the stop watch is still running (i.e. there
+	/// was no call to stop()) then the elapsed time is returned added to the
+	/// current diff_time sum, otherwise the current summed time difference alone
+	/// is returned.
 	float getTime() const
 	{
-		// Return the TOTAL time to date
 		float retval = total_time;
 		if(running)
 		{
@@ -94,15 +92,15 @@ public:
 		return 0.001 * retval;
 	}
 
-	// Add dt seconds of time to the counter. Does not increment the number of
-	// clock sessions
+	/// Add dt seconds of time to the counter. Does not increment the number of
+	/// clock sessions
 	void addTime(const float dt)
 	{
 		total_time += 1000*dt;
 	}
 
-	// Time in msec. for a single run based on the total number of COMPLETED runs
-	// and the total time.
+	/// Time in msec. for a single run based on the total number of COMPLETED runs
+	/// and the total time.
 	float getAverageTime() const
 	{
 		return 0.001 * total_time/clock_sessions;
@@ -115,7 +113,7 @@ public:
 
 private:
 
-	// helpers functions
+	//// helpers functions
 
 	float getDiffTime() const
 	{
@@ -128,6 +126,11 @@ private:
 	}
 };
 
+/**
+ * Helper function that takes a function object (or just a C function
+ * pointer) and measures the time that spent calculating it.
+ * 
+ */
 template< class T >
 double watch_time(const T& a){
 	stopwatch s;
@@ -138,4 +141,3 @@ double watch_time(const T& a){
 	return s.getTime()*1000.;
 }
 
-#endif // stopwatch_h__

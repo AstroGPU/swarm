@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file helpers.hpp
- *   \brief Defines and implements the utility functions for loop unrolling, select templates
- *          and launch templatized integrator.
+ *   \brief Template meta-programming combinators (symbolic helper functions) 
+ * for loop unrolling and selecting the correct templatized integrator at runtime.
  *          
  */
 

@@ -37,7 +37,7 @@ void set_prefered_shared_memory(const char* function_name){
 const int registers_per_thread = 64;  
 cudaDeviceProp deviceInfo;
 
-/*
+/**
  * \todo Is it intentional that shmem_per_system isn't multiplied by chunk_size?
  */
 int optimized_system_per_block(int chunk_size, int thread_per_system
@@ -58,7 +58,11 @@ void select_cuda_device(int dev) {
 
 }
 
-
+/**
+ * The intent is to tell CUDA driver to use more cache. But it does
+ * not improve performance all the time. 
+ * 
+ */
 void set_more_cache(){
 	$$$;
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -76,8 +80,8 @@ void print_device_information(){
 	  
 }
 
-/*
- * \todo is block_warps computed correctly when blocksize is a multiple of warpSize?
+/**
+ * @todo is block_warps computed correctly when blocksize is a multiple of warpSize?
  */
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	assert(blocksize > 0);
@@ -100,6 +104,11 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	return limit;
 }
 
+/**
+ * Helper function to catch wrong configurations when running a kernel.
+ * It uses the general guidelines from the CUDA Occupancy calculator.
+ * 
+ */
 bool check_cuda_limits ( int blocksize, int shmem_per_block ){
 	return blocks_per_mp(blocksize, shmem_per_block) > 0;
 }

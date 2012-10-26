@@ -20,6 +20,9 @@
  *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationMediumN
  *          that implements functions to calculate acceleration and jerk in
  *          parallel for many-body systems. 
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *          
  */
 

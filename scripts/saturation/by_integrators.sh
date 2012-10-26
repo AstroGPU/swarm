@@ -1,4 +1,4 @@
-DTIME=10.0 # Destination time
+DTIME=2.0 # Destination time
 NBOD="3 10" # a list of number of bodies
 INTEGRATORS="Hermite" # a list of integrators
 SOURCE=`dirname $0`/../../

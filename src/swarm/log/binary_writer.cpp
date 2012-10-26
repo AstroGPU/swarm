@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file binary_writer.cpp
- *    \brief Defines and implements a writer that writes to Berkeley DB in binary form. 
+ *    \brief Defines and implements a writer that writes to binary files. 
  *
  *
  */
@@ -33,8 +33,7 @@
 namespace swarm { namespace log {
 
 /**
- * binary_writer plugin for use in
- * io.cpp
+ *   \brief A writer plugin that writes to binary files. (default writer in swarm)
  *
  */
 class binary_writer : public writer

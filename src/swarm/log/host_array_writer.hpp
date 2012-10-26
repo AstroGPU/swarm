@@ -20,6 +20,9 @@
  *    \brief Defines an event writer plug-in for io.cpp.
  *
  *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ *
  */
 
 
@@ -103,8 +106,10 @@ public:
 };
 
 /**
- * host_array_writer plugin for use in
- * io.cpp
+ *  A writer plugin that keeps the data in the memory.
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
 class host_array_writer : public writer

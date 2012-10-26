@@ -42,6 +42,10 @@ struct HermitePropagatorParams {
 };
 
 /*! GPU implementation of hermite propagator
+ * It is of no practical use since @ref hermite integrator implements
+ * the same functionaliy faster. It is only given for performance comparison
+ * between equivalent propagators and integrators.
+ * 
  * \ingroup propagators
  *
  */

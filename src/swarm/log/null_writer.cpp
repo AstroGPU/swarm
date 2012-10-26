@@ -34,8 +34,9 @@
 namespace swarm { namespace log {
 
 /**
- * null_writer plugin for use in
- * io.cpp
+ * A writer plugin to use when the log output is not needed.
+ * 
+ * Discards all the log output.
  *
  */
 class null_writer : public writer

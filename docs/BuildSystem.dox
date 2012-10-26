@@ -64,8 +64,9 @@ then close the GUI window using the "Close" button.
 \subsection cuda CUDA related options
   | Variable           | Description         | Default value |
   |--------------------|---------------------|---------------|
-  | *GENERATE_FERMI*         | to generate CUDA binaries for Fermi architecture, check this option only if you have a Fermi card in your system. | ON |
-  | *GENERATE_GT200* 	       | to generate CUDA binaries for GT200 architecture, check this option only if you have a GT200 card in your system. | OFF |
+  | *GENERATE_FERMI*   | to generate CUDA binaries for Fermi (Geforce 400 series) architecture, check this option only if you have a Fermi card in your system. | ON |
+  | *GENERATE_GT200*   | to generate CUDA binaries for GT200 architecture(Geforce 200 series), check this option only if you have a GT200 card in your system. | OFF |
+  | *GENERATE_KEPLER*  | to generate CUDA binaries for Kepler architecture(Geforce 600 series), check this option only if you have a Kepler compatible card in your system. [Experimental, not thoroughly tested]| OFF |
   | *CUDA_TOOLKIT_ROOT_DIR* | The directory where CUDA toolkit is installed. Useful when multiple version of CUDA are installed on one system  | /usr/local/cuda |
   
 

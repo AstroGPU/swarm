@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file swarm.h
- *   \brief Defines the public interface for swarmng library. 
+ *   \brief Defines the public interface for Swarm-NG library. 
  *
  *   User application intending to use swarm library should include this header file.
  *   This file has most of essential headers needed to use the swarmng library.

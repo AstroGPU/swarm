@@ -38,13 +38,16 @@ T arg_parse(const std::string &s)
 	return boost::lexical_cast<T>(s);
 }
 
-//
-// Parse ranges of the form:
-//	<r1>..<r2>
-//	MIN..<r2>
-//	<r1>..MAX
-//	ALL
-//
+/*!
+ * Parser for range datatype to use with boost::program_options.
+ * 
+ * Parse ranges of the form:
+ *	<r1>..<r2>
+ *	MIN..<r2>
+ *	<r1>..MAX
+ *	ALL
+ * 
+ */
 template<typename T>
 void validate(boost::any& v,
 	const std::vector<std::string>& values,
@@ -87,6 +90,10 @@ void validate(boost::any& v,
 	}
 }
 
+/**
+ * Petty print a range object
+ * 
+ */
 template<typename T>
 std::ostream &operator<<(std::ostream &out, const range<T> &r)
 {
@@ -101,13 +108,28 @@ std::ostream &operator<<(std::ostream &out, const range<T> &r)
 }
 	
 
-void execute(const std::string &datafile, time_range_t T, sys_range_t sys);
-void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t body_range);
+/*! Execute a query on the datafile. The query consists of ranges for time (T), systems (sys) and bodies (bod)
+ * 
+ * @param datafile Filename for the swarm binary log to query from
+ * @param T        Range of times to output
+ * @param sys      Range of systems to output
+ * @param bod      Range of bodies to output
+ * 
+ */
+void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() );
+
 enum planets_coordinate_system_t {
   astrocentric, barycentric, jacobi, origin
 };
+
+//! Set the output format of the @ref execute to be in Cartesian coordinates
 void set_cartesian_output(const planets_coordinate_system_t& coordinate_system = origin) ;
+//! Set the output format of the @ref execute to be in Keplerian coordinates
 void set_keplerian_output(const planets_coordinate_system_t& coordinate_system = jacobi) ;
+/*! Set the output format of the @ref execute for the coordinates. 
+ * @param coordinate_system Choice of coordinate system, c.f. @ref planets_coordinate_system_t
+ * 
+ */
 void set_coordinate_system(const planets_coordinate_system_t& coordinate_system);  
 
 } }

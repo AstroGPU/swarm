@@ -38,8 +38,7 @@ namespace swarm {
 		_log = l->get_hostlog();
 	}
 
-        gpulog::host_log* integrator::get_host_log(){
-	  //	  return _logman->get_hostlog();
+    gpulog::host_log* integrator::get_host_log(){
 	  return _log;
 	}
 
@@ -116,15 +115,13 @@ namespace swarm {
 
 
 /*!
-   \brief Integrator instantiation support
-
-  @param[in] cfg configuration class
-*/
-
-/* Must use factory class to dynamically load integrator subclass
- * instead of using constructor. Done so that users can define their
- * own integrators that the swarm code does not need to know about at
- * compile time
+ * \brief Dynamically load integrators based on the configuration
+ *
+ * Must use factory class to dynamically load integrator subclass
+ * instead of using constructor. Users can define their
+ * own integrators that can be loaded dynamically later.
+ * 
+ * @param[in] cfg configuration class
  */
 Pintegrator integrator::create(const config &cfg)
 {

@@ -38,6 +38,12 @@ struct MidpointPropagatorParams {
 };
 
 /*! GPU implementation of modified midpoint method propagator
+ *
+ *
+ *  *EXPERIMENTAL*: WIP, this class is not thoroughly tested and can
+ * change at any time.
+ * 
+ *
  * \ingroup propagators
  *
  */

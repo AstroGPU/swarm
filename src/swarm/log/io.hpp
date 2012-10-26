@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file io.hpp
- *  \brief Defines swarmdb and range.
+ *  \brief Defines routines for reading binary log files made by binary_writer.
  *
 */
 

@@ -20,6 +20,9 @@
  *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_collision
  *          that detects physical collisions. 
  *
+ *  *EXPERIMENTAL*: This class does not pass any tests. 
+ * 
+ *
  */
 
 #pragma once

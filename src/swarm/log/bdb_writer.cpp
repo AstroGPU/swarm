@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file bdb_writer.cpp
- *    \brief Defines and implements an I/O interface for writing to files.
+ *    \brief Writer plugin to output the log into a Berkeley-DB database.
  *
  *
  */
@@ -37,8 +37,11 @@ namespace swarm { namespace log {
 using namespace gpulog;
 
 /**
- * A writer that writes directly to Berkeley DB databases
+ *  \brief Writer plugin to output the log into a Berkeley-DB database.
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
 class bdb_writer : public writer

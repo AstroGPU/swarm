@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file writer.h 
- *    \brief Defines class \ref swarm::writer and implements output writer methods.
+ *    \brief Defines class interface (\ref swarm::writer) for writer plugins.
  *
  *
  */

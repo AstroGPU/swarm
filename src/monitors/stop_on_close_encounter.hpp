@@ -29,7 +29,7 @@
 
 namespace swarm { namespace monitors {
 
-/* Parameters for stop_on_close_encounter monitor
+/** Parameters for stop_on_close_encounter monitor
  * deactivate_on_close_encounter (bool): 
  * log_on_close_encounter (bool): 
  * verbose_on_close_encounter (bool): 

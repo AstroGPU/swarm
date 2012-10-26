@@ -20,8 +20,9 @@
 /*! \file kepler.h
  *  \brief converts between Cartesian & Keplerian coordinates
  *
- *  Based on code from John Chambers' Mercury code
-*/
+ *  Based on code from John Chambers' Mercury code 
+ *  @TODO put proper refernece to publication or URL.
+ */
 
 #ifndef H_SWARM_KEPLER
 

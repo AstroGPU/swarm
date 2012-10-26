@@ -1,7 +1,7 @@
 from sys import path
 path.append('lib')
 
-from numpy import *
+#from numpy import *
 from libswarmng_ext import *
 
 
@@ -41,4 +41,4 @@ sync
 
 
 max_deltaE = find_max_energy_conservation_error( ens, ref)
-print "Max energy conservation error ", max_deltaE
+print("Max energy conservation error ", max_deltaE)

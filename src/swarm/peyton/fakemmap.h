@@ -20,13 +20,14 @@
 
 /*! \file fakemmap.h
  *   \brief Defines macros and functions for faking memory mapping for portability.
+ * Fake memory mapping for portability with windows system
+ *
+ *  *EXPERIMENTAL*: This class does not pass any tests. 
+ * 
+ *
  *
  */
 
-
-/* 
- * Fake memory mapping for portability
- */
 
 #include <stdlib.h>
 

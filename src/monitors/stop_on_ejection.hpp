@@ -30,7 +30,7 @@
 namespace swarm {
   namespace monitors {
 
-/* Parameters for stop_on_ejection monitor
+/*! Parameters for stop_on_ejection monitor
  * deactivate_on_ejection (bool): 
  * log_on_ejection (bool): 
  * verbose_on_ejection (bool): 
