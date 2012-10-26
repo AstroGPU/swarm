@@ -25,27 +25,21 @@
 #include "swarm/common.hpp"
 #include "device_settings.hpp"
 
-#if 0
-// Setting prefered cache size the following function
-// can do this but the problem is that since our kernel is really
-// a template functin we don't know the exact name for it
-void set_prefered_shared_memory(const char* function_name){
-	cudaFuncSetCacheConfig( name, cudaFuncCachePreferShared);
-}
-#endif
 
 const int registers_per_thread = 64;  
 cudaDeviceProp deviceInfo;
 
-/*
- * \todo Is it intentional that shmem_per_system isn't multiplied by chunk_size?
+/**
+ * Find the optimized value for system_per_block based on device 
+ * parameters.
  */
 int optimized_system_per_block(int chunk_size, int thread_per_system
 		, int shmem_per_system){
-	return blocks_per_mp( chunk_size * thread_per_system, shmem_per_system) 
+	return blocks_per_mp( chunk_size * thread_per_system, chunk_size * shmem_per_system) 
 		* chunk_size ;
 }
 
+///
 void select_cuda_device(int dev) {
 	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
 	if( dev >= 0 && dev < devcnt )
@@ -58,9 +52,8 @@ void select_cuda_device(int dev) {
 
 }
 
-
+///
 void set_more_cache(){
-	$$$;
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 }
 
@@ -76,7 +69,7 @@ void print_device_information(){
 	  
 }
 
-/*
+/**
  * \todo is block_warps computed correctly when blocksize is a multiple of warpSize?
  */
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
@@ -99,6 +92,7 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 
 	return limit;
 }
+
 
 bool check_cuda_limits ( int blocksize, int shmem_per_block ){
 	return blocks_per_mp(blocksize, shmem_per_block) > 0;

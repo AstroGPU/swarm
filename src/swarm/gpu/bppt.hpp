@@ -152,6 +152,12 @@ class integrator : public gpu::integrator  {
 
 	/////////////////////// Logical parallelization parameters ////////////////////////////////////
 	 
+	/**
+	 *  User specified value of system_per_block.
+	 * 
+	 * It can return a positive value to override the automaticly calculated system_per_block.
+	 * or return 0 to indicate that automatic system_per_block should be used.
+	 */ 
 	const int& override_system_per_block()const{
 		return _override_system_per_block;
 	}
