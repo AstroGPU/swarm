@@ -96,6 +96,7 @@ class stop_on_collision {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+        //! check for close encounters and return status of need_full_test
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    need_full_test = false; 
@@ -113,7 +114,7 @@ class stop_on_collision {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check if deactivate the system and return the status
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if (need_to_deactivate() && (thread_in_system()==0) )
@@ -144,6 +145,7 @@ class stop_on_collision {
   }
 #endif
 
+        //! Check close encounters
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d_squared = _sys.distance_squared_between(i,j);
@@ -192,6 +194,7 @@ class stop_on_collision {
        }
 #endif
 
+        //! default constructor for stop_on_collision
 	GPUAPI stop_on_collision(const params& p,ensemble::SystemRef& s,log_t& l)
 	    :_params(p),_sys(s),_log(l),_counter(0){}
 	

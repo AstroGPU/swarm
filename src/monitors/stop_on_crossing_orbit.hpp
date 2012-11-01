@@ -31,7 +31,7 @@
 
 namespace swarm { namespace monitors {
 
-/* Parameters for stop_on_crossing_orbit monitor
+/*! Parameters for stop_on_crossing_orbit monitor
  * deactivate_on_crossing (bool): 
  * log_on_crossing (bool): 
  * verbose_on_crossing (bool): 
