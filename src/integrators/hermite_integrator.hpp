@@ -40,7 +40,7 @@ class hermite: public integrator {
 	double _time_step;
 	mon_params_t _mon_params;
 
-	public:
+public: //! Construct for class hermite integrator
 	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
 	}
@@ -49,9 +49,10 @@ class hermite: public integrator {
 		launch_templatized_integrator(this);
 	}
 
-
+        //! Convert internal coord to std coord
         GPUAPI void convert_internal_to_std_coord() {} 
-        GPUAPI void convert_std_to_internal_coord() {}
+        //! Convert std coord to internal coord
+        GPUAPI void convert_std_to_internal_coord() {}  
 
 	template<class T>
 	__device__ void kernel(T compile_time_param){

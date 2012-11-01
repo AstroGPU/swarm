@@ -29,6 +29,7 @@
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
 
+//! Flag for using standard coordiates
 #define  ASSUME_PROPAGATOR_USES_STD_COORDINATES 0
 
 namespace swarm { namespace cpu {
@@ -56,7 +57,7 @@ class mvs_cpu : public integrator {
   // included here so as to avoid namespace conflicts between CPU and OMP integrators
 #include "../propagators/keplerian.hpp"
 
-	public:
+public:  //! Construct for class mvs_cpu
 	mvs_cpu(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
 	}
@@ -67,10 +68,12 @@ class mvs_cpu : public integrator {
 		}
 	}
 
+        //! Method for calculating inner product of two arrays
 	inline static double inner_product(const double a[3],const double b[3]){
 		return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 	}
 
+        //! Method for calculating forces
 	void calcForces(ensemble::SystemRef& sys, double acc[][3]){
 		const int nbod = sys.nbod();
 
@@ -204,7 +207,7 @@ class mvs_cpu : public integrator {
 	    }
 	}
 
-
+        //! Integrating an ensemble
 	void integrate_system(ensemble::SystemRef sys){
 		const int nbod = sys.nbod();
 		double acc[nbod][3];

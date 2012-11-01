@@ -46,7 +46,7 @@ class hermite_cpu : public integrator {
 	double _time_step;
 	mon_params_t _mon_params;
 
-	public:
+public:  //! Construct for hermite_cpu class
 	hermite_cpu(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
 	}
@@ -57,10 +57,12 @@ class hermite_cpu : public integrator {
 		}
 	}
 
+        //! defines inner product of two arrays
 	inline static double inner_product(const double a[3],const double b[3]){
 		return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 	}
 
+        //! Calculate the force field. 
 	void calcForces(ensemble::SystemRef& sys, double acc[][3],double jerk[][3]){
 		const int nbod = sys.nbod();
 
@@ -101,6 +103,7 @@ class hermite_cpu : public integrator {
 		}
 	}
 
+        //! Integrate ensembles
 	void integrate_system(ensemble::SystemRef sys){
 		const int nbod = sys.nbod();
 		double pre_pos[nbod][3];

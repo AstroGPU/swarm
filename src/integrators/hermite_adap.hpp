@@ -39,14 +39,14 @@ class hermite_adap: public integrator {
 	private:
 	double _time_step_factor, _min_time_step;
 	mon_params_t _mon_params;
-
-	public:
-	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {
+ 
+public:  //! constructor for hermite_adap
+        hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {         
 		_time_step_factor =  cfg.require("time_step_factor", 0.0);
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
-	template<class T>
+        template<class T> //! Shared memory size
 	static GENERIC int shmem_per_system(T compile_time_param){
 		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
 	}
@@ -55,17 +55,17 @@ class hermite_adap: public integrator {
 		launch_templatized_integrator(this);
 	}
 
-	template<class T>
-	struct SystemSharedData {
-		typedef Gravitation<T> Grav;
+	template<class T> //! Date structure for system shared data
+	struct SystemSharedData {   
+  		typedef Gravitation<T> Grav;
 		typename Grav::shared_data gravitation;
 		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
 	};
 
-        GPUAPI void convert_internal_to_std_coord() {} 
-        GPUAPI void convert_std_to_internal_coord() {}
+        GPUAPI void convert_internal_to_std_coord() {} //! convert internal coord to standard coord
+  GPUAPI void convert_std_to_internal_coord() {}  //! convert std coord to internal coord
 
-	template<class T>
+  template<class T>  //! calculate adaptive time steps
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
 		{
 		// Body number

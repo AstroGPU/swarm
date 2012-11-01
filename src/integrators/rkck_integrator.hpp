@@ -16,25 +16,27 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file rkck.hpp
- *   \brief Defines and implements \ref swarm::gpu::bppt:rkck class - the GPU 
+/*! \file rkck_integrator.hpp
+ *   \brief Defines and implements \ref swarm::gpu::bppt::rkck class - the GPU 
  *          implementation of Runge Kutta Cash Karp integrator. 
  *
  */
 
-#include "swarm/common.hpp"
+#include "swarm/common.pp"
 #include "swarm/gpu/bppt.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
 
-struct FixedTimeStep {
-	const static bool adaptive_time_step = false;
-	const static bool conditional_accept_step = false;
+//! data structure for fixed time step
+struct FixedTimeStep { 
+        const static bool adaptive_time_step = false;   
+        const static bool conditional_accept_step = false;  
 };
 
-struct AdaptiveTimeStep {
-	const static bool adaptive_time_step = true;
-	const static bool conditional_accept_step = true;
+//! data structure for adaptive time step
+struct AdaptiveTimeStep {  
+	const static bool adaptive_time_step = true; 
+	const static bool conditional_accept_step = true; 
 };
 
 /*! Runge Kutta Cash Karp integrator Fixed/Adaptive
@@ -57,7 +59,7 @@ class rkck: public integrator {
 	int _iteration_count;
 	mon_params_t _mon_params;
 
-	public:
+public:  //! Construct for class rkck
 	rkck(const config& cfg): base(cfg),_min_time_step(0.001),_max_time_step(0.1), _mon_params(cfg) {
 		if(!cfg.count("min_time_step")) ERROR("Integrator rkck requires a min timestep ('min time step' keyword in the config file).");
 		_min_time_step = atof(cfg.at("min_time_step").c_str());
@@ -74,7 +76,10 @@ class rkck: public integrator {
 	}
 
 
+        //! method for convert internal coord to std coord
         GPUAPI void convert_internal_to_std_coord() {} 
+  
+        //! method for convert std coord to internal coord
         GPUAPI void convert_std_to_internal_coord() {}
 
 	GPUAPI bool is_in_body_component_grid(const int b, const int c, const int nbod) 
