@@ -169,10 +169,11 @@ class stop_on_ejection {
 	  }
 #endif
 
-	
+        //! default constructor for stop_on_ejection
 	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l){}
 
+        //! check bodies other than the central star and set the status of need_full_test
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    bool need_full_test = false; 
@@ -191,7 +192,7 @@ class stop_on_ejection {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system state and see if need to be deactivated. 
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if(is_condition_met() && is_deactivate_on() )

@@ -101,6 +101,7 @@ class stop_on_any_large_distance {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+        //! Check to see if need_full_test
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    need_full_test = false; 
@@ -141,7 +142,7 @@ class stop_on_any_large_distance {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system state
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if(is_condition_met() && is_deactivate_on() &&(thread_in_system==0) )

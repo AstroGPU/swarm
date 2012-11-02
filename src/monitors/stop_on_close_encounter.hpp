@@ -94,6 +94,7 @@ class stop_on_close_encounter {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+        //! Check for close encounters and need_full_test status
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    need_full_test = false; 
@@ -111,7 +112,7 @@ class stop_on_close_encounter {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system status, if deactivate
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if (need_to_deactivate() && (thread_in_system==0) )
