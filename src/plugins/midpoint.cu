@@ -25,11 +25,13 @@
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_acc.hpp"
 
+//! Declare device_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
+//! Initialize the integrator plugin for midpoint propagator
 integrator_plugin_initializer< generic< MidpointPropagator, stop_on_ejection<L>, GravitationAcc > >
 	midpoint_prop_plugin("midpoint"
 			,"This is the integrator based on midpoint propagator");

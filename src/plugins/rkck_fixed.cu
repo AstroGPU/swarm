@@ -24,11 +24,12 @@
 
 #include "rkck.hpp"
 
-
+//! Initialize the integrator plugin for fixed rkck integrator
 integrator_plugin_initializer<
 		rkck< FixedTimeStep, stop_on_ejection<L>  ,GravitationAcc >
 	> rkck_fixed_plugin("rkck_fixed");
 
+//! Initialize the integrator plugin for fixed rkck integrator for close encounter event
 integrator_plugin_initializer<
 	        rkck< FixedTimeStep, stop_on_ejection_or_close_encounter<L>  ,GravitationAcc > 
 	> rkck_fixed_close_encounter_plugin("rkck_fixed_close_encounter");

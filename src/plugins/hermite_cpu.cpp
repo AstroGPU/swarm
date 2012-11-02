@@ -26,12 +26,13 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 
+//! Declare host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using namespace swarm::cpu;
 using swarm::integrator_plugin_initializer;
 
-
+//! Initialize the integrator plugin for hermite_cpu
 integrator_plugin_initializer<
   hermite_cpu< stop_on_ejection<L> >
 	> hermite_cpu_plugin("hermite_cpu");
@@ -42,13 +43,14 @@ integrator_plugin_initializer<
 		hermite_cpu< combine< L, stop_on_ejection<L>, stop_on_close_encounter<L> > >
 	> hermite_cpu_plugin_crossing_orbit("hermite_cpu_crossing");*/
 
+//! Initialize the integrator plugin for hermite_cpu_ejection_or_close_encounter
 integrator_plugin_initializer<
   hermite_cpu< stop_on_ejection_or_close_encounter<L> >
 	> hermite_cpu_plugin_ejection_or_close_encounter(
 		"hermite_cpu_ejection_or_close_encounter"
 	);
 
-
+//! Initialize the integrator plugin for hermite_cpu_log
 integrator_plugin_initializer<
   hermite_cpu< log_time_interval<L> >
 	> hermite_cpu_log_plugin("hermite_cpu_log");

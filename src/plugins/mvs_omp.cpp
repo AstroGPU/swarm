@@ -28,12 +28,14 @@
 #include "monitors/stop_on_ejection.hpp"
 //#include "monitors/composites.hpp"
 
+//! Declare host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using swarm::integrator_plugin_initializer;
 using namespace swarm::cpu;
 
 #ifdef _OPENMP
+//! Initialize the integrator plugin for mvs propagator when using OpenMP
 integrator_plugin_initializer<
   mvs_omp< stop_on_ejection<L> >
 	> mvs_omp_plugin("mvs_omp");

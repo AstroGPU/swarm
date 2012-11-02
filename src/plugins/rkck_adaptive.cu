@@ -23,11 +23,12 @@
 
 #include "rkck.hpp"
 
+//! Initialize the integrator plugin for adaptive rkck integrator
 integrator_plugin_initializer<
 		rkck< AdaptiveTimeStep, stop_on_ejection<L> ,GravitationAcc >
 	> rkck_adaptive_plugin("rkck_adaptive");
 
-
+//! Initialize the integrator plugin for adaptive rkck integrator for close encounter event
 integrator_plugin_initializer<
 	        rkck< AdaptiveTimeStep, stop_on_ejection_or_close_encounter<L>  ,GravitationAcc > 
 	> rkck_adaptive_close_encounter_plugin("rkck_adaptive_close_encounter");

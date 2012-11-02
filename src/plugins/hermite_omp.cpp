@@ -29,6 +29,7 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 
+//! Declare the host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using swarm::integrator_plugin_initializer;

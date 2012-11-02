@@ -27,6 +27,7 @@
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_acc.hpp"
 
+//! Declare the device_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;

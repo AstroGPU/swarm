@@ -27,12 +27,13 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 
+//! Declare host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using namespace swarm::cpu;
 using swarm::integrator_plugin_initializer;
 
-
+//! Initialize the integrator plugin for mvs propagator on CPU
 integrator_plugin_initializer<
   mvs_cpu< stop_on_ejection<L> >
 	> mvs_cpu_plugin("mvs_cpu");
@@ -43,13 +44,14 @@ integrator_plugin_initializer<
 		mvs_cpu< combine< L, stop_on_ejection<L>, stop_on_close_encounter<L> > >
 	> mvs_cpu_plugin_crossing_orbit("mvs_cpu_crossing");*/
 
+//! Initialize the integrator plugin for mvs propagator for ejection or close encounter event on CPU
 integrator_plugin_initializer<
   mvs_cpu< stop_on_ejection_or_close_encounter<L> >
 	> mvs_cpu_plugin_ejection_or_close_encounter(
 		"mvs_cpu_ejection_or_close_encounter"
 	);
 
-
+//! Initialize the integrator plugin for mvs log propagator on CPU
 integrator_plugin_initializer<
   mvs_cpu< log_time_interval<L> >
 	> mvs_cpu_log_plugin("mvs_cpu_log");

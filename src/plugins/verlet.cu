@@ -25,12 +25,13 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "swarm/gpu/gravitation_acc.hpp"
 
+//! Declare the device_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
-
+//! Initialize the integrator plugin for verlet propagator
 integrator_plugin_initializer< generic< VerletPropagator, stop_on_ejection<L>, GravitationAcc > >
 	verlet_prop_plugin("verlet"
 			,"This is the integrator based on verlet propagator");
