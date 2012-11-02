@@ -22,7 +22,7 @@
  *
  */
 
-#include "swarm/common.pp"
+#include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
