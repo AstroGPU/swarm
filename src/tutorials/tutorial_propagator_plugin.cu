@@ -24,7 +24,9 @@ using namespace swarm::monitors;
 using swarm::integrator_plugin_initializer;
 
 
-
+// The generic is the generic integrator. It takes three parameters:
+// an integrator, a monitor and an implementation of gravitational force
+// calculation.
 integrator_plugin_initializer< generic< TutorialPropagator, stop_on_ejection<L>, GravitationAccJerk > >
 	tutorial_prop_plugin("tutorial"
 			,"This is the integrator based on tutorial propagator");

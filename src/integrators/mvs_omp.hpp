@@ -30,6 +30,10 @@
 namespace swarm { namespace cpu {
 
 #ifdef _OPENMP
+/**
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ */
 template< class Monitor >
 class mvs_omp : public mvs_cpu<Monitor> {
 	public:

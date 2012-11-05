@@ -56,6 +56,9 @@ GPUAPI double sqr(const double& d){
 }
 
 /** Stopping monitor to detect crossing orbits for planets 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ * 
  *  WARNING:  This only tests for potential orbit crossing and makes assumptions about planet ordering
  *  \ingroup monitors
  */
@@ -103,7 +106,7 @@ class stop_on_crossing_orbit {
 		// h2 = ||pos X vel||^2
 		double h2 = sqr(y*vz-z*vy) + sqr(z*vx-x*vz) + sqr(x*vy-y*vx);
 		double _GM = _sys[b].mass(); 
-		double r = _sys[b].radius(), sp = _sys[b].speed();
+		double r = _sys[b].distance_to_origin(), sp = _sys[b].speed();
 		double energy = sp*0.5-_GM/r;
 
 		a = -0.5*_GM/energy;

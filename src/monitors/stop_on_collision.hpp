@@ -29,11 +29,11 @@
 
 namespace swarm {  namespace monitors {
 
-/* Parameters for stop_on_collision monitor
+/** Parameters for stop_on_collision monitor
  * deactivate_on_collision (bool): 
  * log_on_collision (bool): 
  * verbose_on_collision (bool): 
- * collision_radius (real): default distance or collision if individual radii not avaliable
+ * collision_distance_to_origin (real): default distance or collision if individual radii not avaliable
  *
  * \ingroup monitors_param
  */ 
@@ -45,7 +45,7 @@ struct stop_on_collision_param {
    */
 	stop_on_collision_param(const config &cfg)
 	{
-	  dmin_squared = cfg.optional("collision_radius",0.);
+	  dmin_squared = cfg.optional("collision_distance_to_origin",0.);
 	  dmin_squared *= dmin_squared;
 
 	  deactivate_on = cfg.optional("deactivate_on_collision",false);
@@ -55,7 +55,10 @@ struct stop_on_collision_param {
 };
 
 /** Simple monitor to detect physical collisions.  
- *  Signals and logs if current separation between any two bodies is less than "collision_radius".
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
+ *  Signals and logs if current separation between any two bodies is less than "collision_distance_to_origin".
  *  WARNING: Does not interpolate between steps
  *
  *  \ingroup monitors
@@ -126,11 +129,11 @@ class stop_on_collision {
 #if 0 // still under development
   GPUAPI bool check_close_encounter_possible(const int& i, const int& j, double dt){
 
-    //	  double hill_radius_sq_upper_limit = pow(((_sys.mass(i)+_sys.mass(j))/(3.0*_sys.mass(0))),2.0/3.0)*(std::max(_sys.radius_squared(i),_sys.radius_squared(j)));
-	  double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
-	  double vesc_sq = 2.0*_sys.mass(0)/std::min(_sys.radius(i),_sys.radius(j));
+    //	  double hill_distance_to_origin_sq_upper_limit = pow(((_sys.mass(i)+_sys.mass(j))/(3.0*_sys.mass(0))),2.0/3.0)*(std::max(_sys.distance_to_origin_squared(i),_sys.distance_to_origin_squared(j)));
+	  double target_distance_to_origin_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
+	  double vesc_sq = 2.0*_sys.mass(0)/std::min(_sys.distance_to_origin(i),_sys.distance_to_origin(j));
 	  double d_squared = _sys.distance_squared_between(i,j);
-	  bool close_encounter = (d_squared < vesc_sq*dt*dt + target_radius_sq);
+	  bool close_encounter = (d_squared < vesc_sq*dt*dt + target_distance_to_origin_sq);
 	  return close_encounter;
 	}
 #endif
@@ -149,8 +152,8 @@ class stop_on_collision {
 	GPUAPI bool check_close_encounters(const int& i, const int& j){
 
 		double d_squared = _sys.distance_squared_between(i,j);
-		double target_radius_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
-		bool close_encounter = d_squared < target_radius_sq;
+		double target_distance_to_origin_sq = (NUM_ATTRIBUTES>=1) ? attribute(i)*attribute(i) : _params.dmin_squared;
+		bool close_encounter = d_squared < target_distance_to_origin_sq;
 
 		if( close_encounter )
 		  if(is_verbose_on() )

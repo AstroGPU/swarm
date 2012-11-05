@@ -22,6 +22,7 @@
  *          parallel for many-body systems. 
  *
  *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  * 
  */
 
@@ -32,6 +33,11 @@
 namespace swarm { namespace gpu { namespace bppt {
 
 /** 
+ * Gravitation calculation class for large number of bodies in a system.
+ * 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
  * Doesn't-need-to-be-templatized Class working as a function object to 
  * calculate acceleration and jerk in parallel for many-body systems.
  * 

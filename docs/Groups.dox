@@ -19,3 +19,12 @@
  *  a buffer in the GPU global device memory
  *
  */
+ 
+ /*! \defgroup experimental Experimental Modules
+  * 
+  * Modules and classes listed here are still experimental and work-in-progress,
+  * you are welcome to use them only if you understand the structure of the
+  * library and you are willing to debug our code. otherwise, all comments
+  * and bug reports are appreciated. You can report bugs at http://github.com/AstroGPU/swarm/issues 
+  * 
+  */

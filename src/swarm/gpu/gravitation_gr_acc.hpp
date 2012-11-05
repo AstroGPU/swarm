@@ -36,6 +36,7 @@ namespace swarm { namespace gpu { namespace bppt {
  * To be used with integration aglorithms that don't make use of the jerk, e.g., Runge-Kutta
  *
  *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  */
 template<class T>
 class GravitationAcc_GR {

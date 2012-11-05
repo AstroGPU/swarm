@@ -108,9 +108,16 @@ set of documentation:
 Once compilation is done, you can test the installation using:
 \verbatim make test \endverbatim
 
-If you want to test the computational capacity of your systemm, do:
-\verbatim make benchmark \endverbatim
+See \ref TestSwarm "How to test swarm" for more extensive testing and 
+customizing the tests.
 
+
+If you want to test the computational capacity of your system, do:
+\verbatim make benchmark \endverbatim
+*WARNING:* This requires performing long integrations on both the CPU and GPU, so it may take a long time. Please be patient.
+
+Please report your results at 
+http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
 
 
 */

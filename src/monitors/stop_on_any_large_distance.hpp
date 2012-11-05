@@ -60,6 +60,8 @@ struct stop_on_any_large_distance_params {
 };
 
 /** Simple monitor that logs when any one body is separated from 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  *  both the origin and every other body by a distance of at least "rmax" 
  *  Optionally signals if "stop on rmax" is true
  *  This monitor may be useful in simple scattering experiments.
@@ -111,14 +113,14 @@ class stop_on_any_large_distance {
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ )
 		  {
-		    if(_sys.radius_squared(b) > _params.rmax * _params.rmax )
+		    if(_sys.distance_to_origin_squared(b) > _params.rmax * _params.rmax )
 		      is_any_body_far_from_origin = true;
 		  }
 		if(!is_any_body_far_from_origin) break;
 		bool need_to_log = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ )
 		  {
-		    if(_sys.radius_squared(b) >= _params.rmax * _params.rmax ) 
+		    if(_sys.distance_to_origin_squared(b) >= _params.rmax * _params.rmax ) 
 		      {
 			bool is_far_from_every_body = true;
 			for(int bb = 0 ; bb < _sys.nbod(); bb ++ )
@@ -169,13 +171,13 @@ class stop_on_any_large_distance {
 
 		bool is_any_body_far_from_origin = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius_squared(b) > _params.rmax * _params.rmax )
+			if(_sys.distance_to_origin_squared(b) > _params.rmax * _params.rmax )
 				is_any_body_far_from_origin = true;
 		}
 		if(!is_any_body_far_from_origin) return;
 		bool need_to_log = false;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius_squared(b) >= _params.rmax * _params.rmax ) {
+			if(_sys.distance_to_origin_squared(b) >= _params.rmax * _params.rmax ) {
 				bool is_far_from_every_body = true;
 				for(int bb = 0 ; bb < _sys.nbod(); bb ++ )
 					if(b != bb) {

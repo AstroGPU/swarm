@@ -21,6 +21,7 @@
  *
  *
  *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  * 
  *
  */

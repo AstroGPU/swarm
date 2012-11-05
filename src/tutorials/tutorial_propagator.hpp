@@ -40,7 +40,10 @@
 //
 #include "swarm/swarmplugin.h"
 
-
+// We have to create a separate data structure that holds the parameters
+// for the propagator. This data structure is initialized with the
+// configuration object when the propagator plugin is loaded. 
+// 
 struct TutorialPropagatorParams {
 	double time_step;
 	TutorialPropagatorParams(const config& cfg){
@@ -48,59 +51,100 @@ struct TutorialPropagatorParams {
 	}
 };
 
+// This is the actual class that represents our propagator, we cannot
+// initialize variables in the class because this class is instantiated
+// at the place when it needs to be used. The propagator class is
+// parametrized by number of bodies (class T contains it) and an
+// implementation of Gravitational force calculation algorithm.
 template<class T,class Gravitation>
-struct TutorialPropagator {
+class TutorialPropagator {
+	public:
+	
+	// This will give the Generic integrator an idea about the struct
+	// type we used for the parameters
 	typedef TutorialPropagatorParams params;
+	
+	// We get the number of bodies at the compile-time. The propagator
+	// should use this value for number of bodies instead of getting
+	// it from the ensemble.
 	const static int nbod = T::n;
 
+	// We define variables that we use throughout the integration
+	// _params contains all the parameters from the configuration. 
+	// sys is the system that we have to operate on. and calcForces
+	// is the implementation of force calculation algorithm
+	// 
+	// The constructure initializez these member variables from what
+	// is provided.
+	private:
 	params _params;
-
-
-	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
-	int b;
-	int c;
-	int ij;
-	bool body_component_grid;
-	bool first_thread_in_system;
-	double max_timestep;
-
-
+	
 	GPUAPI TutorialPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
-	GPUAPI void init()  { }
+    // These are the variables that are generally used in the
+    // integrators, we receive these variable in this way from
+    // the integrator.
+    // b, c and ij are define our work based on the thread id. b is
+    // the number of body, c is the component number (0,1,2). and
+    // ij is the pair number that is passed to calcForces
+	public:
+	int b;
+	int c;
+	int ij;
+	
+	// body_component_grid and first_thread_in_system are useful
+	// predicates when we want to exclude some threads from updating
+	// the data structures.
+	bool body_component_grid;
+	bool first_thread_in_system;
+	
+	// max_timestep is set by the generic_integrator, this is the biggest
+	// time step that we are allowed to take. Usually it is only bound
+	// by the destination_time and the default implementation uses
+	// destination_time - sys.time().(but it can be used otherwise).
+	double max_timestep;
 
+
+
+	// init function is executed before entering the integration loop
+	// a propagator can set-up data structure if needed.
+	// shutdown is executed right after the integration loop. So it
+	// do the clean-up.
+	GPUAPI void init()  { }
 	GPUAPI void shutdown() { }
 
-        GPUAPI void convert_internal_to_std_coord() {} 
-        GPUAPI void convert_std_to_internal_coord() {}
+	// These functions are only used if the propagator uses a coordinate
+	// system other than the default.
+	GPUAPI void convert_internal_to_std_coord() {} 
+	GPUAPI void convert_std_to_internal_coord() {}
 
-	static GENERIC int thread_per_system(){
-		return nbod * 3;
-	}
+	// propagator can use arbitrary number of systems and may use
+	// some shared memory, but it should be reported here so the 
+	// launcher can initialize it.
+	static GENERIC int thread_per_system(){ return nbod * 3; }
+	static GENERIC int shmem_per_system() { return 0;        }
 
-	static GENERIC int shmem_per_system() {
-		 return 0;
-	}
 
-	GPUAPI bool is_in_body_component_grid()
-        { return  ((b < nbod) && (c < 3)); }	
 
-	GPUAPI bool is_in_body_component_grid_no_star()
-        { return ( (b!=0) && (b < nbod) && (c < 3) ); }	
-
-	GPUAPI bool is_first_thread_in_system()
-        { return (thread_in_system()==0); }	
-
+	// The advance function is called within the integration loop
+	// The main purpose of the advance function is to integrate 
+	// the system and advance the system in time. 
+	//
+	// The usual implemnation consist of sampling accleration (and jerk
+	// if needed) at one or more points around the current system time
+	// and extrapolate position and velocities.
 	GPUAPI void advance(){
+		// we define the local values just for more readable code.
 		double pos = 0.0, vel = 0.0;
 		double acc = 0.0, jerk = 0.0;
 		
-		if( is_in_body_component_grid() )
-			pos = sys[b][c].pos() , vel = sys[b][c].vel();
+		// we have to use the predicate so we do not go out of bounds 
+		// of the array.
+		if( body_component_grid ) pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
 		// First step of integration: calculate the accelartion 
@@ -117,14 +161,14 @@ struct TutorialPropagator {
 
 		// For this simple integrator, we use explicit Euler integration
 		// equations. More complex equations can be used in practice.
-		pos = pos +  h*(vel+(h*0.5)*(acc+(h/3.0)*jerk));
-		vel = vel +  h*(acc+(h*0.5)*jerk);
+		pos = pos +  h * ( vel + (h*0.5) * (acc + (h/3.0)*jerk ) );
+		vel = vel +  h * ( acc + (h*0.5) * jerk );
 
 
-		// Finalize the step
-		if( is_in_body_component_grid() )
-			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		if( is_first_thread_in_system() ) 
-			sys.time() += h;
+		// Finalize the step: save the position and velocities back to the ensemble
+		// data structure and advance the system time.
+		if(   body_component_grid  )  sys[b][c].pos() = pos , sys[b][c].vel() = vel;
+		if( first_thread_in_system )  sys.time() += h;
 	}
 };
+

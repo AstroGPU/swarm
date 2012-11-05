@@ -52,6 +52,9 @@ struct stop_on_close_encounter_param {
 };
 
 /** Simple monitor to detect close encounters.
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+
  *  Signals and logs if current separation between any two bodies (measured in mutual Hill radii) is less than "close_approach".
  *  WARNING: Does not interpolate between steps
  *
@@ -127,7 +130,7 @@ class stop_on_close_encounter {
 		double _GM = _sys[0].mass();  // remove _ if ok to keep
 		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
 		//		bool close_encounter = d < _p.dmin * rH;
-		double a = 0.5*(_sys[i].radius()+_sys[i].radius());
+		double a = 0.5*(_sys[i].distance_to_origin()+_sys[i].distance_to_origin());
 		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM)*a*a*a;
 		bool close_encounter = d*d*d < _params.dmin*_params.dmin*_params.dmin * rH3;
 

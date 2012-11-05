@@ -59,6 +59,8 @@ struct log_transit_params {
 };
 
 /** Monitor that logs (the estimated transit time, the estimated minimum impact parameter in units of stellar radii, and the estimated velocity projected onto the planet of the sky in units of stellar radii per time) at times near a transit
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+
  *   *  Assumes integration results in increasing time.
  *   *  Currently, highly experimental
  *   *  Currently, hardwired for Hermite, Fixed, std. Gravitation, nbod=3

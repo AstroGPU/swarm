@@ -34,6 +34,10 @@
 namespace swarm { namespace gpu { namespace bppt {
 
 /** 
+ * Gravitation calculation for a number of bodies between 10-20
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
  * templatized Class working as a function object to 
  * calculate acceleration and jerk in parallel.
  *

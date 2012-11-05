@@ -42,7 +42,7 @@ struct VerletPropagatorParams {
  *
  *  *EXPERIMENTAL*: This class is not maintained anymore since it is not
  * of much practical value.
- * 
+ *  \ingroup experimental
  * \ingroup propagators
  *
  */

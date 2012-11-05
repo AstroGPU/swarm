@@ -35,10 +35,12 @@ namespace swarm { namespace monitors {
 /** Combination of stop_on_ejcetion, stop_on_close_encounter and
  * stop_on_crossing_orbit
  *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
  * \ingroup monitors
  *
  *
- *  *EXPERIMENTAL*: This class is not thoroughly tested.
  * 
  */
 template <class L> 
@@ -133,6 +135,8 @@ private:
 
 
 /** Combination of stop_on_ejcetion and stop_on_close_encounter
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  *
  *
  * \ingroup monitors

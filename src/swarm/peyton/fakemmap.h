@@ -22,7 +22,8 @@
  *   \brief Defines macros and functions for faking memory mapping for portability.
  * Fake memory mapping for portability with windows system
  *
- *  *EXPERIMENTAL*: This class does not pass any tests. 
+ *  *EXPERIMENTAL*: This module is not thoroughly tested.
+ *  \ingroup experimental
  * 
  *
  *

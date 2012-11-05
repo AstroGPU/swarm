@@ -42,6 +42,7 @@ struct MidpointPropagatorParams {
  *
  *  *EXPERIMENTAL*: WIP, this class is not thoroughly tested and can
  * change at any time.
+ *  \ingroup experimental
  * 
  *
  * \ingroup propagators

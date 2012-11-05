@@ -108,8 +108,8 @@ class stop_on_ejection {
 	GPUAPI bool test_body(const int& b) {
 
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
-		//		double r = sqrt(_sys[b].radius_squared());  // WARNING: Deceiving function name
-		double r = _sys[b].radius();  // WARNING: Deceiving function name
+		//		double r = sqrt(_sys[b].distance_to_origin_squared());  // WARNING: Deceiving function name
+		double r = _sys[b].distance_to_origin();  // WARNING: Deceiving function name
 		if( r < _params.rmax ) return false;
 		double rdotv = x*vx+y*vy+z*vz;
 		if( rdotv <= 0. ) return false;

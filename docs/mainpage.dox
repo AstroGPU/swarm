@@ -18,17 +18,17 @@ differential equations.
 
 
 \b Table \b of \b contents
- - \ref IntroductionSwarm
  - \ref BuildSwarm
  - \ref SwarmExec "Using command-line interface"
- - \b Using \b C++ \b library \b interface
+ - **Using C++ library interface**
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
+ - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
 	- \ref TutorialIntegrator
- - \b Using \b Python \b interface
- 	- \ref TutorialPython
+
+ - \ref ReleaseNotes "Release Notes"
 
 
  @section LicensingCiting Licensing, Citing & Acknowledging Swarm-NG
@@ -76,3 +76,6 @@ We acknowledge additional support from:
  Source code is hosted on http://github.com/AstroGPU/swarm . 
 
 */
+
+# - \b Using \b Python \b interface
+# 	- \ref TutorialPython
