@@ -11,10 +11,11 @@ mkdir -p $OUTPUT
 
 for C in $CHUNKSIZE_LIST 
 do
-	cmake . -DSHMEM_CHUNK_SIZE=$C -DENSEMBLE_CHUNK_SIZE=$C
+	PREFIX="$OUTPUT/$C"
 	
-	make swarm
-	make test
-	cp Testing/Temporary/LastTest.log $OUTPUT/Log-$C.log
-	cp Testing/Temporary/LastTestsFailed.log $OUTPUT/Log-Failed-$C.log
+	{ cmake . -DSHMEM_CHUNK_SIZE=$C -DENSEMBLE_CHUNK_SIZE=$C ; make swarm; } 2>&1 | tee $PREFIX-Build.log;
+	
+	make test  2>&1 | tee $PREFIX-Test.log
+	cp Testing/Temporary/LastTest.log $PREFIX-Detail.log
+	cp Testing/Temporary/LastTestsFailed.log $PREFIX-Failed.log
 done
