@@ -23,6 +23,7 @@ differential equations.
  - **Using C++ library interface**
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
+	- \ref TutorialEnsemble
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
