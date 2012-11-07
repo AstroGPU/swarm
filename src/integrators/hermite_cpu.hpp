@@ -22,6 +22,11 @@
  *
  */
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+
 #include "swarm/common.hpp"
 #include "swarm/integrator.hpp"
 #include "swarm/plugin.hpp"
@@ -52,6 +57,9 @@ public:  //! Construct for hermite_cpu class
 	}
 
 	virtual void launch_integrator() {
+		#ifdef _OPENMP
+		#pragma omp parallel for
+		#endif
 		for(int i = 0; i < _ens.nsys(); i++){
 			integrate_system(_ens[i]);
 		}
@@ -181,6 +189,7 @@ public:  //! Construct for hermite_cpu class
 		}
 	}
 };
+
 
 
 } } // Close namespaces

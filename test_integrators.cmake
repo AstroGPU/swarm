@@ -6,21 +6,27 @@
 #  1. There are sample input/output files only up to 9 bodies/system
 #  2. Configurations for running each integrator should be provided
 
+# Directory where the tests are located
+SET(TEST_INTEGRATOR_DIR ${TESTDIR}/integrators)
+
 SET(TEST_integrator_nbod TRUE CACHE BOOL "Test all integrators versus all number of bodies")
 SET(TEST_stability TRUE CACHE BOOL "Test stability of all integrators")
-
-# List of integrators (name of configuration file) that are tested versus all number of bodies
-SET(TEST_integrator_nbod_list CPU Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step mvs CACHE LIST "List of integrators to be tested vs. nbod")
-
-# List of integrators (name of configuration file) that are tested for stability (run for long time)
-SET(TEST_stability_list Hermite Hermite_Adaptive Runge_Kutta_Fixed_Time_Step Runge_Kutta_Adaptive_Time_Step CACHE LIST "List of integrators to be tested for stability")
-
-# Number of systems generated for the stability test
 SET(TEST_stability_nsys 16 CACHE STRING "Number of systems for stability test")
-# duration of the stability test
 SET(TEST_stability_duration 100 CACHE STRING "Duration of the stability test")
+#SET(TEST_integrator_nbod_list CACHE LIST "List of integrators to be tested vs. nbod")
+#SET(TEST_stability_list CACHE LIST "List of integrators (name of configuration file) that are tested for stability (run for long time)")
 
-SET(TEST_INTEGRATOR_DIR ${TESTDIR}/integrators)
+## Automatically test all plugins that have a cfg file.
+
+FOREACH(id ${SWARM_PLUGINS})
+	IF((${PLUGIN_${id}}) AND (EXISTS "${TEST_INTEGRATOR_DIR}/${id}.cfg"))
+		LIST(APPEND TEST_integrator_nbod_list ${id})
+		LIST(APPEND TEST_stability_list ${id})
+	ENDIF()
+ENDFOREACH()
+
+MESSAGE("Will Test: ${TEST_integrator_nbod_list}")
+
 
 ##################### MACROS START HERE #########################################
 
