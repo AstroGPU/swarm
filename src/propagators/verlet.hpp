@@ -32,6 +32,7 @@ namespace swarm { namespace gpu { namespace bppt {
  */
 struct VerletPropagatorParams {
 	double max_timestep, max_timestep_global, timestep_scale;
+        //! Constructor
 	VerletPropagatorParams(const config& cfg){
 		max_timestep_global = cfg.require("max_timestep", 0.0);
 		timestep_scale = cfg.require("timestep_scale", 0.0);
@@ -53,7 +54,7 @@ struct VerletPropagator {
 
 	params _params;
 
-	// Runtime variables
+	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -63,7 +64,7 @@ struct VerletPropagator {
 	bool first_thread_in_system;
 	double max_timestep, timestep;
 
-
+        //! Constructor   
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -107,7 +108,7 @@ struct VerletPropagator {
         { return (thread_in_system()==0); }	
 
 
-	// calculate the timestep given current positions
+	//! calculate the timestep given current positions
 	GPUAPI double calc_timestep() const
 	{
 	// assumes that calcForces has already been called to fill shared memory
@@ -144,28 +145,28 @@ struct VerletPropagator {
 
 			double h_first_half = 0.5 * h;
 
-			// First half step for positions
+			//! First half step for positions
 			pos = pos + h_first_half * vel;
 
-			// Calculate acceleration in the middle
+			//! Calculate acceleration in the middle
 			double acc = calcForces.acc(ij,b,c,pos,vel);
 			
-			// First half step for velocities
+			//! First half step for velocities
 			vel = vel + h_first_half * acc;
 
-			// Update timestep with positions (and velocities) at end of half-step
+			//! Update timestep with positions (and velocities) at end of half-step
 			timestep = calc_timestep();
 
-			// Second half step for velocities
+			//! Second half step for velocities
 			double h_second_half = 0.5*timestep;
 
-			// Second half step for positions and velocities
+			//! Second half step for positions and velocities
 			vel = vel + h_second_half * acc;
 			pos = pos + h_second_half * vel;
 
 			//////////////// END of Integration Step /////////////////
 
-		// Finalize the step
+		//! Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 

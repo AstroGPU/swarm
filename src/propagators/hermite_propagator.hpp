@@ -36,6 +36,7 @@ namespace bppt {
  */
 struct HermitePropagatorParams {
 	double time_step;
+        //! Constructor
 	HermitePropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
@@ -57,7 +58,7 @@ struct HermitePropagator {
 	params _params;
 
 
-	// Runtime variables
+	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -112,7 +113,7 @@ struct HermitePropagator {
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
 
 
-		// Predict 
+		//! Predict 
 		pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.0)*jerk0));
 		vel = vel +  h*(acc0+(h*0.5)*jerk0);
 
@@ -121,17 +122,17 @@ struct HermitePropagator {
 		double acc1,jerk1;
 #pragma unroll
 		for(int i = 0; i < 2 ; i++){
-			// Evaluation
+			//! Evaluation
 			calcForces(ij,b,c,pos,vel,acc1,jerk1);
 			
-			// Correct
+			//! Correct
 			pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
 			vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
 		}
 		acc0 = acc1, jerk0 = jerk1;
 
 
-		// Finalize the step
+		//! Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 
