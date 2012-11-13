@@ -62,8 +62,8 @@ public:  //! constructor for hermite_adap
 		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
 	};
 
-        GPUAPI void convert_internal_to_std_coord() {} //! convert internal coord to standard coord
-  GPUAPI void convert_std_to_internal_coord() {}  //! convert std coord to internal coord
+        GPUAPI void convert_internal_to_std_coord() {} 
+        GPUAPI void convert_std_to_internal_coord() {}  
 
   template<class T>  //! calculate adaptive time steps
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
@@ -73,14 +73,14 @@ public:  //! constructor for hermite_adap
 		// Component number
 		int c = thread_component_idx(T::n);
 
-		// Put accelerations and jerks for each body and component into shared memory
+		//! Put accelerations and jerks for each body and component into shared memory
 		if( (b < T::n) && (c < 3) ) {
 		    shared.gravitation[b][c].acc() = acc*acc;
 		    shared.gravitation[b][c].jerk() = jerk*jerk;
 	    }
 		__syncthreads();
-		// calculate sum of squares of each component for each body
-		// store ratio in shared memory
+		//! calculate sum of squares of each component for each body
+		//! store ratio in shared memory
 		if( (b < T::n) && (c==0) ) {
 		    double acc_mag_sq = shared.gravitation[b][0].acc()+shared.gravitation[b][1].acc()+shared.gravitation[b][2].acc();
 		    double jerk_mag_sq = shared.gravitation[b][0].jerk()+shared.gravitation[b][1].jerk()+shared.gravitation[b][2].jerk();
@@ -103,10 +103,11 @@ public:  //! constructor for hermite_adap
 	__device__ void kernel(T compile_time_param){
 
 		if(sysid()>=_dens.nsys()) return;
-		// References to Ensemble and Shared Memory
+		//! References to Ensemble and Shared Memory
 		typedef Gravitation<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
 		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
+		//! Calculate the forces
 		Grav calcForces(sys, shared_data.gravitation );
 
 		// Local variables
@@ -130,7 +131,7 @@ public:  //! constructor for hermite_adap
 
 		////////// INTEGRATION //////////////////////
 
-		// Calculate acceleration and jerk
+		//! Calculate acceleration and jerk
 		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
@@ -143,7 +144,7 @@ public:  //! constructor for hermite_adap
 			}
 
 			
-			// Initial Evaluation, it can be omitted for faster computation
+			/// Initial Evaluation, it can be omitted for faster computation
 			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
@@ -179,7 +180,7 @@ public:  //! constructor for hermite_adap
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
-			// Finalize the step
+			/// Finalize the step
 			if( (b < T::n) && (c < 3) )
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( thread_in_system()==0 ) 

@@ -70,6 +70,7 @@ public:  //! Construct for class rkck
 		_error_tolerance = atof(cfg.at("error_tolerance").c_str());
 	}
 
+        ///
 	virtual void launch_integrator() {
 		_iteration_count = _destination_time / _max_time_step;
 		launch_templatized_integrator(this);
@@ -85,11 +86,12 @@ public:  //! Construct for class rkck
 	GPUAPI bool is_in_body_component_grid(const int b, const int c, const int nbod) 
 	{ return ((b < nbod) && (c < 3)); }
 
+        //! RKCK integrator
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 
 ////////////////////// RKCK Constants /////////////////////////////
-	// Cash-Karp constants From GSL
+	/// Define Cash-Karp constants From GSL
 	// Step 1 coefficient
 	const double b1 = 1.0 / 5.0;
 	// Step 2 coefficient
@@ -130,7 +132,7 @@ public:  //! Construct for class rkck
 
 		double time_step = _max_time_step;
 
-		// local information per component per body
+		/// local information per component per body
 		double pos = 0, vel = 0 ;
 		if( is_in_body_component_grid(b,c,nbod) )
 			pos = sys[b][c].pos() , vel = sys[b][c].vel();
@@ -146,7 +148,7 @@ public:  //! Construct for class rkck
 				h = _destination_time - sys.time();
 			}
 
-			//// RKCK   integrate system  ////////////////////////////////////////////////////////////////
+			/// RKCK   integrate system  ////////////////////////////////////////////////////////////////
 			double p0 = pos, v0 = vel;
 
 			// Step 1

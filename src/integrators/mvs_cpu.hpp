@@ -65,6 +65,7 @@ public:  //! Construct for class mvs_cpu
 		_time_step =  cfg.require("time_step", 0.0);
 	}
 
+        //! 
 	virtual void launch_integrator() {
 		for(int i = 0; i < _ens.nsys(); i++){
 			integrate_system(_ens[i]);
@@ -122,7 +123,7 @@ public:  //! Construct for class mvs_cpu
 	void convert_internal_to_std_coord(ensemble::SystemRef sys) 
 	{ convert_helio_pos_bary_vel_to_std_coord(sys);	} 
 
-  ///	Standardized member name to call convert_std_to_helio_pos_bary_vel_coord()
+        /// Standardized member name to call convert_std_to_helio_pos_bary_vel_coord()
         GPUAPI void convert_std_to_internal_coord(ensemble::SystemRef sys) 
 	{ convert_std_to_helio_pos_bary_vel_coord(sys); }
 

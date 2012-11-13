@@ -74,11 +74,11 @@ public:  //! Construct for hermite_cpu class
 	void calcForces(ensemble::SystemRef& sys, double acc[][3],double jerk[][3]){
 		const int nbod = sys.nbod();
 
-		// Clear acc and jerk
+		/// Clear acc and jerk
 		for(int b = 0; b < nbod; b++)	for(int c =0; c < 3; c++) 
 			acc[b][c] = 0, jerk[b][c] = 0;
 
-		// Loop through all pairs
+		/// Loop through all pairs
 		for(int i=0; i < nbod-1; i++) for(int j = i+1; j < nbod; j++) {
 
 			double dx[3] = { sys[j][0].pos()-sys[i][0].pos(),
@@ -90,19 +90,19 @@ public:  //! Construct for hermite_cpu class
 				sys[j][2].vel()-sys[i][2].vel()
 			};
 
-			// Calculated the magnitude
+			/// Calculated the magnitude
 			double r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2] * dx[2];
 			double rinv = 1 / ( sqrt(r2) * r2 ) ;
 			double rv =  inner_product(dx,dv) * 3. / r2;
 
-			// Update acc/jerk for i
+			/// Update acc/jerk for i
 			const double scalar_i = +rinv*sys[j].mass();
 			for(int c = 0; c < 3; c++) {
 				acc[i][c] += dx[c]* scalar_i;
 				jerk[i][c] += (dv[c] - dx[c] * rv) * scalar_i;
 			}
 
-			// Update acc/jerk for j
+			/// Update acc/jerk for j
 			const double scalar_j = -rinv*sys[i].mass();
 			for(int c = 0; c < 3; c++) {
 				acc[j][c] += dx[c]* scalar_j;
@@ -133,17 +133,17 @@ public:  //! Construct for hermite_cpu class
 				h = _destination_time - sys.time();
 			}
 
-			// Predict
+			/// Predict
 			for(int b = 0; b < nbod; b++)	for(int c =0; c < 3; c++) {
 					sys[b][c].pos() += h * (sys[b][c].vel()+h*0.5*(acc0[b][c]+h/3*jerk0[b][c]));
 					sys[b][c].vel() += h * (acc0[b][c]+h*0.5*jerk0[b][c]);
 				}
 
-			// Copy positions
+			/// Copy positions
 			for(int b = 0; b < nbod; b++) for(int c =0; c < 3; c++)
 					pre_pos[b][c] = sys[b][c].pos(), pre_vel[b][c] = sys[b][c].vel();
 
-			// Round one
+			///Integrate, Round one
 			{
 				calcForces(sys,acc1,jerk1);
 
@@ -159,7 +159,7 @@ public:  //! Construct for hermite_cpu class
 				}
 			}
 
-			// Round two
+			/// Integrate, Round two
 			{
 				calcForces(sys,acc1,jerk1);
 

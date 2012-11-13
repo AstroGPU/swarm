@@ -39,7 +39,10 @@ class mvs_omp : public mvs_cpu<Monitor> {
 	public:
 	typedef mvs_cpu<Monitor> base;
 
+        //!
 	mvs_omp(const config& cfg): base(cfg){}
+
+        //!
 	virtual void launch_integrator() {
 #pragma omp parallel for
 		for(int i = 0; i < base::_ens.nsys(); i++){

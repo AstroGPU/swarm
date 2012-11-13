@@ -49,9 +49,9 @@ public: //! Construct for class hermite integrator
 		launch_templatized_integrator(this);
 	}
 
-        //! Convert internal coord to std coord
+        //! Convert internal coordinates to std coordinates
         GPUAPI void convert_internal_to_std_coord() {} 
-        //! Convert std coord to internal coord
+        //! Convert std coordinates to internal coordinates
         GPUAPI void convert_std_to_internal_coord() {}  
 
 	template<class T>
@@ -87,7 +87,7 @@ public: //! Construct for class hermite integrator
 
 		////////// INTEGRATION //////////////////////
 
-		// Calculate acceleration and jerk
+		/// Calculate acceleration and jerk
 		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
@@ -99,8 +99,9 @@ public: //! Construct for class hermite integrator
 			}
 
 			
-			// Initial Evaluation
-			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
+			/// Initial Evaluation
+			/// Calculate the forces
+			//calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
 			pos = pos +  h*(vel+(h*0.5)*(acc0+(h/3.0)*jerk0));
@@ -137,7 +138,7 @@ public: //! Construct for class hermite integrator
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
-			// Finalize the step
+			/// Finalize the step
 			if( (b < nbod) && (c < 3) )
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
