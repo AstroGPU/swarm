@@ -195,11 +195,13 @@ class GravitationAccJerk {
 			sum(b,c,acc,jerk);
 		}
 	}
-				
+	
+        //! The number of thread per system
 	static GENERIC int thread_per_system(){
 		return (nbod*3>(nbod-1)*nbod/2) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
+        //! The amount of memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}

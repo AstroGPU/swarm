@@ -39,7 +39,7 @@ int optimized_system_per_block(int chunk_size, int thread_per_system
 		* chunk_size ;
 }
 
-///
+//! Select cuda device
 void select_cuda_device(int dev) {
 	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
 	if( dev >= 0 && dev < devcnt )
@@ -61,7 +61,7 @@ void set_more_cache(){
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 }
 
-///
+//! print out the device information
 void print_device_information(){
 	  std::cerr << "Device:\t"  << deviceInfo.name   << "\n"
 		  //<< " Compute Capabality: " << deviceInfo.computeMode <<   "\n"

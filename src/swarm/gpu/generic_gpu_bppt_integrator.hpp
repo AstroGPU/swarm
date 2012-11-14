@@ -101,13 +101,13 @@ class generic: public integrator {
 	generic(const config& cfg): base(cfg), _mon_params(cfg),_prop_params(cfg) {
 	}
 
-
+        //! launch the integrator
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
 
 
-
+        //! Define the number of thread per system
 	template<class T>
 	static GENERIC int thread_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::thread_per_system();
@@ -116,6 +116,7 @@ class generic: public integrator {
 		return max3( grav, prop, moni);
 	}
 
+        //! Define the amount of shared memory per system
 	template<class T>
 	static GENERIC int shmem_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::shmem_per_system();
@@ -155,10 +156,10 @@ class generic: public integrator {
 		//		bool first_thread_in_system = (thread_in_system() == 0);  // Barrier to select only the first thread
 
 
-		// Setting up Monitor
+		//! Setting up Monitor
 		monitor_t montest(_mon_params,sys,*_log) ;
 
-		// Setting up Propagator
+		//! Setting up Propagator
 		Propagator<T,GravitationInstance> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;

@@ -55,11 +55,11 @@ class GravitationAcc_GR {
 	public:
 
 	/**
-     * Calculate accelerations, including approximation for weak GR
-     * currently hardwired for G=M_sol=AU=1, year=2pi
-     * \todo read c^2 from parameter file?  read from system attribute?
-     *       set system attribute from parameter file?
-     */
+         * Calculate accelerations, including approximation for weak GR
+         * currently hardwired for G=M_sol=AU=1, year=2pi
+         * \todo read c^2 from parameter file?  read from system attribute?
+         *       set system attribute from parameter file?
+         */
 	GENERIC GravitationAcc_GR(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared)
         {	
 	  c2 = 101302340.; 
@@ -251,10 +251,10 @@ class GravitationAcc_GR {
 		return acc_from_sun + acc_from_planets + acc_gr;
 	}
 
+        //! define the operator ()
 	public:
-
 	GENERIC void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
-		// Write positions to shared (global) memory
+		/// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		__syncthreads();

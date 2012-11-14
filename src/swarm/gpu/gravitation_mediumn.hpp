@@ -133,7 +133,7 @@ class GravitationMediumN {
 	 * impact of the body 0 (star).
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
-	 *  @TODO: Remove once allow propagators to use GravitationAcc
+	 *  \todo: Remove once allow propagators to use GravitationAcc
 	 */
 	GENERIC double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
@@ -158,7 +158,7 @@ class GravitationMediumN {
 	/**  
 	 *  Find the acceleration for a planet.
 	 *
-     *  @TODO: Remove once allow propagators to use GravitationAcc
+         *  \todo: Remove once allow propagators to use GravitationAcc
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
 	 */
@@ -312,7 +312,7 @@ class GravitationMediumN {
 		}
 	}
 				
-	/// @TODO: Remove once allow propagators to use GravitationAcc
+	/// todo: Remove once allow propagators to use GravitationAcc
 	__device__ double acc_planets (int ij,int b,int c)const{
 	  //		if(ij < pair_count)
 		if(ij < 3*nbod )
@@ -324,7 +324,7 @@ class GravitationMediumN {
 			return 0;
 	}
 				
-	/// @TODO: Remove once allow propagators to use GravitationAcc
+	/// todo: Remove once allow propagators to use GravitationAcc
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -344,7 +344,7 @@ class GravitationMediumN {
 	static GENERIC int shmem_per_system() {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		//		return pair_count * 3  * 2 * sizeof(double);
-		// TODO: Test
+		/// todo: Test
 		 return pair_count * 3  * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
@@ -369,10 +369,12 @@ class GravitationMediumN {
 		return &shared_mem[idx];
 	}
 
+        //! Number of threads per system
 	static GENERIC int thread_per_system(){
 		return std::max(nbod * 3, (nbod-1)*nbod/2);
 	}
 
+        //! Amount of shared memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}

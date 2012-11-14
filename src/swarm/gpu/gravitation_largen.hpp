@@ -96,7 +96,7 @@ class GravitationLargeN {
 	 *  @acc  reference to output variable for acceleration
 	 *  @jerk reference to output variable for jerk
 	 */
-     GPUAPI void sum(int b,int c,double& acc, double & jerk)const{
+         GPUAPI void sum(int b,int c,double& acc, double & jerk)const{
 
 	   // Total acceleration 
 	   acc = 0.0;
@@ -205,7 +205,7 @@ class GravitationLargeN {
 	 * \todo Remove once allow propagators to use GravitationAcc
 	 *
 	 */
-     GPUAPI double sum_acc_planets(int b,int c)const{
+         GPUAPI double sum_acc_planets(int b,int c)const{
 
 	   // Total acceleration 
 	   double acc = 0.0;

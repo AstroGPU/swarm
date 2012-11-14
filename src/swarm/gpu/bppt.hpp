@@ -144,6 +144,7 @@ class integrator : public gpu::integrator  {
 	//! Should be a multiple of SHMEM_CHUNK_SIZE for better coalescing
 	int _override_system_per_block;
 
+        //! Constructor
 	public:
 	integrator(const config &cfg) : Base(cfg) {
 		int spb = cfg.optional("system_per_block",0);

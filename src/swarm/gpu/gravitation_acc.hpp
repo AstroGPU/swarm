@@ -48,8 +48,8 @@ class GravitationAcc {
 	ensemble::SystemRef& sys;
 	shared_data &shared;
 
+        //! Constructor
 	public:
-
 	GPUAPI GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
 	private:
@@ -73,6 +73,7 @@ class GravitationAcc {
 
 	}
 
+        //!
 	public:
           GPUAPI double one_over_r(const int b1, const int b2) const
           {
@@ -92,7 +93,6 @@ class GravitationAcc {
 	  }
 
 	private:
-
 	GPUAPI double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
 
@@ -138,8 +138,8 @@ class GravitationAcc {
 		return acc_from_sun + acc_from_planets;
 	}
 
+        //! Define operator 
 	public:
-
 	GPUAPI void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -204,10 +204,12 @@ class GravitationAcc {
 			return 0;
 	}
 
+        //! The number of threads per system
 	static GENERIC int thread_per_system(){
 	  return ( 3*nbod > (nbod-1)*nbod/2 ) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
+        //! The amount of shared memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}
