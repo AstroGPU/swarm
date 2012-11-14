@@ -5,7 +5,7 @@
  * it under the terms of the GNU General Public License as published by  *
  * the Free Software Foundation; either version 3 of the License.        *
  *                                                                       *
- * This program is distributed in the hope that it will be useful,       *
+ * This program is distributed in the hope t`hat it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  * GNU General Public License for more details.                          *
@@ -43,8 +43,8 @@ const int nsys = 64;
 
 const double mass_planet = 0.0001;
 
-// For first two, the collision should be at 1.8856
-// at 3.77125 they end up at each others position.
+/// For first two, the collision should be at 1.8856
+/// at 3.77125 they end up at each others position.
 const double xpos[4] = {  -2.0, +2.0, -4.0, +4.0 };
 
 

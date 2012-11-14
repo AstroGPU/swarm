@@ -30,6 +30,7 @@ using namespace std;
 const int nbod = 3;
 const int nsys = 64;
 
+/// main program
 int main(int argc, char* argv[]){
 	if(argc <= 1){
 		cout << "Usage: straight_line <outputfilename>" << endl;

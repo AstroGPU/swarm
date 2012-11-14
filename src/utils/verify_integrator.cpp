@@ -36,7 +36,7 @@ const int DEBUG_LEVEL = 0;
 using namespace swarm;
 using namespace std;
 
-
+/// Parse the command line options and configure the system
 vector<config> parse_commandline_and_config(int argc, char* argv[]){
 	namespace po = boost::program_options;
 	po::positional_options_description pos;
@@ -96,6 +96,7 @@ vector<config> parse_commandline_and_config(int argc, char* argv[]){
 	return configs;
 }
 
+/// Main program
 int main(int argc, char* argv[]){
 
 	vector<config> cfgs = parse_commandline_and_config(argc,argv);

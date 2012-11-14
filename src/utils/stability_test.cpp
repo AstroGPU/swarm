@@ -35,6 +35,7 @@ int DEBUG_LEVEL  = 0;
 
 #define SYNC cudaThreadSynchronize()
 
+/// Test the system stability
 void stability_test(config& cfg){
 	if(!validate_configuration(cfg) ) {
 		std::cerr << "Invalid configuration" << std::endl;
@@ -105,7 +106,7 @@ void stability_test(config& cfg){
 
 }
 
-
+/// Main program
 int main(int argc,  char **argv)
 {
 	namespace po = boost::program_options;

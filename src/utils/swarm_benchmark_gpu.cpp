@@ -37,6 +37,8 @@ int DEBUG_LEVEL  = 0;
 
 swarm::log::manager logman;
 
+
+/// Perform the integration of the ensemble
 void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string& param, const string& value) {
 	cfg[param] = value;
 	if(!validate_configuration(cfg) ) {
@@ -111,7 +113,7 @@ void run_integration(config& cfg, cpu_ensemble& reference_ensemble, const string
 
 }
 
-
+/// Run the interations defined in the command line
 void benchmark_loop(config& cfg, cpu_ensemble& ens, const string& param, const vector<string>& values) {
 
 	for(vector<string>::const_iterator i = values.begin();  i != values.end(); i++){
@@ -121,6 +123,7 @@ void benchmark_loop(config& cfg, cpu_ensemble& ens, const string& param, const v
 
 }
 
+/// Run the interations based on the range defined in the command line
 void benchmark_range(config& cfg, cpu_ensemble& ens, const string& param, int  from, int to , int increment ){
 
 	for(int i = from; i <= to ; i+= increment ){
@@ -133,7 +136,7 @@ void benchmark_range(config& cfg, cpu_ensemble& ens, const string& param, int  f
 
 }
 
-
+/// Main program
 int main(int argc,  char **argv)
 {
 	namespace po = boost::program_options;

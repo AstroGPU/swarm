@@ -55,6 +55,7 @@
 
 namespace swarm
 {
+        /// parse the parameters
 	template<typename T>
 	T arg_parse(const std::string &s)
 	{
@@ -69,7 +70,7 @@ namespace swarm
 	//	MIN..<r2>
 	//	<r1>..MAX
 	//	ALL
-	//
+	/// Validate the input options
 	template<typename T>
 	void validate(boost::any& v,
 		const std::vector<std::string>& values,
@@ -140,7 +141,7 @@ void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 	}
 }
 
-// Default output, if no handler is registered
+/// Default output, if no handler is registered
 std::ostream& record_output_default(std::ostream &out, gpulog::logrecord &lr)
 {
 	double T; int sys;
@@ -149,7 +150,7 @@ std::ostream& record_output_default(std::ostream &out, gpulog::logrecord &lr)
 	return out;
 }
 
-// EVT_SNAPSHOT
+/// EVT_SNAPSHOT
 std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr)
 {
 	double T;
@@ -241,7 +242,7 @@ std::ostream& record_output_1(std::ostream &out, gpulog::logrecord &lr)
 	return out;
 }
 
-// EVT_EJECTION
+/// EVT_EJECTION
 std::ostream& record_output_2(std::ostream &out, gpulog::logrecord &lr)
 {
 	double T;
@@ -284,6 +285,7 @@ void execute_query(const std::string &datafile, swarm::time_range_t T, swarm::sy
 	}
 }
 
+/// Main program. 
 int main(int argc, char **argv)
 {
 	namespace po = boost::program_options;

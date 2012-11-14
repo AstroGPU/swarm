@@ -34,7 +34,7 @@ using namespace std;
 int DEBUG_LEVEL  = 0;
 const int LOGARITHMIC_BASE = 2;
 
-
+/// Test system stability
 void stability_test(config& cfg){
 	if(!validate_configuration(cfg) ) {
 		std::cerr << "Invalid configuration" << std::endl;
@@ -143,7 +143,7 @@ void stability_test(config& cfg){
 
 }
 
-
+/// Main program for the utility
 int main(int argc,  char **argv)
 {
 	namespace po = boost::program_options;

@@ -24,6 +24,8 @@
 #include "swarm/snapshot.hpp"
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
+
+/// Parse the command line options
 void parse_cmd(int argc, char* argv[], string& ifn, string& ofn){
 	namespace po = boost::program_options;
 	po::positional_options_description pos;
@@ -49,6 +51,7 @@ void parse_cmd(int argc, char* argv[], string& ifn, string& ofn){
 
 }
 
+/// Main program
 int main(int argc,char * argv[]){
 	string ifn, ofn;
 	parse_cmd(argc,argv,ifn,ofn);
