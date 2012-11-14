@@ -38,7 +38,7 @@ namespace swarm {
 		_log = l->get_hostlog();
 	}
 
-    gpulog::host_log* integrator::get_host_log(){
+        gpulog::host_log* integrator::get_host_log(){
 	  return _log;
 	}
 
@@ -64,12 +64,14 @@ namespace swarm {
 			if( ens[i].is_active() ) count_running++;
 		return count_running;
 	}
+
 	int number_of_not_disabled_systems(defaultEnsemble ens) {
 		int count_running = 0;
 		for(int i = 0; i < ens.nsys() ; i++)
 			if( !ens[i].is_disabled() ) count_running++;
 		return count_running;
 	}
+
 	void activate_all_systems(defaultEnsemble& ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
 		  {
@@ -77,6 +79,7 @@ namespace swarm {
 			  ens[i].set_active();
 		  }
 	}
+
 	void activate_inactive_systems(defaultEnsemble& ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
 		  {

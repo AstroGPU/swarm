@@ -29,7 +29,8 @@
 #include <boost/program_options.hpp>
 
 namespace swarm { namespace query {
-	
+
+    /// Parse the input	
 template<typename T>
 T arg_parse(const std::string &s)
 {

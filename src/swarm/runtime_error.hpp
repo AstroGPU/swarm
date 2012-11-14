@@ -38,6 +38,8 @@ namespace swarm {
 */
 class runtime_error : public std::runtime_error
 {
+
+//! Constructor
 public:
         runtime_error(const std::string &msg) : std::runtime_error(msg) {}
         virtual ~runtime_error() throw() {};
@@ -55,8 +57,10 @@ public:
  */
 struct cudaException : public swarm::runtime_error
 {
+        //! Handling cuda run time exception
 	cudaException(cudaError err) : swarm::runtime_error( cudaGetErrorString(err) ) {}
 
+        //! Check the cuda run time error
 	static void check(cudaError err, const char *fun, const char *file, const int line) {
 		if(err != cudaSuccess)
 			throw cudaException(err);

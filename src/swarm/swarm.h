@@ -46,22 +46,27 @@ namespace swarm {
  *  encouraged for forward compatibility.
  */
 inline void init(const config &cfg) { 
-	// Select the proper device
+	/// Select the proper device
 	const char* devstr = getenv("CUDA_DEVICE");
+
+	/// Device present or not
 	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
 
+	///
 	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
 
+	/// Select cuda device
 	select_cuda_device(dev);
 
 	if(cfg.optional("more_cache",0)!=0){
 		set_more_cache();
 	}
-
+	///
 	if(cfg.optional("verbose",0)!=0){
 	print_device_information();
         }
 
+	/// initialize the config
 	swarm::log::manager::default_log()->init(cfg);
 }
 
