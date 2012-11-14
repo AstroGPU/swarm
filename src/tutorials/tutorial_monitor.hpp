@@ -69,7 +69,7 @@ namespace swarm { namespace monitors {
 struct TutorialMonitor_params 
 {
 	double max_distance_from_origin;
-	
+        /// Constructor
 	TutorialMonitor_params(const config &cfg)
 	{
 		max_distance_from_origin = cfg.optional("max_distance_from_origin",POSITIVE_INFINITY);
@@ -100,6 +100,7 @@ params _params;
 ensemble::SystemRef& _sys;
 log_t& _log;
 
+  /// Default constructor
 public:
 GPUAPI TutorialMonitor(const params& p,ensemble::SystemRef& s,log_t& l)
 	:_params(p),_sys(s),_log(l){}
@@ -144,6 +145,7 @@ GPUAPI void operator () (const int thread_in_system)
 // an ejection.
 // 
 // Otherwise, the test returns false.
+///
 GPUAPI bool is_there_any_ejection()
 {
 	for(int b = 0; b < _sys.nbod(); b++){

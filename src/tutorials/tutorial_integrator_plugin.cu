@@ -32,11 +32,3 @@ integrator_plugin_initializer< TutorialIntegrator_Instantiated >
 //
 // For complete listing of these two files look at \ref src/tutorials/tutorial_integrator.hpp and \ref src/tutorials/tutorial_integrator_plugin.cu
 
-
-/*************************************************************************
- ************************************************************************
- * We would like to hear your feedback on using Swarm-NG libraries. 
- * Please send your comments on this tutorial and Swarm-NG to our mailing
- * list at: http://groups.google.com/group/swarm-ng.
- * 
- ************************************************************************/

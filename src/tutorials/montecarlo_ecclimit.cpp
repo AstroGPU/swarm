@@ -47,7 +47,7 @@ using namespace swarm;
 using namespace std;
 
 config cfg;
-
+///
 void inspect(defaultEnsemble &ens, const int sys, const int bod ) 
 {
 	  fprintf(stderr,"%d %d: %lg (%lg %lg %lg) (%lg %lg %lg) \n", sys, bod,
@@ -62,7 +62,7 @@ void inspect(defaultEnsemble &ens, const int sys, const int bod )
 }
 
 int maxsysid = 0;
-
+///
 void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &ens, const int sysidx, const int sysid) 
 {
   double time_init = cfg.optional("time_init", 0.0);
@@ -216,7 +216,7 @@ defaultEnsemble generate_ensemble_with_randomized_initial_conditions(const confi
   return ens;
 }
 
-
+/// Output the system
 void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
@@ -289,13 +289,13 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
   os << std::flush;
 }
 
-
+///
 void print_selected_systems(swarm::ensemble& ens, std::vector<unsigned int> systemindices, std::ostream &os = std::cout)
 {
   for(unsigned int i=0; i<systemindices.size(); ++i)
       print_system(ens,systemindices[i], os);
 }
-
+///
 void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, std::ostream &os = std::cout)
 {
   if(nprint>ens.nsys()) nprint = ens.nsys();
@@ -303,7 +303,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, 
       print_system(ens,systemid,os);
 }
 
-
+/// Output the stable systems
 void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init) 
 {
   // find the stable ones and output the initial conditions for the stable
@@ -376,7 +376,7 @@ std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
     }
   return semimajor_axes;
 }
-
+///
 void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vector<double> >& semimajor_axes_init, const double deltaa_threshold )
 {
   for(int sys_idx = 0; sys_idx < ens.nsys() ; sys_idx++)

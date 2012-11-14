@@ -44,7 +44,7 @@
 using namespace swarm;
 using namespace std;
 
-
+/// Main program
 int main(int argc, char* argv[]){
 
 

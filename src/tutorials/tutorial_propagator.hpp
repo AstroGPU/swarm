@@ -44,8 +44,10 @@
 // for the propagator. This data structure is initialized with the
 // configuration object when the propagator plugin is loaded. 
 // 
+/// Data structure for TutorialPropagator
 struct TutorialPropagatorParams {
 	double time_step;
+        /// Constructor for TutorialPropagatorParams
 	TutorialPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
@@ -56,12 +58,14 @@ struct TutorialPropagatorParams {
 // at the place when it needs to be used. The propagator class is
 // parametrized by number of bodies (class T contains it) and an
 // implementation of Gravitational force calculation algorithm.
+/// Class TutorialPropagator
 template<class T,class Gravitation>
 class TutorialPropagator {
 	public:
 	
 	// This will give the Generic integrator an idea about the struct
 	// type we used for the parameters
+        /// Data structure
 	typedef TutorialPropagatorParams params;
 	
 	// We get the number of bodies at the compile-time. The propagator
@@ -80,7 +84,7 @@ class TutorialPropagator {
 	params _params;
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
-	
+        /// Constructor for TutorialPropagator
 	GPUAPI TutorialPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -119,7 +123,9 @@ class TutorialPropagator {
 
 	// These functions are only used if the propagator uses a coordinate
 	// system other than the default.
+        ///
 	GPUAPI void convert_internal_to_std_coord() {} 
+        ///
 	GPUAPI void convert_std_to_internal_coord() {}
 
 	// propagator can use arbitrary number of systems and may use
@@ -137,6 +143,7 @@ class TutorialPropagator {
 	// The usual implemnation consist of sampling accleration (and jerk
 	// if needed) at one or more points around the current system time
 	// and extrapolate position and velocities.
+        /// Function for advancing time steps
 	GPUAPI void advance(){
 		// we define the local values just for more readable code.
 		double pos = 0.0, vel = 0.0;

@@ -40,11 +40,11 @@ using swarm::config;
 using swarm::ensemble;
 using namespace swarm::gpu::bppt;
 
-// The integrator does not have to be a template, but defining it as
+/// The integrator does not have to be a template, but defining it as
 // a template makes it easier to use different Monitors and different
 // Gravitational force calculation algorithms
 template< class Monitor , template<class T> class Gravitation >
-// Name the integrator, and implement swarm::gpu::bppt::integrator
+/// Name the integrator, and implement swarm::gpu::bppt::integrator
 class TutorialIntegrator: public integrator {
 	
 	// Some convenience aliases, just to follow the conventions
@@ -62,6 +62,7 @@ class TutorialIntegrator: public integrator {
 	// The configurations are loaded when the integrator is first created.
 	// The integrator should also configure the monitor by initializing the
 	// _mon_params and passing the cfg parameter to it.
+        /// Constructor for TutorialIntegrator 
 	public:
 	TutorialIntegrator(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
@@ -74,6 +75,7 @@ class TutorialIntegrator: public integrator {
 	// launch_templatized integrator will call a version of the
 	// kernel function (see below) optimized for the specific number of
 	// bodies.
+        ///
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
@@ -81,7 +83,9 @@ class TutorialIntegrator: public integrator {
 		// These two function are used by some monitors. If you use
 		// a coordinate system other than Cartesian, you may need
 		// to convert it to Cartesian and back when these functions are called.
+        ///
         GPUAPI void convert_internal_to_std_coord() {} 
+        ///
         GPUAPI void convert_std_to_internal_coord() {}
 
 	// The CUDA kernel that contains our algorithm is defined in this
@@ -92,6 +96,8 @@ class TutorialIntegrator: public integrator {
 	// There are no dynamic parameters, since everything else (ensemble
 	// and configuration parameters) is already
 	// specified in the member variables of current class.
+
+        /// CUDA kernal for integration process
 	template<class T>
 	__device__ void kernel(T compile_time_param){
 

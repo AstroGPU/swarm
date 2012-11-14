@@ -47,7 +47,7 @@ using namespace swarm;
 using namespace std;
 
 config cfg;
-
+///
 void inspect(defaultEnsemble &ens, const int sys, const int bod ) 
 {
 	  fprintf(stderr,"%d %d: %lg (%lg %lg %lg) (%lg %lg %lg) \n", sys, bod,
@@ -60,7 +60,7 @@ void inspect(defaultEnsemble &ens, const int sys, const int bod )
 			  ens[sys][bod][2].vel()
 			  );
 }
-
+///
 void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &ens, const int sysidx, const int sysid) 
 {
   double time_init = cfg.optional("time_init", 0.0);
@@ -335,6 +335,7 @@ void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init)
 
 }
 
+/// Calculate teh semi-major axes
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
   std::vector<std::vector<double> > semimajor_axes(ens.nsys(),std::vector<double>(ens.nbod(),0.));
@@ -366,7 +367,7 @@ std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
     }
   return semimajor_axes;
 }
-
+/// 
 void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vector<double> >& semimajor_axes_init, const double deltaa_threshold )
 {
   for(int sys_idx = 0; sys_idx < ens.nsys() ; sys_idx++)
