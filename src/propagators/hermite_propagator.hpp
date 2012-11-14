@@ -57,7 +57,6 @@ struct HermitePropagator {
 
 	params _params;
 
-
 	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
@@ -69,11 +68,12 @@ struct HermitePropagator {
 	bool first_thread_in_system;
 	double max_timestep;
 
-
+        //! Constructor for HermitePropagator
 	GPUAPI HermitePropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
+        //! Initialize the system
 	GPUAPI void init()  {
 		double pos,vel;
 		if( is_in_body_component_grid() )
@@ -83,6 +83,7 @@ struct HermitePropagator {
 
 	GPUAPI void shutdown() { }
 
+        //! Conversation between the coordinate systems. 
         GPUAPI void convert_internal_to_std_coord() {} 
         GPUAPI void convert_std_to_internal_coord() {}
 
@@ -103,6 +104,7 @@ struct HermitePropagator {
 	__device__ bool is_first_thread_in_system()
         { return (thread_in_system()==0); }	
 
+        //! Advance the time steps
 	GPUAPI void advance(){
 		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;

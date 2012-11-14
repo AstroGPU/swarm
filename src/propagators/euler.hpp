@@ -97,6 +97,7 @@ struct EulerPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+        //! Advance the timesteps
 	GPUAPI void advance(){
 		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;
@@ -108,7 +109,7 @@ struct EulerPropagator {
 
 
 		calcForces(ij,b,c,pos,vel,acc,jerk);
-		//! Integrator
+		//! Integration
 		pos = pos +  h*(vel+(h*0.5)*(acc+(h*third)*jerk));
 		vel = vel +  h*(acc+(h*0.5)*jerk);
 

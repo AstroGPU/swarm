@@ -32,7 +32,7 @@ namespace swarm { namespace gpu { namespace bppt {
  */
 struct MidpointPropagatorParams {
 	double time_step;
-        //! Constructor
+        //! Constructor for MidpointPropagatorParams
 	MidpointPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
@@ -67,15 +67,16 @@ struct MidpointPropagator {
 //	bool first_thread_in_system;
 	double max_timestep;
 
-        //! Constructor
+        //! Constructor for MidpointPropagator
 	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
+        ///
 	static GENERIC int thread_per_system(){
 		return nbod * 3;
 	}
-
+        ///
 	static GENERIC int shmem_per_system() {
 		 return 0;
 	}
@@ -84,7 +85,9 @@ struct MidpointPropagator {
 
 	GPUAPI void shutdown() { }
 
+        /// Conversion from internal coordinate system to standard cooridinate system. 
         GPUAPI void convert_internal_to_std_coord() {} 
+        /// Conversion from standard coordinate system to internal cooridinate system. 
         GPUAPI void convert_std_to_internal_coord() {}
 
 	__device__ bool is_in_body_component_grid()
@@ -99,6 +102,7 @@ struct MidpointPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+        /// Advance time steps
 	GPUAPI void advance(){
 		double H = min( max_timestep ,  _params.time_step );
 		double pos = 0, vel = 0;
@@ -117,11 +121,11 @@ struct MidpointPropagator {
 		double v_i,  v_im1, v_im2;
 		double a_im1;
 
-		//! Step 0
+		// Step 0
 		p_i = pos;
 		v_i = vel;
 
-		//! Step 1
+		// Step 1
 		p_im1 = p_i;
 		v_im1 = v_i;
 
@@ -130,7 +134,7 @@ struct MidpointPropagator {
 		p_i = p_im1 + h * v_im1;
 		v_i = v_im1 + h * a_im1;
 
-		//! Step 2 .. n
+		// Step 2 .. n
 		for(int i = 2; i <= n; i++){
 			p_im2 = p_im1;
 			p_im1 = p_i;
@@ -148,7 +152,7 @@ struct MidpointPropagator {
 		vel = 0.5 * ( v_i + v_im1 + h * a_i );
 
 
-		//! Finalize the step
+		// Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 

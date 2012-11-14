@@ -37,7 +37,7 @@ namespace bppt {
  */
 struct MVSPropagatorParams {
 	double time_step;
-        //! Constructor
+        //! Constructor for MVSPropagatorParams
 	MVSPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
@@ -68,6 +68,7 @@ struct MVSPropagator {
 
 	double acc_bc;
 
+        //! Constructor for MVSPropagator
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -139,12 +140,12 @@ struct MVSPropagator {
 
 		if( is_in_body_component_grid() )
 		{
-			if(b==0) //! For sun
+			if(b==0) // For sun
 			{
 			sys[b][c].vel() = sumv;
 			sys[b][c].pos() = sump/mtot;
 			}
-			else     //! For planets
+			else     // For planets
 			{
 			sys[b][c].vel() -= calcForces.shared[0][c].acc(); // really sumv from shared;
 			sys[b][c].pos() -= calcForces.shared[1][c].acc(); // really pc0 = original sys[0][c].pos() from shared
@@ -260,30 +261,30 @@ struct MVSPropagator {
 	{
 		double hby2 = 0.5 * min( max_timestep ,  _params.time_step );
 
-			//! Step 1
+			// Step 1
 			if ( is_in_body_component_grid() ) 
 			   drift_step(hby2);
 
-			//! Step 2: Kick Step
+			// Step 2: Kick Step
 			if( is_in_body_component_grid_no_star() ) 
 			   sys[b][c].vel() += hby2 * acc_bc;
 
 			__syncthreads();
 
-			//! 3: Kepler Drift Step (Keplerian orbit about sun/central body)
+			// 3: Kepler Drift Step (Keplerian orbit about sun/central body)
 			if( (ij>0) && (ij<nbod)  ) 
 			    drift_kepler( sys[ij][0].pos(),sys[ij][1].pos(),sys[ij][2].pos(),sys[ij][0].vel(),sys[ij][1].vel(),sys[ij][2].vel(),sqrtGM, 2.0*hby2 );
 			__syncthreads();
 
-			//! TODO: check for close encounters here
+			// TODO: check for close encounters here
 			acc_bc = calcForces.acc_planets(ij,b,c);
 
-			//! Step 4: Kick Step
+			// Step 4: Kick Step
 			if( is_in_body_component_grid_no_star() ) 
 			   sys[b][c].vel() += hby2 * acc_bc;
 			__syncthreads();
 
-			//! Step 5
+			// Step 5
 			if ( is_in_body_component_grid() ) 
 			  drift_step(hby2);
 

@@ -54,7 +54,6 @@ struct VerletPropagator {
 
 	params _params;
 
-	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -64,7 +63,7 @@ struct VerletPropagator {
 	bool first_thread_in_system;
 	double max_timestep, timestep;
 
-        //! Constructor   
+        //! Constructor for VerletPropagator
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -77,6 +76,7 @@ struct VerletPropagator {
 		 return 0;
 	}
 
+        /// Initialize the system
 	GPUAPI void init()  
 	{ 
 	   // First half step uses timestep factor from previous itteration, 
@@ -134,6 +134,7 @@ struct VerletPropagator {
 	return factor;
 	}
 
+        /// Advance time steps
 	GPUAPI void advance(){
 		double h = timestep;
 		double pos = 0.0, vel = 0.0;
@@ -145,28 +146,28 @@ struct VerletPropagator {
 
 			double h_first_half = 0.5 * h;
 
-			//! First half step for positions
+			// First half step for positions
 			pos = pos + h_first_half * vel;
 
-			//! Calculate acceleration in the middle
+			// Calculate acceleration in the middle
 			double acc = calcForces.acc(ij,b,c,pos,vel);
 			
-			//! First half step for velocities
+			// First half step for velocities
 			vel = vel + h_first_half * acc;
 
-			//! Update timestep with positions (and velocities) at end of half-step
+			// Update timestep with positions (and velocities) at end of half-step
 			timestep = calc_timestep();
 
-			//! Second half step for velocities
+			// Second half step for velocities
 			double h_second_half = 0.5*timestep;
 
-			//! Second half step for positions and velocities
+			// Second half step for positions and velocities
 			vel = vel + h_second_half * acc;
 			pos = pos + h_second_half * vel;
 
 			//////////////// END of Integration Step /////////////////
 
-		//! Finalize the step
+		// Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 

@@ -142,13 +142,13 @@ GPUAPI double solvex(double r0dotv0, double alpha,
        SC_prussing_fast(alx2,Sp,Cp);  // optimization
      else
 #endif
-     SC_prussing(alx2,Sp,Cp);  //! optimization
+     SC_prussing(alx2,Sp,Cp);  // optimization
      F = sig0*x2*Cp + foo*x3*Sp + r0*x - smu*dt; //! eqn 2.41 PC
      dF = sig0*x*(1.0 - alx2*Sp)  + foo*x2*Cp + r0; //! eqn 2.42 PC
      ddF = sig0*(1.0-alx2*Cp) + foo*x*(1.0 - alx2*Sp);
      z = fabs((_N_LAG - 1.0)*((_N_LAG - 1.0)*dF*dF - _N_LAG*F*ddF));
      z = sqrt(z);
-     double denom = (dF + SIGN(dF)*z);  //! faster than copysign
+     double denom = (dF + SIGN(dF)*z);  // faster than copysign
      if (denom ==0.0) denom = MINDENOM;
      u = _N_LAG*F/denom; //! equation 2.43 PC
      x -= u;
@@ -179,17 +179,17 @@ GPUAPI void drift_kepler(double& x_old, double& y_old, double& z_old, double& vx
    // WARNING: Using softened potential
    double r0 = sqrt(x*x + y*y + z*z + MINR_IN_1EM8*MINR_IN_1EM8*1.e-16); //! current radius
 #else
-   double r0 = sqrt(x*x + y*y + z*z ); //! current radius
+   double r0 = sqrt(x*x + y*y + z*z ); // current radius
 #endif
-//   double r0 = sqrt(x*x + y*y + z*z ); //! current radius
-   double v2 = (vx*vx + vy*vy + vz*vz);  //! current velocity
+//   double r0 = sqrt(x*x + y*y + z*z ); // current radius
+   double v2 = (vx*vx + vy*vy + vz*vz);  // current velocity
    double r0dotv0 = (x*vx + y*vy + z*vz);
    double GM = sqrtGM*sqrtGM;
-   double alpha = (2.0/r0 - v2/GM);  //! inverse of semi-major eqn 2.134 MD
+   double alpha = (2.0/r0 - v2/GM);  // inverse of semi-major eqn 2.134 MD
 // here alpha=1/a and can be negative
-   double x_p = solvex(r0dotv0, alpha, sqrtGM, r0, deltaTime); //! solve universal kepler eqn
+   double x_p = solvex(r0dotv0, alpha, sqrtGM, r0, deltaTime); // solve universal kepler eqn
 
-//   double smu = sqrt(GM);  //! from before we cached sqrt(GM)
+//   double smu = sqrt(GM);  // from before we cached sqrt(GM)
    double smu = sqrtGM; 
    double foo = 1.0 - r0*alpha;
    double sig0 = r0dotv0/smu;
