@@ -44,16 +44,18 @@ namespace gpulog
 		}
 #endif
 
-	// device internals encapsulation for log_base<> template
+	//! device internals encapsulation for log_base<> template
 	struct dev_internals
 	{
+	        //! Allocate memory
 		template<typename T>
 			__host__ static void alloc(T* &ret, int num = 1)
 			{
 				cudaMalloc((void **)&ret, num*sizeof(T));
 			}
 
-		template<typename T>
+	        //! Memory copy from device to CPU host
+		template<typename T> 
 			__host__ static const T get(T *ptr)
 			{
 				T ret;
@@ -61,18 +63,21 @@ namespace gpulog
 				return ret;
 			}
 
+	        //! Memory copy from Host to Device
 		template<typename T>
 			__host__ static void set(T *ptr, const T& val)
 			{
 				cudaMemcpy(ptr, &val, sizeof(*ptr), cudaMemcpyHostToDevice);
 			}
 
+	        //! Free allocated memory
 		template<typename T>
 			__host__ static void dealloc(T* p, int num = 1)
 			{
 				cudaFree(p);
 			}
 
+	        //! Get thread ID
 		__device__ static inline int threadId()
 		{
 		#ifdef __CUDACC__
@@ -84,37 +89,43 @@ namespace gpulog
 		}
 
 #ifdef __CUDACC__
+	  //!
         __device__ static inline int atomicAdd(int *x, int add) {
 			return global_atomicAdd(x, add);
 		}
 #else
-        __host__ static inline int atomicAdd(int *x, int add) {
+	  //!
+       __host__ static inline int atomicAdd(int *x, int add) {
 			return global_atomicAdd(x, add);
 		}
 #endif
 	};
 
-	// host internals encapsulation for log_base<> template
+	//! host internals encapsulation for log_base<> template
 	struct host_internals
 	{
+	        //!
 		template<typename T>
 			static void alloc(T* &ret, int num = 1)
 			{
 				ret = num == 1 ? new T : new T[num];
 			}
 
+	        //!
 		template<typename T>
 			static const T get(T *ptr)
 			{
 				return *ptr;
 			}
 
+	        //!
 		template<typename T>
 			static void set(T *ptr, const T& val)
 			{
 				*ptr = val;
 			}
 
+	        //!
 		template<typename T>
 			static void dealloc(T* p, int num = 1)
 			{
@@ -122,6 +133,7 @@ namespace gpulog
 				else delete [] p;
 			}
 
+	        //!
 		static inline int atomicAdd(int *x, int add) { int tmp = *x; *x += add; return tmp; }
 		static int threadId() { return -1; }
 	};
@@ -141,9 +153,8 @@ namespace gpulog
 	/* CUDA 2.3 and beyond */
 	// #define PTR_T(T)  T*
 
-	/*
-	   Log template with the write() implementations.
-	*/
+	
+	//!   Log template with the write() implementations.
 	template<typename A>
 	struct log_base
 	{
@@ -153,6 +164,7 @@ namespace gpulog
 		int buf_len;
 
 	public: /* manipulation from host */
+	        //!
 		__host__ void alloc(size_t len)
 		{
 			buf_len = len;
@@ -164,6 +176,7 @@ namespace gpulog
 			DHOST( std::cerr << "Allocated " << len << " bytes.\n"; )
 		}
 
+	        //!
 		__host__ void free()
 		{
 			A::dealloc(buffer, buf_len);
@@ -173,43 +186,50 @@ namespace gpulog
 			at = NULL;
 		}
 
-		__host__ void clear()	/* clear the output buffer (from host side) */
+	        //! clear the output buffer (from host side)
+		__host__ void clear()	
 		{
 			A::set(at, 0);
 		}
 
-		__host__ int fetch_size() const  /* get the size (in bytes) of the data in the output buffer */
+	        //! get the size (in bytes) of the data in the output buffer 
+		__host__ int fetch_size() const   
 		{
 			return A::get(at);
 		}
 
-		__host__ void set_size(int pos) const  /* move the buffer pointer to position pos */
+	        //! move the buffer pointer to position pos 
+		__host__ void set_size(int pos) const  
 		{
 			A::set(at, pos);
 		}
 
-	public: /* manipulation from device */
+	public: 
+	        //! manipulation from device 
 		__host__ __device__ int capacity() const
 		{
 			return buf_len;
 		}
 		
-		__host__ __device__ int size() const  /* get the size (in bytes) of the data in the output buffer */
+	        //! get the size (in bytes) of the data in the output buffer 
+		__host__ __device__ int size() const  
 		{
 			return *at;
 		}
 
-		__host__ __device__ void seek(int pos) const  /* move the buffer pointer to position pos */
+	        //! move the buffer pointer to position pos 
+		__host__ __device__ void seek(int pos) const  
 		{
 			*at = pos;
 		}
 
-		__host__ __device__ char* internal_buffer() const  /* return the internal output buffer (mainly for use by copy()) */
+	        //! return the internal output buffer (mainly for use by copy()) 
+		__host__ __device__ char* internal_buffer() const  
 		{
 			return buffer;
 		}
 
-		// test if the buffer has overflowed
+		//! test if the buffer has overflowed
 		__host__ __device__ inline bool has_overflowed(int idx)
 		{
 			return idx > buf_len;
@@ -249,10 +269,10 @@ namespace gpulog
 
 	};
 
-	// Device specialization
+	//! Device specialization
 	typedef log_base<dev_internals> device_log;
 
-	// Host specialization, with memory management
+	//! Host specialization, with memory management
 	struct host_log : public log_base<host_internals>
 	{
 		host_log(size_t len = 0)
@@ -271,28 +291,28 @@ namespace gpulog
 		Log memory management and copying API
 	*/
 
-	// Download the pointers from symbol 'name' to device_log structure
-	// on the host
+	//! Download the pointers from symbol 'name' to device_log structure
+	//! on the host
 	inline void download_device_log(device_log &log, device_log* dlog)
 	{
 		cudaMemcpy(&log, dlog, sizeof(log), cudaMemcpyDeviceToHost);
 	}
 
-	// Download the pointers from symbol 'name' to device_log structure
-	// on the host
+	//! Download the pointers from symbol 'name' to device_log structure
+	//! on the host
 	inline void download_device_log(device_log &log, const char *name)
 	{
 		cudaMemcpyFromSymbol(&log, name, sizeof(log), 0, cudaMemcpyDeviceToHost);
 	}
 
-	// Uplaod the pointers from device_log structure on the host to
-	// symbol 'name'
+	//! Uplaod the pointers from device_log structure on the host to
+	//! symbol 'name'
 	inline void upload_device_log(const char *name, device_log &log)
 	{
 		cudaMemcpyToSymbol(name, &log, sizeof(log), 0, cudaMemcpyHostToDevice);
 	}
 
-	// Uplaod the pointers from device_log structure on the host to a new buffer
+	//! Uplaod the pointers from device_log structure on the host to a new buffer
 	inline device_log* upload_device_log(device_log &log)
 	{
 		void* pdlog;
@@ -301,12 +321,12 @@ namespace gpulog
 		return (device_log*) pdlog;
 	}
 
-	//
-	// Copy device log buffers and metadata from 'from'
-	// to host_log 'to'.
-	//
-	// If (flags & LOG_DEVCLEAR) reset the device log afterwards
-	//
+	//!
+	//! Copy device log buffers and metadata from 'from'
+	//! to host_log 'to'.
+	//!
+	//! If (flags & LOG_DEVCLEAR) reset the device log afterwards
+	//!
 	__host__ inline void copy(host_log &to, device_log &from, int flags = 0)
 	{
 		// clear host log
@@ -334,12 +354,12 @@ namespace gpulog
 		}
 	}
 
-	//
-	// Copy device log buffers and metadata from object stored
-	// in device symbol 'symbol', to host_log to.
-	//
-	// If (flags & LOG_DEVCLEAR) reset the device log afterwards
-	//
+	//!
+	//! Copy device log buffers and metadata from object stored
+	//! in device symbol 'symbol', to host_log to.
+	//!
+	//! If (flags & LOG_DEVCLEAR) reset the device log afterwards
+	//!
 	inline void copy(host_log &to, const char *from, int flags = 0)
 	{
 		device_log dlog;
@@ -347,12 +367,12 @@ namespace gpulog
 		copy(to, dlog, flags);
 	}
 
-	//
-	// Copy device log buffers and metadata from object stored
-	// in device symbol 'symbol', to host_log to.
-	//
-	// If (flags & LOG_DEVCLEAR) reset the device log afterwards
-	//
+	//!
+	//! Copy device log buffers and metadata from object stored
+	//! in device symbol 'symbol', to host_log to.
+	//!
+	//! If (flags & LOG_DEVCLEAR) reset the device log afterwards
+	//!
 	inline void copy(host_log &to, device_log *from, int flags = 0)
 	{
 		device_log dlog;
@@ -360,9 +380,7 @@ namespace gpulog
 		copy(to, dlog, flags);
 	}
 
-	//
-	// Setup a new log object in device symbol 'symbol'
-	//
+	//! Setup a new log object in device symbol 'symbol'
 	inline device_log alloc_device_log(const char *symbol, size_t len)
 	{
 		device_log dlog;
@@ -371,9 +389,7 @@ namespace gpulog
 		return dlog;
 	}
 
-	//
-	// Setup a new log object and return the device pointer
-	//
+	//! Setup a new log object and return the device pointer
 	inline device_log* alloc_device_log(size_t len)
 	{
 		device_log dlog;
@@ -381,9 +397,7 @@ namespace gpulog
 		return upload_device_log(dlog);
 	}
 
-	//
-	// Free the memory associated with device log in symbol 'symbol'
-	//
+	//! Free the memory associated with device log in symbol 'symbol'
 	inline void free_device_log(const char *symbol)
 	{
 		device_log dlog;

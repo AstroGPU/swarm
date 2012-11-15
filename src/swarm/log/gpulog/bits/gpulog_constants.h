@@ -29,15 +29,14 @@
 
 namespace gpulog
 {
-	//
-	// System message IDs
-	//
+	//! System message ID
 	static const int MSG_INVALID = -1;
+	//! System message ID
 	static const int MSG_PRINTF = -2;
 
-	//
-	// flags for gpulog::copy() and related functions
-	//
+	//!
+	//! flags for gpulog::copy() and related functions
+	//!
 	static const int LOG_DEVCLEAR = 0x01;
 }
 

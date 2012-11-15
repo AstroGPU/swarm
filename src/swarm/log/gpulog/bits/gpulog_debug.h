@@ -24,13 +24,12 @@
  *
  */
 
-
 #ifndef bits_gpulog_debug_h__
 #define bits_gpulog_debug_h__
 
-//
-// Debugging macros. Define GPULOG_DEBUG=1 to turn on
-//
+//!
+//! Debugging macros. Define GPULOG_DEBUG=1 to turn on
+//!
 #if GPULOG_DEBUG
 	#define DBG(x) x
 #else
