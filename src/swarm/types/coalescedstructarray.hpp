@@ -177,6 +177,7 @@ public:
 	}
 };
 
+//! CoalescedStruct for double data type
 template<int W>
 struct DoubleCoalescedStruct {
 	typedef double scalar_t;

@@ -31,7 +31,7 @@ using peyton::util::trim;
 
 namespace swarm {
 
-
+//! Initialize the config objects
 void config::initialize(const char* const key_value_pairs[][2],const int n){
 	$_(n);
 	for(int i =0 ; i < n ; i++ )
@@ -39,7 +39,7 @@ void config::initialize(const char* const key_value_pairs[][2],const int n){
 	
 }
 
-
+//! Load the configuration file and check for format errors
 config config::load(const std::string &fn, config cfg)
 {
 	std::ifstream in(fn.c_str());
