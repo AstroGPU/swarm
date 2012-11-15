@@ -17,12 +17,10 @@
  ************************************************************************/
 
 /*! \file null_writer.cpp
- *    \brief Implements a dummy null writer. 
+ *    \brief Defines a dummy null writer
  *
  *
  */
-
-
 
 #include "../common.hpp"
 

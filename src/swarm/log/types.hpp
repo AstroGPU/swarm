@@ -25,7 +25,7 @@
 #pragma once
 #include "../types/ensemble.hpp"
 
-namespace swarm { namespace log { /////////////////////////////////////////////////////////////////////////////
+namespace swarm { namespace log {
 
 /** \brief for on-GPU state logging of bodies
  * NOTE: I've written out the datatypes _explicitly_, because
@@ -70,12 +70,15 @@ struct body_set
 	GENERIC body_set(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
 };
 
+//! For one body case
 GENERIC const body_set<1> make_body_set(const ensemble &ens, int sys, int bod0)
 {
 	body_set<1> br(ens, sys);
 	br.bod[0] = bod0;
 	return br;
 }
+
+//! For two body case
 GENERIC const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, int bod1)
 {
 	body_set<2> br(ens, sys);
@@ -83,6 +86,8 @@ GENERIC const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, 
 	br.bod[1] = bod1;
 	return br;
 }
+
+//! For three body case
 GENERIC const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
 {
 	body_set<3> br(ens, sys);
@@ -92,11 +97,11 @@ GENERIC const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, 
 	return br;
 }
 
-} } ////////////////////////////////////////////////////////////////////////////////////////////////
+} } 
 
 
 
-namespace gpulog { 	namespace internal {  ////////////////////////////////////////////////////
+namespace gpulog { 	namespace internal {  
 
 
 using namespace swarm::log;

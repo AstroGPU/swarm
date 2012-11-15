@@ -45,14 +45,14 @@ Pwriter writer::create(const config& cfg)
 {
         Pwriter w;
 
-		std::string name = cfg.optional(std::string("log_writer") , std::string("null") );
-		std::string plugin_name = "writer_" + name;
+	std::string name = cfg.optional(std::string("log_writer") , std::string("null") );
+	std::string plugin_name = "writer_" + name;
 
-		try {
-			w.reset( (writer*) (plugin::instance(plugin_name,cfg)) );
-		}catch(plugin_not_found& e){
+	try {
+	  w.reset( (writer*) (plugin::instance(plugin_name,cfg)) );
+	}catch(plugin_not_found& e){
 			ERROR("Log writer " + name + " not found.");
-		}
+	}
 
         return w;
 }

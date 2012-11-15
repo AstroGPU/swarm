@@ -26,7 +26,7 @@
 #pragma once
 namespace swarm {
 
-	// Note: the header _MUST_ be padded to 16-byte boundary
+	//! Define swarm header. The header _MUST_ be padded to 16-byte boundary
 	struct ALIGN(16) swarm_header
 	{
 		char magic[6];		//!< Magic string to quickly verify this is a swarm file (== 'SWARM\0')
@@ -37,6 +37,7 @@ namespace swarm {
 
 		static const uint64_t npos = 0xFFFFFFFFFFFFFFFFLL;
 
+		//! Constructor for swarm_header
 		swarm_header(const std::string &type, int flags_ = 0, uint64_t datalen_ = npos)
 		{
 			strcpy(magic, "SWARM");
@@ -49,13 +50,14 @@ namespace swarm {
 			datalen = datalen_;
 		}
 
+		//! Determine the string type
 		std::string type() const
 		{
 			const char *c = strstr(m_type, "//");
 			if(!c) { return trim(m_type); }
 			return trim(std::string(m_type, c - m_type));
 		}
-
+		//! Check the data type is compatible
 		bool is_compatible(const swarm_header &a)
 		{
 			bool ffver_ok = memcmp(magic, a.magic, 8) == 0;
@@ -65,6 +67,7 @@ namespace swarm {
 		}
 	};
 
+	//! Define swarm index header. It _MUST_ be padded to 16-byte boundary
 	struct ALIGN(16) swarm_index_header : public swarm_header
 	{
 		uint64_t	timestamp;	// datafile timestamp (mtime)

@@ -42,6 +42,7 @@ protected:
 	std::auto_ptr<std::ostream> output;
 	std::string rawfn, binfn;
 
+//! Constructor
 public:
 	binary_writer(const config &cfg)
 	{
@@ -70,6 +71,7 @@ public:
 		output.reset(NULL);
 	}
 
+        //! Process the log data and write to output
 	virtual void process(const char *log_data, size_t length)
 	{
 		// TODO: filter out the printfs
@@ -77,7 +79,7 @@ public:
 	}
 };
 
-
+//! Initialize the binary writer plugin
 writer_plugin_initializer< binary_writer >
 	binary_writer_plugin("binary", "This is the binary writer");
 

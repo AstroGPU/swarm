@@ -42,6 +42,7 @@ const char* SORTED_HEADER_CHECK = "T_sorted_output";
 const char* T_INDEX_CHECK = "T_sorted_index";
 const char* SYS_INDEX_CHECK = "sys_sorted_index";
 
+//!
 void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 {
 	//std::cerr << "msgid=" << lr.msgid() << "\n";
@@ -56,7 +57,7 @@ void get_Tsys(gpulog::logrecord &lr, double &T, int &sys)
 	}
 }
 
-// Sort the raw outputs
+//! Sort the raw outputs
 struct idx_t
 {
 	const char *ptr;	// pointer to this packet in memory
@@ -83,12 +84,13 @@ struct idx_t
 	}
 };
 
-
+///
 struct index_entry_time_cmp
 {
 	bool operator()(const swarmdb::index_entry &a, const swarmdb::index_entry &b) const { return a.T < b.T || (a.T == b.T && a.sys < b.sys || (a.sys == b.sys && a.offs < b.offs) ); }
 };
 
+///
 struct index_entry_sys_cmp
 {
 	bool operator()(const swarmdb::index_entry &a, const swarmdb::index_entry &b) const { return a.sys < b.sys || (a.sys == b.sys && a.T < b.T) || (a.T == b.T && a.offs < b.offs); }
@@ -101,6 +103,7 @@ struct index_entry_bod_cmp
 };
 #endif
 
+///
 bool get_file_info(uint64_t &timestamp, uint64_t &filesize, const std::string &fn)
 {
 	struct stat sb;
@@ -118,6 +121,7 @@ bool get_file_info(uint64_t &timestamp, uint64_t &filesize, const std::string &f
 	return true;
 }
 
+/// Define class for creating index
 template<typename Cmp>
 class index_creator : public index_creator_base
 {
@@ -127,24 +131,27 @@ protected:
 	std::string filename;
 	int nentries;
 
+//! Constructor
 public:
 	index_creator(const std::string &suffix_, const std::string &filetype_) : suffix(suffix_), filetype(filetype_), nentries(0) {}
 
+        //!
 	virtual bool start(const std::string &datafile)
 	{
 		filename = datafile + suffix;
 		out.open(filename.c_str());
 		assert(out);
 
-		// get the timestamp and file size of the data file
+		//! get the timestamp and file size of the data file
 		uint64_t timestamp, filesize;
 		get_file_info(timestamp, filesize, datafile);
 
-		// write header
+		//! write header
 		swarm::swarm_index_header fh(filetype, timestamp, filesize);
 		out.write((char*)&fh, sizeof(fh));
 		return true;
 	}
+        //!
 	virtual bool add_entry(uint64_t offs, gpulog::logrecord lr)
 	{
 		swarmdb::index_entry ie;
@@ -155,6 +162,8 @@ public:
 		nentries++;
 		return true;
 	}
+
+        //!
 	virtual bool finish()
 	{
 		out.close();
@@ -178,6 +187,7 @@ public:
 	}
 };
 
+//!
 void swarmdb::index_binary_log_file(std::vector<boost::shared_ptr<index_creator_base> > &ic, const std::string &datafile)
 {
 	// open datafile
@@ -211,6 +221,8 @@ void swarmdb::index_binary_log_file(std::vector<boost::shared_ptr<index_creator_
 	when log sizes reach a few GB. A better implementation, using merge
 	sort could/should be written.
 */
+
+//! Sort the binary file
 bool sort_binary_log_file(const std::string &outfn, const std::string &infn)
 {
 	mmapped_swarm_file mm(infn, UNSORTED_HEADER_CHECK);
@@ -251,6 +263,7 @@ bool sort_binary_log_file(const std::string &outfn, const std::string &infn)
 	return true;
 }
 
+//! Define structure sysinfo 
 struct sysinfo
 {
 	int sys;
@@ -263,6 +276,7 @@ struct sysinfo
 	}
 };
 
+//! Find and load the next snapshot
 bool swarmdb::snapshots::next(cpu_ensemble &ens)
 {	
 	// find and load the next snapshot
@@ -336,11 +350,13 @@ bool swarmdb::snapshots::next(cpu_ensemble &ens)
 	return true;
 }
 
+//!
 swarmdb::snapshots::snapshots(const swarmdb &db_, time_range_t T, double Tabserr_, double Trelerr_)
 	: db(db_), Tabserr(Tabserr_), Trelerr(Trelerr_), r(db.query(ALL, T))
 {
 }
 
+//!
 swarmdb::result::result(const swarmdb &db_, const sys_range_t &sys_, const time_range_t &T_)
   : db(db_), sys(sys_), T(T_)
 {
@@ -403,6 +419,7 @@ swarmdb::result::result(const swarmdb &db_, const sys_range_t &sys_, const body_
 }
 #endif
 
+//! Return next log record
 gpulog::logrecord swarmdb::result::next()
 {
 	if(at < end)
@@ -429,11 +446,13 @@ void swarmdb::result::unget()
 	at = atprev;
 }
 
+//! Constructor for swarmdb
 swarmdb::swarmdb(const std::string &datafile)
 {
 	open(datafile);
 }
 
+//! Open output file
 void swarmdb::open(const std::string &datafile)
 {
 	if(access(datafile.c_str(), 04) != 0)
@@ -449,6 +468,7 @@ void swarmdb::open(const std::string &datafile)
 	open_indexes();
 }
 
+//! Open index map, recreate if not exists
 void swarmdb::open_indexes(bool force_recreate)
 {
 	std::vector<boost::shared_ptr<index_creator_base> > ic;
@@ -485,6 +505,7 @@ void swarmdb::open_indexes(bool force_recreate)
 	}
 }
 
+//! Check if data index is up-to-date
 bool swarmdb::open_index(index_handle &h, const std::string &datafile, const std::string &suffix, const std::string &filetype)
 {
 	std::string filename = datafile + suffix;
@@ -499,7 +520,7 @@ bool swarmdb::open_index(index_handle &h, const std::string &datafile, const std
 	uint64_t timestamp, filesize;
 	get_file_info(timestamp, filesize, datafile);
 
-	//TODO: this quick fix is only for fake memory mapping
+	//! todo: this quick fix is only for fake memory mapping
 	timestamp = h.mm.hdr().timestamp;
 
 	if(h.mm.hdr().datafile_size != filesize || h.mm.hdr().timestamp != timestamp)

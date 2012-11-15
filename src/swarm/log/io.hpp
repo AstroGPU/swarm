@@ -31,10 +31,6 @@
 #include "log.hpp"
 
 namespace swarm { 
-	
-	
-	
-	
 	/**
 	 *
 	 * This namespace contains routines for opening and querying 
@@ -83,6 +79,7 @@ namespace swarm {
 		};
 	} MIN;
 
+	  //! Structure defines data range
 	template<typename T>
 	struct range
 	{
@@ -102,7 +99,7 @@ namespace swarm {
 
 	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
 	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
-
+	  //!
 	struct index_creator_base
 	{
 		virtual bool start(const std::string &datafile) = 0;
@@ -111,8 +108,10 @@ namespace swarm {
 		virtual ~index_creator_base() {};
 	};
 
+	  //! Defines swarmdb class
 	class swarmdb
 	{
+	  //! Structure for index entry
 	public:
 		struct index_entry
 		{
@@ -139,6 +138,7 @@ namespace swarm {
 		void open_indexes(bool force_recreate = false);
 		bool open_index(index_handle &h, const std::string &datafile, const std::string &suffix, const std::string &filetype);
 
+	  //! Defines query result structure
 	public:
 		struct result
 		{
@@ -157,10 +157,11 @@ namespace swarm {
 			void unget();
 		};
 
+	  //! swarmdb constructor
 	public:
 		swarmdb(const std::string &datafile);
 
-		// return a stream of events with msgid, and system sys, at time T
+		//! return a stream of events with msgid, and system sys, at time T
 	  result query(sys_range_t sys, time_range_t T) const
 		{
 		  return result(*this, sys, T);
@@ -172,7 +173,7 @@ namespace swarm {
 		  return result(*this, sys, body, T);
 		}
 	  */
-
+	  //! Defines snapshots structure
 	public:
 		struct snapshots
 		{
@@ -184,7 +185,7 @@ namespace swarm {
 			bool next(cpu_ensemble &ens/*, bool keep_existing = true*/);
 			snapshots(const swarmdb &db, time_range_t T, double Tabserr = 0, double Trelerr = 0);
 		};
-
+	        //!
 		snapshots get_snapshots(time_range_t T, double Tabserr = 0, double Trelerr = 0)
 		{
 			return snapshots(*this, T, Tabserr, Trelerr);

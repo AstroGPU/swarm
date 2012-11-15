@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file host_array_writer.hpp 
- *    \brief Defines an event writer plug-in for io.cpp.
+ *  \brief Defines an event writer plug-in for io.cpp.
  *
  *
  *  *EXPERIMENTAL*: This class is not thoroughly tested.
@@ -25,8 +25,6 @@
  * 
  *
  */
-
-
 
 #include "../common.hpp"
 #include "../types/config.hpp"
@@ -36,7 +34,7 @@
 #include "writer.h"
 
 namespace swarm { namespace log {
-
+//! Define event_record class
 template<int NumData>
 class event_record
 {
@@ -51,11 +49,14 @@ public:
     for(int i=0;i<NumData;++i) data[i] = d[i];
   }
 
+  //! Constructor
   event_record(const int b1, const int b2, const double t, const double* d)
     : bodid1(b1), bodid2(b2), time(t)
   {
     for(int i=0;i<NumData;++i) data[i] = d[i];
   }
+
+  //! Get number of data records
   int get_num_data() const 
   { return NumData;  };
 
@@ -69,18 +70,22 @@ public:
   int bodid1, bodid2;
   double time;
   data_type data;
+
+  //! Constructor for specialized version for NumData = -1
   event_record(const int b, const double t, const data_type& d)
     : bodid1(b), bodid2(-1), time(t), data(d.size())
   {
     for(int i=0;i<data.size();++i) data[i] = d[i];
   }
 
+  //! Constructor
   event_record(const int b1, const int b2, const double t, const data_type& d)
     : bodid1(b1), bodid2(b2), time(t), data(d.size())
   {
     for(int i=0;i<data.size();++i) data[i] = d[i];
   }
 
+  //! Get number of data records
   int get_num_data() const 
   {       return data.size();    }
 };
@@ -92,15 +97,18 @@ public:
   typedef std::vector<double> data_type;
   int bodid1, bodid2;
   double time;
-  //  data_type data;
+
+  //! Constructor for event_record for NumData=0
   event_record(const int b, const double t)
     : bodid1(b), bodid2(-1), time(t)
   {  }
 
+  //! Constructor
   event_record(const int b1, const int b2, const double t)
     : bodid1(b1), bodid2(b2), time(t)
   {  }
 
+  //! Get number of data records
   int get_num_data() const 
   {       return 0;    }
 };
@@ -125,22 +133,30 @@ protected:
   int debug;
 
 public:
+
+  //! Constructor for host_array_writer
   host_array_writer(const config &cfg);
   
+  //! Add the event type to the log
   void add_event_type_to_log(const int et);
   
+  //!
   event_log_one_code_type& get_event_log_all_systems(const int i)
   {    return event_log[i];  }
 
+  //!
   const event_log_one_code_type& get_event_log_all_systems(const int i) const
   {    return event_log[i];  }
 
+  //!
   event_log_one_system_type& get_event_log(const int i, const int sys)
   {    return event_log[i][sys];  }
 
+  //!
   const event_log_one_system_type& get_event_log(const int i, const int sys) const
   {    return event_log[i][sys];  }
 
+  //! 
   int get_event_type(const int i) const
   {    
     if((i>=0) && (i<event_codes_to_log.size()))
@@ -149,6 +165,7 @@ public:
       return 0;
   }
 
+  //! Destructor
   ~host_array_writer()
   {	}
   
