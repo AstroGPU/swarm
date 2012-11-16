@@ -178,7 +178,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	 */
 	class_<ensemble::Body >("Body", no_init )
 		.add_property("mass", &get_mass, &set_mass)
-		.def("radius", &ensemble::Body::radius )
+		.def("distance_to_origin", &ensemble::Body::distance_to_origin )
 		.def("speed", &ensemble::Body::speed )
 		.add_property("attributes", make_function(&ensemble::Body::attributes, return_value_policy<reference_existing_object>()) )
 		.def("__getitem__", &bod_getitem, return_value_policy<reference_existing_object>() )

@@ -47,5 +47,5 @@ SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp swarm/query.cpp)
 # Build the command line utilities
 ADD_SUBDIRECTORY(utils)
 ADD_SUBDIRECTORY(tutorials)
-#ADD_SUBDIRECTORY(python)
+ADD_SUBDIRECTORY(python)
 #ADD_SUBDIRECTORY(apps)
