@@ -117,14 +117,15 @@ If for any reasons the compilation does not work or the tests do not pass, pleas
 command to generate a feedback package.
 
 From the build directory (for simple installs it is the same as swarm directory) run 
-\verbatim scripts/make_feedback.sh \endverbatim
+\verbatim cd <build directory>
+sh <source direcotry>/scripts/make_feedback.sh \endverbatim
 
 The script will create a file named feedback.tgz. Email us this file with the description of
 your system so we can work towards fixing the problem.
 
 If you examine the code and you find a bug, please don't hesitate to report it at
 http://github.com/AstroGPU/swarm/issues . Feel free to fork the repository and send
-pull requests if you can solve any bugs.
+pull requests if you fix any bugs.
 
    
 
