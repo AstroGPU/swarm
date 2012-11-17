@@ -80,10 +80,7 @@ compile properly:
      - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
 
  - Once configuration succeeds without errors, press "e" to exit configuration 
-page and then press "g" to generate the make files. If no error, do:
-\verbatim
-cmake .
-\endverbatim
+page and then press "g" to generate the make files.
 
 \subsection compile Compile swarm
 
