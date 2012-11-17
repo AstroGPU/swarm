@@ -37,9 +37,6 @@ Optional software dependencies:
  - CMake GUI (cmake-gui)
  - Console CMake (ccmake)
 
-Python development requirements:
- - Boost Python module
- - Python 2.5 or later development headers
 
 Installing required packages on your system, here we take Ubuntu as an example:
  - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
@@ -51,10 +48,6 @@ sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-opti
 install doxygen and cmake-gui:
 \verbatim
 sudo apt-get install doxygen cmake-gui
-\endverbatim
- - Install Python:
-\verbatim
-sudo apt-get install libboost-python-dev python-dev
 \endverbatim
 
 \section Compilation
@@ -118,6 +111,22 @@ If you want to test the computational capacity of your system, do:
 
 Please report your results at 
 http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+
+\section Feedback
+If for any reasons the compilation does not work or the tests do not pass, please use the following 
+command to generate a feedback package.
+
+From the build directory (for simple installs it is the same as swarm directory) run 
+\verbatim scripts/make_feedback.sh \endverbatim
+
+The script will create a file named feedback.tgz. Email us this file with the description of
+your system so we can work towards fixing the problem.
+
+If you examine the code and you find a bug, please don't hesitate to report it at
+http://github.com/AstroGPU/swarm/issues . Feel free to fork the repository and send
+pull requests if you can solve any bugs.
+
+   
 
 
 */
