@@ -18,7 +18,7 @@
 
 
 /*! \file kepler.hpp
- *  \brief converts between Cartesian & Keplerian coordinates
+ *  \brief Defines functions for converting between Cartesian & Keplerian coordinates.
  *
  *  Based on code from John Chambers' Mercury code
  *

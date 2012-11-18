@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file kepler.cpp
+ *  \brief Implements functions for converting between Cartesian & Keplerian coordinates.
+ *
+ */
+
 #include "kepler.hpp"
 #include <math.h>
 #include <assert.h>

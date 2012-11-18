@@ -1,10 +1,33 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/** \file tutorial_gpu.cpp
+ *  \brief A tutorial for using GPU integrators. 
+ *
+ */
+
+
 /* This is a tutorial used in doxygen pages
  * should go through program2doxgyen before
  * it can be used by doxygen.
  *
  */
 // \page TutorialGPU Advanced tutorial for using GPU integrators
-// \ingroup Tutorials
 //
 //  The basic API gives you control for selecting integrators and
 //  using them. If you need to have more control over the integration
@@ -21,7 +44,7 @@
 using namespace swarm;
 using namespace std;
 
-
+/// Main program
 int main(int argc, char* argv[]){
 
 
@@ -102,3 +125,4 @@ int main(int argc, char* argv[]){
     std::cout << "Max Energy Conservation Error =  " << max_deltaE << std::endl;
 
 }
+// To find the complete listing of this tutorial look at \ref src/tutorials/tutorial_gpu.cpp in the source code repository.

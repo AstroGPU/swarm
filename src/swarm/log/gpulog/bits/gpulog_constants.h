@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,20 +18,25 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_constants.h 
+ *    \brief Defines message IDs. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_constants_h__
 #define bits_gpulog_constants_h__
 
 namespace gpulog
 {
-	//
-	// System message IDs
-	//
+	//! System message ID
 	static const int MSG_INVALID = -1;
+	//! System message ID
 	static const int MSG_PRINTF = -2;
 
-	//
-	// flags for gpulog::copy() and related functions
-	//
+	//!
+	//! flags for gpulog::copy() and related functions
+	//!
 	static const int LOG_DEVCLEAR = 0x01;
 }
 

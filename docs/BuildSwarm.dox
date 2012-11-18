@@ -1,89 +1,130 @@
 namespace swarm {
 
-/** \page BuildSwarm How to build swarm
+/** \page BuildSwarm Getting Started with Swarm-NG
 
 
-\section Obtain Obtaining Swarm
+\section Obtain Obtaining the source code
+Currently we do not have any binary packages available. 
 You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
 
-- Checkout the latest development versions from Git Repository using following command
+- Checkout the latest development version from Git Repository using the following command:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
+\endverbatim
+If you want to download the stable version from git, use this command:
+\verbatim
+$ git clone -b stable  git@github.com:AstroGPU/swarm.git
 \endverbatim
 
 \section Pre Pre-requisites
 Minimum Hardware requirements:
- - 64-bit Linux system
+ - 64-bit CPU
+ - 2GB Memory
  - nVidia GPU with compute capabality 1.3 or above (GT200 and Fermi architectures; some features require compute capability 2.0)
 
-Required software packages:
- - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 4.0 or later 
- - GCC 4.4 : CUDA has problems with most recent versions of GCC. Check the CUDA manual for the supported version of GCC.
- - <a href="http://www.boost.org/">Boost</a> 1.33 or later (including program_options, regex)
+Software Requirements:
+ - 64-bit Linux (tested on Ubuntu and RHEL)
+ - Latest CUDA drivers (should match CUDA SDK)
+ - <a href="http://developer.nvidia.com/cuda-downloads">CUDA Toolkit</a> 3.2 or later 
+ - GCC 4.x (Refer to your CUDA Toolkit manual for the correct version of GCC)
+ - <a href="http://www.boost.org/">Boost</a> libraries 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
- - <a href="http://www.doxygen.org/">Doxygen</a> (optional)
 
-Installing required packages on Ubuntu
- - Download and Install CUDA Toolkit SDK for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
- - Install the rest of packages using following command:
+Optional software dependencies:
+ - <a href="http://www.doxygen.org/">Doxygen</a> 
+ - CMake GUI (cmake-gui)
+ - Console CMake (ccmake)
+
+
+Installing required packages on your system, here we take Ubuntu as an example:
+ - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
+ - Install CMake:
 \verbatim
-sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev doxygen cmake-gui
+sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev 
+\endverbatim
+ - For generating documentation and using the CMake graphical user interface, 
+install doxygen and cmake-gui:
+\verbatim
+sudo apt-get install doxygen cmake-gui
 \endverbatim
 
+\section Compilation
 
-\section Build Step-by-Step building
+Compilation of Swarm comprises two steps - Configuration and Compilation. 
+Swarm uses <B>CMAKE</B> system for both. The following instructions are 
+for a quick build of Swarm. \ref BuildSystem "Build System" describes more advanced 
+configuration and compilation settings. 
 
-\subsection s1 Step 1: Initialize CMake
-Change into source directory ("cd swarm") and execute the following command:
+\subsection configure Configure your building environment
+The configuration process allows you to adjust the default compiling options. 
+There are three options to do CMAKE configuration: Command-line, Console, 
+and GUI. Here we discuss Console approach. Command-line and GUI options are 
+described in \ref BuildSystem "Build System". 
+
+ - Create a directory for make files and binaries - &lt;build directory&gt;
+
+ - Change to the &lt;build directory&gt; and type this command:
 \verbatim
-$ cmake .
+ccmake <source directory>
 \endverbatim
-Do NOT panic if you get error messages.  
-CMake will try to automatically find required packages if they are installed in default location. 
-Otherwise it will give you error messages about missing packages.  See Step 2 for how to resolve these
+ccmake command is a console user interface for CMAKE; &lt;source directory&gt;
+is the top directory of swarm. 
 
-\subsection s2 Step 2: Configure Variables and Paths
+ - Press "c" to configure. If there are errors, press "e" to go to the 
+variable editing page and fix the indicated problem(s) and start over. You may 
+need to set the following variables to their correct values for swarm to 
+compile properly:
+     - \c Boost_INCLUDE_DIR      : Path where Boost headers are installed. [/usr/include/]
+     - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
 
-You may need to change the following variables for CMake for compiling properly:
+ - Once configuration succeeds without errors, press "e" to exit configuration 
+page and then press "g" to generate the make files.
 
- - \c Boost_INCLUDE_DIR      : Path where Boost headers are installed. [/usr/include/]
- - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
- - \c CUDA_SDK_ROOT_DIR      : Path to the CUDA SDK [/usr/local/cuda, /opt/cuda]
- - \c CMAKE_INSTALL_PREFIX   : Path to cmake
- - \c MAX_NBODIES            : Maximum number of bodies supported by Swarm [3..16; n.b. >=16 work only with selected gravitation classes]
+\subsection compile Compile swarm
 
-To change any of the above variables use any of following methods:
- - If CMake GUI is installed and you have X server running, to see a list of variables in a GUI window, type:
- \verbatim cmake-gui . \endverbatim
- - If CMake GUI is installed but no X server access is available, to see a list of variables in an console application type:
- \verbatim ccmake . \endverbatim.  Once variables are set as you like, press "c" to configure, press "e" to exit help, press "g" to generate cmake configuration files.
- - Open \c CMakeCache.txt with a text editor and find the variable and change it
- - To set value of &lt;var&gt; to &lt;value&gt;, type:
- \verbatim cmake . -D<var>=<value> \endverbatim
+ - To compile and build executables and libraries, type: 
+\verbatim make 
+\endverbatim
+It may take a while to compile CUDA files.
 
-\subsection s3 Step 3:  Generate Makefiles
-After you set the variables to desired values, run \verbatim cmake . \endverbatim 
-again to generate the Makefiles.
-
-You may check that Makefiles are present by typing \verbatim make help \endverbatim
-
-\subsection s4 Step 4: Build 
-To build Swarm type: \verbatim make \endverbatim
-It may take a while to build the binaries.
-
-If you need documentation, use the following command:
+ - If you need documentation, use the following command to generate the whole 
+set of documentation:
 \verbatim make doc \endverbatim
 
-\subsection s5 Step 5: Tests
+\section Test Tests and Benchmarks
 
-Once the build is done, you can test the installation using:
+Once compilation is done, you can test the installation using:
 \verbatim make test \endverbatim
 
-If you want to test the computational capacity of your system try:
-\verbatim make benchmark \endverbatim
+See \ref TestSwarm "How to test swarm" for more extensive testing and 
+customizing the tests.
 
+
+If you want to test the computational capacity of your system, do:
+\verbatim make benchmark \endverbatim
+*WARNING:* This requires performing long integrations on both the CPU and GPU, so it may take a long time. Please be patient.
+
+Please report your results at 
+http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+
+\section Feedback
+If for any reasons the compilation does not work or the tests do not pass, please use the following 
+command to generate a feedback package.
+
+From the build directory (for simple installs it is the same as swarm directory) run 
+\verbatim cd <build directory>
+sh <source direcotry>/scripts/make_feedback.sh \endverbatim
+
+The script will create a file named feedback.tgz. Email us this file with the description of
+your system so we can work towards fixing the problem.
+
+If you examine the code and you find a bug, please don't hesitate to report it at
+http://github.com/AstroGPU/swarm/issues . Feel free to fork the repository and send
+pull requests if you fix any bugs.
+
+   
 
 
 */

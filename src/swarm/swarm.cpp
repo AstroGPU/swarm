@@ -1,3 +1,34 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarm.cpp
+ *   \brief Generic command-line interface to use all aspects of the Swarm-NG libraries.
+ * 
+ * Command-line interface provides an easy and portable way to use the Swarm-NG routines
+ * without coding. This can be used to interoperate with other algorithms that are 
+ * written in other languages. 
+ * 
+ * For more info c.f. @ref SwarmExec
+ *
+ *  @TODO Routines in this file may need documenting
+ *
+*/
+
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -150,7 +181,9 @@ void prepare_integrator () {
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
 	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
+	int max_iterations = cfg.optional("max_iterations", integrator::_default_max_iterations );
 	integ = integrator::create(cfg);
+	integ->set_max_iterations(max_iterations);
 	integ->set_ensemble(current_ens);
 	integ->set_destination_time ( destination_time );
 	SYNC;
@@ -316,8 +349,8 @@ void validate(boost::any& v, const std::vector<std::string>& values
 	static boost::regex assign("^(\\w+)=(.+)$");
 	static boost::regex range("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
 	static boost::regex rangeinc("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
-	static boost::regex list("^([a-zA-Z0-9\\.]+)(?:,([a-zA-Z0-9\\.]+))+$");
-	static boost::regex item("([a-zA-Z0-9\\.]+)");
+	static boost::regex list("^([a-zA-Z0-9_\\.]+)(?:,([a-zA-Z0-9_\\.]+))+$");
+	static boost::regex item("([a-zA-Z0-9_\\.]+)");
 	boost::smatch match, items;
 	if (boost::regex_match(s, match, assign)) {
 		p.parameter = match[1];
@@ -435,9 +468,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::options_description query("Query Options");
 	query.add_options()
-		("time,t", po::value<time_range_t>(), "range of times to query")
-		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("body,b", po::value<sys_range_t>(), "range of bodies to query")
+		("time,t", po::value<query::time_range_t>(), "range of times to query")
+		("system,s", po::value<query::sys_range_t>(), "range of systems to query")
+		("body,b", po::value<query::sys_range_t>(), "range of bodies to query")
 		("keplerian,k", "output in Keplerian coordinates")
 		("astrocentric", "output coordinates in astrocentric frame")
 		("barycentric", "output coordinates in barycentric frame")
@@ -567,6 +600,7 @@ int main(int argc, char* argv[]){
 
 
 	else if(command == "query" ) {
+		using namespace query;
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
 
 		time_range_t T;

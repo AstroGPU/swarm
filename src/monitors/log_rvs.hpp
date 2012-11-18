@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file log_rvs.hpp
+ *   \brief Defines and implements the monitor that logs time and events at times near a transit on GPU. 
+ *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ */
+
 #pragma once
 
 #include<iostream>
@@ -29,7 +38,7 @@ namespace swarm {
 
 #if __CUDA_ARCH__ >= 200
 
-/* Parameters for log_rvs monitor
+/** Parameters for log_rvs monitor
  * rv_filesname:       name of file with observation times
  * log_rvs_tol (real): anything !=0 turns on logging; otherwise, not really used
  *
@@ -116,7 +125,17 @@ struct log_rvs_params {
 
 };
 
-/** Monitor that logs (the estimated transit time, the estimated minimum impact parameter in units of stellar radii, and the estimated velocity projected onto the planet of the sky in units of stellar radii per time) at times near a transit
+/**
+ * Monitor that logs several pieces of information at times near a transit.
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ * 
+ * The information that are recorded are:
+ *   * the estimated transit time
+ *   * the estimated minimum impact parameter in units of stellar radii 
+ *   * the estimated velocity projected onto the planet of the sky in units of stellar radii per time
+ * 
+ * 
  *   *  Assumes integration results in increasing time.
  *   *  Currently, highly experimental
  *   *  Currently, hardwired for Hermite, Fixed, std. Gravitation, nbod=3

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_types.h 
+ *    \brief Defines the interface for logging data types. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_types_h__
 #define bits_gpulog_types_h__
 
@@ -27,35 +33,43 @@ namespace gpulog
 {
 	namespace internal
 	{
-		// unbound array alloc request class
+		//! unbound array alloc request class
 		template<typename T>
 		struct array
 		{
-			int nelem;	// requested size (in elements)
+		        //! requested size (in elements)
+			int nelem;	
 
 			__device__ inline array(int n_) : nelem(n_) {}
 		};
 
-		// arginfo (mainly used for debugging)
+		//! arginfo (mainly used for debugging)
 		struct arginfo
 		{
-			int arg;			// which arg is it
-			int align, size, dim;		// scalar type alignment, scalar type size, dimension (if presized array)
-			bool isarray; int nelem;	// is array<>, number of allocated elements
-			int begin, len;			// beginning offset and total length (bytes, w/o padding)
+		        //! which arg is it
+			int arg;
+		        //! scalar type alignment, scalar type size, dimension (if presized array)
+			int align, size, dim;	
+		        //! is array<>, number of allocated elements
+			bool isarray; int nelem;
+		        //! beginning offset and total length (bytes, w/o padding)
+			int begin, len;			
 		};
 
-		// log record header
+		//! log record header
 		struct header
 		{
-			int msgid;	// record ID of the log record
-			int len;	// byte length of the data (including all padding and the size of the header)
+		        //! record ID of the log record
+			int msgid;
+		        //! byte length of the data (including all padding and the size of the header)
+			int len;	
 
 			#if ARGINFO
 			int nargs;	// number of arguments (including the header)
 			int infos;	// offset to array of arginfo structures
 			#endif
 
+		        //! Find data offset
 			__host__ __device__ int dataoffset() const
 			{
 				int offs = sizeof(*this);
@@ -65,6 +79,7 @@ namespace gpulog
 				return offs;
 			}
 
+		        //!
 			__host__ __device__ static inline void new_header(header &h, int msgid_, int len_)
 			{
 				h.msgid = msgid_; h.len = len_;
@@ -73,14 +88,14 @@ namespace gpulog
 				h.infos = 0;
 				#endif
 			}
-
+		        //! Initialize the header
 			__host__ __device__ inline header(int msgid_, int len_) { new_header(*this, msgid_, len_); }
 		};
 
-		// "unspecified datatype" marker for pktsize structure
+		//! "unspecified datatype" marker for pktsize structure
 		struct Tunspec { };
 
-		// datatype with maximum allowed alignment
+		//! datatype with maximum allowed alignment
 		struct ALIGN(16) Tmaxalign {};
 	}
 

@@ -1,27 +1,45 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file device_settings.cpp
+ *   \brief Implements the function to set up the GPU related
+ *          parameters. 
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "device_settings.hpp"
 
-#if 0
-// Setting prefered cache size the following function
-// can do this but the problem is that since our kernel is really
-// a template functin we don't know the exact name for it
-void set_prefered_shared_memory(const char* function_name){
-	cudaFuncSetCacheConfig( name, cudaFuncCachePreferShared);
-}
-#endif
 
 const int registers_per_thread = 64;  
 cudaDeviceProp deviceInfo;
 
-/*
- * \todo Is it intentional that shmem_per_system isn't multiplied by chunk_size?
+/**
+ * Find the optimized value for system_per_block based on device 
+ * parameters.
  */
 int optimized_system_per_block(int chunk_size, int thread_per_system
 		, int shmem_per_system){
-	return blocks_per_mp( chunk_size * thread_per_system, shmem_per_system) 
+	return blocks_per_mp( chunk_size * thread_per_system, chunk_size * shmem_per_system) 
 		* chunk_size ;
 }
 
+//! Select cuda device
 void select_cuda_device(int dev) {
 	int devcnt; cudaErrCheck( cudaGetDeviceCount(&devcnt) );
 	if( dev >= 0 && dev < devcnt )
@@ -34,12 +52,16 @@ void select_cuda_device(int dev) {
 
 }
 
-
+/**
+ * The intent is to tell CUDA driver to use more cache. But it does
+ * not improve performance all the time. 
+ * 
+ */
 void set_more_cache(){
-	$$$;
 	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 }
 
+//! print out the device information
 void print_device_information(){
 	  std::cerr << "Device:\t"  << deviceInfo.name   << "\n"
 		  //<< " Compute Capabality: " << deviceInfo.computeMode <<   "\n"
@@ -52,8 +74,8 @@ void print_device_information(){
 	  
 }
 
-/*
- * \todo is block_warps computed correctly when blocksize is a multiple of warpSize?
+/**
+ * @todo is block_warps computed correctly when blocksize is a multiple of warpSize?
  */
 int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	assert(blocksize > 0);
@@ -76,6 +98,11 @@ int blocks_per_mp( int blocksize, int shmem_per_block ) {
 	return limit;
 }
 
+/**
+ * Helper function to catch wrong configurations when running a kernel.
+ * It uses the general guidelines from the CUDA Occupancy calculator.
+ * 
+ */
 bool check_cuda_limits ( int blocksize, int shmem_per_block ){
 	return blocks_per_mp(blocksize, shmem_per_block) > 0;
 }

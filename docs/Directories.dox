@@ -1,0 +1,98 @@
+/**
+ * \dir src/integrators This directory implements various integrators using different
+ *      algorithms, such as Hermite, Mixed-Variable Symplectic (MVS) and Runge-Kutta.
+ *      Integrators are used to do the ODE integrations.  
+ *
+ */
+
+/** 
+ * \dir src/monitors This directory implements several monitors for recording/logging 
+ *      the system states and events during different computation phases, and also 
+ *      implements the combination of monitors. Monitors are used to determine when
+ *      the system state should be logged and when it should cease integrating a 
+ *      a given system. 
+ *
+ */
+
+/**
+ * \dir src/plugins This directory implement plug-ins for Hermite, MVS, Runge-Kutta
+ *      integrators with different flavors including CPU, GPU and OpenMP. 
+ *
+ */
+
+/**
+ * \dir src/propagators This directory defines different propagator plug-ins for different 
+ *      algorithms such as Hermite, MVS, Verlet and Euler. Propagators implements a device 
+ *      function that advances one system by one time step for one system. 
+ *      
+ */
+
+/**
+ * \dir src/python This directory defines python interface to Swarm-NG.
+ *
+ */
+
+/**
+ * \dir src/swarm Swarm-NG's base directory, contains source files for "swarm" -
+ *      a command-line interface to Swarm-NG library; common header files used in 
+ *      different Swarm-NG components; common utility routines for using Swarm-NG.
+ *
+ */
+
+
+/**
+ * \dir src/swarm/gpu This directory contains source files implementing GPU/CUDA 
+ *      interface including: defining GPU integrator class; setting GPU device related
+ *      parameters; implementing different gravitation calculations on GPU platforms;
+ *      several utility functions for Swarm-NG on GPU. 
+ *
+ */
+
+/**
+ * \dir src/swarm/log This directory defines Swarm-NG even/data logging system, including 
+ *      input/output (IO) data format, implements IO interface, and provides utilities
+ *      for processing the log data. 
+ *
+ */
+
+/** 
+ * \dir src/swarm/log/gpulog This directory defines the log system related to GPU/CUDA 
+ *      interface. 
+ *
+ */
+
+/**
+ * \dir src/swarm/log/gpulog/bits This directory handles the details of the log system for
+ *      GPU/CUDA, such as CUDA compatible data alignment, log stream
+ *      records and macros, record layout, and logging data types, etc. 
+ *
+ */
+
+/** 
+ * \dir src/swarm/peyton  This directory implements additional routines for the logging 
+ *      system and memory mapping and also defines some inline math routines. 
+ *
+ */
+
+/**
+ * \dir src/swarm/types This directory defines data structures for configuration, memory 
+ *      allocation, ensemble base class, and utility functions for public interface to
+ *      Swarm-NG. 
+ *
+ */
+
+/**
+ * \dir src/tutorials This directory implements several tutorials for using Swarm as a
+ *      beginner and Swarm-NG for more advanced users.
+ *
+ */
+
+/**
+ * \dir src/utils This directory implements several utility functions that Swarm-NG can 
+ *      readily use, for example, utilities for saving ensemble to a file, performing 
+ *      stability tests, creating default ensemble, running performance benchmark on GPU,
+ *      and verifying integrators against one another, etc. 
+ *
+ */
+
+

@@ -18,11 +18,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file util.hpp
+ *   \brief Defines string operation utility functions. 
+ *
+ */
+
 #ifndef _astro_util_h
 #define _astro_util_h
 
 #include "macros.h"
-#include "types.hpp"
+#include "astro_types.hpp"
 #include "constants.hpp"
 
 #include <cmath>
@@ -43,7 +48,7 @@
 #endif
 
 namespace peyton {
-// contains string processing functions, type name demangling,
+//! contains string processing functions, type name demangling,
 namespace util {
 
 	/// return approximate longitude of the Sun for a given \a time
@@ -91,6 +96,7 @@ namespace util {
 	}
 	#endif
 
+        //! Defines run time error handling
 	struct demangling_error : public std::runtime_error {
 		demangling_error(const char* s): std::runtime_error(("While demangling " + std::string(s)).c_str()) {}
 	};
@@ -101,7 +107,7 @@ namespace util {
 		return ti.name();
 	}
 #else
-
+        //! Type name demangler
 	inline std::string type_name(const std::type_info &ti){
 		int status = 0;
 		char * tmp = abi::__cxa_demangle(ti.name(), 0, 0, &status);

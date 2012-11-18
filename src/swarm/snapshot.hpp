@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file snapshot.hpp
+ *   \brief Defines and implements load and save functions for ensemble files. 
+ *
+ */
+
 #pragma once
 
 #include "common.hpp"
@@ -25,15 +31,17 @@ using std::string;
 namespace swarm {
 
 /**
- *  \page TextFormat
+ *  \page TextFormat Text Formats
  *
  *
- *  Text formats are used by load_text and save_text functions in \ref snapshot class. 
+ *  Text formats are input and output file formats used by load_text and save_text functions in \ref snapshot class. 
  *
- *  The files are ASCII files containing textual representation of double precision floating point numbers.
- *  All quantities are double precision point numbers except for nsys, nbod, id and state, that are integers.
- *  State is defined in the ensemble. 0 means active, -1 is disabled, other values are intermediate 
- *  inactive states.
+ *  They are ASCII files containing textual representation of double precision floating point numbers.
+ *  All quantities are double precision point numbers except for nsys, nbod, id and state, which are integers.
+ *  State is defined in the ensemble:
+ *    - 0 means active
+ *    - 1 is disabled
+ *    - other values are intermediate inactive states.
  *
  *  Text file format:
 \verbatim
@@ -84,29 +92,29 @@ namespace swarm {
  *   The example above is for 3-body systems.
  *
  *   Explanation:
+ *
  *   Header:
- *    - <number of systems>: Number of systems contained in this file, there should be exact number of blocks describing
- *    the properties of the system and bodies in a system after the header.
- *    - <number of bodies>: Number of bodies per system. All systems have equal number of bodies
- *    - <number of system attributes>: Number of general-purpose attributes per system. The purpose of the attributes are
+ *    - \<number of systems\>: Number of systems contained in this file. There should be exact number of blocks describing
+ *    the properties of the system and bodies in the system after the header.
+ *    - \<number of bodies\>: Number of bodies per system. All systems have equal number of bodies
+ *    - \<number of system attributes\>: Number of general-purpose attributes per system. The purpose of the attributes is
  *    determined by the application
- *    - <number of body attributes> : Number of general-purpose attributes per body. The purpose of the attributes are
+ *    - \<number of body attributes\> : Number of general-purpose attributes per body. The purpose of the attributes is
  *    determined by the application
  *
- * 	 System Block:
- * 	  - <system unique id>: Unique identifier for the system. The systems may be reduced or remove and the order of the systems
- * 	  may change. This unique identifier is used to match systems between input/output files
- * 	  - <system time> : Physical time of the system.
- * 	  - <system state> : Integration state of the system. 0 means active, -1 is disabled, other values are intermediate 
- *  inactive states that may be re-activated.
- *    - <system attribute>: a general-purpose attribute of the system. There are a specific number of these attributes
- *    and the order is important.
+ *    System Block:
+ *     - \<system unique id\>: Unique identifier for the system. The systems may be reduced or removed. The order of the systems
+ *     may also change. This unique identifier is used to match systems between input/output files.
+ *     - \<system time\> : Physical time of the system.
+ *     - \<system state\> : Integration state of the system: 0 means active, 1 is disabled, other values are intermediate 
+ *     inactive states that may be reactivated.
+ *     - \<system attribute\>: A general-purpose attribute of the system. There are a specific number of these attributes and the order is important.
  *
  *    Body Block:
- *    - <mass of the body>: Mass of the body 
- *    - <x> <y> <z>: Three components of the position of the body
- *    - <velocity x> <velocity y> <velocity z>: Three components of the velocity of the body
- *    - <body attribute>: a general-purpose attribute of the body, repeated on the same line and the order must be 
+ *    - \<mass of the body\>: Mass of the body 
+ *    - \<x\> \<y\> \<z\>: Three components of the position of the body
+ *    - \<velocity x\> <velocity y\> \<velocity z\>: Three components of the velocity of the body
+ *    - \<body attribute\>: a general-purpose attribute of the body, repeated on the same line and the order must be 
  *    preserved.
  *
  */

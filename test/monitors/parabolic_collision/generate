@@ -1,0 +1,6 @@
+#!/bin/sh
+
+NBOD=$1
+FILE=$2
+
+bin/parabolic_collision $FILE

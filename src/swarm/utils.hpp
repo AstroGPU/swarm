@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file utils.hpp
- *   \brief Utility routines for common tasks that most users would need.
+ *   \brief Defines utility routines for common tasks that most users would need.
  *
  *   Contains:
  *    - Generating ensembles
@@ -69,7 +69,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg);
 /** 
  * Deprecated: Validate the configuration
  *
- * The criterias are very general and will cause problems.\TODO This function
+ * The criterias are very general and will cause problems.\todo This function
  * needs to be restructured or at least updated
  */
 bool validate_configuration(swarm::config& cfg);
