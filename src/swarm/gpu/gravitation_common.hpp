@@ -15,10 +15,17 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_common.hpp
+ *   \brief Defines and implements common utility functions for calculating acceleration 
+ *          and jerk of gravitation. 
+ */
+
 #pragma once
 
-// TODO: Do we actually use this?
+// For using CoalescedStructArray in the gravitation implementations
 #include "../types/coalescedstructarray.hpp"
+
 #include "bppt.hpp"
 
 namespace swarm { namespace gpu { namespace bppt {
@@ -76,7 +83,7 @@ GENERIC double inner_product(const double a[3],const double b[3]){
 	return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 }
 
-/// Helper function to convert an integer from 1..n*(n-1)/2 to a pair (first,second), this function returns the first element.
+//! Helper function to convert an integer from 1..n*(n-1)/2 to a pair (first,second), this function returns the first element.
 template<int nbod>
 GENERIC int first ( int ij ){
 	int i = nbod - 1 - ij / (nbod/2);
@@ -87,7 +94,7 @@ GENERIC int first ( int ij ){
 		return nbod - 1 - i - nbod%2 + 1;
 }
 
-/// Helper function to convert an integer from 1..n*(n-1)/2 to a pair (first,second), this function returns the second element.
+//! Helper function to convert an integer from 1..n*(n-1)/2 to a pair (first,second), this function returns the second element.
 template<int nbod>
 GENERIC int second ( int ij ){
 	int i = nbod - 1 - ij / (nbod/2);

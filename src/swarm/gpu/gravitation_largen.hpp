@@ -15,6 +15,17 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_largen.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationLargeN
+ *          that implements functions to calculate acceleration and jerk in
+ *          parallel for many-body systems. 
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ * 
+ */
+
 #pragma once
 
 #include "gravitation_common.hpp"
@@ -22,6 +33,11 @@
 namespace swarm { namespace gpu { namespace bppt {
 
 /** 
+ * Gravitation calculation class for large number of bodies in a system.
+ * 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
  * Doesn't-need-to-be-templatized Class working as a function object to 
  * calculate acceleration and jerk in parallel for many-body systems.
  * 
@@ -59,7 +75,7 @@ class GravitationLargeN {
 
 	public:
 
-	/*
+	/**
 	 * Create a function object for computing gravitational force 
 	 * on planets in a system using a shared memory area.
 	 *
@@ -70,7 +86,9 @@ class GravitationLargeN {
 	 */
 	GENERIC GravitationLargeN(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
-	/*  
+	private:
+
+	/** 
 	 *  Find the acceleration and jerk for a planet.
 	 *
 	 *  @b  planet number
@@ -177,7 +195,7 @@ class GravitationLargeN {
 	 }
 
 
-	/*  
+	/**  
 	 *  Find the acceleration for a planet, 
 	 *  ignoring body 0 (presumably central star)
 	 *
@@ -187,7 +205,6 @@ class GravitationLargeN {
 	 * \todo Remove once allow propagators to use GravitationAcc
 	 *
 	 */
-
          GPUAPI double sum_acc_planets(int b,int c)const{
 
 	   // Total acceleration 
@@ -231,8 +248,9 @@ class GravitationLargeN {
 	   return acc;
 	 }
 
+	public:
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration and
 	 * jerk on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.
@@ -289,7 +307,7 @@ class GravitationLargeN {
 	  return body_count * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
-	static __device__ void * system_shared_data_pointer(const int sysid_in_block) {
+	static GPUAPI void * system_shared_data_pointer(const int sysid_in_block) {
 		extern __shared__ char shared_mem[];
 		int b = sysid_in_block / CHUNK_SIZE ;
 		int i = sysid_in_block % CHUNK_SIZE ;
@@ -299,8 +317,8 @@ class GravitationLargeN {
 		return &shared_mem[idx];
 	}
 
-    // WARNING: Need to test that this works (accounting for larger memory usage due to coalesced arrys)
-	static __device__ void * unused_shared_data_pointer(const int system_per_block) {
+    /// WARNING: Need to test that this works (accounting for larger memory usage due to coalesced arrys)
+	static GPUAPI void * unused_shared_data_pointer(const int system_per_block) {
 		extern __shared__ char shared_mem[];
 		int b = system_per_block / CHUNK_SIZE ;
 		int i = system_per_block % CHUNK_SIZE ;

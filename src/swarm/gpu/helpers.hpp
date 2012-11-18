@@ -16,6 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file helpers.hpp
+ *   \brief Template meta-programming combinators (symbolic helper functions) 
+ * for loop unrolling and selecting the correct templatized integrator at runtime.
+ *          
+ */
+
 #pragma once
 
 #include "device_settings.hpp"
@@ -55,6 +61,7 @@ struct Unroller {
 	}
 };
 
+///
 template<int End, int Step>
 struct Unroller<End, End, Step> {
 	template<typename Action>

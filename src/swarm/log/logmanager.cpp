@@ -17,22 +17,23 @@
  ************************************************************************/
 
 /*! \file logmanager.cpp
- *  \brief public interface to swarm logging system
+ *  \brief Implements the public interface to swarm logging system.
  *
 */
 
 #include "logmanager.hpp"
 
+//! a hook into which to place a breakpoint when the debugger
+//! won't stop in nvcc-compiled code.
 extern "C" void debug_hook()
 {
-	// a hook into which to place a breakpoint when the debugger
-	// won't stop in nvcc-compiled code.
 	std::cerr << "";
 }
 
 namespace swarm {
 namespace log {
 
+//! define default log manager and initialize it. 
 Pmanager& manager::default_log() {
 	static Pmanager default_manager(new manager());
 	static bool is_initialized = false;
@@ -45,6 +46,7 @@ Pmanager& manager::default_log() {
 	return default_manager;
 }
 
+//! Initialize the log writer
 void manager::init(const config& cfg, int host_buffer_size, int device_buffer_size)
 {
 	log_writer = writer::create(cfg);
@@ -53,7 +55,7 @@ void manager::init(const config& cfg, int host_buffer_size, int device_buffer_si
 	hlog.alloc(host_buffer_size);
 	pdlog = gpulog::alloc_device_log(device_buffer_size);
 }
-
+//! Reset the log manager
 void manager::shutdown()
 {
 	config cfg; cfg["log_writer"] = "null";
@@ -61,6 +63,7 @@ void manager::shutdown()
 	swarm::log::manager::init(cfg,0,0);
 }
 
+//! Flush the output buffer for both host and device
 void manager::flush(int flags)
 {
 	// TODO: Implement flushing of writer as well

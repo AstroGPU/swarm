@@ -16,8 +16,8 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
-/*! \file integrator.cpp
- *  \brief class integrator
+/*! \file writer.cpp
+ *  \brief Implements output writer interface. 
  *
 */
 
@@ -26,7 +26,7 @@
 
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /*!
    \brief Writer instantiation support
@@ -45,15 +45,15 @@ Pwriter writer::create(const config& cfg)
 {
         Pwriter w;
 
-		std::string name = cfg.optional(std::string("log_writer") , std::string("null") );
-		std::string plugin_name = "writer_" + name;
+	std::string name = cfg.optional(std::string("log_writer") , std::string("null") );
+	std::string plugin_name = "writer_" + name;
 
-		try {
-			w.reset( (writer*) (plugin::instance(plugin_name,cfg)) );
-		}catch(plugin_not_found& e){
+	try {
+	  w.reset( (writer*) (plugin::instance(plugin_name,cfg)) );
+	}catch(plugin_not_found& e){
 			ERROR("Log writer " + name + " not found.");
-		}
+	}
 
         return w;
 }
-}
+} } // namespace log::swarm

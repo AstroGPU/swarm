@@ -15,6 +15,18 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file gravitation_mediumn.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationMediumN
+ *          that implements functions to calculate acceleration and jerk in
+ *          parallel for many-body systems. 
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ *          
+ */
+
+
 #pragma once
 
 #include "gravitation_common.hpp"
@@ -22,6 +34,10 @@
 namespace swarm { namespace gpu { namespace bppt {
 
 /** 
+ * Gravitation calculation for a number of bodies between 10-20
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ *
  * templatized Class working as a function object to 
  * calculate acceleration and jerk in parallel.
  *
@@ -56,13 +72,14 @@ class GravitationMediumN {
 	typedef GravitationAccJerkScalars<CHUNK_SIZE> shared_data [pair_count][3];
 
 	private:
-	public: // hack to make this public to test whether it's worth using shared memory for some small steps
+	public: 
+	// hack to make this public to test whether it's worth using shared memory for some small steps
 	ensemble::SystemRef& sys;
 	shared_data &shared;
 
 	public:
 
-	/*
+	/**
 	 * Create a function object for computing gravitational force 
 	 * on planets in a system using a shared memory area.
 	 *
@@ -73,6 +90,8 @@ class GravitationMediumN {
 	 */
 	GENERIC GravitationMediumN(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
+	private:
+	
 	/**
 	 *  Step one of the algorithm. All pairs run in parallel. This
 	 *  function calculates intermediate results for a pair and
@@ -109,12 +128,12 @@ class GravitationMediumN {
 
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAcc
-	/*
+	/**
 	 * calculate accleration for a planet ignoring the
 	 * impact of the body 0 (star).
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
+	 *  \todo: Remove once allow propagators to use GravitationAcc
 	 */
 	GENERIC double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
@@ -135,10 +154,11 @@ class GravitationMediumN {
 		return acc_sum;
 	}
 
-  // TODO: Remove once allow propagators to use GravitationAcc
-	/*  
+
+	/**  
 	 *  Find the acceleration for a planet.
 	 *
+         *  \todo: Remove once allow propagators to use GravitationAcc
 	 *  @b  planet number
 	 *  @c  coordinate number x:0,y:1,z:2
 	 */
@@ -171,7 +191,8 @@ class GravitationMediumN {
 	//        { sum_test(b,c,acc,jerk); }
 	        { sum_works(b,c,acc,jerk); }
 
-	/*  
+
+	/**  
 	 *  Find the acceleration and jerk for a planet.
 	 *
 	 *  @b  planet number
@@ -211,13 +232,13 @@ class GravitationMediumN {
 		jerk = jerks[0] + jerks[1];
 	}
 
-	/*  
+	/**  
 	 *  Find the acceleration and jerk for a planet.
 	 *
-	 *  @b  planet number
-	 *  @c  coordinate number x:0,y:1,z:2
-	 *  @acc  reference to output variable for acceleration
-	 *  @jerk reference to output variable for jerk
+	 *  @param b  planet number
+	 *  @param c  coordinate number x:0,y:1,z:2
+	 *  @param acc  reference to output variable for acceleration
+	 *  @param jerk reference to output variable for jerk
 	 */
 	GENERIC void sum_works(int b,int c,double& acc, double & jerk)const{
 		// Total acceleration from other planets
@@ -257,8 +278,9 @@ class GravitationMediumN {
 		jerk = jerk_from_sun + jerk_from_planets;
 	}
 
+	public:
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration and
 	 * jerk on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.
@@ -290,7 +312,7 @@ class GravitationMediumN {
 		}
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAcc
+	/// todo: Remove once allow propagators to use GravitationAcc
 	__device__ double acc_planets (int ij,int b,int c)const{
 	  //		if(ij < pair_count)
 		if(ij < 3*nbod )
@@ -302,7 +324,7 @@ class GravitationMediumN {
 			return 0;
 	}
 				
-  // TODO: Remove once allow propagators to use GravitationAcc
+	/// todo: Remove once allow propagators to use GravitationAcc
 	__device__ double acc (int ij,int b,int c,double& pos,double& vel)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
@@ -322,7 +344,7 @@ class GravitationMediumN {
 	static GENERIC int shmem_per_system() {
 		const int pair_count = nbod * (nbod - 1) / 2;
 		//		return pair_count * 3  * 2 * sizeof(double);
-		// TODO: Test
+		/// todo: Test
 		 return pair_count * 3  * sizeof(GravitationAccJerkScalars<CHUNK_SIZE>)/CHUNK_SIZE;
 	}
 
@@ -347,10 +369,12 @@ class GravitationMediumN {
 		return &shared_mem[idx];
 	}
 
+        //! Number of threads per system
 	static GENERIC int thread_per_system(){
 		return std::max(nbod * 3, (nbod-1)*nbod/2);
 	}
 
+        //! Amount of shared memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}

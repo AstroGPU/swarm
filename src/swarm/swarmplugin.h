@@ -15,6 +15,11 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file swarmplugin.h
+ *   \brief Convenient header file to be used in new plugins.
+ *
+*/
 #pragma once
 
 #include "swarm/gpu/generic_gpu_bppt_integrator.hpp"

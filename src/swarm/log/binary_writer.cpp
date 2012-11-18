@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file binary_writer.cpp
+ *    \brief Defines and implements a writer that writes to binary files. 
+ *
+ *
+ */
+
 #include "../common.hpp"
 
 #include "../types/config.hpp"
@@ -23,19 +30,19 @@
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /**
- * binary_writer plugin for use in
- * io.cpp
+ *   \brief A writer plugin that writes to binary files. (default writer in swarm)
  *
  */
-class binary_writer : public swarm::writer
+class binary_writer : public writer
 {
 protected:
 	std::auto_ptr<std::ostream> output;
 	std::string rawfn, binfn;
 
+//! Constructor
 public:
 	binary_writer(const config &cfg)
 	{
@@ -49,11 +56,11 @@ public:
 			ERROR("Could not open '" + rawfn + "' for writing");
 
 		// write header
-		swarm::swarm_header fh(UNSORTED_HEADER_FULL);
+		swarm::swarm_header fh(query::UNSORTED_HEADER_FULL);
 		output->write((char*)&fh, sizeof(fh));
 	}
 
-	/* 
+	/*
 	 * We postpone sorting the output here. We leave the
 	 * file unsorted as it is. No one knows who 
 	 * will benefit from sorting the file and it is
@@ -64,6 +71,7 @@ public:
 		output.reset(NULL);
 	}
 
+        //! Process the log data and write to output
 	virtual void process(const char *log_data, size_t length)
 	{
 		// TODO: filter out the printfs
@@ -71,9 +79,9 @@ public:
 	}
 };
 
-
+//! Initialize the binary writer plugin
 writer_plugin_initializer< binary_writer >
 	binary_writer_plugin("binary", "This is the binary writer");
 
-}
+} }
 

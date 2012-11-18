@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+from sys import path,argv
+path.append('lib')
+from libswarmng_ext import *
+
+from numpy import *
+from math import *
+from random import uniform
+from sys import argv
+
+nsys = 4
+nbod = int(argv[1])
+filename = argv[2]
+
+
+def indexed(sequence):
+    return zip(range(len(sequence)), sequence)
+
+def sphericalToCartesian(r,theta, phi = 0):
+    return [ r*cos(theta)*cos(phi), r*sin(theta)*cos(phi), r*sin(phi) ]
+
+ens = DefaultEnsemble.create(nbod,nsys)
+
+orbit_radius = 1.0
+orbit_velocity = sqrt(1/orbit_radius)
+
+
+for i,s in indexed(ens):
+    # Trivial attributes of the system
+    s.id = i
+    s.time = 0
+    s.set_active()
+    
+    # select a random phase to put the first body
+    phi_base = uniform(0,2*pi)
+    
+    for j,b in indexed(s):
+        if(j == 0):
+            # Set the central body as a large mass stationary object
+            b.pos = [0, 0, 0]
+            b.vel = [0, 0, 0]
+            b.mass = 1.0
+        else:
+            ## distribute the planets uniformly around the orbit by different phases
+            phi = phi_base + (j-1)*2*pi/(ens.nbod-1) 
+            b.mass = 0.001
+            b.pos = sphericalToCartesian(orbit_radius, phi) 
+            b.vel = sphericalToCartesian( -1**j * orbit_velocity, phi+ pi/2)
+
+ens.save_to_text(filename)

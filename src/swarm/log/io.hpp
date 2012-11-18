@@ -1,5 +1,23 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Eric Ford and the Swarm-NG Development Team     *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
 /*! \file io.hpp
- *  \brief declares swarmdb and range
+ *  \brief Defines routines for reading binary log files made by binary_writer.
  *
 */
 
@@ -12,7 +30,33 @@
 #include "fileformat.hpp"
 #include "log.hpp"
 
-namespace swarm {
+namespace swarm { 
+	/**
+	 *
+	 * This namespace contains routines for opening and querying 
+	 * a swarm log file.
+	 * Swarm log file is a binary file with a simple textual header
+	 * and a number of fixed size C structs (gpulog::logrecord).
+	 *
+	 * swarmdb is used to open the log file and query it. API users
+	 * should only interact with swarmdb. 
+	 *
+	 * swarmdb uses indexes for fast retrieval of data. The indexes
+	 * are built the first time file is opened and then cached on
+	 * disk. There are two indexes:
+	 *   1. Time index sorted based on time of records
+	 *   2. System index sorted based on system id of records
+	 * 
+	 * Although sort_binary_output_file function can be used to sort
+	 * the entire data file, there is no reason to do so. Since all
+	 * the accesses to the file go through the index. 
+	 * 
+	 *
+	 *
+	 *
+	 *
+	 */
+	namespace query {
 
 	extern const char* UNSORTED_HEADER_FULL;
 	extern const char* UNSORTED_HEADER_CHECK;
@@ -35,6 +79,7 @@ namespace swarm {
 		};
 	} MIN;
 
+	  //! Structure defines data range
 	template<typename T>
 	struct range
 	{
@@ -54,7 +99,7 @@ namespace swarm {
 
 	typedef mmapped_file_with_header<swarm_header> mmapped_swarm_file;
 	typedef mmapped_file_with_header<swarm_index_header> mmapped_swarm_index_file;
-
+	  //!
 	struct index_creator_base
 	{
 		virtual bool start(const std::string &datafile) = 0;
@@ -63,16 +108,18 @@ namespace swarm {
 		virtual ~index_creator_base() {};
 	};
 
+	  //! Defines swarmdb class
 	class swarmdb
 	{
+	  //! Structure for index entry
 	public:
 		struct index_entry
 		{
-			uint64_t offs;	// data offset for the record
+			uint64_t offs;	//!< data offset for the record
 	
-			double T;	// time
-			int sys;	// system at the record
-			int body;	// bod at/in the record
+			double T;	//!< time
+			int sys;	//!< system at the record
+			int body;	//!< bod at/in the record
 		};
 
 	protected:
@@ -91,6 +138,7 @@ namespace swarm {
 		void open_indexes(bool force_recreate = false);
 		bool open_index(index_handle &h, const std::string &datafile, const std::string &suffix, const std::string &filetype);
 
+	  //! Defines query result structure
 	public:
 		struct result
 		{
@@ -109,10 +157,11 @@ namespace swarm {
 			void unget();
 		};
 
+	  //! swarmdb constructor
 	public:
 		swarmdb(const std::string &datafile);
 
-		// return a stream of events with msgid, and system sys, at time T
+		//! return a stream of events with msgid, and system sys, at time T
 	  result query(sys_range_t sys, time_range_t T) const
 		{
 		  return result(*this, sys, T);
@@ -124,7 +173,7 @@ namespace swarm {
 		  return result(*this, sys, body, T);
 		}
 	  */
-
+	  //! Defines snapshots structure
 	public:
 		struct snapshots
 		{
@@ -136,7 +185,7 @@ namespace swarm {
 			bool next(cpu_ensemble &ens/*, bool keep_existing = true*/);
 			snapshots(const swarmdb &db, time_range_t T, double Tabserr = 0, double Trelerr = 0);
 		};
-
+	        //!
 		snapshots get_snapshots(time_range_t T, double Tabserr = 0, double Trelerr = 0)
 		{
 			return snapshots(*this, T, Tabserr, Trelerr);
@@ -147,6 +196,6 @@ namespace swarm {
 
 	bool sort_binary_log_file(const std::string &outfn, const std::string &infn);
 
-} // end namespace swarm
+} } // end namespace query:: swarm
 
 #endif

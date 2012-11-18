@@ -1,7 +1,31 @@
+/*************************************************************************
+ * Copyright (C) 2010 by Mario Juric and the Swarm-NG Development Team   *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file types.hpp 
+ *    \brief Defines on-GPU state logging of bodies. 
+ *
+ *
+ */
+
 #pragma once
 #include "../types/ensemble.hpp"
 
-namespace swarm { /////////////////////////////////////////////////////////////////////////////
+namespace swarm { namespace log {
 
 /** \brief for on-GPU state logging of bodies
  * NOTE: I've written out the datatypes _explicitly_, because
@@ -46,12 +70,15 @@ struct body_set
 	GENERIC body_set(const ensemble &ens_, int sys_) : ens(ens_), sys(sys_) { }
 };
 
+//! For one body case
 GENERIC const body_set<1> make_body_set(const ensemble &ens, int sys, int bod0)
 {
 	body_set<1> br(ens, sys);
 	br.bod[0] = bod0;
 	return br;
 }
+
+//! For two body case
 GENERIC const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, int bod1)
 {
 	body_set<2> br(ens, sys);
@@ -59,6 +86,8 @@ GENERIC const body_set<2> make_body_set(const ensemble &ens, int sys, int bod0, 
 	br.bod[1] = bod1;
 	return br;
 }
+
+//! For three body case
 GENERIC const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, int bod1, int bod2)
 {
 	body_set<3> br(ens, sys);
@@ -68,18 +97,21 @@ GENERIC const body_set<3> make_body_set(const ensemble &ens, int sys, int bod0, 
 	return br;
 }
 
-} ////////////////////////////////////////////////////////////////////////////////////////////////
+} } 
 
 
 
-namespace gpulog { 	namespace internal {  ////////////////////////////////////////////////////
+namespace gpulog { 	namespace internal {  
+
+
+using namespace swarm::log;
 
 //! body_set_cls is a proxy for an array of bodies, so make sure it reports
 //! the same alignment as body[N], as well as sizeof()
 //! return alignment of body[N]
-template<int N> struct alignment<swarm::body_set<N> > : public alignment<swarm::body[N]> { };
+template<int N> struct alignment<body_set<N> > : public alignment<body[N]> { };
 //! return traits of body[N]
-template<int N> struct    ttrait<swarm::body_set<N> > : public    ttrait<swarm::body[N]> { };	
+template<int N> struct    ttrait<body_set<N> > : public    ttrait<body[N]> { };	
 
 /** \brief Template partial specialization of argio class from gpulog for body_set
  *
@@ -87,16 +119,16 @@ template<int N> struct    ttrait<swarm::body_set<N> > : public    ttrait<swarm::
  *  gpulog subsystem.
  *
  */
-template<int N> struct     argio<swarm::body_set<N> >
+template<int N> struct     argio<body_set<N> >
 {
-	GENERIC static void put(char *ptr, const swarm::body_set<N> &br, int start, int datalen)
+	GENERIC static void put(char *ptr, const body_set<N> &br, int start, int datalen)
 	{
 		DHOST( std::cerr << "Writing [" << br << "] start=" << start << " len=" << datalen << "\n" );
 		DGPU( printf("Writing start=%d len=%d\n", start, datalen); );
-		dev_assert(sizeof(swarm::body)*N == datalen);
+		dev_assert(sizeof(body)*N == datalen);
 
 		// write out N bodies
-		swarm::body *bodies = (swarm::body *)(ptr + start);
+		body *bodies = (body *)(ptr + start);
 		for(int i=0; i < N; i++)
 		{
 			bodies[i].set(i,br.ens[br.sys][br.bod[i]]);

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,6 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog_ilogstream.h 
+ *    \brief Handles log stream records. 
+ *
+ *
+ */
+
 #ifndef bits_gpulog_ilogstream_h__
 #define bits_gpulog_ilogstream_h__
 
@@ -26,7 +32,7 @@ namespace gpulog
 namespace internal
 {
 
-	/* a stream of logrecords */
+        //! a stream of logrecords
 	struct ilogstream
 	{
 	protected:
@@ -37,9 +43,12 @@ namespace internal
 		int at, len;
 
 	public:
+	        //! Class constructors for different stream input
 		__device__ __host__ ilogstream(const char *ptr_, int len_) : ptr(ptr_), at(0), len(len_), hend(-1, 0) {}
+	        //! Class constructors for different stream input
 		__device__ __host__ ilogstream(const host_log &l) : ptr(l.internal_buffer()), at(0), len(l.size()), hend(-1, 0) {}
 
+	        //! Class constructors for different stream input
 		__device__ __host__ logrecord next()
 		{
 			// if we're at the end
