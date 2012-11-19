@@ -50,7 +50,7 @@ The Swarm-NG library includes code reused or adapted from:
 - the nVidia CUDA SDK (http://www.nvidia.com/object/cuda_home_new.html),
 - the GNU Science Library (http://www.gnu.org/software/gsl/),
 - Sverre Aarseth’s hermit2 code (http://www.ast.cam.ac.uk/~sverre/web/pages/nbody.htm), and
-- John Chamber’s Mercury code (http://www.arm.ac.uk/~jec/home.html), which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan’s Swift code (http://www.boulder.swri.edu//~hal/swift.html).
+- John Chamber’s Mercury code (http://www.arm.ac.uk/~jec/home.html), which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan’s Swift code (http://www.boulder.swri.edu/~hal/swift.html).
 
 We are happy to acknowledge financial support from:
 - the University of Florida’s Research Opportunity Seed Fund,
