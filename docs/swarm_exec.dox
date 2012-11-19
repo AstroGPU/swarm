@@ -100,7 +100,7 @@ param 2 = value
 
    - -h [ --help ] : Displays the brief help message
 
-   \subsection Integrate integrate: General prupose integration
+   \subsection Integrate integrate: General purpose integration
    Reads an ensemble from a file (Generates one if no input file specified) and integrates it. Statistical 
    information about time progress and energy conservation will be written to output in specified intervals.
    The resulting ensemble is saved to a file if an output file is specified.
