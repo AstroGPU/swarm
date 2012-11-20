@@ -34,10 +34,12 @@ differential equations.
 
  @section LicensingCiting Licensing, Citing & Acknowledging Swarm-NG
 
-Citing Swarm-NG
-- When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper describing Swarm-NG and the Swarm-NG Website.  
+Citing Swarm-NGWhen writing papers which made use of Swarm-NG, we strongly encourage you to cite the following technical paper describing Swarm-NG and the Swarm-NG Website. 
+ 
 - Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy. 
 arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
+
+- Website: http://www.astro.ufl.edu/~eford/code/swarm/docs
 
 Licensing Information
 - Swarm-NG v1.0 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
@@ -61,7 +63,7 @@ We are happy to acknowledge financial support from:
 We acknowledge additional support from:
 - the University of Florida Astronomy Department (http://astro.ufl.edu/),
 - UF CISE Prof. Jorg Peters' SurfLab (http://www.cise.ufl.edu/research/SurfLab/)
-- UF’s High Performance Computing Center (http://www.hpc.ufl.edu/),
+- UF High Performance Computing Center (http://www.hpc.ufl.edu/),
 - the Harvard-Smithsonian Center for Astrophysics (http://www.cfa.harvard.edu/) and the Institute for Theory and Computation (http://www.cfa.harvard.edu/itc/),
 - the Institute for Advanced Study (http://sns.ias.edu/), and
 - nVidia Corporation (http://www.nvidia.com).
