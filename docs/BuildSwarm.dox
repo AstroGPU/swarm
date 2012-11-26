@@ -9,13 +9,22 @@ You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
 
-- Checkout the latest development version from Git Repository using the following command:
+- Checkout the latest development version from Git Repository using one of the following commands: \\
+if you are an SSH user and you have set-up SSH with Github, then use:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
 \endverbatim
-If you want to download the stable version from git, use this command:
+if you have not set-up SSH or never used SSH with Github, use:
+\verbatim
+$ git clone https://github.com/AstroGPU/swarm.git
+\endverbatim
+- If you want to download the stable version from git, use one of these commands instead:
 \verbatim
 $ git clone -b stable  git@github.com:AstroGPU/swarm.git
+\endverbatim
+Or
+\verbatim
+$ git clone -b stable https://github.com/AstroGPU/swarm.git
 \endverbatim
 
 \section Pre Pre-requisites
