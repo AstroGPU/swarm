@@ -2,7 +2,7 @@ namespace swarm {
 /** \page ReleaseNotes Release notes
 
 <b>Version 1.0</b>
-This will be the first stable release of Swarm-NG. 
+This is the first stable release of Swarm-NG. 
 In addition to optimized GPU kernels, it includes:
 - A user friendly build environment (using CMake), 
 - Comprehensive documentations (using Doxygen), 
