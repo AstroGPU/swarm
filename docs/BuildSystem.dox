@@ -110,7 +110,7 @@ unused plugins to reduce compilation time.
 
 \section testing Testing options
 
-Since testing is done through CTest, the CMake testing system. Testing parameters are to be set using CMake variables. These variables
+Since testing is done through CTest, the CMake testing system, testing parameters are to be set using CMake variables. These variables
 are used when issuing a "make test" command.
 
  <table>
