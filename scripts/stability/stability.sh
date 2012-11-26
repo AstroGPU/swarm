@@ -5,7 +5,9 @@
 OUTBASE=$1
 INTEGRATOR=$2
 
-EMAIL=saleh@cise.ufl.edu
+# After the test is done, an email is send 
+# this email adress if it is not empty
+EMAIL=
 
 # Range of number of bodies to do stablity test for
 # space sparated list of numbers
@@ -53,9 +55,12 @@ do
 	echo "Integration is done "	`$DATE`
 done
 
+if [ -n "$EMAIL" ] 
+then
 sendmail $EMAIL <<EOF
 Subject: Swarm Update: $INTEGRATOR is done
-From: stabibility.sh
+From: stabibility.sh@$HOSTNAME
 To: <$EMAIL>
 Integration for $INTEGRATOR for $NBODY_RANGE is done at `$DATE`
 EOF
+fi

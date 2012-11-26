@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file ensemble.hpp
- *  \brief Defines ensemble base class. 
+ *  \brief Defines ensemble base class and implements its member functions.  
  *
 */
 
@@ -36,7 +36,7 @@ template<class N>
 GENERIC N square(const N& x) { return x*x; }
 
 
-/*
+/**
  * To use as an array for members of Body and Sys
  *
  */
@@ -168,27 +168,41 @@ class EnsembleBase {
 		GENERIC Component& getitem(const int& i){
 			return operator[](i);
 		}
+		
+		GENERIC const double& x() const { return component[0].pos(); }
+		GENERIC double& x() { return component[0].pos(); }
+		GENERIC const double& y() const { return component[1].pos(); }
+		GENERIC double& y() { return component[1].pos(); }
+		GENERIC const double& z() const { return component[2].pos(); }
+		GENERIC double& z() { return component[2].pos(); }
+
+		GENERIC const double& vx() const { return component[0].vel(); }
+		GENERIC double& vx() { return component[0].vel(); }
+		GENERIC const double& vy() const { return component[1].vel(); }
+		GENERIC double& vy() { return component[1].vel(); }
+		GENERIC const double& vz() const { return component[2].vel(); }
+		GENERIC double& vz() { return component[2].vel(); }
 
 		//! Accessing extra attributes of the array.
 		GENERIC double& attribute(const int& i) { return _attributes[i]; }
 		GENERIC const double& attribute(const int& i) const { return _attributes[i]; }
 	        GENERIC int num_attributes() const { return NUM_BODY_ATTRIBUTES; };
 
-		//! Distance of the planet to (0,0,0) 
-		GENERIC double radius_squared() { 
+		//! Square distance of the planet to (0,0,0) 
+		GENERIC double distance_to_origin_squared() { 
 			return square(operator[](0).pos()) 
 				+ square(operator[](1).pos()) 
 				+ square(operator[](2).pos());
 		}
 
-		//! Magnitude of velocity
+		//! Square of magnitude of velocity
 		GENERIC double speed_squared() {
 			return square(operator[](0).vel()) 
 				+ square(operator[](1).vel()) 
 				+ square(operator[](2).vel());
 		}
 		
-		GENERIC double radius() { return sqrt(radius_squared()); }
+		GENERIC double distance_to_origin() { return sqrt(distance_to_origin_squared()); }
 		GENERIC double speed() { return sqrt(speed_squared()); }
 
 		//! Get all position and velocities at once

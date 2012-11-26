@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs.hpp
+ *   \brief Defines \ref swarm::gpu::bppt::MVSPropagator - the GPU implementation 
+ *          of mixed variables symplectic propagator.
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/swarmplugin.h"
 #include "keplerian.hpp"
@@ -30,6 +37,7 @@ namespace bppt {
  */
 struct MVSPropagatorParams {
 	double time_step;
+        //! Constructor for MVSPropagatorParams
 	MVSPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
@@ -48,7 +56,7 @@ struct MVSPropagator {
 	params _params;
 
 
-	// Runtime variables
+	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -60,6 +68,7 @@ struct MVSPropagator {
 
 	double acc_bc;
 
+        //! Constructor for MVSPropagator
 	GPUAPI MVSPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -113,7 +122,7 @@ struct MVSPropagator {
 		if( b==0 )
 		{
 			calcForces.shared[1][c].acc() = sys[0][c].pos();
-			// Find Center of mass and momentum
+			//! Find Center of mass and momentum
 			for(int j=0;j<nbod;++j) {
 				const double mj = sys[j].mass();
 				mtot += mj;

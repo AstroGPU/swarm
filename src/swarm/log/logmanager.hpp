@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file logmanager.hpp
- *    \brief Manage CPU/GPU logs and writing them to appropriate output. 
+ *    \brief Defines the class \ref swarm::log::manager - the logging manager 
+ *           for CPU/GPU logs and writing them to appropriate output. 
  *
  *
  */

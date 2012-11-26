@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/** \file tutorial_simple.cpp
+ *  \brief A simple tutorial for beginners to use the swarm API. 
+ *
+ */
+
+
 /*
  *  This is a simple tutorial used in doxygen pages
  *  should go through program2doxygen before it
@@ -110,6 +134,6 @@ int main(int argc, char* argv[]){
 //  -  \ref swarm::snapshot::save_text  Use this utility function to save an ensemble to a text file.
 //  -  \ref swarm::log::manager      Most users won't need it because the default log manager is used by all integrators.
 //      But if you need multiple log streams, you need to create your own log manager
-//      and use it in integrators by \ref integrator::set_log_manager.
+//      and use it in integrators by \ref integrator::set_log_manager method.
 //
 // To find the complete listing of this tutorial look at \ref src/tutorials/tutorial_simple.cpp in the source code repository.

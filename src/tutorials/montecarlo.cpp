@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file montecarlo.cpp
+ *  \brief Implement Monte Carlo simulation to find planetary systems and generate ensemble. 
+ *
+ */
+
+
 /** 
  * In writing this monte carlo simulation which is supposed to find planetary
  * systems using Monte Carlo simulations, I used the old monte carlo code.
@@ -23,7 +47,7 @@ using namespace swarm;
 using namespace std;
 
 config cfg;
-
+///
 void inspect(defaultEnsemble &ens, const int sys, const int bod ) 
 {
 	  fprintf(stderr,"%d %d: %lg (%lg %lg %lg) (%lg %lg %lg) \n", sys, bod,
@@ -36,7 +60,7 @@ void inspect(defaultEnsemble &ens, const int sys, const int bod )
 			  ens[sys][bod][2].vel()
 			  );
 }
-
+///
 void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &ens, const int sysidx, const int sysid) 
 {
   double time_init = cfg.optional("time_init", 0.0);
@@ -311,6 +335,7 @@ void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init)
 
 }
 
+/// Calculate teh semi-major axes
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
   std::vector<std::vector<double> > semimajor_axes(ens.nsys(),std::vector<double>(ens.nbod(),0.));
@@ -342,7 +367,7 @@ std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
     }
   return semimajor_axes;
 }
-
+/// 
 void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vector<double> >& semimajor_axes_init, const double deltaa_threshold )
 {
   for(int sys_idx = 0; sys_idx < ens.nsys() ; sys_idx++)

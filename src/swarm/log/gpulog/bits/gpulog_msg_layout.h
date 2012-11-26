@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,21 +27,19 @@
 #ifndef bits_gpulog_msg_layout_h__
 #define bits_gpulog_msg_layout_h__
 
-/*
-	class template pktsize<> and supporting classes and templates that
-	enable the compile-time calculation of log record layout (byte
-	offsets to which the data will be stored).
-*/
-
+/*!
+ *	class template pktsize<> and supporting classes and templates that
+ *	enable the compile-time calculation of log record layout (byte
+ *	offsets to which the data will be stored).
+ */
 namespace gpulog
 {
 	namespace internal
 	{
 
 	#if !__CUDACC__
-	//
-	// Aux operators for debugging
-	//
+
+	//! Aux operators for debugging
 	template<typename T>
 	inline std::ostream &operator <<(std::ostream &out, const array<T> &v) { return out << "n=" << v.nelem; }
 	inline std::ostream &operator <<(std::ostream &out, const header &h)   { return out << "msgid=" << h.msgid << " len=" << h.len IFARGINFO( << " nargs=" << h.nargs << " infos=" << h.infos); }
@@ -63,7 +61,7 @@ namespace gpulog
 	//	- array<>s (allocation)
 	//
 
-	// i/o support: scalar PODs
+	//! i/o support: scalar PODs
 	template<typename T> struct argio
 	{
 		__host__ __device__ static inline void put(char *ptr, const T &x, int start, int datalen)
@@ -74,7 +72,7 @@ namespace gpulog
 		}
 	};
 
-	// force a compiler error if the user attempts to serialize a pointer.
+	//! force a compiler error if the user attempts to serialize a pointer.
 	template<typename T> struct argio<T*>
 	{
 		__host__ __device__ static inline void put(char *ptr, const T *x, int start, int datalen)
@@ -83,7 +81,7 @@ namespace gpulog
 		}
 	};
 
-	// presized array read/write specialization
+	//! presized array read/write specialization
 	template<typename T, int N> struct argio<T[N]>
 	{
 		// array write specialization
@@ -99,7 +97,7 @@ namespace gpulog
 		}
 	};
 
-	// i/o support: unbound array (array<>) specialization
+	//! i/o support: unbound array (array<>) specialization
 	template<typename T> struct argio<array<T> >
 	{
 		__host__ __device__ static inline void put(char *ptr, const array<T> &x, int start, int datalen)
@@ -110,11 +108,7 @@ namespace gpulog
 		}
 	};
 
-
-	//
-	// Compile-time record layout computation machinery
-	//
-
+	//! Compile-time record layout computation machinery
 	#define ASTART(at, a)		(at & (a-1) ? (at & ~(a-1)) + a : at)		/* Aligned start address closest but >= than at, for type T */
 
 	// CUDA 2.2/2.3 compilation speedup hack -- otherwise (if ASTART is called directly), nvcc
@@ -146,10 +140,10 @@ namespace gpulog
 			} \
 		}
 
-	/*
-		struct template to compile-time compute (properly aligned) offsets and sizes
-		of passed types. Used in conjunction with write function templates.
-	*/
+	/*!
+	 *	struct template to compile-time compute (properly aligned) offsets and sizes
+	 *	of passed types. Used in conjunction with write function templates.
+	 */
 	template <
 		typename T0,
 		typename T1 = Tunspec, typename T2 = Tunspec, typename T3 = Tunspec, typename T4 = Tunspec, typename T5 = Tunspec, 
@@ -188,14 +182,16 @@ namespace gpulog
 		static const int lenp = ASTART(end, ALIGNOF(Tmaxalign));		/* padded length, assuming last variable was a scalar, that properly aligns the next packet */
 
 	public:
+	        //! padded length of the record when the last element is not an array<> 
 		template<typename T>
-		__host__ __device__ inline static int len_with_padding(const T& x)		/* padded length of the record when the last element is not an array<> */
+		__host__ __device__ inline static int len_with_padding(const T& x)		
 		{
 			return lenp;
 		}
 
+	        //! padded length of the record when the last element is an array<> 
 		template<typename T>
-		__host__ __device__ inline static int len_with_padding(const array<T> &x)	/* padded length of the record when the last element is an array<> */
+		__host__ __device__ inline static int len_with_padding(const array<T> &x)	
 		{
 			// compute the end offset
 			int at2 = end;

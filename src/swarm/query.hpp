@@ -28,86 +28,109 @@
 #include <boost/regex.hpp>
 #include <boost/program_options.hpp>
 
-namespace swarm { 
-	template<typename T>
-	T arg_parse(const std::string &s)
+namespace swarm { namespace query {
+
+    /// Parse the input	
+template<typename T>
+T arg_parse(const std::string &s)
+{
+	if(s == "MIN") { return MIN; }
+	if(s == "MAX") { return MAX; }
+	return boost::lexical_cast<T>(s);
+}
+
+/*!
+ * Parser for range datatype to use with boost::program_options.
+ * 
+ * Parse ranges of the form:
+ *	<r1>..<r2>
+ *	MIN..<r2>
+ *	<r1>..MAX
+ *	ALL
+ * 
+ */
+template<typename T>
+void validate(boost::any& v,
+	const std::vector<std::string>& values,
+	range<T>* target_type, int)
+{
+	using namespace boost::program_options;
+	typedef range<T> rangeT;
+
+	// Make sure no previous assignment to 'a' was made.
+	validators::check_first_occurrence(v);
+
+	// Extract the first string from 'values'. If there is more than
+	// one string, it's an error, and exception will be thrown.
+	const std::string& s = validators::get_single_string(values);
+
+	if(s == "ALL")
 	{
-		if(s == "MIN") { return MIN; }
-		if(s == "MAX") { return MAX; }
-		return boost::lexical_cast<T>(s);
+		v = boost::any(rangeT(ALL));
+		return;
 	}
 
-	//
-	// Parse ranges of the form:
-	//	<r1>..<r2>
-	//	MIN..<r2>
-	//	<r1>..MAX
-	//	ALL
-	//
-	template<typename T>
-	void validate(boost::any& v,
-		const std::vector<std::string>& values,
-		range<T>* target_type, int)
-	{
-		using namespace boost::program_options;
-		typedef range<T> rangeT;
-
-		// Make sure no previous assignment to 'a' was made.
-		validators::check_first_occurrence(v);
-
-		// Extract the first string from 'values'. If there is more than
-		// one string, it's an error, and exception will be thrown.
-		const std::string& s = validators::get_single_string(values);
-
-		if(s == "ALL")
+	static boost::regex r("(.+?)(?:\\.\\.(.+))?");
+	boost::smatch match;
+	if (boost::regex_match(s, match, r)) {
+		//for(int i=0; i != match.size(); i++) { std::cerr << match[i] << "\n"; }
+		if(match[2] == "")
 		{
-			v = boost::any(rangeT(ALL));
-			return;
+			v = boost::any(rangeT(arg_parse<T>(match[1])));
 		}
-
-		static boost::regex r("(.+?)(?:\\.\\.(.+))?");
-		boost::smatch match;
-		if (boost::regex_match(s, match, r)) {
-			//for(int i=0; i != match.size(); i++) { std::cerr << match[i] << "\n"; }
-			if(match[2] == "")
-			{
-				v = boost::any(rangeT(arg_parse<T>(match[1])));
-			}
-			else
-			{
-				v = boost::any(rangeT(arg_parse<T>(match[1]), arg_parse<T>(match[2])));
-			}
-		} else {
+		else
+		{
+			v = boost::any(rangeT(arg_parse<T>(match[1]), arg_parse<T>(match[2])));
+		}
+	} else {
 #if BOOST_VERSION  < 104200
-			throw validation_error("invalid value");
+		throw validation_error("invalid value");
 #else
-			throw validation_error(validation_error::invalid_option_value);
+		throw validation_error(validation_error::invalid_option_value);
 #endif
-		}
 	}
+}
 
-	template<typename T>
-	std::ostream &operator<<(std::ostream &out, const swarm::range<T> &r)
-	{
-		if(r.first == T(MIN) && r.last == T(MAX)) { return out << "ALL"; }
-		if(r.first == r.last) { return out << r.first; }
+/**
+ * Petty print a range object
+ * 
+ */
+template<typename T>
+std::ostream &operator<<(std::ostream &out, const range<T> &r)
+{
+	if(r.first == T(MIN) && r.last == T(MAX)) { return out << "ALL"; }
+	if(r.first == r.last) { return out << r.first; }
 
-		if(r.first == T(MIN)) { out << "MIN"; } else { out << r.first; }
-		out << "..";
-		if(r.last == T(MAX)) { out << "MAX"; } else { out << r.last; }
+	if(r.first == T(MIN)) { out << "MIN"; } else { out << r.first; }
+	out << "..";
+	if(r.last == T(MAX)) { out << "MAX"; } else { out << r.last; }
 
-		return out;
-	}
+	return out;
+}
 	
-	namespace query {
 
-void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys);
-void execute(const std::string &datafile, swarm::time_range_t T, swarm::sys_range_t sys, body_range_t body_range);
+/*! Execute a query on the datafile. The query consists of ranges for time (T), systems (sys) and bodies (bod)
+ * 
+ * @param datafile Filename for the swarm binary log to query from
+ * @param T        Range of times to output
+ * @param sys      Range of systems to output
+ * @param bod      Range of bodies to output
+ * 
+ */
+void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() );
+
 enum planets_coordinate_system_t {
   astrocentric, barycentric, jacobi, origin
 };
+
+//! Set the output format of the @ref execute to be in Cartesian coordinates
 void set_cartesian_output(const planets_coordinate_system_t& coordinate_system = origin) ;
+//! Set the output format of the @ref execute to be in Keplerian coordinates
 void set_keplerian_output(const planets_coordinate_system_t& coordinate_system = jacobi) ;
+/*! Set the output format of the @ref execute for the coordinates. 
+ * @param coordinate_system Choice of coordinate system, c.f. @ref planets_coordinate_system_t
+ * 
+ */
 void set_coordinate_system(const planets_coordinate_system_t& coordinate_system);  
 
 } }

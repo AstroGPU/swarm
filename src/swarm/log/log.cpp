@@ -23,9 +23,8 @@
  */
 
 #include "log.hpp"
-namespace swarm {
-  namespace log {
-
+namespace swarm { namespace log {
+    //!
   int num_ints_for_event(const int code)
   {
     switch(code)
@@ -44,6 +43,7 @@ namespace swarm {
       }
   }
 
+    //!
   int num_doubles_for_event(const int code)
   {
     switch(code)
@@ -63,5 +63,4 @@ namespace swarm {
       }
   }
 
-  } // namespace log
-} // namespace swarm
+} } // namespace log:: swarm

@@ -17,8 +17,7 @@
  ************************************************************************/
 
 /*! \file swarmplugin.h
- *   \brief Convenient header file including generic_gpu_bppt_integrator.hpp
- *          and stop_on_ejection.hpp
+ *   \brief Convenient header file to be used in new plugins.
  *
 */
 #pragma once

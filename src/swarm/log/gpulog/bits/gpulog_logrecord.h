@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -36,7 +36,7 @@ namespace internal
 		Log unserialization infrastructure	
 	*/
 
-	/* log unserialization - reads elements from a log record */
+	//! log unserialization - reads elements from a log record 
 	struct logrecord
 	{
 		const char *ptr;
@@ -47,13 +47,19 @@ namespace internal
 		__host__ __device__ inline const arginfo &get_arginfo(int arg) const { return *((arginfo *)(ptr + hdr().infos) + arg); }
 		#endif
 
+	        //! Constructor for logrecord
 		__host__ __device__ inline logrecord() : ptr(NULL), at(0) { IFARGINFO(atarg = 1); }
+	        //! Constructor for logrecord
 		__host__ __device__ inline logrecord(const char *ptr_) : ptr(ptr_), at(hdr().dataoffset()) { IFARGINFO(atarg = 1); }
 
+	        //! Retrurn the header pointer
 		__host__ __device__ inline const header &hdr() const { return *(header *)ptr; }
+	        //! 
 		__host__ __device__ inline operator bool() const { return at < hdr().len; }
 
+	        //! 
 		__host__ __device__ inline int len() const { return hdr().len; }
+	        //! 
 		__host__ __device__ inline int msgid() const { return hdr().msgid; }
 	};
 
@@ -90,7 +96,7 @@ namespace internal
 		#endif
 	}
 
-	/* Unserialize a scalar */
+	//! Unserialize a scalar
 	template<typename T>
 	__device__ inline logrecord_ref operator >>(logrecord &in, T &v)
 	{
@@ -109,7 +115,7 @@ namespace internal
 		return in;
 	}
 
-	/* specialization for sized arrays */
+	//! specialization for sized arrays 
 	template<typename T, int N>
 	__device__ inline logrecord_ref operator >>(logrecord &in, const T (&v)[N])
 	{
@@ -130,7 +136,7 @@ namespace internal
 		return in;
 	}
 
-	/* specialization for char ptr (null terminated string) */
+	//! specialization for char ptr (null terminated string) 
 	__device__ inline logrecord_ref operator>>(logrecord &in, char *v)
 	{
 		if(!in) { return in; }
@@ -151,14 +157,14 @@ namespace internal
 		return in;
 	}
 
-	/* specialization for char array (we assume it'll be a null-terminated string) */
+	//! specialization for char array (we assume it'll be a null-terminated string) 
 	template<int N>
 	__device__ inline logrecord_ref operator>>(logrecord &in, char v[N])
 	{
 		return in >> (char *)v;
 	}
 
-	/* specialization for return of pointers to non-const arrays */
+	//! specialization for return of pointers to non-const arrays 
 	template<typename T>
 	__device__ inline logrecord_ref operator >>(logrecord &in, T *&v)
 	{
@@ -169,7 +175,7 @@ namespace internal
 		return in;
 	}
 
-	/* specialization for return of a pointer array */
+	//! specialization for return of a pointer array
 	template<typename T>
 	__device__ inline logrecord_ref operator >>(logrecord &in, const T *&v)
 	{

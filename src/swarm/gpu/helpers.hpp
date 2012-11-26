@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file helpers.hpp
- *   \brief Defines utility functions for loop unrolling, select templates
- *          and launch templatized integrator.
+ *   \brief Template meta-programming combinators (symbolic helper functions) 
+ * for loop unrolling and selecting the correct templatized integrator at runtime.
  *          
  */
 
@@ -61,6 +61,7 @@ struct Unroller {
 	}
 };
 
+///
 template<int End, int Step>
 struct Unroller<End, End, Step> {
 	template<typename Action>

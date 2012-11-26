@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Mario Juric   *
- *   mjuric@astro.Princeton.EDU   *
+ *   Copyright (C) 2005 by Mario Juric                                     *
+ *   mjuric@astro.Princeton.EDU                                            *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,14 +19,16 @@
  ***************************************************************************/
 
 /*! \file fakemmap.h
- *   \brief Header file for faking memory mapping for portability.
+ *   \brief Defines macros and functions for faking memory mapping for portability.
+ * Fake memory mapping for portability with windows system
+ *
+ *  *EXPERIMENTAL*: This module is not thoroughly tested.
+ *  \ingroup experimental
+ * 
+ *
  *
  */
 
-
-/* 
- * Fake memory mapping for portability
- */
 
 #include <stdlib.h>
 

@@ -15,17 +15,25 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file mvs_cpu.cpp
+ *   \brief Initializes the CPU version of the mixed variables symplectic propagator plugins.
+ *
+ */
+
+
 #include "integrators/mvs_cpu.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/composites.hpp"
 
+//! Declare host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using namespace swarm::cpu;
 using swarm::integrator_plugin_initializer;
 
-
+//! Initialize the integrator plugin for mvs propagator on CPU
 integrator_plugin_initializer<
   mvs_cpu< stop_on_ejection<L> >
 	> mvs_cpu_plugin("mvs_cpu");
@@ -36,13 +44,14 @@ integrator_plugin_initializer<
 		mvs_cpu< combine< L, stop_on_ejection<L>, stop_on_close_encounter<L> > >
 	> mvs_cpu_plugin_crossing_orbit("mvs_cpu_crossing");*/
 
+//! Initialize the integrator plugin for mvs propagator for ejection or close encounter event on CPU
 integrator_plugin_initializer<
   mvs_cpu< stop_on_ejection_or_close_encounter<L> >
 	> mvs_cpu_plugin_ejection_or_close_encounter(
 		"mvs_cpu_ejection_or_close_encounter"
 	);
 
-
+//! Initialize the integrator plugin for mvs log propagator on CPU
 integrator_plugin_initializer<
   mvs_cpu< log_time_interval<L> >
 	> mvs_cpu_log_plugin("mvs_cpu_log");

@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /** \file random.hpp
- *  \brief simple interface to CPU random number generators
+ *  \brief Defines and implements simple interfaces to CPU random number generators
  *
  * \todo use better random nubmer generators (e.g., from boost++)
 */
@@ -44,6 +44,7 @@ double draw_std_normal()
   return sqrt(-2.*std::log(rn1))*cos(2.*M_PI*(rn2));
 }
 
+///
 double draw_value_from_config(const swarm::config& cfg, const std::string& name, const int bod, double min, double max)
 {
   double val;
@@ -95,7 +96,7 @@ double draw_value_from_config(const swarm::config& cfg, const std::string& name,
   return val;
 }
 
-
+///
 double draw_value_from_config(const swarm::config& cfg, const std::string& name, double min, double max)
 {
   double val;

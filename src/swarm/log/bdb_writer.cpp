@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file bdb_writer.cpp
- *    \brief Defines an I/O interface for writing to files.
+ *    \brief Writer plugin to output the log into a Berkeley-DB database.
  *
  *
  */
@@ -32,16 +32,20 @@
 
 #include <db_cxx.h>
 
-namespace swarm {
+namespace swarm { namespace log {
 
 using namespace gpulog;
 
 /**
- * A writer that writes directly to Berkeley DB databases
+ *  \brief Writer plugin to output the log into a Berkeley-DB database.
  *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ * 
  *
  */
-class bdb_writer : public swarm::writer
+class bdb_writer : public writer
 {
 	// To do this, first we have to include the BDB in the CMake files
 	// in process, we should make a gpulog::ilogstream out of the data
@@ -49,12 +53,16 @@ class bdb_writer : public swarm::writer
 	// now the problem is what are we going to use for the key. Maybe we
 	// can use a very simple key and later on we can do secondary databases
 	// to make the indexes based on time and system id.
+
 	Db db;
+//! constructor for bdb_writer
 public:
 	bdb_writer(const config& cfg):db(0,0){
 		std::string fileName = cfg.require("log_output_db",std::string()) + ".db";
 		db.open(NULL, fileName.c_str() , NULL, DB_RECNO, DB_CREATE | DB_TRUNCATE, 0);
 	}
+
+        //! Process the log data and put them in the database
 	virtual void process(const char *log_data, size_t length) {
 		ilogstream stream(log_data,length);
 		while(logrecord lr = stream.next()){
@@ -63,12 +71,15 @@ public:
 			db.put(NULL,&key,&data,DB_APPEND);
 		}
 	}
+
+        //! Destructor
 	~bdb_writer(){
 		db.close(0);
 	}
 };
 
+//! Initialize the database writer plugin
 writer_plugin_initializer< bdb_writer >
 	bdb_writer_plugin("bdb", "This is the Berkeley DB writer");
 
-}
+} }

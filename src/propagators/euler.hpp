@@ -15,6 +15,12 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file euler.hpp
+ *   \brief Defines and implements \ref swarm::gpu::bppt::EulerPropagator class.
+ *
+ */
+
 #include "swarm/swarmplugin.h"
 
 namespace swarm {
@@ -28,12 +34,16 @@ namespace bppt {
  */
 struct EulerPropagatorParams {
 	double time_step;
+        //! Constructor
 	EulerPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
 };
 
 /*! GPU implementation of euler propagator
+ * It is of no practical use. Given here as a working example. @ref TutorialPropagator 
+ * is based on this propagator.
+ * 
  * \ingroup propagators
  *
  */
@@ -45,7 +55,7 @@ struct EulerPropagator {
 	params _params;
 
 
-	// Runtime variables
+	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -55,7 +65,7 @@ struct EulerPropagator {
 	bool first_thread_in_system;
 	double max_timestep;
 
-
+        //! Constructor for EulerPropagator
 	GPUAPI EulerPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -87,6 +97,7 @@ struct EulerPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+        //! Advance the timesteps
 	GPUAPI void advance(){
 		double h = min(_params.time_step, max_timestep);
 		double pos = 0.0, vel = 0.0;
@@ -98,19 +109,19 @@ struct EulerPropagator {
 
 
 		calcForces(ij,b,c,pos,vel,acc,jerk);
-		// Integratore
+		//! Integration
 		pos = pos +  h*(vel+(h*0.5)*(acc+(h*third)*jerk));
 		vel = vel +  h*(acc+(h*0.5)*jerk);
 
 
-		// Finalize the step
+		//! Finalize the step
 		if( is_in_body_component_grid() )
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 		if( is_first_thread_in_system() ) 
 			sys.time() += h;
 	}
 };
-
+  
 }
 }
 }

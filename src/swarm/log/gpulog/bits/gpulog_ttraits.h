@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -43,11 +43,11 @@ namespace gpulog
 	namespace internal
 	{
 
-	/* Type alignment querying */
+	  //! Type alignment querying 
 	template<typename T> struct alignment         { static const int value = __alignof__(T); };
 
-	/* Alignment overrides to make the host packing compatible with device packing */
-	/* See table B-1 in CUDA 2.2 Programming Guide for reference */
+	//! Alignment overrides to make the host packing compatible with device packing 
+	//! See table B-1 in CUDA 2.2 Programming Guide for reference 
 	template<>           struct alignment<float2> { static const int value = 8; };
 	template<>           struct alignment<float4> { static const int value = 16; };
 	template<>           struct alignment<char2>  { static const int value = 2; };
@@ -68,9 +68,8 @@ namespace gpulog
 	template<>           struct alignment<ulong4> { static const int value = 4*alignment<ulong1>::value; };
 	template<>           struct alignment<double2> { static const int value = 16; };
 
-	//
-	// Type traits
-	//
+
+	//! Type traits, scalar type
 	template<typename T>
 	struct ttrait
 	{
@@ -88,24 +87,28 @@ namespace gpulog
 		static const size_t dim = 1;
 	};
 
+	//! Type traits, pointer type
 	template<typename T>
 	struct ttrait<T*> : public ttrait<T>
 	{
 		static const bool isptr = true;
 	};
 
+	//! Type traits, array type
 	template<typename T, int N>
 	struct ttrait<T[N]> : public ttrait<T>
 	{
 		static const size_t dim = N;
 	};
 
+	//! Type traits, array type
 	template<typename T>
 	struct ttrait<array<T> > : public ttrait<T>
 	{
 		static const bool isarr = true;
 	};
 
+	//! Type traits, type unspecified
 	template<>
 	struct ttrait<Tunspec>
 	{
@@ -120,13 +123,23 @@ namespace gpulog
 	};
 
 	/* Alignment, size and type trait convenience macros */
-	#define ALIGNOF(T)	(ttrait<T>::align)				/* Alignment of type T */
-	#define ESIZE(T)	(ttrait<T>::size)				/* Scalar element size of type T. E.g., if T = short[5], ESIZE(T) = sizeof(short) */
-	#define DIMEN(T)	(ttrait<T>::dim)				/* Array size of type T. E.g., if T = short[5], DIMEN(T) = 5 */
-	#define SIZEOF(T)	(ESIZE(T)*DIMEN(T))				/* Byte size of type T. For array<X>, this is the size of X */
+	//! Alignment of type T 
+	#define ALIGNOF(T)	(ttrait<T>::align)
 
-	#define ISARRAY(T)	(ttrait<T>::isarr)				/* Is type T an array<> class */
-	#define SCALAR(T)	typename gpulog::internal::ttrait<T>::scalarT	/* The scalar of type T (extracts T out of array<T>, if it's an array) */
+	//! Scalar element size of type T. E.g., if T = short[5], ESIZE(T) = sizeof(short) 
+	#define ESIZE(T)	(ttrait<T>::size)
+
+	//! Array size of type T. E.g., if T = short[5], DIMEN(T) = 5 
+	#define DIMEN(T)	(ttrait<T>::dim)	
+
+	//! Byte size of type T. For array<X>, this is the size of X 
+	#define SIZEOF(T)	(ESIZE(T)*DIMEN(T))				
+
+	//! Is type T an array<> class 
+	#define ISARRAY(T)	(ttrait<T>::isarr)
+
+	//! The scalar of type T (extracts T out of array<T>, if it's an array) 
+	#define SCALAR(T)	typename gpulog::internal::ttrait<T>::scalarT	
 	#define ISUNSPEC(T)	(ttrait<T>::isunspec)
 
 	#if GPULOG_DEBUG && !__CUDACC__

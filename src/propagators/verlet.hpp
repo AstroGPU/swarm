@@ -16,9 +16,13 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file verlet.hpp
+ *   \brief Defines \ref swarm::gpu::bppt::VerletPropagator - the GPU 
+ *          implementation of Verlet propagator. 
+ *
+ */
+
 #include "swarm/swarmplugin.h"
-
-
 
 namespace swarm { namespace gpu { namespace bppt {
 
@@ -28,6 +32,7 @@ namespace swarm { namespace gpu { namespace bppt {
  */
 struct VerletPropagatorParams {
 	double max_timestep, max_timestep_global, timestep_scale;
+        //! Constructor
 	VerletPropagatorParams(const config& cfg){
 		max_timestep_global = cfg.require("max_timestep", 0.0);
 		timestep_scale = cfg.require("timestep_scale", 0.0);
@@ -35,6 +40,10 @@ struct VerletPropagatorParams {
 };
 
 /*! GPU implementation of Verlet propagator
+ *
+ *  *EXPERIMENTAL*: This class is not maintained anymore since it is not
+ * of much practical value.
+ *  \ingroup experimental
  * \ingroup propagators
  *
  */
@@ -45,7 +54,6 @@ struct VerletPropagator {
 
 	params _params;
 
-	// Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -55,7 +63,7 @@ struct VerletPropagator {
 	bool first_thread_in_system;
 	double max_timestep, timestep;
 
-
+        //! Constructor for VerletPropagator
 	GPUAPI VerletPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
@@ -68,6 +76,7 @@ struct VerletPropagator {
 		 return 0;
 	}
 
+        /// Initialize the system
 	GPUAPI void init()  
 	{ 
 	   // First half step uses timestep factor from previous itteration, 
@@ -99,7 +108,7 @@ struct VerletPropagator {
         { return (thread_in_system()==0); }	
 
 
-	// calculate the timestep given current positions
+	//! calculate the timestep given current positions
 	GPUAPI double calc_timestep() const
 	{
 	// assumes that calcForces has already been called to fill shared memory
@@ -125,6 +134,7 @@ struct VerletPropagator {
 	return factor;
 	}
 
+        /// Advance time steps
 	GPUAPI void advance(){
 		double h = timestep;
 		double pos = 0.0, vel = 0.0;

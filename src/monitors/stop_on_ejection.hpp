@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_ejection.hpp
- *   \brief Defines the monitor that signals and logs when bodies meets 
- *          ejection criteria. 
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_ejection
+ *          that signals and logs when bodies meets ejection criteria. 
  *
  */
 
@@ -30,7 +30,7 @@
 namespace swarm {
   namespace monitors {
 
-/* Parameters for stop_on_ejection monitor
+/*! Parameters for stop_on_ejection monitor
  * deactivate_on_ejection (bool): 
  * log_on_ejection (bool): 
  * verbose_on_ejection (bool): 
@@ -108,8 +108,8 @@ class stop_on_ejection {
 	GPUAPI bool test_body(const int& b) {
 
 		double x,y,z,vx,vy,vz; _sys[b].get(x,y,z,vx,vy,vz);
-		//		double r = sqrt(_sys[b].radius_squared());  // WARNING: Deceiving function name
-		double r = _sys[b].radius();  // WARNING: Deceiving function name
+		//		double r = sqrt(_sys[b].distance_to_origin_squared());  // WARNING: Deceiving function name
+		double r = _sys[b].distance_to_origin();  // WARNING: Deceiving function name
 		if( r < _params.rmax ) return false;
 		double rdotv = x*vx+y*vy+z*vz;
 		if( rdotv <= 0. ) return false;
@@ -169,10 +169,11 @@ class stop_on_ejection {
 	  }
 #endif
 
-	
+        //! default constructor for stop_on_ejection
 	GPUAPI stop_on_ejection(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l){}
 
+        //! check bodies other than the central star and set the status of need_full_test
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    bool need_full_test = false; 
@@ -191,7 +192,7 @@ class stop_on_ejection {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system state and see if need to be deactivated. 
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if(is_condition_met() && is_deactivate_on() )
