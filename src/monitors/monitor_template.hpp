@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file monitor_template.hpp
- *   \brief Defines monitor templates. 
+ *   \brief Defines monitor templates \ref swarm::monitors::monitor_template. 
  *
  */
 
@@ -27,16 +27,15 @@
 
 namespace swarm {
 
-/**
+/*!
  * @brief Namespace for monitors (i.e., stoppers & loggers) and their associated classes
  */
-  namespace monitors {
-
-struct monitor_template_params {
-	monitor_template_params(const config &cfg)
-	{
-	}
-};
+        namespace monitors { 
+	     //! Structure for monitor_template_params
+	     struct monitor_template_params { 
+	       //! default constructor for monitor_template_params
+	       monitor_template_params(const config &cfg) {}
+	     };
 
 /** Empty monitor to use as a template.  
  * Signal is always false.  Does not do any logging.
@@ -55,7 +54,7 @@ class monitor_template {
 
 	public:
 
-        // Provide these functions, so two monitors can be combined
+        //! Provide these functions, so two monitors can be combined
         GPUAPI bool is_deactivate_on() { return false; }
         GPUAPI bool is_log_on() { return false; }
         GPUAPI bool is_verbose_on() { return false; }
@@ -66,9 +65,12 @@ class monitor_template {
         GPUAPI bool need_to_deactivate () 
           { return ( is_deactivate_on() && is_condition_met() ); }
 
-
+    
+        //! set the initial condition to false
 	GPUAPI bool pass_one (int thread_in_system) 
           { return false; }
+
+        //! set the system state to disabled when three conditions are met
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if(is_condition_met() && is_deactivate_on() && (thread_in_system==0) )
@@ -93,6 +95,7 @@ class monitor_template {
 	}
 #endif
 
+        //! default monitor_template construct
 	GPUAPI monitor_template(const params& p,ensemble::SystemRef& s,log_t& l)
 		:_params(p),_sys(s),_log(l){}
 	

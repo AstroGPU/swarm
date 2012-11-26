@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Mario Juric   *
- *   mjuric@cfa.harvard.EDU       *
+ *   Copyright (C) 2010 by Mario Juric                                     *
+ *   mjuric@cfa.harvard.EDU                                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,13 +24,12 @@
  *
  */
 
-
 #ifndef bits_gpulog_debug_h__
 #define bits_gpulog_debug_h__
 
-//
-// Debugging macros. Define GPULOG_DEBUG=1 to turn on
-//
+//!
+//! Debugging macros. Define GPULOG_DEBUG=1 to turn on
+//!
 #if GPULOG_DEBUG
 	#define DBG(x) x
 #else

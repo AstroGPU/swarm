@@ -1,14 +1,10 @@
-#/bin/csh
-rm -f feedback.tgz;
-make clean >& feedback.make.clean
-make tidy >& feedback.make.tidy
-make info >& feedback.make.info
-make apps >& feedback.make.apps
-make doc-asciidoc >& feedback.make.asciidoc
-make doc-doxygen >& feedback.make.doxygen
-make test >& feedback.make.test
-make benchmark-quick |& tee feedback.make.benchmark
-tar czf feedback.tgz feedback.make.* run/benchmark.out test-outputs
+#/bin/bash
+rm -f feedback.tgz
+rm -rf Testing
+make clean 2>&1 | tee feedback.make.clean
+make swarm 2>&1 | tee feedback.make.swarm
+make test  2>&1 | tee feedback.make.test
+tar -czf feedback.tgz CMakeCache.txt feedback.make.* Testing
 rm -f feedback.make.*
 echo "Created feedback.tgz"
 

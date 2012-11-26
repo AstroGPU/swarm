@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file config.hpp
- *  \ brief Defines data structure to hold the configuration. 
+ *  \brief Defines data structure to hold the configuration. 
  *
  */
 

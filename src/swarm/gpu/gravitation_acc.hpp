@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_acc.hpp
- *   \brief Defines the class to calculate acceleration part of the gravitation. 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAcc 
+ *          that implements member functions to calculate acceleration part of the gravitation. 
  *          
  */
 
@@ -47,12 +48,13 @@ class GravitationAcc {
 	ensemble::SystemRef& sys;
 	shared_data &shared;
 
+        //! Constructor
 	public:
+	GPUAPI GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
 
-	__device__ GravitationAcc(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
+	private:
 
-
-	__device__ void calc_pair(int ij)const{
+	GPUAPI void calc_pair(int ij)const{
 		int i = first<nbod>( ij );
 		int j = second<nbod>( ij );
 		if(i != j){
@@ -71,7 +73,9 @@ class GravitationAcc {
 
 	}
 
-          __device__ double one_over_r(const int b1, const int b2) const
+        //!
+	public:
+          GPUAPI double one_over_r(const int b1, const int b2) const
           {
 	  double sum = 0.;
 
@@ -88,9 +92,8 @@ class GravitationAcc {
 		return sum;
 	  }
 
-
-
-	__device__ double sum_acc_planets(int b,int c)const{
+	private:
+	GPUAPI double sum_acc_planets(int b,int c)const{
 		double acc_sum = 0;
 
 		/// Find the contribution from/to Sun first
@@ -110,7 +113,7 @@ class GravitationAcc {
 		return acc_sum;
 	}
 
-	__device__ double sum_acc(int b,int c) const{
+	GPUAPI double sum_acc(int b,int c) const{
 		double acc_from_planets = 0;
 		double acc_from_sun = 0;
 
@@ -135,8 +138,9 @@ class GravitationAcc {
 		return acc_from_sun + acc_from_planets;
 	}
 
-
-	__device__ void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
+        //! Define operator 
+	public:
+	GPUAPI void operator() (int ij,int b,int c,double& pos,double& vel,double& acc)const{
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
@@ -149,7 +153,7 @@ class GravitationAcc {
 		}
 	}
 
-	/*
+	/**
 	 * Different version of acceleration calculation used for 
 	 * MVS integrator. The impact of body 0(sun or star) is 
 	 * ignored because in the integrator it is calculated using
@@ -174,7 +178,7 @@ class GravitationAcc {
 			return 0;
 	}
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration only 
 	 * on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.
@@ -200,10 +204,12 @@ class GravitationAcc {
 			return 0;
 	}
 
+        //! The number of threads per system
 	static GENERIC int thread_per_system(){
 	  return ( 3*nbod > (nbod-1)*nbod/2 ) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
+        //! The amount of shared memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}

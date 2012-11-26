@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file mvs_omp.hpp
- *   \brief Defines the OpenMP interface for CPU implementation of mixed 
- *          variables symplectic propagator.
+ *   \brief Defines OpenMP implementation of mixed 
+ *          variables symplectic propagator on CPU.
  *
  */
 
@@ -30,12 +30,19 @@
 namespace swarm { namespace cpu {
 
 #ifdef _OPENMP
+/**
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ */
 template< class Monitor >
 class mvs_omp : public mvs_cpu<Monitor> {
 	public:
 	typedef mvs_cpu<Monitor> base;
 
+        //!
 	mvs_omp(const config& cfg): base(cfg){}
+
+        //!
 	virtual void launch_integrator() {
 #pragma omp parallel for
 		for(int i = 0; i < base::_ens.nsys(); i++){

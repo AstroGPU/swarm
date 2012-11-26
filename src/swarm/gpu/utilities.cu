@@ -23,15 +23,12 @@
 
 #include "../common.hpp"
 #include "utilities.hpp"
-//
-// Utilities
-//
 
 
 namespace swarm {
 
 struct count_systems_t {
-deviceEnsemble ens;
+	deviceEnsemble ens;
 	int count_running;
 
 };

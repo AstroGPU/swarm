@@ -17,8 +17,8 @@
  ************************************************************************/
 
 /*! \file bppt.hpp
- *   \brief Defines the GPU integrator class with one thread for each body-pair.
- *          also defines the interface to GPU and CUDA. 
+ *   \brief Defines and implements the GPU integrator class with one thread 
+ *          for each body-pair and the interface to GPU and CUDA. 
  *
  *
  */
@@ -38,8 +38,8 @@
 namespace swarm {
 namespace gpu {
 
-/*! Class of GPU integrators with a thread for each body-pair
- * \addtogroup integrators
+/*!
+ * Class of GPU integrators with a thread for each body-pair. 
  *
  *  Using a thread for each body-pair is to parallelize as much as possible
  *  when integrating an ensemble. The thread assignment is as follows
@@ -144,6 +144,7 @@ class integrator : public gpu::integrator  {
 	//! Should be a multiple of SHMEM_CHUNK_SIZE for better coalescing
 	int _override_system_per_block;
 
+        //! Constructor
 	public:
 	integrator(const config &cfg) : Base(cfg) {
 		int spb = cfg.optional("system_per_block",0);
@@ -152,6 +153,12 @@ class integrator : public gpu::integrator  {
 
 	/////////////////////// Logical parallelization parameters ////////////////////////////////////
 	 
+	/**
+	 *  User specified value of system_per_block.
+	 * 
+	 * It can return a positive value to override the automaticly calculated system_per_block.
+	 * or return 0 to indicate that automatic system_per_block should be used.
+	 */ 
 	const int& override_system_per_block()const{
 		return _override_system_per_block;
 	}

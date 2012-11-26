@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file plugin.hpp
- *   \brief Defines the interface and utility functions for the plugin development 
+ *   \brief Defines \ref swarm::plugin class and \ref swarm::basic_plugin class,
+ *          implements the interface and utility functions for the plugin development 
  *          and plugin management system
  *
  *   Containts:
@@ -36,6 +37,9 @@ namespace swarm {
  *  Derived intstances should implement \ref create method
  *  for instancing the main class of the plugin package. \ref id
  *  is used to identify the package for the plugin look-up table.
+ * 
+ *  It is difficult to use the abstract class, one should use the helper
+ * classes @ref integrator_plugin_initializer, @ref writer_plugin_initializer .
  */
 struct plugin {
 	//! Instance the plugin and return the main class of the package
@@ -57,7 +61,7 @@ struct plugin {
 	static std::vector<plugin*> all();
 
 	struct help_t{};
-	/*! Plugin help message.
+	/*! Plugin the list of plugins in a nice format
 	 *   To use:
 	 *   \code
 	 *     std::cout << plugin::help << std::endl;

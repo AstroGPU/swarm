@@ -17,12 +17,10 @@
  ************************************************************************/
 
 /*! \file null_writer.cpp
- *    \brief Implements a dummy null writer. 
+ *    \brief Defines a dummy null writer
  *
  *
  */
-
-
 
 #include "../common.hpp"
 
@@ -31,14 +29,15 @@
 
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /**
- * null_writer plugin for use in
- * io.cpp
+ * A writer plugin to use when the log output is not needed.
+ * 
+ * Discards all the log output.
  *
  */
-class null_writer : public swarm::writer
+class null_writer : public writer
 {
 public:
 	null_writer(const config& cfg){}
@@ -48,4 +47,4 @@ public:
 writer_plugin_initializer< null_writer >
 	null_writer_plugin("null", "This is the dummy null writer");
 
-}
+} }

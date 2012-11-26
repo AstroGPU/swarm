@@ -36,8 +36,12 @@
 */
 #pragma once
 
-#undef _GLIBCXX_ATOMIC_BUILTINS
-#undef _GLIBCXX_USE_INT128
+#ifdef __CUDACC__
+	// GCC 4.7 bug workaround
+	#undef _GLIBCXX_ATOMIC_BUILTINS
+	#undef _GLIBCXX_USE_INT128
+#endif
+
 
 // Standard C++ Library
 #include <cassert>
@@ -56,9 +60,11 @@
 #include <set>
 #include <algorithm>
 #include <limits>
-#ifndef __CUDACC__ // CUDA 2.2 C++ bug workaround
-#include <sstream>
-#include <valarray>
+#ifndef __CUDACC__ 
+
+	// CUDA 2.2 C++ bug workaround
+	#include <sstream>
+	#include <valarray>
 #endif
 
 // Boost Libraries

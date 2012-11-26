@@ -15,17 +15,27 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file mvs_omp.cpp
+ *   \brief Initializes the OpenMP version of the mixed variables symplectic propagator plugins.
+ *
+ */
+
+
 #include "integrators/mvs_omp.hpp"
 //#include "monitors/log_time_interval.hpp"
 #include "monitors/stop_on_ejection.hpp"
 //#include "monitors/composites.hpp"
 
+//! Declare host_log variable
 typedef gpulog::host_log L;
 using namespace swarm::monitors;
 using swarm::integrator_plugin_initializer;
 using namespace swarm::cpu;
 
 #ifdef _OPENMP
+//! Initialize the integrator plugin for mvs propagator when using OpenMP
 integrator_plugin_initializer<
   mvs_omp< stop_on_ejection<L> >
 	> mvs_omp_plugin("mvs_omp");

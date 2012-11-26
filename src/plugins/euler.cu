@@ -15,17 +15,24 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file euler.cu
+ *   \brief Initializes the integrator plugin. 
+ *
+ */
+
 #include "propagators/euler.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
 
+//! Declare devide_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
 
-
+//! Initializes the integrator plugin
 integrator_plugin_initializer< generic< EulerPropagator, stop_on_ejection<L>, GravitationAccJerk > >
 	euler_prop_plugin("euler"
 			,"This is the integrator based on euler propagator");

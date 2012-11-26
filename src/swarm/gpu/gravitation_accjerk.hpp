@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file gravitation_accjerk.hpp
- *   \brief Defines the class to calculate accerleration and jerk 
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::GravitationAccJerk
+ *          that implements the functions to calculate accerleration and jerk 
  *          of the gravitation in parallel.
  *          
  */
@@ -68,7 +69,7 @@ class GravitationAccJerk {
 
 	public:
 
-	/*
+	/**
 	 * Create a function object for computing gravitational force 
 	 * on planets in a system using a shared memory area.
 	 *
@@ -78,6 +79,8 @@ class GravitationAccJerk {
 	 *
 	 */
 	GENERIC GravitationAccJerk(ensemble::SystemRef& sys,shared_data &shared):sys(sys),shared(shared){	}
+
+	private:
 
 	/**
 	 *  Step one of the algorithm. All pairs run in parallel. This
@@ -113,8 +116,9 @@ class GravitationAccJerk {
 	}
 
 
+	public:
 
-	/*  
+	/**  
 	 *  Find the acceleration and jerk for a planet.
 	 *
 	 *  @b  planet number
@@ -160,8 +164,9 @@ class GravitationAccJerk {
 		jerk = jerk_from_sun + jerk_from_planets;
 	}
 
+	public:
 
-	/*
+	/**
 	 * Run the complete algorithm for computing acceleration and
 	 * jerk on all bodies. This is tightly coupled with the
 	 * BPPT integrators. ij, b and c are calculated from thread id.
@@ -190,12 +195,13 @@ class GravitationAccJerk {
 			sum(b,c,acc,jerk);
 		}
 	}
-				
-
+	
+        //! The number of thread per system
 	static GENERIC int thread_per_system(){
 		return (nbod*3>(nbod-1)*nbod/2) ? nbod*3 : (nbod-1)*nbod/2;
 	}
 
+        //! The amount of memory per system
 	static GENERIC int shmem_per_system() {
 		 return sizeof(shared_data)/CHUNK_SIZE;
 	}

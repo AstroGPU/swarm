@@ -27,7 +27,7 @@
 #define _astro_constants_h
 
 namespace peyton {
-// Various physical and mathematical constants
+//! Various physical and mathematical constants
 namespace constants {
 
 	const double pi = 3.14159265358979323846264338;
@@ -51,7 +51,7 @@ namespace constants {
 	// unit conversion
 	const double years = 3600*24*365; ///< number of seconds in a year
 }
-// usability and backwards compatibility alias
+//! usability and backwards compatibility alias
 namespace ctn = constants;
 }
 

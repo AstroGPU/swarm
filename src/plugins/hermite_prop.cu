@@ -15,19 +15,28 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "propagators/hermite.hpp"
+
+/*! \file hermite_prop.cu
+ *   \brief Initializes the hermite propagator integrator plugin. 
+ *
+ */
+
+
+#include "propagators/hermite_propagator.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
 
+//! Declare device_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
 
-
+//! Intialize the integrator plugin for hermite propagator
 integrator_plugin_initializer< generic< HermitePropagator, stop_on_ejection<L>, GravitationAccJerk > >
 	hermite_prop_plugin("hermite_prop"
 			,"Propagator version of Hermite integrator");
+
 
 

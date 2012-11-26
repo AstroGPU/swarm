@@ -17,7 +17,8 @@
  ************************************************************************/
 
 /*! \file stop_on_close_encounter.hpp
- *   \brief Defines the monitor that signals and logs when the distance between
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_close_encounter
+ *          that signals and logs when the distance between
  *          any two bodies is less than "close_approach". 
  *
  */
@@ -28,7 +29,7 @@
 
 namespace swarm { namespace monitors {
 
-/* Parameters for stop_on_close_encounter monitor
+/** Parameters for stop_on_close_encounter monitor
  * deactivate_on_close_encounter (bool): 
  * log_on_close_encounter (bool): 
  * verbose_on_close_encounter (bool): 
@@ -51,6 +52,9 @@ struct stop_on_close_encounter_param {
 };
 
 /** Simple monitor to detect close encounters.
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+
  *  Signals and logs if current separation between any two bodies (measured in mutual Hill radii) is less than "close_approach".
  *  WARNING: Does not interpolate between steps
  *
@@ -93,6 +97,7 @@ class stop_on_close_encounter {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+        //! Check for close encounters and need_full_test status
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    need_full_test = false; 
@@ -110,7 +115,7 @@ class stop_on_close_encounter {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system status, if deactivate
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    if (need_to_deactivate() && (thread_in_system==0) )
@@ -125,7 +130,7 @@ class stop_on_close_encounter {
 		double _GM = _sys[0].mass();  // remove _ if ok to keep
 		//		double rH = pow((_sys[i].mass()+_sys[j].mass())/(3.*_GM),1./3.);
 		//		bool close_encounter = d < _p.dmin * rH;
-		double a = 0.5*(_sys[i].radius()+_sys[i].radius());
+		double a = 0.5*(_sys[i].distance_to_origin()+_sys[i].distance_to_origin());
 		double rH3 = (_sys[i].mass()+_sys[j].mass())/(3.*_GM)*a*a*a;
 		bool close_encounter = d*d*d < _params.dmin*_params.dmin*_params.dmin * rH3;
 

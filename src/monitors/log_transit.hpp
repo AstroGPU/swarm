@@ -17,7 +17,11 @@
  ************************************************************************/
 
 /*! \file log_transit.hpp
- *   \brief Defines the monitor that logs time and events at times near a transit.
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_transit
+ *          that logs time and events at times near a transit.
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
 
@@ -30,7 +34,7 @@
 namespace swarm {
   namespace monitors {
 
-/* Parameters for log_transit monitor
+/*! Parameters for log_transit monitor
  * log_transit_tol (real): desired precision of transit times (zero makes inactive)
  * 
  * \ingroup monitors_param
@@ -40,13 +44,14 @@ struct log_transit_params {
         int nbod, num_max_iter;
         bool log_on_transit, log_on_occultation;
 
+        //! Defines log parameters for event of near a transit
 	log_transit_params(const config &cfg)
 	{
 	  nbod = cfg.require<int>("nbod"); 
 	  num_max_iter = cfg.optional("num_max_transit_iter", 2); 
-	  tol = cfg.optional("log_transit_tol", 2.e-8); // 0.1 seconds for G=Msol=AU=1
+	  tol = cfg.optional("log_transit_tol", 2.e-8); //! 0.1 seconds for G=Msol=AU=1
 	  // WARNING assumes Hermite Fixed
-	  dt = cfg.require("time_step", 0.0);  // use hermite's timestep
+	  dt = cfg.require("time_step", 0.0);  //! use hermite's timestep
 	  log_on_transit = cfg.optional("log_transits", true); 
 	  log_on_occultation = cfg.optional("log_occultations", false); 
 	  
@@ -54,6 +59,8 @@ struct log_transit_params {
 };
 
 /** Monitor that logs (the estimated transit time, the estimated minimum impact parameter in units of stellar radii, and the estimated velocity projected onto the planet of the sky in units of stellar radii per time) at times near a transit
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+
  *   *  Assumes integration results in increasing time.
  *   *  Currently, highly experimental
  *   *  Currently, hardwired for Hermite, Fixed, std. Gravitation, nbod=3
@@ -78,7 +85,7 @@ class log_transit {
 
 	public:
 		template<class T>
-		static GENERIC int thread_per_system(T compile_time_param){
+		static GENERIC int thread_per_system(T compile_time_param){ 
 			return 1;
 		}
 
@@ -115,6 +122,8 @@ class log_transit {
 
   GPUAPI double square(const double x) { return x*x; }
 
+
+  //! calculate the time near the transit
   template<int nbod>
   GPUAPI void calc_transit_time(const int& thread_in_system, const int& i,const int& j, const double& dt, double dx[2], double dv[2], const double& b2begin, double& db2dt, const double& pos_step_end, const double& vel_step_end, double& dt_min_b2,double& b,double & vproj)
   {
@@ -122,6 +131,8 @@ class log_transit {
 	typedef swarm::compile_time_params_t<nbod> par_t;
     typedef swarm::gpu::bppt::GravitationAccJerk<par_t> calcForces_t;
     typedef typename calcForces_t::shared_data grav_t;
+
+    //! calculate forces
     calcForces_t calcForces(_sys,*( (grav_t*) (&shared_mem[(swarm::gpu::bppt::sysid_in_block()%SHMEM_CHUNK_SIZE)*sizeof(double)+(swarm::gpu::bppt::sysid_in_block()/SHMEM_CHUNK_SIZE)*SHMEM_CHUNK_SIZE*(nbod*(nbod-1)*3*sizeof(double))]) ) );
 
     const int bid = swarm::gpu::bppt::thread_body_idx(nbod);
@@ -198,7 +209,7 @@ class log_transit {
   }
 
 
-  // save one based on simple extrapolation, while working on one that itterates
+  //! save one based on simple extrapolation, while working on one that itterates
   template<int nbod>
   GPUAPI void calc_transit_time_works(const int& i,const int& j, const double& dt, double dx[2], double dv[2], const double& b2begin, double& db2dt,double& dt_min_b2,double& b,double & vproj)
   {

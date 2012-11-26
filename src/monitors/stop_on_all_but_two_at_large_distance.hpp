@@ -17,8 +17,12 @@
  ************************************************************************/
 
 /*! \file stop_on_all_but_two_at_large_distance.hpp
- *   \brief Defines the monitor that signals and logs when no more than two bodies 
- *          are within a distance "rmax" of origin or another body.
+ *   \brief Defines and implements the monitor \ref swarm::monitors::stop_on_all_but_two_at_large_distance
+ *          that signals and logs when no more than two bodies are within a distance 
+ *          "rmax" of origin or another body.
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  *
  */
 
@@ -30,13 +34,16 @@ namespace swarm {
   namespace monitors {
 
 
-/* Parameters for stop_on_all_but_two_at_large_distance monitor
+/** Parameters for stop_on_all_but_two_at_large_distance monitor
  * deactivate_on_close_encounter (bool): 
  * log_on_close_encounter (bool): 
  * verbose_on_close_encounter (bool): 
  * rmax (real): minimum distance between bodies to be considered isolated
  *
  * \ingroup monitors_param
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */ 
 struct stop_on_all_but_two_at_large_distance_params {
 	double rmax;
@@ -52,7 +59,9 @@ struct stop_on_all_but_two_at_large_distance_params {
 	}
 };
 
-/** Simple monitor that signals and logs when no more than two bodies are within a distance "rmax" of origin or another body.  Need to test this monitor.
+/** Simple monitor that signals and logs when no more than two bodies are within a distance "rmax" of origin or another body. 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  *  \ingroup monitors
  */
 template<class log_t>
@@ -90,6 +99,7 @@ class stop_on_all_but_two_at_large_distance {
 
         GPUAPI void log_system()  {  log::system(_log, _sys);  }
 
+        //! Check if need full test
 	GPUAPI bool pass_one (int thread_in_system) 
           {
 	    need_full_test = false; 
@@ -99,7 +109,7 @@ class stop_on_all_but_two_at_large_distance {
 		// Check for distance from origin
 		int num_body_near_origin = 0, id1 = -1, id2 = -2;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-		  if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
+		  if(_sys.distance_to_origin_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
 		    {
 		      if(num_body_near_origin==0) id1 = b;
 		      if(num_body_near_origin==1) id2 = b;
@@ -112,7 +122,7 @@ class stop_on_all_but_two_at_large_distance {
 	    return need_full_test;
 	  }
 	    
-
+        //! Check the system state if it should be deactivated
 	GPUAPI int pass_two (int thread_in_system) 
           {
 	    int new_state = _sys.state();
@@ -122,7 +132,7 @@ class stop_on_all_but_two_at_large_distance {
 		int num_body_far_from_all = 0;
 		for(int b = 0 ; b < _sys.nbod(); b ++ )
 		  {
-		    if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
+		    if(_sys.distance_to_origin_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
 		    bool is_far_from_every_body = true;
 		    for(int bb = 0 ; bb < _sys.nbod(); bb ++ ){		
 		      if(b == bb) continue;
@@ -164,7 +174,7 @@ class stop_on_all_but_two_at_large_distance {
 		// Check for distance from origin
 		int num_body_near_origin = 0, id1 = -1, id2 = -2;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
+			if(_sys.distance_to_origin_squared(b) <= _params.rmax*_params.rmax ) // WARNING: Confusing function name
 				{
 				if(num_body_near_origin==0) id1 = b;
 				if(num_body_near_origin==1) id2 = b;
@@ -177,7 +187,7 @@ class stop_on_all_but_two_at_large_distance {
 		// Check for distance from other bodies
 		int num_body_far_from_all = 0;
 		for(int b = 0 ; b < _sys.nbod(); b ++ ){
-			if(_sys.radius_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
+			if(_sys.distance_to_origin_squared(b) <= _params.rmax*_params.rmax ) continue; // WARNING: Confusing function name
 			bool is_far_from_every_body = true;
 			for(int bb = 0 ; bb < _sys.nbod(); bb ++ ){		
 			   if(b == bb) continue;

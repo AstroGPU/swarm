@@ -82,7 +82,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
 			double rmag = pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
-			double vmag = sqrt(2*mass_sun/rmag);  // spped for uniform circular motion
+			double vmag = sqrt(2*mass_sun/rmag) * ejection_factor ;  // spped for uniform circular motion
 			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
 			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
 			vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
@@ -150,11 +150,10 @@ config default_config() {
 	config cfg;
 	cfg["nsys"] = 16;
 	cfg["nbod"] = 3;
-	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+	cfg["integrator"] = "hermite_cpu"; // Set to use a GPU integrator
 	cfg["time_step"] = "0.001";       // time step
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
-//	cfg["blocksize"] = "16";
 	cfg["log_writer"] = "null";
 	return cfg;
 }

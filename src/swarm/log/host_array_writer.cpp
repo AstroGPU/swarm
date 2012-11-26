@@ -33,8 +33,9 @@
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
+  //! Implement the constructor
   host_array_writer::host_array_writer(const config &cfg) : event_codes_to_log(0), event_log(0)
   {
     debug = cfg.optional<int>("debug_host_array_writer",0);
@@ -50,6 +51,7 @@ namespace swarm {
       add_event_type_to_log(cfg.require<int>("host_array_event_type4"));
   }
   
+    //! 
   void host_array_writer::add_event_type_to_log(const int et)
   {
     //    int size = event_codes_to_log.size();
@@ -58,6 +60,7 @@ namespace swarm {
     event_log.resize(event_codes_to_log.size());
   }
   
+    //! Process the log data
   void host_array_writer::process(const char *log_data, size_t length)
   {
     int events_added = 0;
@@ -128,5 +131,5 @@ namespace swarm {
 writer_plugin_initializer< host_array_writer >
 	host_array_writer_plugin("host_array", "This stores selected events in simple arrays on the host");
 
-}
+} } // namespcae log::swarm
 

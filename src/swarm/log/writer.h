@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file writer.h 
- *    \brief Defines output writer methods.
+ *    \brief Defines class interface (\ref swarm::writer) for writer plugins.
  *
  *
  */
@@ -27,7 +27,7 @@
 #include "../common.hpp"
 #include "../types/config.hpp"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /**
         \brief Abstract output writer interface
@@ -52,4 +52,4 @@ class writer
 };
 typedef shared_ptr<writer> Pwriter;
 
-}
+} } // namespace log::swarm

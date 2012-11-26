@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file montecarlo_mcmc_outputs.cpp
+ *  \brief Implement Monte Carlo simulation to find planetary systems and generate ensemble. 
+ *
+ */
+
+
 /** 
  * In writing this monte carlo simulation which is supposed to find planetary
  * systems using Monte Carlo simulations, I used the old monte carlo code.
@@ -105,7 +129,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(co
 	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	    }
       
-	}  // end loop over bodies
+	} // end loop over bodies
   
       // Shift into barycentric frame
       ens.get_barycenter(sysid,x,y,z,vx,vy,vz);
@@ -204,6 +228,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
 	      std::cout << "vy= " << vy << "=" << vy_t << " ";
 	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	    }
+	}
 #else
       std::vector<double> masses(ens.nbod(),0.0);
       double x=0, y=0, z=0, vx=0, vy=0, vz=0;
@@ -248,8 +273,8 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
 	      std::cout << "vy= " << vy << "=" << vy_t << " ";
 	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	    }
+	} // end loop over bodies
 #endif      
-	}  // end loop over bodies
   
       // Shift into barycentric frame
       ens.get_barycenter(sysid,x,y,z,vx,vy,vz);
@@ -264,7 +289,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(co
   return ens;
 }
 
-
+/// output the system
 void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
@@ -335,13 +360,13 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
   os << std::flush;
 }
 
-
+///
 void print_selected_systems(swarm::ensemble& ens, std::vector<unsigned int> systemindices, std::ostream &os = std::cout)
 {
   for(unsigned int i=0; i<systemindices.size(); ++i)
       print_system(ens,systemindices[i], os);
 }
-
+///
 void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, std::ostream &os = std::cout)
 {
   if(nprint>ens.nsys()) nprint = ens.nsys();
@@ -349,7 +374,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, 
       print_system(ens,systemid,os);
 }
 
-
+///
 void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init) 
 {
   // find the stable ones and output the initial conditions for the stable
@@ -390,7 +415,7 @@ void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init)
     }
 
 }
-
+/// Calculate the semi-major axes
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
   std::vector<std::vector<double> > semimajor_axes(ens.nsys(),std::vector<double>(ens.nbod(),0.));
@@ -474,7 +499,7 @@ void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vecto
       if(disable) ens[sys_idx].set_disabled();
     }
 }
-
+///
 bool needs_shrinking( const defaultEnsemble& ens ) 
 {
   // This is the ratio we use when we are shrinking
@@ -529,7 +554,7 @@ defaultEnsemble trim_disabled_systems( const defaultEnsemble& ens )
 }
 
 
-
+///
 void reactivate_systems(defaultEnsemble&ens)
 {
   for(int i = 0; i < ens.nsys() ; i++)
@@ -538,7 +563,7 @@ void reactivate_systems(defaultEnsemble&ens)
 	ens.set_active(i);
     }
 }
-
+///
 volatile bool integration_loop_not_aborted_yet = true;
 /**
  *   We can use this signal handler function
@@ -556,6 +581,7 @@ void catch_ctrl_c()
   signal(SIGINT, &ctrl_c_trap );
 }
 
+/// The main program
 int main(int argc, char* argv[] ) 
 {
   // We keep it simple, later on one can use boost::program_options to 
