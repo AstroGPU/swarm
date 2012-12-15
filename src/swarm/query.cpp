@@ -293,8 +293,9 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_ra
 }
 
 
-    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, body_range_t &bod)
+    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, const body_range_t &_bod)
 {
+    	body_range_t bod = _bod;
 	int evtid = lr.msgid();
 
 	// Make sure these stay synced with src/swarm/log/log.hpp
