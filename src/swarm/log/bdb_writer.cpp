@@ -39,6 +39,15 @@ using namespace gpulog;
 /**
  *  \brief Writer plugin to output the log into a Berkeley-DB database.
  *
+ *  To use this, add following lines to your integration configuration file
+ *
+ *  log_output = bdb
+ *  log_output_db = <fileName>
+ *
+ *  Replace <fileName> with the name of the output file without extension. the db extension will be added
+ *  automatically.
+ *
+ *
  *
  *  *EXPERIMENTAL*: This class is not thoroughly tested.
  *  \ingroup experimental
