@@ -26,6 +26,11 @@ Or
 \verbatim
 $ git clone -b stable https://github.com/AstroGPU/swarm.git
 \endverbatim
+If you get an error message when trying to clone the stable branch, then you probably have an older version of git.  In that case, you might try the following commands
+\verbatim
+$ git clone  git@github.com:AstroGPU/swarm.git
+$ git checkout --track -b stable origin/stable
+\endverbatim
 
 \section Pre Pre-requisites
 Minimum Hardware requirements:
