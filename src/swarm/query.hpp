@@ -109,6 +109,12 @@ std::ostream &operator<<(std::ostream &out, const range<T> &r)
 }
 	
 
+/*!
+ * Pretty print a log record to the output
+ *
+ */
+std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, const body_range_t &bod = body_range_t() );
+
 /*! Execute a query on the datafile. The query consists of ranges for time (T), systems (sys) and bodies (bod)
  * 
  * @param datafile Filename for the swarm binary log to query from
@@ -134,4 +140,5 @@ void set_keplerian_output(const planets_coordinate_system_t& coordinate_system =
 void set_coordinate_system(const planets_coordinate_system_t& coordinate_system);  
 
 } }
+
 

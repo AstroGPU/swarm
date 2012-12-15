@@ -32,6 +32,12 @@ namespace gpulog
 namespace internal
 {
 
+	struct unexpected_end_of_buffer_exception : std::exception {
+		const char * what() {
+			return "Unexpected end of buffer, the record retrieved is only half correct";
+		}
+	};
+
         //! a stream of logrecords
 	struct ilogstream
 	{
@@ -40,11 +46,11 @@ namespace internal
 
 	protected:
 		const char *const ptr;
-		int at, len;
+		size_t at, len;
 
 	public:
 	        //! Class constructors for different stream input
-		__device__ __host__ ilogstream(const char *ptr_, int len_) : ptr(ptr_), at(0), len(len_), hend(-1, 0) {}
+		__device__ __host__ ilogstream(const char *ptr_, size_t len_) : ptr(ptr_), at(0), len(len_), hend(-1, 0) {}
 	        //! Class constructors for different stream input
 		__device__ __host__ ilogstream(const host_log &l) : ptr(l.internal_buffer()), at(0), len(l.size()), hend(-1, 0) {}
 
@@ -58,8 +64,16 @@ namespace internal
 			logrecord rec(ptr + at);
 			at += rec.len();
 
+			if(at > len)
+				throw unexpected_end_of_buffer_exception();
+
 			return rec;
 		}
+
+		const size_t& cursor(){
+			return at;
+		}
+
 	};
 
 }
