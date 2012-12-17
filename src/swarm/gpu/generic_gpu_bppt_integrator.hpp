@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file generic_gpu_bppt_integrator.hpp
+ *   \brief Defines and implements class \ref swarm::gpu::bppt::generic - a generic 
+ *          integrator for rapid creation of new GPU integrators. 
+ *
+ */
+
 #include "../common.hpp"
 #include "bppt.hpp"
 #include "device_functions.h"
@@ -77,8 +84,7 @@ class generic: public integrator {
 
 	//! We don't really know number of bodies right now and it does not matter.
 	//! parameters of the Propagator should be initialized with config file. But
-	//! The only way to access Propagator class is to instantiate it with something.
-	//
+	//! The only way to access Propagator class is to instantiate it with something.
 	typedef compile_time_params_t<3> defpar_t;
 	typedef  typename Propagator< defpar_t, Gravitation<defpar_t> >::params prop_params_t;
 
@@ -95,12 +101,13 @@ class generic: public integrator {
 	generic(const config& cfg): base(cfg), _mon_params(cfg),_prop_params(cfg) {
 	}
 
+        //! launch the integrator
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
 
 
-
+        //! Define the number of thread per system
 	template<class T>
 	static GENERIC int thread_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::thread_per_system();
@@ -109,6 +116,7 @@ class generic: public integrator {
 		return max3( grav, prop, moni);
 	}
 
+        //! Define the amount of shared memory per system
 	template<class T>
 	static GENERIC int shmem_per_system(T compile_time_param){
 		const int grav = Gravitation<T>::shmem_per_system();
@@ -117,8 +125,6 @@ class generic: public integrator {
 		return max3( grav, prop, moni);
 	}
 
-  //         __device__ void convert_internal_to_std_coord() {} ;
-  //         __device__ void convert_std_to_internal_coord() {};
 
 	/**
 	 * \brief Integrator the system using the provided Propagator and Monitor.
@@ -129,7 +135,7 @@ class generic: public integrator {
 	 *
 	 */
 	template<class T>
-	__device__ void kernel(T compile_time_param){
+	GPUAPI void kernel(T compile_time_param){
 		if(sysid()>=_dens.nsys()) return;
 
 		typedef Gravitation<T> GravitationInstance;
@@ -150,10 +156,10 @@ class generic: public integrator {
 		//		bool first_thread_in_system = (thread_in_system() == 0);  // Barrier to select only the first thread
 
 
-		// Setting up Monitor
+		//! Setting up Monitor
 		monitor_t montest(_mon_params,sys,*_log) ;
 
-		// Setting up Propagator
+		//! Setting up Propagator
 		Propagator<T,GravitationInstance> prop(_prop_params,sys,calcForces);
 		prop.b = b;
 		prop.c = c;

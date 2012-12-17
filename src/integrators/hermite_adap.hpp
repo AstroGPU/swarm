@@ -16,6 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file hermite_adap.hpp
+ *   \brief Defines and implements \ref swarm::gpu::bppt::hermite_adap class - the  
+ *          GPU implementation of PEC2 Hermite integrator with adaptive time step.
+ *
+ */
+
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 
@@ -33,14 +39,14 @@ class hermite_adap: public integrator {
 	private:
 	double _time_step_factor, _min_time_step;
 	mon_params_t _mon_params;
-
-	public:
-	hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {
+ 
+public:  //! constructor for hermite_adap
+        hermite_adap(const config& cfg): base(cfg),_time_step_factor(0.001),_min_time_step(0.001), _mon_params(cfg) {         
 		_time_step_factor =  cfg.require("time_step_factor", 0.0);
 		_min_time_step =  cfg.require("min_time_step", 0.0);
 	}
 
-	template<class T>
+        template<class T> //! Shared memory size
 	static GENERIC int shmem_per_system(T compile_time_param){
 		return sizeof(SystemSharedData<T>)/SHMEM_CHUNK_SIZE;
 	}
@@ -49,17 +55,17 @@ class hermite_adap: public integrator {
 		launch_templatized_integrator(this);
 	}
 
-	template<class T>
-	struct SystemSharedData {
-		typedef Gravitation<T> Grav;
+	template<class T> //! Date structure for system shared data
+	struct SystemSharedData {   
+  		typedef Gravitation<T> Grav;
 		typename Grav::shared_data gravitation;
 		DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> time_step_factor[T::n];
 	};
 
         GPUAPI void convert_internal_to_std_coord() {} 
-        GPUAPI void convert_std_to_internal_coord() {}
+        GPUAPI void convert_std_to_internal_coord() {}  
 
-	template<class T>
+  template<class T>  //! calculate adaptive time steps
 	__device__ double calc_adaptive_time_step(T compile_time_param, SystemSharedData<T>& shared, const double acc, const double jerk)
 		{
 		// Body number
@@ -67,14 +73,14 @@ class hermite_adap: public integrator {
 		// Component number
 		int c = thread_component_idx(T::n);
 
-		// Put accelerations and jerks for each body and component into shared memory
+		//! Put accelerations and jerks for each body and component into shared memory
 		if( (b < T::n) && (c < 3) ) {
 		    shared.gravitation[b][c].acc() = acc*acc;
 		    shared.gravitation[b][c].jerk() = jerk*jerk;
 	    }
 		__syncthreads();
-		// calculate sum of squares of each component for each body
-		// store ratio in shared memory
+		//! calculate sum of squares of each component for each body
+		//! store ratio in shared memory
 		if( (b < T::n) && (c==0) ) {
 		    double acc_mag_sq = shared.gravitation[b][0].acc()+shared.gravitation[b][1].acc()+shared.gravitation[b][2].acc();
 		    double jerk_mag_sq = shared.gravitation[b][0].jerk()+shared.gravitation[b][1].jerk()+shared.gravitation[b][2].jerk();
@@ -97,10 +103,11 @@ class hermite_adap: public integrator {
 	__device__ void kernel(T compile_time_param){
 
 		if(sysid()>=_dens.nsys()) return;
-		// References to Ensemble and Shared Memory
+		//! References to Ensemble and Shared Memory
 		typedef Gravitation<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
 		SystemSharedData<T>& shared_data = *(SystemSharedData<T>*) system_shared_data_pointer(this, compile_time_param);
+		//! Calculate the forces
 		Grav calcForces(sys, shared_data.gravitation );
 
 		// Local variables
@@ -124,7 +131,7 @@ class hermite_adap: public integrator {
 
 		////////// INTEGRATION //////////////////////
 
-		// Calculate acceleration and jerk
+		//! Calculate acceleration and jerk
 		calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) {
@@ -137,7 +144,7 @@ class hermite_adap: public integrator {
 			}
 
 			
-			// Initial Evaluation, it can be omitted for faster computation
+			/// Initial Evaluation, it can be omitted for faster computation
 			///calcForces(thread_in_system(),b,c,pos,vel,acc0,jerk0);
 
 			// Predict 
@@ -173,7 +180,7 @@ class hermite_adap: public integrator {
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
-			// Finalize the step
+			/// Finalize the step
 			if( (b < T::n) && (c < 3) )
 				sys[b][c].pos() = pos , sys[b][c].vel() = vel;
 			if( thread_in_system()==0 ) 

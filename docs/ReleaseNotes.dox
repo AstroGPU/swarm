@@ -1,0 +1,38 @@
+namespace swarm {
+/** \page ReleaseNotes Release notes
+
+<b>Version 1.0</b>
+This is the first stable release of Swarm-NG. 
+In addition to optimized GPU kernels, it includes:
+- A user friendly build environment (using CMake), 
+- Comprehensive documentations (using Doxygen), 
+- A test suite to ease development of new features and ensuring Swarm-NG is ready for science, and
+- (TODO: add summary of) much more.
+
+<b>Version 0.9.0</b>
+This is a pre-release prior to the first stable release.
+It includes many new features and major optimizations, including:
+- Major performance improvements, including many optimizations for Fermi GPUs
+- Completely new parallelization model, allowing efficient optimization of smaller ensembles
+- Greater modularity thanks to templatized propagators, monitors and gravitation classes
+- New propagators:  \ref gpu::bppt::MvsPropagator "mvs", \ref gpu::bppt::RkckPropagator "rkck" (both Fixed and Adaptive Timestep)
+- Several example monitor classes
+- (TODO: add summary of) much more.
+This version is described in Dindar et al. 2012 (arXiv:1208.1157)
+
+<b>Version 0.2.0</b>
+
+This release added new GPU-based integrators for few-body systems.
+Swarm-NG now includes:  \ref gpu::bppt::hermite "hermite", hermite_cpu, \ref gpu::bppt::rkck "rkck", \ref gpu::bppt::VerletPropagator "verlet", and \ref gpu::bppt::EulerPropagator "euler".
+
+<b>Version 0.1.3</b>
+
+This initial release contains GPU-based integrators for few-body
+systems (hermite_gpu, hermite_cpu, verlet_gpu, verlet_cpu).
+It comes with a basic, easy-to-use public interface for setting
+initial conditions, calling the GPU-based integration algorithms and
+accessing the output data.  Small example programs are provided to
+demonstrate functionality and how to program with Swarm-NG.
+
+*/
+}

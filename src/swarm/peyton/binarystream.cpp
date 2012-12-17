@@ -18,6 +18,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file binarystream.cpp
+ *   \brief Implements the I/O operators and methods.
+ *
+ */
+
  
 #define HAVE_BOOST_IOSTREAMS
 #ifdef HAVE_BOOST_IOSTREAMS
@@ -117,6 +122,8 @@ int demo_binarystream()
 	// peyton::io::binary::track_manifest to false. It's turned on by
 	// default.
 	cout << binary::manifest << "\n";
+
+	return 0;
 }
 
 #if 0

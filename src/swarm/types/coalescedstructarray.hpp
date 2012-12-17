@@ -16,6 +16,10 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file coalescedstructarray.hpp
+ *  \brief Defines and implements the array of structures with coalescsed access. 
+ */
+
 #pragma once
 
 
@@ -173,6 +177,7 @@ public:
 	}
 };
 
+//! CoalescedStruct for double data type
 template<int W>
 struct DoubleCoalescedStruct {
 	typedef double scalar_t;

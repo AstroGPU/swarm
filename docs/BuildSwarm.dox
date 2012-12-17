@@ -3,19 +3,33 @@ namespace swarm {
 /** \page BuildSwarm Getting Started with Swarm-NG
 
 
-\section Obtain Obtaining source code
-Currently we don't have any binary packages available. 
+\section Obtain Obtaining the source code
+Currently we do not have any binary packages available. 
 You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
 
-- Checkout the latest development versions from Git Repository using following command
+- Checkout the latest development version from Git Repository using one of the following commands: \\
+if you are an SSH user and you have set-up SSH with Github, then use:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
 \endverbatim
-If you want to download the stable version from git, use this command
+if you have not set-up SSH or never used SSH with Github, use:
+\verbatim
+$ git clone https://github.com/AstroGPU/swarm.git
+\endverbatim
+- If you want to download the stable version from git, use one of these commands instead:
 \verbatim
 $ git clone -b stable  git@github.com:AstroGPU/swarm.git
+\endverbatim
+Or
+\verbatim
+$ git clone -b stable https://github.com/AstroGPU/swarm.git
+\endverbatim
+If you get an error message when trying to clone the stable branch, then you probably have an older version of git.  In that case, you might try the following commands
+\verbatim
+$ git clone  git@github.com:AstroGPU/swarm.git
+$ git checkout --track -b stable origin/stable
 \endverbatim
 
 \section Pre Pre-requisites
@@ -34,116 +48,97 @@ Software Requirements:
 
 Optional software dependencies:
  - <a href="http://www.doxygen.org/">Doxygen</a> 
- - CMake GUI(cmake-gui)
- - Console CMake(ccmake)
+ - CMake GUI (cmake-gui)
+ - Console CMake (ccmake)
 
-Python development requirements:
- - Boost Python module
- - Python 2.5 or later development headers
 
-Installing required packages on Ubuntu
+Installing required packages on your system, here we take Ubuntu as an example:
  - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
- - Install the rest of required packages using following command:
+ - Install CMake:
 \verbatim
 sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev 
 \endverbatim
-For generating documentation and using the CMake graphical user interface
+ - For generating documentation and using the CMake graphical user interface, 
+install doxygen and cmake-gui:
 \verbatim
 sudo apt-get install doxygen cmake-gui
 \endverbatim
-For python development
-\verbatim
-sudo apt-get install libboost-python-dev python-dev
-\endverbatim
 
-\section Configuration Configuration
-Create a directory for Make files and binaries (it can be anywhere on your system) We call it &lt;build directory&gt; from now. We will refer to source directory as &lt;source directory&gt;.
+\section Compilation
 
-We will use CMake to configure and collect parameters of the system. 
-The procedure is explained for different interfaces of CMake: Command-line, Console, GUI.
+Compilation of Swarm comprises two steps - Configuration and Compilation. 
+Swarm uses <B>CMAKE</B> system for both. The following instructions are 
+for a quick build of Swarm. \ref BuildSystem "Build System" describes more advanced 
+configuration and compilation settings. 
 
-\subsection CMake Configuration using CMake command line
+\subsection configure Configure your building environment
+The configuration process allows you to adjust the default compiling options. 
+There are three options to do CMAKE configuration: Command-line, Console, 
+and GUI. Here we discuss Console approach. Command-line and GUI options are 
+described in \ref BuildSystem "Build System". 
 
-Change into the build directory and execute the following command:
-\verbatim
-$ cmake <source directory>
-\endverbatim
-CMake will try to automatically find required packages if they are installed in default location. 
-Otherwise it will give you error messages about missing packages. In this case, you need to set the paths to software packages that Swarm uses.
+ - Create a directory for make files and binaries - &lt;build directory&gt;
 
-You may need to change the following variables for CMake in order for Swarm
-to compile properly:
-
- - \c Boost_INCLUDE_DIR      : Path where Boost headers are installed. [/usr/include/]
- - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
- - \c MAX_NBODIES            : Maximum number of bodies supported by Swarm [3..16; n.b. >=16 work only with selected gravitation classes]
- - \c GENERATE_FERMI         : To generate CUDA binaries for Fermi architecture, check this option only if you have a Fermi card in your system.
- - \c GENERATE_GT200 		 : To generate CUDA binaries for GT200 architecture, check this option only if you have a GT200 card in your system.
-
-The variables may have default values filled in. If there is a default value, you can leave it unchaned. For paths, you need to put the proper path in if the
-value contains the word NOTFOUND.
-
-To see a list of all variables and their values run
-\verbatim cmake <build directory> -L \endverbatim
-
-To set value of &lt;var&gt; to &lt;value&gt;, type:
-\verbatim cmake <build directory> -D<var>=<value> \endverbatim
-
-To check your configuration and generate make files run 
-\verbatim cmake <build directory> \endverbatim 
-
-If there are errors, go back and change the variables and try again.
-
-Once the Make files are created
-You may check that Makefiles are present by changing into the build directory 
-and executing \verbatim make help \endverbatim
-
-\subsection CCMake Configuration using Console CMake
-CCMake is a console UI interface to CMake. To get started change to the build
-directory and type this command:
+ - Change to the &lt;build directory&gt; and type this command:
 \verbatim
 ccmake <source directory>
 \endverbatim
+ccmake command is a console user interface for CMAKE; &lt;source directory&gt;
+is the top directory of swarm. 
 
-After the intialization is done, you will see the list of variables. Fill in the
-variables according to \ref CMake .
+ - Press "c" to configure. If there are errors, press "e" to go to the 
+variable editing page and fix the indicated problem(s) and start over. You may 
+need to set the following variables to their correct values for swarm to 
+compile properly:
+     - \c Boost_INCLUDE_DIR      : Path where Boost headers are installed. [/usr/include/]
+     - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
 
-Hit "c" to configure, if there are errors, go back to the variables page and 
-fix them and start over. 
+ - Once configuration succeeds without errors, press "e" to exit configuration 
+page and then press "g" to generate the make files.
 
-Once configuration succeded hit "e" to exit configuration page and then hit "g"
-to generate the Make files.
+\subsection compile Compile swarm
 
-\subsection CMakeGUI Configuration using CMake GUI
-CMake GUI is an X11 interface to CMake. To run CMake GUI, you need an X server running (local or remote).
-
-To get started, change into the build directory and type this command:
-\verbatim
-cmake-gui <source directory>
+ - To compile and build executables and libraries, type: 
+\verbatim make 
 \endverbatim
-
-Hit "Configure" button, in the dialogs that follow, choose the default options.
-CMake will check th configuration and may produce errors are in red text in the bottom pane.
-
-Change the variables according to \ref CMake. Hit "Configure" again to apply changes. Make sure there are no errors.
-
-Hit "Generate" when you are done and Makefiles are generated. You can close the CMake GUI window after generate command is done.
-
-\section Compile Compile
-To compile and build binaries type: \verbatim make \endverbatim
 It may take a while to compile CUDA files.
 
-If you need documentation, use the following command:
+ - If you need documentation, use the following command to generate the whole 
+set of documentation:
 \verbatim make doc \endverbatim
 
 \section Test Tests and Benchmarks
 
-Once the build is done, you can test the installation using:
+Once compilation is done, you can test the installation using:
 \verbatim make test \endverbatim
 
-If you want to test the computational capacity of your system try:
-\verbatim make benchmark \endverbatim
+See \ref TestSwarm "How to test swarm" for more extensive testing and 
+customizing the tests.
 
+
+If you want to test the computational capacity of your system, do:
+\verbatim make benchmark \endverbatim
+*WARNING:* This requires performing long integrations on both the CPU and GPU, so it may take a long time. Please be patient.
+
+Please report your results at 
+http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+
+\section Feedback
+If for any reasons the compilation does not work or the tests do not pass, please use the following 
+command to generate a feedback package.
+
+From the build directory (for simple installs it is the same as swarm directory) run 
+\verbatim cd <build directory>
+sh <source direcotry>/scripts/make_feedback.sh \endverbatim
+
+The script will create a file named feedback.tgz. Email us this file with the description of
+your system so we can work towards fixing the problem.
+
+If you examine the code and you find a bug, please don't hesitate to report it at
+http://github.com/AstroGPU/swarm/issues . Feel free to fork the repository and send
+pull requests if you fix any bugs.
+
+   
 
 
 */

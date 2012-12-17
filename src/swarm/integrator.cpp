@@ -17,7 +17,7 @@
  ************************************************************************/
 
 /*! \file integrator.cpp
- *  \brief class integrator 
+ *  \brief Implements member functions for class integrator.
  *
 */
 
@@ -30,7 +30,7 @@
 
 namespace swarm {
 
-	const int integrator::_default_max_iterations = 10000;
+	const int integrator::_default_max_iterations = 10000000;
 	const int integrator::_default_max_attempts   = 1000000;
 
 	void integrator::set_log_manager(log::Pmanager& l){
@@ -39,7 +39,6 @@ namespace swarm {
 	}
 
         gpulog::host_log* integrator::get_host_log(){
-	  //	  return _logman->get_hostlog();
 	  return _log;
 	}
 
@@ -65,12 +64,14 @@ namespace swarm {
 			if( ens[i].is_active() ) count_running++;
 		return count_running;
 	}
+
 	int number_of_not_disabled_systems(defaultEnsemble ens) {
 		int count_running = 0;
 		for(int i = 0; i < ens.nsys() ; i++)
 			if( !ens[i].is_disabled() ) count_running++;
 		return count_running;
 	}
+
 	void activate_all_systems(defaultEnsemble& ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
 		  {
@@ -78,6 +79,7 @@ namespace swarm {
 			  ens[i].set_active();
 		  }
 	}
+
 	void activate_inactive_systems(defaultEnsemble& ens) {
 		for(int i = 0; i < ens.nsys() ; i++)
 		  {
@@ -116,15 +118,13 @@ namespace swarm {
 
 
 /*!
-   \brief Integrator instantiation support
-
-  @param[in] cfg configuration class
-*/
-
-/* Must use factory class to dynamically load integrator subclass
- * instead of using constructor. Done so that users can define their
- * own integrators that the swarm code does not need to know about at
- * compile time
+ * \brief Dynamically load integrators based on the configuration
+ *
+ * Must use factory class to dynamically load integrator subclass
+ * instead of using constructor. Users can define their
+ * own integrators that can be loaded dynamically later.
+ * 
+ * @param[in] cfg configuration class
  */
 Pintegrator integrator::create(const config &cfg)
 {

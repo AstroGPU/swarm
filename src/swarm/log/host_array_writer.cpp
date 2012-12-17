@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ * Copyright (C) 2011 by Eric Ford and the Swarm-NG Development Team     *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -15,104 +15,30 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file host_array_writer.cpp 
+ *    \brief Processes the event log data.
+ *
+ *
+ */
+
+#include "host_array_writer.hpp"
+
 #include "../common.hpp"
 
 #include "../types/config.hpp"
 #include "../plugin.hpp"
 
+//#include<unordered_map>
 #include "io.hpp"
 #include "writer.h"
 
-namespace swarm {
+namespace swarm { namespace log {
 
-template<int NumData>
-class event_record
-{
-public:
-  typedef double data_type[NumData];
-  int bodid1, bodid2;
-  double time;
-  data_type data;
-  event_record(const int b, const double t, const double* d)
-    : bodid1(b), bodid2(-1), time(t)
+  //! Implement the constructor
+  host_array_writer::host_array_writer(const config &cfg) : event_codes_to_log(0), event_log(0)
   {
-    for(int i=0;i<NumData;++i) data[i] = d[i];
-  }
-
-  event_record(const int b1, const int b2, const double t, const double* d)
-    : bodid1(b1), bodid2(b2), time(t)
-  {
-    for(int i=0;i<NumData;++i) data[i] = d[i];
-  }
-  int get_num_data() const 
-  { return NumData;  };
-
-};
-
-// Specialized version for NumData=-1 to allow for variable length
-template<>  class event_record<-1>
-{
-public:
-  typedef std::vector<double> data_type;
-  int bodid1, bodid2;
-  double time;
-  data_type data;
-  event_record(const int b, const double t, const data_type& d)
-    : bodid1(b), bodid2(-1), time(t), data(d.size())
-  {
-    for(int i=0;i<data.size();++i) data[i] = d[i];
-  }
-
-  event_record(const int b1, const int b2, const double t, const data_type& d)
-    : bodid1(b1), bodid2(b2), time(t), data(d.size())
-  {
-    for(int i=0;i<data.size();++i) data[i] = d[i];
-  }
-
-  int get_num_data() const 
-  {       return data.size();    }
-};
-
-// Specialized version for NumData=0 to allow for no double data (is this needed?)
-template<>  class event_record<0>
-{
-public:
-  typedef std::vector<double> data_type;
-  int bodid1, bodid2;
-  double time;
-  //  data_type data;
-  event_record(const int b, const double t)
-    : bodid1(b), bodid2(-1), time(t)
-  {  }
-
-  event_record(const int b1, const int b2, const double t)
-    : bodid1(b1), bodid2(b2), time(t)
-  {  }
-
-  int get_num_data() const 
-  {       return 0;    }
-};
-
-/**
- * host_array_writer plugin for use in
- * io.cpp
- *
- */
-class host_array_writer : public swarm::writer
-{
-public: 
-  static const int num_doubles_per_event = 2;
-  typedef event_record<num_doubles_per_event> event_record_type;
-protected:
-  std::vector<int> event_codes_to_log;
-
-  typedef std::vector<event_record_type>  event_log_one_system_type;
-  typedef std::vector<event_log_one_system_type>  event_log_one_code_type;
-  std::vector<event_log_one_code_type> event_log;
-
-public:
-  host_array_writer(const config &cfg) : event_codes_to_log(0), event_log(0)
-  {
+    debug = cfg.optional<int>("debug_host_array_writer",0);
     // eventually figure out how to set multiple event types
     int event_type = cfg.require<int>("host_array_event_type");
     if(event_type!=0) 
@@ -125,36 +51,17 @@ public:
       add_event_type_to_log(cfg.require<int>("host_array_event_type4"));
   }
   
-  void add_event_type_to_log(const int et)
+    //! 
+  void host_array_writer::add_event_type_to_log(const int et)
   {
+    //    int size = event_codes_to_log.size();
+    //    event_code_index[et] = size;
     event_codes_to_log.push_back(et);
     event_log.resize(event_codes_to_log.size());
   }
   
-  event_log_one_code_type& get_event_log_all_systems(const int i)
-  {    return event_log[i];  }
-
-  const event_log_one_code_type& get_event_log_all_systems(const int i) const
-  {    return event_log[i];  }
-
-  event_log_one_system_type& get_event_log(const int i, const int sys)
-  {    return event_log[i][sys];  }
-
-  const event_log_one_system_type& get_event_log_(const int i, const int sys) const
-  {    return event_log[i][sys];  }
-
-  int get_event_type(const int i) const
-  {    
-    if((i>=0) && (i<event_codes_to_log.size()))
-      return event_codes_to_log[i];  
-    else
-      return 0;
-  }
-
-  ~host_array_writer()
-  {	}
-  
-  virtual void process(const char *log_data, size_t length)
+    //! Process the log data
+  void host_array_writer::process(const char *log_data, size_t length)
   {
     int events_added = 0;
     gpulog::ilogstream ils(log_data,length);
@@ -176,6 +83,9 @@ public:
 	    // \todo Add code for how to process other observations-type events here
 	    //	    if((event_code==EVT_TRANSIT)||(event_code==EVT_OCCULTATION)) 
 
+	    //	 int event_id = (depth>0.) ? log::EVT_TRANSIT : log::EVT_OCCULTATION;
+	    //	 log::event(_log,event_id,_sys.time()+dt_min_b2,_sys.id(),j,b,vproj);
+
 	    if((event_code>=log::EVT_FIRST_OBS_CODE)&&(event_code<=log::EVT_LAST_OBS_CODE)) 
 	      {
 		int num_ints = log::num_ints_for_event(event_code);
@@ -195,28 +105,31 @@ public:
 		  }
 
 		++events_added;
-#if DEBUG || 1
-		int oldprec = std::cout.precision();
-		std::cout.precision(8);
-		std::cout << "Event " << event_code << " t= " << time << " sys= " << sysid << " bod= " << intdata[0];
-		if(num_ints>=2)
-		  std::cout << ", " << intdata[1];
-		std::cout.precision(4);
-		for(int j=0;j<num_doubles;++j)	  
-		  std::cout << " " << doubledata[j];
-		std::cout.precision(oldprec);
-		std::cout << "\n";
-#endif
+		if(debug)
+		  {
+		    int oldprec = std::cout.precision();
+		    std::cout.precision(10);
+		    std::cout << "EventCode= " << event_code << " t= " << time << " sys= " << sysid << " bod= " << intdata[0];
+		    if(num_ints>=2)
+		      {
+			for(int j=1;j<num_ints;++j)
+			  std::cout << ", " << intdata[j];
+		      }
+		    std::cout.precision(6);
+		    for(int j=0;j<num_doubles;++j)	  
+		      std::cout << " " << doubledata[j];
+		    std::cout.precision(oldprec);
+		    std::cout << " \n";
+		  }
 	      }
 	    
 	  }
       }
   }
-};
 
 
 writer_plugin_initializer< host_array_writer >
 	host_array_writer_plugin("host_array", "This stores selected events in simple arrays on the host");
 
-}
+} } // namespcae log::swarm
 

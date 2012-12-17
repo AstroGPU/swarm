@@ -15,7 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#include "integrators/hermite.hpp"
+
+/*! \file hermite.cu
+ *   \brief Initializes the hermite integrator plugins. 
+ *
+ */
+
+#include "integrators/hermite_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"
@@ -23,20 +29,25 @@
 #include "monitors/log_transit.hpp"
 #include "monitors/log_rvs.hpp"
 
+//! Declare devide_log variable
 typedef gpulog::device_log L;
 using namespace swarm::monitors;
 using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
+//! Initialize the hermite integrator plugin for stop_on_ejection and gravitation acceleration
 integrator_plugin_initializer<hermite< stop_on_ejection<L> , GravitationAccJerk > >
 	hermite_plugin("hermite");
 
+//! Initialize the hermite integrator plugin for stop_on_ejection_or_close_encounter and gravitation acceleration
 integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
 	hermite_close_encounter_plugin("hermite_close_encounter");
 
+//! Initialize the hermite integrator plugin for log_time_interval and gravitation acceleration
 integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
 	hermite_log_plugin("hermite_log");
 
+//! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
 integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
 	hermite_transit_plugin("hermite_transit");
 

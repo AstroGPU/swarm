@@ -3,8 +3,7 @@ namespace swarm {
 
   \page SwarmExec Swarm command-line interface
 
-  Swarm executable is the average Linus user's interface to Swarm-NG package. Swarm executable can be used
-  to accomplish different tasks:
+  Swarm executable is a command line user interface to Swarm-NG package. Swarm executable can be used to accomplish different tasks:
     
     - Integrate an ensemble from a text input file
     - Examine log output files
@@ -100,7 +99,7 @@ param 2 = value
 
    - -h [ --help ] : Displays the brief help message
 
-   \subsection Integrate integrate: General prupose integration
+   \subsection Integrate integrate: General purpose integration
    Reads an ensemble from a file (Generates one if no input file specified) and integrates it. Statistical 
    information about time progress and energy conservation will be written to output in specified intervals.
    The resulting ensemble is saved to a file if an output file is specified.
@@ -149,7 +148,7 @@ swarm integrate -c conf2.cfg -d 100 -n 10 -I INPUT.txt -O OUTPUT.txt
 
 
    \subsection Benchmark benchmark: Stress test and Stability test for integrators
-   To put integrators under stress test and compare the timing and stability of different
+   Put integrators under stress test and compare the timing and stability of different
    integration scenarios.
    
    Benchmark requires a parameter name to iterate over and values for the parameter. Values
@@ -177,7 +176,7 @@ in one of these three forms
     - param=start..inc..finish   \ paramater "param" will iterate over numbers in the interval [start, finish] using the specified increment amount that comes in the middle.
 
    \subsubsection BenchmarkExamples Examples:
-   Performs a stress test to a specific integration scenario using generated systems
+   Performs a stress test for a specific integration scenario using generated systems
 \verbatim
 swarm benchmark -c conf.cfg --range nsys=4000,8000,16000,32000
 \endverbatim

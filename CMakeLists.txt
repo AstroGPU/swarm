@@ -1,11 +1,12 @@
 # Project Settings
 PROJECT(Swarm_NG)
-SET(Swarm_NG_VERSION_MAJOR 0)
-SET(Swarm_NG_VERSION_MINOR 2)
+SET(Swarm_NG_VERSION_MAJOR 1)
+SET(Swarm_NG_VERSION_MINOR 0)
 
 # CMake Settings
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
+SET(CMAKE_BUILD_TYPE Release)
 
 # Directory Structure 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -14,6 +15,7 @@ SET(swarm_INCLUDE_DIRS
 	${CMAKE_SOURCE_DIR}/src 
 	${CMAKE_BINARY_DIR}/src
 	)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 SET(SAMPLES ${CMAKE_SOURCE_DIR}/samples) 
 SET(TESTDIR ${CMAKE_SOURCE_DIR}/test) 
 
@@ -21,9 +23,8 @@ SET(TESTDIR ${CMAKE_SOURCE_DIR}/test)
 
 # All the cached variables and parameters that control
 # the compilation go in this file
-INCLUDE(variables.cmake)
+INCLUDE(cmake/variables.cmake)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
 
 # Find the libraries and packages
@@ -60,7 +61,7 @@ MACRO(SWARM_ADD_LIBRARY target)
 	TARGET_LINK_LIBRARIES(${target} swarmng)
 ENDMACRO(SWARM_ADD_LIBRARY target)
 
-INCLUDE(doc.cmake)
+INCLUDE(cmake/doc.cmake)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
 
@@ -69,8 +70,6 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in ${CMAKE_CURRENT_BINAR
 ADD_SUBDIRECTORY(src)
 
 
-tutorial_python(TutorialPython py/tutorial.py)
-
-INCLUDE(test.cmake)
-INCLUDE(custom.cmake)
+INCLUDE(cmake/test.cmake)
+INCLUDE(cmake/custom.cmake)
 

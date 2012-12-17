@@ -1,15 +1,91 @@
 namespace swarm {
 
-/** \page TestSwarm How to test swarm
+/** \page TestSwarm How to Test Swarm
 
+The Swarm source distribution contains various test suites for testing
+Swarm's functionality. 
 
-Once the build is done, you can test the installation using:
+\section test Swarm Tests
 
+Once the build process is finished successfully, you may test the 
+installation by the following three mechanisms:
+
+\subsection default Running the default test set
+
+There is a default set of tests that you can run by simpily type:
+
+\verbatim
 make test 
+\endverbatim
 
-If you want to test the computational capacity of your system try:
+\subsection option Running special test set
 
+Besides the default test suite, Swarm provides options for users to select different
+test parameters or different swarm components for testing via swarm configuration. 
+The options are listed below. The values displayed for each options are the default
+values. 
+
+- Test all integrators versus all number of bodies
+\verbatim
+TEST_integrator_nbod:BOOL=TRUE
+\endverbatim
+
+- List of integrators to be tested vs. nbod
+\verbatim
+TEST_integrator_nbod_list:STRING=CPU;Runge_Kutta_Fixed_Time_Step;Runge_Kutta_Adaptive_Time_Step;mvs
+\endverbatim
+
+- Test the monitors against different number of bodies
+\verbatim
+TEST_monitors_nbod:BOOL=FALSE
+\endverbatim
+
+- Test stability of all integrators
+\verbatim
+TEST_stability:BOOL=FALSE
+\endverbatim
+
+- Duration of the stability test
+\verbatim
+TEST_stability_duration:STRING=100
+\endverbatim
+
+- List of integrators to be tested for stability
+\verbatim
+TEST_stability_list:STRING=Runge_Kutta_Fixed_Time_Step;Runge_Kutta_Adaptive_Time_Step
+\endverbatim
+
+- Number of systems for stability test
+\verbatim
+TEST_stability_nsys:STRING=16
+\endverbatim
+
+\subsection usertests Build your own tests
+
+Swarm also allows users to make their own tests. 
+
+\subsection output Test output
+
+After running swarm tests, three output files will be generated in 
+&lt;build directory&gt;/Testing/Temporary.
+
+    - \c CTestCostData.txt: contains the testing time for each tests in the 
+test suite. 
+
+    - \c LastTest.log: captures the detailed information about each tests, such 
+as the name of the test, test command line, start time and end time, time elapsed, 
+and other run time outputs. In addition, it indicates if a test succeeded or failed. 
+
+    - \c LastTestsFailed.log: lists all the tests that failed during 'make test'
+execution. 
+
+\section benchmark Benchmarking
+
+If you want to test the computational capacity of your system, type:
+
+\verbatim
 make benchmark 
+\endverbatim
 
 */
 

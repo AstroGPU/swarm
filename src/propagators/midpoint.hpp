@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file midpoint.hpp
+ *   \brief Defines \ref swarm::gpu::bppt::MidpointPropagator - the GPU 
+ *          implementation of modified midpoint method propagator. 
+ *
+ */
+
 #include "swarm/swarmplugin.h"
 
 namespace swarm { namespace gpu { namespace bppt {
@@ -25,12 +32,20 @@ namespace swarm { namespace gpu { namespace bppt {
  */
 struct MidpointPropagatorParams {
 	double time_step;
+        //! Constructor for MidpointPropagatorParams
 	MidpointPropagatorParams(const config& cfg){
 		time_step = cfg.require("time_step", 0.0);
 	}
 };
 
 /*! GPU implementation of modified midpoint method propagator
+ *
+ *
+ *  *EXPERIMENTAL*: WIP, this class is not thoroughly tested and can
+ * change at any time.
+ *  \ingroup experimental
+ * 
+ *
  * \ingroup propagators
  *
  */
@@ -42,7 +57,7 @@ struct MidpointPropagator {
 	params _params;
 
 
-	// Runtime variables
+	//! Runtime variables
 	ensemble::SystemRef& sys;
 	Gravitation& calcForces;
 	int b;
@@ -52,15 +67,16 @@ struct MidpointPropagator {
 //	bool first_thread_in_system;
 	double max_timestep;
 
-
+        //! Constructor for MidpointPropagator
 	GPUAPI MidpointPropagator(const params& p,ensemble::SystemRef& s,
 			Gravitation& calc)
 		:_params(p),sys(s),calcForces(calc){}
 
+        ///
 	static GENERIC int thread_per_system(){
 		return nbod * 3;
 	}
-
+        ///
 	static GENERIC int shmem_per_system() {
 		 return 0;
 	}
@@ -69,7 +85,9 @@ struct MidpointPropagator {
 
 	GPUAPI void shutdown() { }
 
+        /// Conversion from internal coordinate system to standard cooridinate system. 
         GPUAPI void convert_internal_to_std_coord() {} 
+        /// Conversion from standard coordinate system to internal cooridinate system. 
         GPUAPI void convert_std_to_internal_coord() {}
 
 	__device__ bool is_in_body_component_grid()
@@ -84,6 +102,7 @@ struct MidpointPropagator {
 //        { return first_thread_in_system; }	
         { return (thread_in_system()==0); }	
 
+        /// Advance time steps
 	GPUAPI void advance(){
 		double H = min( max_timestep ,  _params.time_step );
 		double pos = 0, vel = 0;
@@ -94,7 +113,7 @@ struct MidpointPropagator {
 
 		////////// INTEGRATION //////////////////////
 
-		/// Modified midpoint method integrator with n substeps
+		//! Modified midpoint method integrator with n substeps
 		const int n = 4;
 		double h = H / n;
 

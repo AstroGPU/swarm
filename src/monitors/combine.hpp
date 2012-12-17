@@ -15,6 +15,15 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file combine.hpp
+ *   \brief Defines and implements a template \ref swarm::monitors::combine
+ *          to combine two monitors.
+ *
+ */
+
+
 #pragma once
 
 #include <limits>
@@ -29,9 +38,11 @@ GENERIC const T& max2(const T& a, const T& b){
 
 
 template< class Param1, class Param2 >
+//! Define parameters for combining monitors
 struct combine_monitors_params {
 	Param1 p1;
 	Param2 p2;
+        //! default construct for combine_monitors_params
 	combine_monitors_params(const config &cfg): p1(cfg), p2(cfg)
 	{
 	}
@@ -49,6 +60,9 @@ struct combine_monitors_params {
  *  Example:
  *  combine_monitors< combine_monitors< Monitor1, Monitor2> , Monitor3 >
  *  \ingroup monitors
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
  */
 template< class log_t,  class Monitor1,  class Monitor2 >
 struct combine {
@@ -69,11 +83,13 @@ struct combine {
 
 	public:
 		template<class T>
+		//! return the number of thread of the system, larger of the two monitors
 		static GENERIC int thread_per_system(T compile_time_param){
 			return max2(monitor1_t::thread_per_system(compile_time_param)
 					,monitor2_t::thread_per_system(compile_time_param));
 		}
 
+                //! return the shared memory amount, larger of the two monitors
 		template<class T>
 		static GENERIC int shmem_per_system(T compile_time_param) {
 			return max2(monitor1_t::shmem_per_system(compile_time_param)

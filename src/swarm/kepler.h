@@ -20,8 +20,9 @@
 /*! \file kepler.h
  *  \brief converts between Cartesian & Keplerian coordinates
  *
- *  Based on code from John Chambers' Mercury code
-*/
+ *  Based on code from John Chambers' Mercury code 
+ *  \todo put proper refernece to publication or URL.
+ */
 
 #ifndef H_SWARM_KEPLER
 
@@ -51,6 +52,7 @@ double improve_mean_to_eccentric_annomaly_guess(const double e, const double M, 
       return x+dx;
 };
 
+/// calculate mean anomaly to eccentric anomaly
 double mean_to_eccentric_annomaly(const double e,  double M)
 {
   // Based on Mercury
@@ -78,6 +80,7 @@ double mean_to_eccentric_annomaly(const double e,  double M)
     }
 }
 
+/// Calculate the caresian coordinates for the ellipse
 void calc_cartesian_for_ellipse(double& x,double& y, double & z, double &vx, double &vy, double &vz, const double a, const double e, const double i, const double O, const double w, const double M, const double GM)
 {
   double cape = mean_to_eccentric_annomaly(e,M);
