@@ -156,6 +156,24 @@ int lr_extract_time(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result)
 		return DB_DONOTINDEX;
 }
 
+int compare_time(DB* db, const DBT *k1, const DBT* k2){
+    if(k1->size < k2->size)
+        return -1;
+    else if(k1->size > k2->size)
+        return 1;
+    else{
+        if( (k1->size == 8) && (k2->size == 8) ) {
+            double& a = *(double*)(k1->data);
+            double& b = *(double*)(k2->data);
+            if(a < b) return -1;
+            else if(a > b) return 1;
+            else return 0;
+        }else{
+            return 0;
+        }
+    }
+}
+
 
 /**
  * We need a strategy for reading for binary log files,
@@ -204,13 +222,14 @@ int main(int argc, char* argv[]){
             DB_INIT_LOCK | DB_INIT_MPOOL |
             DB_INIT_TXN , 0);*/
 	Db primary(NULL, 0), system_idx(NULL, 0), time_idx(NULL, 0), event_idx(NULL, 0);
-	primary.open(NULL, (outputFileName+".p.db").c_str(), "primary", DB_BTREE, DB_CREATE, 0);
+	primary.open(NULL, (outputFileName+".p.db").c_str(), NULL, DB_BTREE, DB_CREATE, 0);
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
-	system_idx.open(NULL, (outputFileName+".sys.db").c_str(), "system_idx", DB_BTREE, DB_CREATE , 0);
+	system_idx.open(NULL, (outputFileName+".sys.db").c_str(), NULL, DB_BTREE, DB_CREATE , 0);
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
-	time_idx.open(NULL, (outputFileName+".time.db").c_str(), "time_idx", DB_BTREE, DB_CREATE  , 0);
+    time_idx.set_bt_compare(compare_time);
+	time_idx.open(NULL, (outputFileName+".time.db").c_str(), NULL, DB_BTREE, DB_CREATE  , 0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
-	event_idx.open(NULL, (outputFileName+".evt.db").c_str(), "event_idx", DB_BTREE, DB_CREATE , 0);
+	event_idx.open(NULL, (outputFileName+".evt.db").c_str(), NULL, DB_BTREE, DB_CREATE , 0);
 
 	primary.associate(NULL, &system_idx,  &lr_extract_sysid, DB_IMMUTABLE_KEY);
 	primary.associate(NULL, &time_idx  ,  &lr_extract_time , DB_IMMUTABLE_KEY);

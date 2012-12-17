@@ -64,8 +64,6 @@ namespace internal
 			logrecord rec(ptr + at);
 			at += rec.len();
 
-			if(at > len)
-				throw unexpected_end_of_buffer_exception();
 
 			return rec;
 		}
