@@ -47,15 +47,25 @@ int recordsLimit = 1000;
 int DEBUG_LEVEL = 0;
 const int CACHESIZE = 1024*1024*64 ;
 
+typedef long long idx_t; 
+
 struct logdb_primary_key {
     double time;
     int system_id;
     int event_id;
+    idx_t recno;
 };
 
 
 po::variables_map argvars_map;
 string inputFileName, outputFileName;
+// Number to start with record number, it shouldn't be 
+// very significant since it is only used to remove
+// duplicates
+idx_t start_recno = 0;
+// Absolute position in the input file where the conversion should
+// begin
+idx_t starting_position = 0;
 
 void parse_commandline_and_config(int argc, char* argv[]){
 
@@ -65,6 +75,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			("output,o", po::value<std::string>(), "Name of the database output file")
 			("number,n", po::value<int>(), "Number of records to convert")
 			("verbose,v", po::value<int>(), "Verbosity level")
+            ("position,p", po::value<idx_t>(), "Absolute position in the input file where the conversion should begin (in bytes)")
+            ("recno,r", po::value<idx_t>(), "Starting record number")
 			("dump,d", "Dump all the records up to the number")
 			("quiet,q", "Suppress all messages")
 			("help,h", "Help message")
@@ -99,6 +111,12 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	if(vm.count("number"))
 		recordsLimit = vm["number"].as<int>();
+
+    if(vm.count("recno"))
+        start_recno  = vm["recno"].as<idx_t>();
+
+    if(vm.count("position"))
+        starting_position = vm["position"].as<idx_t>();
 
 
 }
@@ -148,16 +166,19 @@ bool extract_from_ptr(void* ptr, size_t size, double& time, int& sys){
 int lr_extract_sysid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
     logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
     put_in_dbt(pkey.system_id, result);
+    return 0;
 }
 
 int lr_extract_evtid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
     logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
     put_in_dbt(pkey.event_id, result);
+    return 0;
 }
 
 int lr_extract_time(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
     logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
     put_in_dbt(pkey.time , result);
+    return 0;
 }
 
 /**
@@ -184,6 +205,8 @@ int compare_logdb_primary_key(DB* db, const DBT *k1, const DBT* k2){
             else if(a.system_id > b.system_id) return 1;
             else if(a.event_id < b.event_id) return -1;
             else if(a.event_id > b.event_id) return 1;
+            else if(a.recno < b.recno) return -1;
+            else if(a.recno > b.recno) return 1;
             else return 0;
         }else{
             return 0;
@@ -270,6 +293,19 @@ int main(int argc, char* argv[]){
 	if(!input_reader.validate())
 		throw std::runtime_error("The input file is not valid");
 
+
+
+    cout << "Starting to convert at position " << starting_position << 
+        " with record number " << start_recno << endl;
+
+    idx_t current_recno = start_recno;
+
+    // When starting_position is not specified, we shouldn't 
+    // go back to zero, it is incorrect as the header is already
+    // read.
+    if(starting_position > 0)
+        input_reader.seek( starting_position );
+
 	// Open the database files: primary, system_index, time_index, event_index
 	// associate the indices with the primary
 
@@ -280,7 +316,6 @@ int main(int argc, char* argv[]){
             DB_INIT_LOCK | DB_INIT_MPOOL |
             DB_INIT_TXN , 0);*/
     primary.set_cachesize(0,CACHESIZE,0);
-	primary.set_flags(DB_DUP);
     primary.set_bt_compare(compare_logdb_primary_key);
 	primary.open(NULL, (outputFileName+".p.db").c_str(), NULL, DB_BTREE, DB_CREATE, 0);
 
@@ -313,6 +348,7 @@ int main(int argc, char* argv[]){
     logdb_primary_key pkey;
     Dbt key(&pkey,sizeof(pkey)),data;
 
+
 	for(int i=0; (i < recordsLimit) && !interruption_received; i++) {
 		// read one record from binary file
 		logrecord l = input_reader.next();
@@ -328,16 +364,20 @@ int main(int argc, char* argv[]){
             // form the primary key
             pkey.event_id = l.msgid();
             extract_from_ptr((void*)l.ptr, l.len(), pkey.time, pkey.system_id);
+            pkey.recno = current_recno;
 
             data.set_data((void*)l.ptr);
             data.set_size(l.len());
             primary.put(NULL,&key,&data,0);
+
+            current_recno += 1;
         }else{
             break;
         }
 
 	}
-    cout << "Processed the input file up to position " << input.tellg() << endl;
+    cout << "Processed the input file up to position " << input_reader.tellg() << 
+        " and record number " << current_recno << endl;
 
 	// Close all the databases
 	primary.close(0);

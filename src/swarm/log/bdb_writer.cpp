@@ -30,7 +30,7 @@
 #include "log.hpp"
 #include "writer.h"
 
-#include <db_cxx.h>
+#include "bdb_database.hpp"
 
 namespace swarm { namespace log {
 
@@ -63,27 +63,27 @@ class bdb_writer : public writer
 	// can use a very simple key and later on we can do secondary databases
 	// to make the indexes based on time and system id.
 
-	Db db;
+    idx_t current_recno;
+    bdb_database db;
 //! constructor for bdb_writer
 public:
-	bdb_writer(const config& cfg):db(0,0){
-		std::string fileName = cfg.require("log_output_db",std::string()) + ".db";
-		db.open(NULL, fileName.c_str() , NULL, DB_RECNO, DB_CREATE | DB_TRUNCATE, 0);
+	bdb_writer(const config& cfg):current_recno(1){
+		std::string fileName = cfg.require("log_output_db",std::string());
+		db.createEmpty(fileName);
 	}
 
         //! Process the log data and put them in the database
 	virtual void process(const char *log_data, size_t length) {
 		ilogstream stream(log_data,length);
 		while(logrecord lr = stream.next()){
-			Dbt key(NULL,0);
-			Dbt data((void*)lr.ptr,lr.len());
-			db.put(NULL,&key,&data,DB_APPEND);
+            db.put(lr, current_recno);
+            current_recno += 1;
 		}
 	}
 
         //! Destructor
 	~bdb_writer(){
-		db.close(0);
+		db.close();
 	}
 };
 

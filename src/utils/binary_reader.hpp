@@ -41,4 +41,7 @@ public:
     char* readBytes(const size_t& len);
 
     void readNextChunk();
+    ptrdiff_t tellg();
+    void seek(ptrdiff_t absolute_position);
+    void readChunk(ptrdiff_t current_offset);
 };

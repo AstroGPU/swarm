@@ -20,20 +20,38 @@ binary_reader::binary_reader(istream& input)
         buffer_end = current = buffer_begin = new char[BUFFER_SIZE];
 }
 
-void binary_reader::readNextChunk(){
-    // lseek back to before of the current
-    int back_offset = buffer_end - current;
-    int page_offset = ((back_offset + PAGESIZE-1)/PAGESIZE)*PAGESIZE;
-    if(page_offset > 0) _input.seekg( -page_offset , ios_base::cur);
+ptrdiff_t binary_reader::tellg(){
+    return _input.tellg() - (buffer_end - current);
+}
+
+void binary_reader::seek(ptrdiff_t absolute_position){
+    ptrdiff_t page_offset = ((absolute_position + PAGESIZE-1)/PAGESIZE)*PAGESIZE;
+    ptrdiff_t mode_offset = absolute_position - page_offset;
+
+    _input.seekg( page_offset, ios_base::beg );
+
+    readChunk( mode_offset );
+}
+
+void binary_reader::readChunk(ptrdiff_t current_offset){
     // read the chuck
     _input.read(buffer_begin,BUFFER_SIZE);
     buffer_end = buffer_begin + _input.gcount();
 
     // set the current pointer
-    current = buffer_begin + page_offset - back_offset;
+    current = buffer_begin + current_offset;
 
-//    std::cerr << "Read " << (buffer_end-buffer_begin) << 
-  //      " bytes and current at " << (current-buffer_begin) << std::endl;
+    // std::cerr << "Read " << (buffer_end-buffer_begin) << 
+    //   " bytes and current at " << (current-buffer_begin) << std::endl;
+}
+
+void binary_reader::readNextChunk(){
+    // lseek back to before of the current
+    ptrdiff_t back_offset = buffer_end - current;
+    ptrdiff_t page_offset = ((back_offset + PAGESIZE-1)/PAGESIZE)*PAGESIZE;
+    if(page_offset > 0) _input.seekg( -page_offset , ios_base::cur);
+
+    readChunk(page_offset - back_offset);
 }
 
 
