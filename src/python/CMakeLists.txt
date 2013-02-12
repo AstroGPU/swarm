@@ -7,7 +7,7 @@ IF(Boost_PYTHON_FOUND)
 			module.cpp
 		)
 		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
-		TARGET_LINK_LIBRARIES(swarmng_ext boost_python ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+		TARGET_LINK_LIBRARIES(swarmng_ext ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 	ELSE()
 		MESSAGE("Python headers were not found")
 	endif()
