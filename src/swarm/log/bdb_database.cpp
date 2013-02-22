@@ -110,23 +110,30 @@ int compare_logdb_primary_key(DB* db, const DBT *k1, const DBT* k2){
         }
     }
 }
-int compare_time(DB* db, const DBT *k1, const DBT* k2){
+
+
+/**
+ * Make a comparison function for a C++ type T that supports "<" operator
+ */
+template<typename T>
+int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
     if(k1->size < k2->size)
         return -1;
     else if(k1->size > k2->size)
         return 1;
     else{
-        if( (k1->size == 8) && (k2->size == 8) ) {
-            double& a = *(double*)(k1->data);
-            double& b = *(double*)(k2->data);
+        if( (k1->size == sizeof(T)) && (k2->size == sizeof(T)) ) {
+            T& a = *(T*)(k1->data);
+            T& b = *(T*)(k2->data);
             if(a < b) return -1;
-            else if(a > b) return 1;
+            else if(b < a) return 1;
             else return 0;
         }else{
             return 0;
         }
     }
 }
+
 
 
 void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
@@ -139,6 +146,8 @@ void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
     // duplicates and it is given a smaller cache size
     system_idx.set_cachesize(0,CACHESIZE/4,0);
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
+    system_idx.set_bt_compare(bdb_compare<int>);
+    system_idx.set_dup_compare(compare_logdb_primary_key);
 	system_idx.open(NULL, (baseFileName+".sys.db").c_str(), NULL, DB_BTREE, open_mode , 0);
 
     // Open up the time index database, it has to support
@@ -146,11 +155,14 @@ void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
     // it takes a smaller cache size
     time_idx.set_cachesize(0,CACHESIZE/4,0);
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
-    time_idx.set_bt_compare(compare_time);
+    time_idx.set_bt_compare(bdb_compare<double>);
+    time_idx.set_dup_compare(compare_logdb_primary_key);
 	time_idx.open(NULL, (baseFileName+".time.db").c_str(), NULL, DB_BTREE, open_mode  , 0);
 
     event_idx.set_cachesize(0,CACHESIZE/4,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
+    event_idx.set_bt_compare(bdb_compare<int>);
+    event_idx.set_dup_compare(compare_logdb_primary_key);
 	event_idx.open(NULL, (baseFileName+".evt.db").c_str(), NULL, DB_BTREE, open_mode , 0);
 
     // Associate the primary table with the indices
