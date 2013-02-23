@@ -63,10 +63,14 @@ class bdb_writer : public writer
 	// can use a very simple key and later on we can do secondary databases
 	// to make the indexes based on time and system id.
 
+    DbEnv* env;
     bdb_database db;
 //! constructor for bdb_writer
 public:
-	bdb_writer(const config& cfg){
+	bdb_writer(const config& cfg)
+        :env(bdb_database::createDefaultEnv())
+        ,db(env)
+    {
 		std::string fileName = cfg.require("log_output_db",std::string());
 		db.createEmpty(fileName);
 	}
@@ -82,6 +86,7 @@ public:
         //! Destructor
 	~bdb_writer(){
 		db.close();
+        env->close(0);
 	}
 };
 

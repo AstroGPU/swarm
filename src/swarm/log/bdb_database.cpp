@@ -1,5 +1,6 @@
 #include "../common.hpp"
 
+#include <unistd.h>
 #include <limits>
 
 #include "bdb_database.hpp"
@@ -98,35 +99,45 @@ int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
 }
 
 
+DbEnv* bdb_database::createDefaultEnv(){
+    DbEnv* env = new DbEnv(0);
+    char* cwd = get_current_dir_name();
+    env->set_cachesize(0,CACHESIZE,0);
+    env->open(cwd,DB_CREATE | DB_INIT_MPOOL,0);
+    free(cwd);
+    return env;
+}
 
-void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
+void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
-    primary.set_cachesize(0,CACHESIZE,0);
+
+    char * fn = fileName.c_str();
+
     primary.set_bt_compare(bdb_compare<pkey_t>);
-	primary.open(NULL, (baseFileName+".p.db").c_str(), NULL, DB_BTREE, open_mode, 0);
+	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, 0);
 
     // Open up the system index database, it has to support
     // duplicates and it is given a smaller cache size
-    system_idx.set_cachesize(0,CACHESIZE/4,0);
+   // system_idx.set_cachesize(0,CACHESIZE,0);
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
     system_idx.set_bt_compare(bdb_compare<sysid_t>);
     system_idx.set_dup_compare(bdb_compare<pkey_t>);
-	system_idx.open(NULL, (baseFileName+".sys.db").c_str(), NULL, DB_BTREE, open_mode , 0);
+	system_idx.open(NULL, fn, "system_idx", DB_BTREE, open_mode , 0);
 
     // Open up the time index database, it has to support
     // duplicates because our index is not a unique index and
     // it takes a smaller cache size
-    time_idx.set_cachesize(0,CACHESIZE/4,0);
+  //  time_idx.set_cachesize(0,CACHESIZE,0);
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
     time_idx.set_bt_compare(bdb_compare<float>);
     time_idx.set_dup_compare(bdb_compare<pkey_t>);
-	time_idx.open(NULL, (baseFileName+".time.db").c_str(), NULL, DB_BTREE, open_mode  , 0);
+	time_idx.open(NULL, fn, "time_idx", DB_BTREE, open_mode  , 0);
 
-    event_idx.set_cachesize(0,CACHESIZE/4,0);
+  //  event_idx.set_cachesize(0,CACHESIZE,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
     event_idx.set_bt_compare(bdb_compare<evtid_t>);
     event_idx.set_dup_compare(bdb_compare<pkey_t>);
-	event_idx.open(NULL, (baseFileName+".evt.db").c_str(), NULL, DB_BTREE, open_mode , 0);
+	event_idx.open(NULL, fn, "event_idx", DB_BTREE, open_mode , 0);
 
     // Associate the primary table with the indices
     // the lr_extract_* is the function that defines
@@ -136,16 +147,16 @@ void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
 	primary.associate(NULL, &event_idx ,  &lr_extract_evtid, DB_IMMUTABLE_KEY);
 }
 
-void bdb_database::openForReading(const std::string& baseFileName) {
-    openInternal(baseFileName, DB_RDONLY);
+void bdb_database::openForReading(const std::string& fileName) {
+    openInternal(fileName, DB_RDONLY);
 }
 
-void bdb_database::create(const std::string& baseFileName){
-    openInternal(baseFileName, DB_CREATE);
+void bdb_database::create(const std::string& fileName){
+    openInternal(fileName, DB_CREATE);
 }
 
-void bdb_database::createEmpty(const std::string& baseFileName){
-    openInternal(baseFileName, DB_CREATE | DB_TRUNCATE );
+void bdb_database::createEmpty(const std::string& fileName){
+    openInternal(fileName, DB_CREATE );
 }
     
 void bdb_database::put(logrecord& lr){
@@ -172,10 +183,10 @@ void bdb_database::put(logrecord& lr){
 }
 
 void bdb_database::close(){
-	primary.close(0);
-	system_idx.close(0);
-	time_idx.close(0);
 	event_idx.close(0);
+	time_idx.close(0);
+	system_idx.close(0);
+	primary.close(0);
 }
 
 } } // close namespace log :: swarm
