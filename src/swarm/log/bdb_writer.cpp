@@ -63,11 +63,10 @@ class bdb_writer : public writer
 	// can use a very simple key and later on we can do secondary databases
 	// to make the indexes based on time and system id.
 
-    idx_t current_recno;
     bdb_database db;
 //! constructor for bdb_writer
 public:
-	bdb_writer(const config& cfg):current_recno(1){
+	bdb_writer(const config& cfg){
 		std::string fileName = cfg.require("log_output_db",std::string());
 		db.createEmpty(fileName);
 	}
@@ -76,8 +75,7 @@ public:
 	virtual void process(const char *log_data, size_t length) {
 		ilogstream stream(log_data,length);
 		while(logrecord lr = stream.next()){
-            db.put(lr, current_recno);
-            current_recno += 1;
+            db.put(lr);
 		}
 	}
 

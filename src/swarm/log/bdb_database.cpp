@@ -11,12 +11,25 @@ using gpulog::logrecord;
 const int CACHESIZE = 1024*1024*64 ;
 
 
-struct logdb_primary_key {
-    double time;
-    int system_id;
-    int event_id;
-    idx_t recno;
+typedef uint32_t sysid_t;
+typedef uint8_t evtid_t;
+struct pkey_t {
+    float time;
+    uint32_t system_event_id;
+
+    pkey_t(const float& t,const int& sysid, const int& evid)
+        :time(t),system_event_id((uint32_t)evid << 24 | sysid){}
+
+    sysid_t system_id()const{ return (system_event_id & ~ (255 << 24)); }
+    evtid_t event_id()const{ return (evtid_t) (system_event_id >> 24); }
 };
+
+bool operator <(const pkey_t& a, const pkey_t& b){
+    if(a.time == b.time)
+        return a.system_event_id < b.system_event_id;
+    else
+        return a.time < b.time;
+}
 
 
 /**
@@ -33,24 +46,6 @@ void put_in_dbt(const T& t, Dbt* data){
 }
 
 
-bool extract_from_ptr(void* ptr, size_t size, double& time, int& sys){
-	logrecord l((char*)ptr);
-	assert(l.len() == size);
-
-	// Based on the implementation in query.cpp
-	switch(l.msgid()){
-	case 1: case 2: case 11: case 15: case 16:
-		l >> time >> sys;
-		return true;
-
-	default:
-        sys = -1;
-        time = std::numeric_limits<double>::quiet_NaN();
-		return false;
-	}
-
-}
-
 /**
  * Extract the system ID from a log record
  *
@@ -61,55 +56,23 @@ bool extract_from_ptr(void* ptr, size_t size, double& time, int& sys){
  *                   should fill in data and size fields that describe the secondary key or keys.
  */
 int lr_extract_sysid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
-    put_in_dbt(pkey.system_id, result);
+    pkey_t& pkey = *(pkey_t*) key->get_data();
+    put_in_dbt(pkey.system_id(), result);
     return 0;
 }
 
 int lr_extract_evtid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
-    put_in_dbt(pkey.event_id, result);
+    pkey_t& pkey = *(pkey_t*) key->get_data();
+    put_in_dbt(pkey.event_id(), result);
     return 0;
 }
 
 int lr_extract_time(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
+    pkey_t& pkey = *(pkey_t*) key->get_data();
     put_in_dbt(pkey.time , result);
     return 0;
 }
 
-/**
- * The primary key is a struct
- * we just convert the key into the struct
- * and perform lexicographical compare in order
- * of time , system_id and event_id
- */
-int compare_logdb_primary_key(DB* db, const DBT *k1, const DBT* k2){
-    const size_t len = sizeof(logdb_primary_key);
-    if(k1->size < k2->size)
-        return -1;
-    else if(k1->size > k2->size)
-        return 1;
-    else{
-        if( (k1->size == len) && (k2->size == len) ) {
-
-            logdb_primary_key& a = *(logdb_primary_key*)(k1->data);
-            logdb_primary_key& b = *(logdb_primary_key*)(k2->data);
-
-            if(a.time < b.time) return -1;
-            else if(a.time > b.time) return 1;
-            else if(a.system_id < b.system_id) return -1;
-            else if(a.system_id > b.system_id) return 1;
-            else if(a.event_id < b.event_id) return -1;
-            else if(a.event_id > b.event_id) return 1;
-            else if(a.recno < b.recno) return -1;
-            else if(a.recno > b.recno) return 1;
-            else return 0;
-        }else{
-            return 0;
-        }
-    }
-}
 
 
 /**
@@ -139,15 +102,15 @@ int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
 void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
 
     primary.set_cachesize(0,CACHESIZE,0);
-    primary.set_bt_compare(compare_logdb_primary_key);
+    primary.set_bt_compare(bdb_compare<pkey_t>);
 	primary.open(NULL, (baseFileName+".p.db").c_str(), NULL, DB_BTREE, open_mode, 0);
 
     // Open up the system index database, it has to support
     // duplicates and it is given a smaller cache size
     system_idx.set_cachesize(0,CACHESIZE/4,0);
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
-    system_idx.set_bt_compare(bdb_compare<int>);
-    system_idx.set_dup_compare(compare_logdb_primary_key);
+    system_idx.set_bt_compare(bdb_compare<sysid_t>);
+    system_idx.set_dup_compare(bdb_compare<pkey_t>);
 	system_idx.open(NULL, (baseFileName+".sys.db").c_str(), NULL, DB_BTREE, open_mode , 0);
 
     // Open up the time index database, it has to support
@@ -155,14 +118,14 @@ void bdb_database::openInternal(const std::string& baseFileName, int open_mode){
     // it takes a smaller cache size
     time_idx.set_cachesize(0,CACHESIZE/4,0);
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
-    time_idx.set_bt_compare(bdb_compare<double>);
-    time_idx.set_dup_compare(compare_logdb_primary_key);
+    time_idx.set_bt_compare(bdb_compare<float>);
+    time_idx.set_dup_compare(bdb_compare<pkey_t>);
 	time_idx.open(NULL, (baseFileName+".time.db").c_str(), NULL, DB_BTREE, open_mode  , 0);
 
     event_idx.set_cachesize(0,CACHESIZE/4,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
-    event_idx.set_bt_compare(bdb_compare<int>);
-    event_idx.set_dup_compare(compare_logdb_primary_key);
+    event_idx.set_bt_compare(bdb_compare<evtid_t>);
+    event_idx.set_dup_compare(bdb_compare<pkey_t>);
 	event_idx.open(NULL, (baseFileName+".evt.db").c_str(), NULL, DB_BTREE, open_mode , 0);
 
     // Associate the primary table with the indices
@@ -185,17 +148,26 @@ void bdb_database::createEmpty(const std::string& baseFileName){
     openInternal(baseFileName, DB_CREATE | DB_TRUNCATE );
 }
     
-void bdb_database::put(const logrecord& lr, const idx_t& recno){
-    logdb_primary_key pkey;
-    Dbt key(&pkey,sizeof(pkey)),data;
+void bdb_database::put(logrecord& lr){
+    
+    double time; int sys;
 
-    // form the primary key
-    pkey.event_id = lr.msgid();
-    extract_from_ptr((void*)lr.ptr, lr.len(), pkey.time, pkey.system_id);
-    pkey.recno = recno;
+	// Based on the implementation in query.cpp
+	switch(lr.msgid()){
+	case 1: case 2: case 11: case 15: case 16:
+		lr >> time >> sys;
+        break;
 
-    data.set_data((void*)lr.ptr);
-    data.set_size(lr.len());
+	default:
+        sys = 0;
+        time = std::numeric_limits<double>::quiet_NaN();
+        break;
+	}
+
+    pkey_t pkey( (float) time, sys, lr.msgid());
+    
+    Dbt key(&pkey,sizeof(pkey));
+    Dbt data((void*)lr.ptr,lr.len());
     primary.put(NULL,&key,&data,0);
 }
 

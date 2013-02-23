@@ -7,8 +7,6 @@
 
 namespace swarm { namespace log {
 
-typedef long long idx_t; 
-
 class bdb_database {
 
 public:
@@ -23,7 +21,7 @@ public:
     void create(const std::string& baseFileName);
     void createEmpty(const std::string& baseFileName);
     
-    void put(const gpulog::logrecord& lr, const idx_t& recno = 0);
+    void put(gpulog::logrecord& lr);
 
     void close();
 
