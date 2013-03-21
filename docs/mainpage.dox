@@ -39,6 +39,7 @@ Citing Swarm-NG
 When writing papers which made use of Swarm-NG, we strongly encourage you to cite the following technical paper describing Swarm-NG and the Swarm-NG Website. 
  
 - Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy. 
+DOI: <a href="http://dx.doi.org/10.1016/j.newast.2013.01.002">10.1016/j.newast.2013.01.002</a>
 arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
 
 - Website: http://www.astro.ufl.edu/~eford/code/swarm/docs
