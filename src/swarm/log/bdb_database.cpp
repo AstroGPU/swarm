@@ -12,18 +12,6 @@ using gpulog::logrecord;
 const int CACHESIZE = 1024*1024*64 ;
 
 
-typedef uint32_t sysid_t;
-typedef uint8_t evtid_t;
-struct pkey_t {
-    float time;
-    uint32_t system_event_id;
-
-    pkey_t(const float& t,const int& sysid, const int& evid)
-        :time(t),system_event_id((uint32_t)evid << 24 | sysid){}
-
-    sysid_t system_id()const{ return (system_event_id & ~ (255 << 24)); }
-    evtid_t event_id()const{ return (evtid_t) (system_event_id >> 24); }
-};
 
 bool operator <(const pkey_t& a, const pkey_t& b){
     if(a.time == b.time)
@@ -111,7 +99,7 @@ DbEnv* bdb_database::createDefaultEnv(){
 void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
 
-    char * fn = fileName.c_str();
+    const char * fn = fileName.c_str();
 
     primary.set_bt_compare(bdb_compare<pkey_t>);
 	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, 0);
@@ -182,11 +170,51 @@ void bdb_database::put(logrecord& lr){
     primary.put(NULL,&key,&data,0);
 }
 
+Pprimary_cursor_t bdb_database::primary_cursor(){
+    shared_ptr<primary_cursor_t> c(new primary_cursor_t);
+    primary.cursor(0,&c->_c,0);
+    return c;
+}
+
 void bdb_database::close(){
 	event_idx.close(0);
 	time_idx.close(0);
 	system_idx.close(0);
 	primary.close(0);
 }
+
+
+
+void primary_cursor_t::close(){
+    _c->close();
+}
+
+bool primary_cursor_t::get(pkey_t& key, lrw_t& lr, uint32_t flags){
+    Dbt k;
+    Dbt d;
+    k.set_data(&key);
+    d.set_data(lr.ptr);
+    k.set_ulen(sizeof(key));
+    d.set_ulen(lr.len);
+    d.set_flags(DB_DBT_USERMEM);
+    k.set_flags(DB_DBT_USERMEM);
+    return _c->get(&k,&d,flags) == 0;
+}
+
+bool primary_cursor_t::position_at(pkey_t& key,lrw_t& lr){
+    Dbt k;
+    Dbt d;
+    k.set_data(&key);
+    d.set_data(lr.ptr);
+    k.set_ulen(sizeof(key));
+    d.set_ulen(lr.len);
+    d.set_flags(DB_DBT_USERMEM);
+    k.set_flags(DB_DBT_USERMEM);
+    k.set_size(sizeof(key));
+    return _c->get(&k,&d,DB_SET_RANGE) == 0;
+}
+
+
+
 
 } } // close namespace log :: swarm
