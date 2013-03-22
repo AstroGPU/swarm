@@ -4,7 +4,7 @@ INCLUDE_DIRECTORIES(.)
 MACRO(ADD_PLUGIN mainfile id default_included text)
 	SET(PLUGIN_${id} ${default_included} CACHE BOOL ${text})
 	IF(${PLUGIN_${id}})
-		LIST(APPEND SWARM_PLUGIN_FILES ${mainfile})
+		LIST(APPEND SWARM_PLUGIN_FILES ${mainfile} ${ARGN})
 		LIST(APPEND SWARM_PLUGINS ${id})
 
 		SET(SWARM_PLUGIN_FILES ${SWARM_PLUGIN_FILES} PARENT_SCOPE)
@@ -33,13 +33,14 @@ CUDA_ADD_LIBRARY(swarmng SHARED
 	swarm/log/io.cpp swarm/log/logmanager.cpp swarm/log/log.cpp
 	swarm/gpu/device_settings.cpp
 	swarm/types/config.cpp swarm/utils.cpp swarm/gpu/utilities.cu
+    
 	${SWARM_PLUGIN_FILES})
 TARGET_LINK_LIBRARIES(swarmng ${Boost_LIBRARIES})
 IF(BDB_FOUND)
 	TARGET_LINK_LIBRARIES(swarmng ${BDB_LIBRARIES})
 ENDIF(BDB_FOUND)
 
-SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp swarm/query.cpp)
+SWARM_ADD_EXECUTABLE(swarm swarm/swarm.cpp swarm/query.cpp swarm/bdb_query.cpp)
 
 
 

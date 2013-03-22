@@ -22,6 +22,7 @@
  *
 */
 
+#pragma once
 
 #include "common.hpp"
 #include "log/io.hpp"
@@ -108,6 +109,7 @@ std::ostream &operator<<(std::ostream &out, const range<T> &r)
 	return out;
 }
 	
+void execute(const std::string &dbfile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() );
 
 /*!
  * Pretty print a log record to the output
@@ -123,7 +125,6 @@ std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, const body
  * @param bod      Range of bodies to output
  * 
  */
-void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod = body_range_t() );
 
 enum planets_coordinate_system_t {
   astrocentric, barycentric, jacobi, origin
@@ -139,6 +140,6 @@ void set_keplerian_output(const planets_coordinate_system_t& coordinate_system =
  */
 void set_coordinate_system(const planets_coordinate_system_t& coordinate_system);  
 
-} }
+} } // namespace swarm query
 
 
