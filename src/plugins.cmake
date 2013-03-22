@@ -33,7 +33,7 @@ ADD_PLUGIN(plugins/midpoint.cu Midpoint FALSE "Midpoint Integrator")
 
 if(BDB_FOUND)
 	INCLUDE_DIRECTORIES(${BDB_INCLUDE_DIR})
-	ADD_PLUGIN(swarm/log/bdb_writer.cpp BDB_Writer FALSE "Berkeley DB writer" swarm/log/bdb_database.cpp)
+	ADD_PLUGIN(swarm/log/bdb_writer.cpp BDB_Writer FALSE "Berkeley DB writer")
 endif()
 
 ADD_PLUGIN(swarm/log/binary_writer.cpp Binary_Writer TRUE "Binary file writer")

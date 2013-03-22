@@ -445,7 +445,6 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			"\tverify    :  Verify an integrator against a reference integrator\n"
 			"\tquery     :  Query data from a log file\n"
 			"\ttest      :  Test a configuration against input/output files\n"
-			"\ttest-cpu  :  Test a configuration against input/output files without initializing GPU\n"
 			"\tgenerate  :  Generate a new ensemble and save it to output file\n"
 			"\tconvert   :  Read input file and write it to output file (converts to/from text)\n"
 			"\nOptions"
@@ -487,6 +486,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	po::options_description general("General Options");
 	general.add_options()
 		("cfg,c", po::value<std::string>(), "Integrator configuration file")
+        ("nogpu,g", "Only use CPU for integration, use this if your machine does not have an NVIDIA GPU")
 		("defaults", "Use default values for required configuration options")
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
@@ -530,8 +530,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		std::cout << desc << "\n"; exit(1); 
 	}
 
-	const int cmd_to_config_len = 7;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text_input" , "text_output", "destination_time", "logarithmic", "interval" };
+	const int cmd_to_config_len = 8;
+	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text_input" , "text_output", "destination_time", "logarithmic", "interval", "nogpu" };
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
@@ -575,9 +575,6 @@ int main(int argc, char* argv[]){
 		init_cuda();
 		run_integration();
 
-	}else if(command == "test-cpu"){
-//		init_cuda();  // removed so CPU tests would work, but then broke GPU tests when needed to set cuda device
-		output_test();
 	}else if(command == "test"){
 		init_cuda();  
 		output_test();
@@ -662,7 +659,7 @@ int main(int argc, char* argv[]){
 	} 
 	
 	else
-		std::cerr << "Valid commands are: integrate, benchmark, verify, test, test-cpu, query, generate " << std::endl;
+		std::cerr << "Valid commands are: integrate, benchmark, verify, test, query, generate " << std::endl;
 
 	return 0;
 }

@@ -46,25 +46,30 @@ namespace swarm {
  *  encouraged for forward compatibility.
  */
 inline void init(const config &cfg) { 
-	/// Select the proper device
-	const char* devstr = getenv("CUDA_DEVICE");
 
-	/// Device present or not
-	const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
+    if(cfg.optional("nogpu", 0) != 0) {
+        /// Select the proper device
+        const char* devstr = getenv("CUDA_DEVICE");
 
-	///
-	const int dev = cfg.optional("CUDA_DEVICE", env_dev);
+        /// Device present or not
+        const int env_dev = (devstr != NULL) ? atoi(devstr) : 0;
 
-	/// Select cuda device
-	select_cuda_device(dev);
+        ///
+        const int dev = cfg.optional("CUDA_DEVICE", env_dev);
 
-	if(cfg.optional("more_cache",0)!=0){
-		set_more_cache();
-	}
-	///
-	if(cfg.optional("verbose",0)!=0){
-	print_device_information();
+        /// Select cuda device
+        select_cuda_device(dev);
+
+        if(cfg.optional("more_cache",0)!=0){
+            set_more_cache();
         }
+        ///
+        if(cfg.optional("verbose",0)!=0){
+        print_device_information();
+            }
+     }else {
+         std::cerr << "Not initializing GPU" << std::endl;
+     }
 
 	/// initialize the config
 	swarm::log::manager::default_log()->init(cfg);
