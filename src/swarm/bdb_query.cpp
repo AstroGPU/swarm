@@ -23,15 +23,15 @@ void execute_bdb_query(const std::string &dbfile, time_range_t T, sys_range_t sy
     pkey_t key(T.first,0,0); 
     lrw_t lrw(20480);
 
-    cur->position_at(key,lrw);
-    cur->prev(key,lrw);
-    while(cur->next(key,lrw) && key.time <= T.last){
+    bool has_record = cur->position_at(key,lrw);
+    while(has_record && key.time <= T.last){
         //std::cerr << key.time << " % " << key.system_id() << " % " << (int)key.event_id() << std::endl;
 
         gpulog::logrecord lr = lrw.lr();
         output_record(std::cout, lr, bod); std::cout << std::endl;
+
+        has_record = cur->next(key,lrw);
     }
-    std::cout << std::endl;
 
     cur->close();
 

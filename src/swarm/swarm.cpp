@@ -530,11 +530,14 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		std::cout << desc << "\n"; exit(1); 
 	}
 
-	const int cmd_to_config_len = 8;
-	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text_input" , "text_output", "destination_time", "logarithmic", "interval", "nogpu" };
+	const int cmd_to_config_len = 7;
+	const char* cmd_to_config[cmd_to_config_len] = { "input", "output", "text_input" , "text_output", "destination_time", "logarithmic", "interval" };
 	for(int i = 0; i < cmd_to_config_len; i++)
 		if(vm.count(cmd_to_config[i]))
 			cfg[cmd_to_config[i]] = vm[cmd_to_config[i]].as<std::string>();
+
+    if(vm.count("nogpu"))
+        cfg["nogpu"] = "1";
 
 	if(vm.count("param_value_pair") > 0) {
 		vector<string> pairs = vm["param_value_pair"].as< vector<string> >();

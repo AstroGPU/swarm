@@ -47,7 +47,7 @@ namespace swarm {
  */
 inline void init(const config &cfg) { 
 
-    if(cfg.optional("nogpu", 0) != 0) {
+    if(cfg.optional("nogpu", 0) == 0) {
         /// Select the proper device
         const char* devstr = getenv("CUDA_DEVICE");
 
