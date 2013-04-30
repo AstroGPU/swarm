@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file montecarlo.cpp
+ *  \brief Implement Monte Carlo simulation to find planetary systems and generate ensemble. 
+ *
+ */
+
+
 /** 
  * In writing this monte carlo simulation which is supposed to find planetary
  * systems using Monte Carlo simulations, I used the old monte carlo code.
@@ -23,7 +47,7 @@ using namespace swarm;
 using namespace std;
 
 config cfg;
-
+///
 void inspect(defaultEnsemble &ens, const int sys, const int bod ) 
 {
 	  fprintf(stderr,"%d %d: %lg (%lg %lg %lg) (%lg %lg %lg) \n", sys, bod,
@@ -36,7 +60,7 @@ void inspect(defaultEnsemble &ens, const int sys, const int bod )
 			  ens[sys][bod][2].vel()
 			  );
 }
-
+///
 void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &ens, const int sysidx, const int sysid) 
 {
   double time_init = cfg.optional("time_init", 0.0);
@@ -53,6 +77,8 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
   double mass_star = cfg.optional("mass_star", 1.);
   double x=0, y=0, z=0, vx=0, vy=0, vz=0;
   ens.set_body(sysidx, 0, mass_star, x, y, z, vx, vy, vz);
+  if(ens[sysidx][0].num_attributes()>=1)
+    ens[sysidx][0].attribute(0) = cfg.optional("radius_star", 1.) * 0.00464912633;
 
   double mass_enclosed = mass_star;
   for(unsigned int bod=1;bod<ens.nbod();++bod)
@@ -60,6 +86,10 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
       double mass_planet = draw_value_from_config(cfg,"mass",bod,0.,mass_star);
       mass_enclosed += mass_planet;
       
+      if(ens[sysidx][bod].num_attributes()>=1)
+	ens[sysidx][bod].attribute(0) = draw_value_from_config(cfg,"radius",bod,0.,200.) * 4.26349283e-5;
+
+
       double a, e, i, O, w, M;
       if(transit_ephemeris)
 	{
@@ -184,7 +214,8 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
   enum {
     JACOBI, BARYCENTRIC, ASTROCENTRIC
   } COORDINATE_SYSTEM = BARYCENTRIC;
-  
+  const bool use_jacobi = cfg.optional("use_jacobi", 0);  
+  if(use_jacobi) COORDINATE_SYSTEM = JACOBI;
 
   std::streamsize cout_precision_old = os.precision();
   os.precision(10);
@@ -263,6 +294,48 @@ void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, 
 }
 
 
+void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init) 
+{
+  // find the stable ones and output the initial conditions for the stable
+  // ones in keplerian coordinates
+  //  std::cerr << "# Finding stable system ids\n";
+  std::vector<unsigned int> stable_system_indices, unstable_system_indices;
+  for(int i = 0; i < ens.nsys() ; i++ )
+    {
+      if(ens[i].is_disabled())
+	unstable_system_indices.push_back(i);
+      else
+	stable_system_indices.push_back(i);
+    }
+  
+  //  std::cerr << "# Writing stable system ids\n";
+  if(cfg.count("stable_init_output"))
+    {
+      ofstream stable_init_output( cfg.optional("stable_init_output", string("stable_init_output.txt")).c_str() ); 
+      print_selected_systems(ens_init,stable_system_indices, stable_init_output);
+    }
+
+  if(cfg.count("stable_final_output"))
+    {
+      ofstream stable_final_output( cfg.optional("stable_final_output", string("stable_final_output.txt")).c_str() ); 
+      print_selected_systems(ens,stable_system_indices, stable_final_output);
+    }
+
+  if(cfg.count("unstable_init_output"))
+    {
+      ofstream unstable_init_output( cfg.optional("unstable_init_output", string("unstable_init_output.txt")).c_str() ); 
+      print_selected_systems(ens_init,unstable_system_indices, unstable_init_output);
+    }
+
+  if(cfg.count("unstable_final_output"))
+    {
+      ofstream unstable_final_output( cfg.optional("unstable_final_output", string("unstable_final_output.txt")).c_str() ); 
+      print_selected_systems(ens,unstable_system_indices, unstable_final_output);
+    }
+
+}
+
+/// Calculate teh semi-major axes
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
   std::vector<std::vector<double> > semimajor_axes(ens.nsys(),std::vector<double>(ens.nbod(),0.));
@@ -294,7 +367,7 @@ std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
     }
   return semimajor_axes;
 }
-
+/// 
 void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vector<double> >& semimajor_axes_init, const double deltaa_threshold )
 {
   for(int sys_idx = 0; sys_idx < ens.nsys() ; sys_idx++)
@@ -429,7 +502,6 @@ void catch_ctrl_c()
 
 int main(int argc, char* argv[] ) 
 {
-
   // We keep it simple, later on one can use boost::program_options to 
   // have more options
   // but now we only use two configuration files. It is because the 
@@ -475,8 +547,12 @@ int main(int argc, char* argv[] )
   // We can set the following two items if we really need
   // longer integrations before we stop for checking the
   // ensemble and saving snapshots.
-  integ->set_max_attempts( 1 );     // one kernel call to allow for prompt CPU pruning of unstable systems
-  integ->set_max_iterations ( 6283299 ); // 10^3 years at time_step=0.001
+  // one kernel call to allow for prompt CPU pruning of unstable systems
+  int max_kernel_calls_per_integrate = cfg.optional("max_kernel_calls_per_integrate",1);
+  // 10^2 inner orbits at 200 time steps per inner orbit
+  int max_itterations_per_kernel_call = cfg.optional("max_itterations_per_kernel_call",20000);
+  integ->set_max_attempts( max_kernel_calls_per_integrate ); 
+  integ->set_max_iterations ( max_itterations_per_kernel_call ); 
   SYNC;
 
   // integrate ensemble
@@ -507,12 +583,12 @@ int main(int argc, char* argv[] )
     int active_ones = number_of_active_systems(ens);
     const double deltaa_frac_threshold = cfg.optional("deltaa_frac_threshold", 0.5);
     disable_unstable_systems( ens, semimajor_axes_init, deltaa_frac_threshold );
-    std::cerr << "# Time: " << ens.time_ranges() << " Active Systems: " << active_ones << ", ";
+    std::cerr << "# Time: " << ens.time_ranges().min << " " << ens.time_ranges().median << " " << ens.time_ranges().max << " Systems: " << ens.nsys() << ", " << active_ones << ", ";
     active_ones = number_of_active_systems(ens);    
     std::cerr << active_ones << "\n";
 
     // EBF Experiment trying to expose host log.  
-    swarm::log::ensemble(*(swarm::log::manager::default_log()->get_hostlog()),ens);
+    swarm::log::ensemble_enabled(*(swarm::log::manager::default_log()->get_hostlog()),ens);
     integ->flush_log();
 
     // 3. Now we need to get rid of the inactive ones. There 
@@ -548,7 +624,7 @@ int main(int argc, char* argv[] )
     // gets tired of it and hits Ctrl-C
     //    std::cerr << "# Saving snapshot\n";
     save_snapshot( ens );
-    
+    write_stable_systems(ens,ens_init);        
   }
 
   // Now we are at the end of the system, before we examine
@@ -561,18 +637,7 @@ int main(int argc, char* argv[] )
       save_snapshot( ens );
     }
 
-  // find the stable ones and output the initial conditions for the stable
-  // ones in keplerian coordinates
-  //  std::cerr << "# Writing stable system ids\n";
-  ofstream output( cfg.optional("stable_output", string("stable_output.txt")).c_str() ); 
+    write_stable_systems(ens,ens_init);    
 
-  std::vector<unsigned int> stable_system_indices;
-  for(int i = 0; i < ens.nsys() ; i++ )
-    {
-      if(!ens[i].is_disabled())
-	stable_system_indices.push_back(i);
-    }
-  
-  print_selected_systems(ens,stable_system_indices, output);
 }
 

@@ -18,6 +18,13 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file gpulog.h 
+ *    \brief Header file for gpulog.
+ *
+ *
+ */
+
+
 #ifndef gpulog_h__
 #define gpulog_h__
 

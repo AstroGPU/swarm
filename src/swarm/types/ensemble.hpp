@@ -16,6 +16,12 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file ensemble.hpp
+ *  \brief Defines ensemble base class and implements its member functions.  
+ *
+*/
+
+
 #pragma once
 
 #include "allocators.hpp"
@@ -28,6 +34,38 @@ template<class N>
 
 //! \todo This should be moved to a global header file
 GENERIC N square(const N& x) { return x*x; }
+
+
+/**
+ * To use as an array for members of Body and Sys
+ *
+ */
+template<typename _value_type, int _N, int _CHUNK_SIZE>
+struct CoalescedMemberArray {
+	typedef _value_type value_type;
+	const static int N = _N;
+	const static int CHUNK_SIZE = _CHUNK_SIZE;
+
+
+	GENERIC value_type getitem(const size_t& i)const{ 
+		return _array[i][0];
+	}
+	GENERIC void setitem(const size_t& i, const value_type& v){ 
+		_array[i][0] = v ;
+	}
+
+	GENERIC const value_type& operator[](const size_t& i)const{
+		return _array[i][0];
+	}
+	GENERIC value_type& operator[](const size_t& i){
+		return _array[i][0];
+	}
+
+private:
+	value_type _array[N][CHUNK_SIZE];
+	
+};
+
 
 /*! ensemble data structure containing nbody systems.
  *  
@@ -107,7 +145,11 @@ class EnsembleBase {
 		} component[3];
 
 		double _mass[CHUNK_SIZE];
-		double _attribute[NUM_BODY_ATTRIBUTES][CHUNK_SIZE];
+		typedef CoalescedMemberArray<double,NUM_BODY_ATTRIBUTES,CHUNK_SIZE>
+			attributes_t;
+		attributes_t _attributes;
+
+		attributes_t& attributes(){ return _attributes; }
 
 		//! Mass of the body
 		GENERIC double& mass() { return _mass[0];  }
@@ -123,25 +165,44 @@ class EnsembleBase {
 		//! Constant accessor for indexing into body. c.f. to regular accessor
 		GENERIC const Component& operator[] (const int & i) const { return component[i]; };
 
-		//! Accessing extra attributes of the array.
-		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
-		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
+		GENERIC Component& getitem(const int& i){
+			return operator[](i);
+		}
+		
+		GENERIC const double& x() const { return component[0].pos(); }
+		GENERIC double& x() { return component[0].pos(); }
+		GENERIC const double& y() const { return component[1].pos(); }
+		GENERIC double& y() { return component[1].pos(); }
+		GENERIC const double& z() const { return component[2].pos(); }
+		GENERIC double& z() { return component[2].pos(); }
 
-		//! Distance of the planet to (0,0,0) 
-		GENERIC double radius_squared() { 
+		GENERIC const double& vx() const { return component[0].vel(); }
+		GENERIC double& vx() { return component[0].vel(); }
+		GENERIC const double& vy() const { return component[1].vel(); }
+		GENERIC double& vy() { return component[1].vel(); }
+		GENERIC const double& vz() const { return component[2].vel(); }
+		GENERIC double& vz() { return component[2].vel(); }
+
+		//! Accessing extra attributes of the array.
+		GENERIC double& attribute(const int& i) { return _attributes[i]; }
+		GENERIC const double& attribute(const int& i) const { return _attributes[i]; }
+	        GENERIC int num_attributes() const { return NUM_BODY_ATTRIBUTES; };
+
+		//! Square distance of the planet to (0,0,0) 
+		GENERIC double distance_to_origin_squared() { 
 			return square(operator[](0).pos()) 
 				+ square(operator[](1).pos()) 
 				+ square(operator[](2).pos());
 		}
 
-		//! Magnitude of velocity
+		//! Square of magnitude of velocity
 		GENERIC double speed_squared() {
 			return square(operator[](0).vel()) 
 				+ square(operator[](1).vel()) 
 				+ square(operator[](2).vel());
 		}
 		
-		GENERIC double radius() { return sqrt(radius_squared()); }
+		GENERIC double distance_to_origin() { return sqrt(distance_to_origin_squared()); }
 		GENERIC double speed() { return sqrt(speed_squared()); }
 
 		//! Get all position and velocities at once
@@ -170,7 +231,11 @@ class EnsembleBase {
 			int state;	int id;
 		} _bunch[CHUNK_SIZE];
 
-		double _attribute[NUM_SYS_ATTRIBUTES][CHUNK_SIZE];
+		typedef CoalescedMemberArray<double,NUM_SYS_ATTRIBUTES,CHUNK_SIZE>
+			attributes_t;
+		attributes_t _attributes;
+
+		attributes_t& attributes(){ return _attributes; }
 
 		//! wall clock time for the system
 		GENERIC double& time() { return _time[0];  }
@@ -185,8 +250,9 @@ class EnsembleBase {
 		GENERIC const int& id() const { return _bunch[0].id; }
 
 		//! Access extra attributes of the system.
-		GENERIC const double& attribute(const int& i) const { return _attribute[i][0]; }
-		GENERIC double& attribute(const int& i) { return _attribute[i][0]; }
+		GENERIC const double& attribute(const int& i) const { return _attributes[i]; }
+		GENERIC double& attribute(const int& i) { return _attributes[i]; }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
 
 		/*! Constanst that are used as values for state variable
 		 *  Value 0 is the active state, it means that the 
@@ -236,10 +302,17 @@ class EnsembleBase {
 
 		//! Access a body within the system
 		GENERIC Body& operator[](const int & i ) const { return _body[i]; };
+
+		GENERIC Body& getitem(const int& i){
+			return operator[](i);
+		}
 		
+		//! Current attributes of the system
+		GENERIC typename Sys::attributes_t& attributes() const { return _sys[0].attributes(); }
+
 		//! Current time of the system
 		GENERIC double& time() const { return _sys[0].time(); }
-		
+
 		//! Query if the system is active
 		GENERIC bool is_active() const { return _sys[0].state() == Sys::SYSTEM_ACTIVE; }
 		
@@ -279,6 +352,8 @@ class EnsembleBase {
 
 		//! extra attribute of the system
 		GENERIC double& attribute(const int& i) const { return _sys[0].attribute(i); }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
+	        GENERIC int num_body_attributes() const { return NUM_BODY_ATTRIBUTES; };
 
 		//! Distance between planet i and j in the system
 		//! For a faster version c.f. \ref distance_squared_between(i,j)
@@ -319,6 +394,10 @@ class EnsembleBase {
 			s.id() = id();
 		}
 
+		GENERIC double total_energy()const{
+			return calc_total_energy();
+		}
+
 		//! Total energy (potential+kinetic) of a system
 		GENERIC double calc_total_energy() const {
 			double K = 0.0, U = 0.0;
@@ -355,12 +434,15 @@ class EnsembleBase {
 		GENERIC const int& state() const { return _ref.state(); }
 		GENERIC const int& id() const { return _ref.id(); }
 		GENERIC const double& attribute(const int& i) const { return _sys[0].attribute(i); }
+	        GENERIC int num_attributes() const { return NUM_SYS_ATTRIBUTES; };
+	        GENERIC int num_body_attributes() const { return NUM_BODY_ATTRIBUTES; };
 		GENERIC const int& nbod()const{ return _ref.nbod();	}
 		GENERIC double distance_squared_between(const int& i , const int & j ) { return _ref.distance_squared_between(i,j); }
 		GENERIC double distance_between(const int& i , const int & j ) { return _ref.distance_between(i,j); }
 		GENERIC void copyTo( const SystemRef& r ) { _ref.copyTo( r ) ; }
-		GENERIC double calc_total_energy() const { _ref.calc_total_energy(); }
+		GENERIC double calc_total_energy() const { return _ref.calc_total_energy(); }
 	};
+
 
 	//! Size of Body[] array required for an ensemble of size nbod,nsys
 	GENERIC static size_t body_element_count(const int& nbod,const int& nsys){
@@ -433,6 +515,10 @@ class EnsembleBase {
 		const int idx = blockid * _nbod * CHUNK_SIZE +  sysinblock;
 		return SystemRef(_nbod,i,&_body[idx], &_sys[i] ) ;
 	};
+
+	GENERIC SystemRef getitem(const int& i){
+		return operator[](i);
+	}
 
 	GENERIC SystemRefConst operator[] (const int & i) const { 
 		return SystemRefConst( const_cast<EnsembleBase*>(this)->operator[](i) ) ;

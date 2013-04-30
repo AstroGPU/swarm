@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ $# -lt 2 ]
 then
 	echo    "Usage: $0 <nbodies> <Directory>"
@@ -25,7 +27,7 @@ PLOT_OUTPUT_PDF=$dir/plot-$nb.pdf
 
 cat > $PLOT <<EOF
 #set size 4, 5
-set terminal postscript eps enhanced color dashed lw 1 "Helvetica" 14
+set terminal postscript eps enhanced color dashed lw 1 "Times" 14
 set output '$PLOT_OUTPUT'
 set key left top
 set title 'Stability Plot for $nb bodies'

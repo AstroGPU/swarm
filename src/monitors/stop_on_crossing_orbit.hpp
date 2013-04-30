@@ -15,13 +15,23 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file stop_on_crossing_orbit.hpp
+ *   \brief Defines the monitor \ref swarm::monitors::stop_on_crossing_orbit
+ *          that detects crossing orbits for planets. 
+ *
+ *
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ * 
+ */
+
 #pragma once
 
 #include <limits>
 
 namespace swarm { namespace monitors {
 
-/* Parameters for stop_on_crossing_orbit monitor
+/*! Parameters for stop_on_crossing_orbit monitor
  * deactivate_on_crossing (bool): 
  * log_on_crossing (bool): 
  * verbose_on_crossing (bool): 
@@ -46,6 +56,9 @@ GPUAPI double sqr(const double& d){
 }
 
 /** Stopping monitor to detect crossing orbits for planets 
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
+ * 
  *  WARNING:  This only tests for potential orbit crossing and makes assumptions about planet ordering
  *  \ingroup monitors
  */
@@ -62,6 +75,15 @@ class stop_on_crossing_orbit {
 
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return _params.deactivate_on; };
         GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_verbose_on() { return _params.verbose_on; };
@@ -84,7 +106,7 @@ class stop_on_crossing_orbit {
 		// h2 = ||pos X vel||^2
 		double h2 = sqr(y*vz-z*vy) + sqr(z*vx-x*vz) + sqr(x*vy-y*vx);
 		double _GM = _sys[b].mass(); 
-		double r = _sys[b].radius(), sp = _sys[b].speed();
+		double r = _sys[b].distance_to_origin(), sp = _sys[b].speed();
 		double energy = sp*0.5-_GM/r;
 
 		a = -0.5*_GM/energy;

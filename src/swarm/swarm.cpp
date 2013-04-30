@@ -1,3 +1,34 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file swarm.cpp
+ *   \brief Generic command-line interface to use all aspects of the Swarm-NG libraries.
+ * 
+ * Command-line interface provides an easy and portable way to use the Swarm-NG routines
+ * without coding. This can be used to interoperate with other algorithms that are 
+ * written in other languages. 
+ * 
+ * For more info c.f. @ref SwarmExec
+ *
+ *  @TODO Routines in this file may need documenting
+ *
+*/
+
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
@@ -117,6 +148,7 @@ void load_generate_ensemble(){
 		
 	}else{
 		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
+		srand(time(NULL));
 		initial_ens = generate_ensemble(cfg);
 	}
 }
@@ -139,12 +171,19 @@ bool save_ensemble(){
 		return false;
 }
 
+void init_cuda(){
+	// Initialize Swarm
+	swarm::init(cfg);
+}
+
 void prepare_integrator () {
 	// Initialize Integrator
 	DEBUG_OUTPUT(2, "Initializing integrator" );
 	double begin_time = initial_ens.time_ranges().average;
 	double destination_time = cfg.optional("destination_time", begin_time + 10 * M_PI );
+	int max_iterations = cfg.optional("max_iterations", integrator::_default_max_iterations );
 	integ = integrator::create(cfg);
+	integ->set_max_iterations(max_iterations);
 	integ->set_ensemble(current_ens);
 	integ->set_destination_time ( destination_time );
 	SYNC;
@@ -310,8 +349,8 @@ void validate(boost::any& v, const std::vector<std::string>& values
 	static boost::regex assign("^(\\w+)=(.+)$");
 	static boost::regex range("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
 	static boost::regex rangeinc("^([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)\\.\\.([0-9\\.Ee]+)$");
-	static boost::regex list("^([a-zA-Z0-9\\.]+)(?:,([a-zA-Z0-9\\.]+))+$");
-	static boost::regex item("([a-zA-Z0-9\\.]+)");
+	static boost::regex list("^([a-zA-Z0-9_\\.]+)(?:,([a-zA-Z0-9_\\.]+))+$");
+	static boost::regex item("([a-zA-Z0-9_\\.]+)");
 	boost::smatch match, items;
 	if (boost::regex_match(s, match, assign)) {
 		p.parameter = match[1];
@@ -387,6 +426,12 @@ void benchmark(const parameter_range& pr){
 	}
 }
 
+void print_version(){
+	bool amd64 = sizeof(void*) == 8;
+	cout << "Swarm is running as " << (amd64 ? "64bit" : "32bit" ) << endl;
+	exit(0);
+}
+
 void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::positional_options_description pos;
@@ -400,6 +445,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			"\tverify    :  Verify an integrator against a reference integrator\n"
 			"\tquery     :  Query data from a log file\n"
 			"\ttest      :  Test a configuration against input/output files\n"
+			"\ttest-cpu  :  Test a configuration against input/output files without initializing GPU\n"
 			"\tgenerate  :  Generate a new ensemble and save it to output file\n"
 			"\tconvert   :  Read input file and write it to output file (converts to/from text)\n"
 			"\nOptions"
@@ -422,9 +468,9 @@ void parse_commandline_and_config(int argc, char* argv[]){
 
 	po::options_description query("Query Options");
 	query.add_options()
-		("time,t", po::value<time_range_t>(), "range of times to query")
-		("system,s", po::value<sys_range_t>(), "range of systems to query")
-		("body,b", po::value<sys_range_t>(), "range of bodies to query")
+		("time,t", po::value<query::time_range_t>(), "range of times to query")
+		("system,s", po::value<query::sys_range_t>(), "range of systems to query")
+		("body,b", po::value<query::sys_range_t>(), "range of bodies to query")
 		("keplerian,k", "output in Keplerian coordinates")
 		("astrocentric", "output coordinates in astrocentric frame")
 		("barycentric", "output coordinates in barycentric frame")
@@ -445,7 +491,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 		("help,h", "produce help message")
 		("plugins,p", "list all of the plugins")
 		("verbose,v", po::value<int>(), "Verbosity level (debug output) ")
-		("quiet,q",  "Suppress all the notifications (for CSV generation)");
+		("quiet,q",  "Suppress all the notifications (for CSV generation)")
+		("version,V",  "Print version message");
 	
 	desc.add(general).add(integrate).add(benchmark).add(query);
 
@@ -462,6 +509,7 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	//// Respond to switches 
 	//
 	if (vm.count("help")) { std::cout << desc << "\n"; exit(1); }
+	if (vm.count("version")) print_version();
 	if (vm.count("verbose") ) DEBUG_LEVEL = vm["verbose"].as<int>();
 	if (vm.count("quiet") ) DEBUG_LEVEL = -1;
 
@@ -516,24 +564,25 @@ int main(int argc, char* argv[]){
 	base_cfg = cfg;
 	command = argvars_map["command"].as< string >();
 
-	// Initialize Swarm
-	swarm::init(cfg);
-	print_device_information();
-	srand(time(NULL));
 
 	// Set some variables
 	pos_threshold = cfg.optional("pos_threshold", 1e-10);
 	vel_threshold = cfg.optional("vel_threshold", 1e-10);
-	time_threshold = cfg.optional("time_threshold", 1e-4);
+	time_threshold = cfg.optional("time_threshold", 1e-10);
 
 	// Branch based on COMMAND
-	if(command == "integrate")
+	if(command == "integrate"){
+		init_cuda();
 		run_integration();
 
-	else if(command == "test")
+	}else if(command == "test-cpu"){
+//		init_cuda();  // removed so CPU tests would work, but then broke GPU tests when needed to set cuda device
 		output_test();
-
-	else if(command == "benchmark" || command == "verify") {
+	}else if(command == "test"){
+		init_cuda();  
+		output_test();
+	}else if(command == "benchmark" || command == "verify") {
+		init_cuda();
 		if(command == "verify") 
 			verify_mode = true;
 
@@ -551,6 +600,7 @@ int main(int argc, char* argv[]){
 
 
 	else if(command == "query" ) {
+		using namespace query;
 		if (!argvars_map.count("logfile")) { cerr << "Name of input log file is missing \n"; return 1; }
 
 		time_range_t T;
@@ -596,6 +646,7 @@ int main(int argc, char* argv[]){
 	}
 
 	else if(command == "generate" ) {
+		srand(time(NULL));
 		INFO_OUTPUT(1, "Generating new ensemble:  " << cfg["nsys"] << ", " << cfg["nbod"] << endl);
 		current_ens = generate_ensemble(cfg);
 		save_ensemble();
@@ -611,7 +662,7 @@ int main(int argc, char* argv[]){
 	} 
 	
 	else
-		std::cerr << "Valid commands are: integrate, benchmark, verify, test, query, generate " << std::endl;
+		std::cerr << "Valid commands are: integrate, benchmark, verify, test, test-cpu, query, generate " << std::endl;
 
 	return 0;
 }

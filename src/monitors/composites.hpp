@@ -15,6 +15,13 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+
+/*! \file composites.hpp
+ *   \brief Defines and implements the combination of monitors.
+ *
+ */
+
 #pragma once
 
 #include "combine.hpp"
@@ -28,11 +35,18 @@ namespace swarm { namespace monitors {
 /** Combination of stop_on_ejcetion, stop_on_close_encounter and
  * stop_on_crossing_orbit
  *
- * \ingroup monitors_param
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  *
+ * \ingroup monitors
+ *
+ *
+ * 
  */
 template <class L> 
 struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
+
+        //! Defines parameter structure
 	struct params {
 		typename stop_on_ejection<L>        ::params ej;
 		typename stop_on_close_encounter<L> ::params ce;
@@ -42,9 +56,20 @@ struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
 			:ej(cfg), ce(cfg), co(cfg) {}
 	};
 	
+        //! method to stop the system in three cases. 
 	GPUAPI stop_on_ejection_or_close_encounter_or_crossing_orbit
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l), co(p.co,s,l) 	{}
+
+        template<class T>
+	static GENERIC int thread_per_system(T compile_time_param){
+	  return 1;
+	}
+
+        template<class T>
+	static GENERIC int shmem_per_system(T compile_time_param) {
+	  return 0;
+	}
 	
   //	GPUAPI void operator () ()
   //         {	  ej(); ce(); co(); }
@@ -73,10 +98,12 @@ struct stop_on_ejection_or_close_encounter_or_crossing_orbit {
         GPUAPI bool need_to_deactivate () 
            { return (ej.need_to_deactivate() || ce.need_to_deactivate()  || co.need_to_deactivate() ); }
 
+        //! check if the system needs full test
 	GPUAPI bool pass_one (int thread_in_system) 
           {  return ej.pass_one(thread_in_system) || ce.pass_one(thread_in_system) || co.pass_one(thread_in_system);  }
 	    
 
+        //! check if deactivating the system
 	GPUAPI int pass_two (int thread_in_system) 
           {  
 	    int s1 = ej.pass_two(thread_in_system);
@@ -108,13 +135,17 @@ private:
 
 
 /** Combination of stop_on_ejcetion and stop_on_close_encounter
+ *  *EXPERIMENTAL*: This class is not thoroughly tested.
+ *  \ingroup experimental
  *
  *
- * \ingroup monitors_param
+ * \ingroup monitors
  *
  */
 template <class L> 
 struct stop_on_ejection_or_close_encounter {
+
+        //! Define the structure params
 	struct params {
 		typename stop_on_ejection<L>        ::params ej;
 		typename stop_on_close_encounter<L> ::params ce;
@@ -123,9 +154,20 @@ struct stop_on_ejection_or_close_encounter {
 			:ej(cfg), ce(cfg) {}
 	};
 	
+        //! default constructor 
 	GPUAPI stop_on_ejection_or_close_encounter
 		(const params& p,ensemble::SystemRef& s,L& l)
 		: ej(p.ej,s,l), ce(p.ce,s,l) 	{}
+
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
 	
   //	GPUAPI void operator () () 
   //        {  ej(); ce(); }
@@ -153,11 +195,11 @@ struct stop_on_ejection_or_close_encounter {
         GPUAPI bool need_to_deactivate () 
            { return (ej.need_to_deactivate() || ce.need_to_deactivate()); }
 
-
+        //! Check if need full test
 	GPUAPI bool pass_one (int thread_in_system) 
           {  return ej.pass_one(thread_in_system) || ce.pass_one(thread_in_system);  }
 	    
-
+        //! check if deactivating the system
 	GPUAPI int pass_two (int thread_in_system) 
           {  
 	    int s1 = ej.pass_two(thread_in_system);

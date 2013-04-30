@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Mario Juric   *
- *   mjuric@astro.Princeton.EDU   *
+ *   Copyright (C) 2005 by Mario Juric                                     *
+ *   mjuric@astro.Princeton.EDU                                            *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -18,9 +18,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file binarystream.hpp
+ *   \brief Defines I/O interface in binary form using boost data types. 
+ *
+ */
+
 /*
-	This file has been copied/modified from Mario Juric's libpeyton.
-*/
+ *	This file has been copied/modified from Mario Juric's libpeyton.
+ */
 
 #ifndef binarystream_h__
 #define binarystream_h__
@@ -39,7 +44,7 @@
 namespace peyton {
 namespace io {
 
-	// forward declarations
+	//! forward declarations
 	template<typename _CharT, typename _Traits = std::char_traits<_CharT> >
 		class basic_obstream;
 	typedef basic_obstream<char> obstream;
@@ -55,31 +60,32 @@ namespace io {
 }
 }
 
-//
-// STL forward declarations
-//
+//!
+//! STL forward declarations
+//!
 namespace std
 {
-	// Sequences
+	//! Sequences
 	template<typename T, typename A> class vector;
 	template<typename T, typename A> class deque;
 	template<typename T, typename A> class list;
 
-	// Associative Containers
+	//! Associative Containers
 	template<typename T, typename C, typename A> class set;
 	template<typename T, typename C, typename A> class multiset;
 	template<typename K, typename V, typename C, typename A> class map;
 	template<typename K, typename V, typename C, typename A> class multimap;
 
-	// Numerics
+	//! Numerics
 	template<typename T> class valarray;
 }
 
-//
-// Automatically mark a std::pair of PODs as a POD
-//
+//!
+//! Automatically mark a std::pair of PODs as a POD
+//!
 namespace boost
 {
+        //! Marks a std::pair of PODs as a POD
 	template <typename First, typename Second>
 		class is_pod< ::std::pair<First, Second> > : 
 			public ::boost::integral_constant<bool, 
@@ -88,16 +94,15 @@ namespace boost
 		{};
 }
 
-//
-// Type traits utilities. Should be separated into it's own header.
-//
-
+//!
+//! Type traits utilities. Should be separated into it's own header.
+//!
 namespace peyton {
 namespace io {
-
-        namespace binary	// auxiliary/debug variables/methods are found here
+        //! auxiliary/debug variables/methods are found here
+        namespace binary	
 	{
-		// Type information structure for @c manifest
+		//! Type information structure for @c manifest
 		struct datatype_info
 		{
 			std::string name;
@@ -111,14 +116,18 @@ namespace io {
 				: name(di.name), type_size(di.type_size), ispod(di.ispod)
 				{}
 		};
+	        //! Define operators
 		inline bool operator<(const datatype_info& a, const datatype_info& b) { return a.name < b.name; }
+	        //! Define operators
 		inline bool operator==(const datatype_info& a, const datatype_info& b) { return a.name == b.name; }
+	        //! Define operators
 		inline std::ostream &operator<<(std::ostream &out, const datatype_info &di);
 
 		typedef std::vector<datatype_info> manifest_t;
 		extern manifest_t manifest;	///< A map between @c T and @c sizeof(T)
 		extern bool track_manifest; ///< If set to @c true , @c manifest will be populated
 
+	        //! Define operators
 		std::ostream &operator<<(std::ostream &out, const manifest_t &manifest);
 
 		/**
@@ -155,8 +164,8 @@ namespace io {
 			}
 	} // namespace binary
 
-	// Use this to tell stream that your user defined type
-	// may be treated as a plain-old-datatype
+	//! Use this to tell stream that your user defined type
+	//! may be treated as a plain-old-datatype
 	#define BLESS_POD(T) \
 	        namespace boost {	    \
 			template <> \
@@ -167,10 +176,7 @@ namespace io {
 	
 	
 	
-	//
-	// Output stream
-	//
-	
+	//! Output stream
 	template<typename _CharT, typename _Traits>
 		class basic_obstream : public std::basic_ostream<_CharT, _Traits>
 		{
@@ -193,9 +199,7 @@ namespace io {
 				{  }
 		};
 	
-	//
-	// Input stream
-	//
+	//! Input stream
 	template<typename _CharT, typename _Traits>
 		class basic_ibstream : public std::basic_istream<_CharT, _Traits>
 		{
@@ -218,9 +222,7 @@ namespace io {
 				{ }
 		};
 
-	//
-	// Input/output stream
-	//
+	//! Input/output stream
 	template<typename _CharT, typename _Traits>
 		class basic_bstream : 
 			public basic_obstream<_CharT, _Traits>,
@@ -244,9 +246,9 @@ namespace io {
 	
 	
 	
-	//
-	// Operator declaration macros
-	//
+	//!
+	//! Operator declaration macros
+	//!
 
 #ifdef _MSC_VER
 	#define BOSTREAM2(...) peyton::io::obstream& operator<<(peyton::io::obstream &out, __VA_ARGS__)
@@ -256,9 +258,9 @@ namespace io {
 	#define BISTREAM2(T...) peyton::io::ibstream& operator>>(peyton::io::ibstream &in,  T)
 #endif
 	
-	//
-	// Generic POD input/output operators
-	//
+	//!
+	//! Generic POD input/output operators
+	//!
 	
 	template<typename T>
 		inline BOSTREAM2(const T &v)
@@ -272,10 +274,10 @@ namespace io {
 			return in.read_pod(&v, 1);
 		}
 	
-	//
-	// C and STL string specializations. Note that there's no
-	// operator >>(char *), because of possible buffer overflow issues.
-	//
+	//!
+	//! C and STL string specializations. Note that there's no
+	//! operator >>(char *), because of possible buffer overflow issues.
+	//!
 
 	#define RETFAIL(x) if(!(x)) return in;
 	
@@ -287,6 +289,7 @@ namespace io {
 		return out.write_pod(v, len);
 	}
 	
+        //! String specializations
 	template<>
 	inline BOSTREAM2(std::string const& v)
 	{
@@ -294,6 +297,7 @@ namespace io {
 		return out.write_pod(v.c_str(), v.size());
 	}
 	
+       //! String pointer specializations
 	template<>
 	inline BISTREAM2(std::string &v)
 	{
@@ -312,20 +316,26 @@ namespace io {
 
 	namespace details
 	{
-		template <typename IT>	// unoptimized version
+		template <typename IT>	//! unoptimized version
 			inline obstream& itwrite(obstream &out, unsigned int size, IT start, const ::boost::false_type&)
 			{
 				for(IT i = start; size != 0; --size, ++i) { out << *i; }
 				return out;
 			}
 	
-		template <typename IT>	// optimized version, for POD arrays
+		template <typename IT>	//! optimized version, for POD arrays
 			inline obstream& itwrite(obstream &out, unsigned int size, IT start, const ::boost::true_type&)
 			{
 				return out.write_pod(start, size);
 			}
 	}
 
+	//!
+	//! Writing routines for containers. There are three versions,
+	//! one optimized for containers linearly stored in memory,
+	//! the generic one, and one optimized for maps (avoids the
+	//! unnecessary temporaries of data_type)
+	//!
 	template <typename IT>
 		inline obstream& itwrite(obstream &out, unsigned int size, IT start)
 		{
@@ -344,12 +354,9 @@ namespace io {
 			return details::itwrite(out, size, start, is_optimizable());
 		}
 
-	//
-	// Reading routines for containers. There are three versions,
-	// one optimized for containers linearly stored in memory,
-	// the generic one, and one optimized for maps (avoids the
-	// unnecessary temporaries of data_type)
-	//
+	//!
+	//! Reading routines for containers. 
+	//!
 	template <typename C>
 		inline ibstream& itread(ibstream &in, C &a)
 		{
@@ -367,6 +374,9 @@ namespace io {
 			return in;
 		}
 
+	//!
+	//! Reading routines for container vectors. 
+	//!
 	template <typename C>
 		inline ibstream& itreadvec(ibstream &in, C &a)
 		{
@@ -386,6 +396,9 @@ namespace io {
 			return in;
 		}
 
+	//!
+	//! Reading routines for containers. 
+	//!
 	template <typename C>
 		inline ibstream& itreadmap(ibstream &in, C &a)
 		{
@@ -405,9 +418,9 @@ namespace io {
 
 	#undef RETFAIL
 	
-	//
-	// STL specializations
-	//
+	//!
+	//! STL specializations
+	//!
 	
 	template<typename First, typename Second>	// std::pair<First, Second>
 		inline BOSTREAM2(const std::pair<First, Second> &v) { return out << v.first << v.second; }

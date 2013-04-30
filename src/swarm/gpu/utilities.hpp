@@ -16,6 +16,13 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file utilities.hpp
+ *   \brief Defines a function for counting the number of active ensemble 
+ *          systems on GPU and utility functions for finding the best factorization
+ *          and compute the optimal allowable grid dimensions based on 
+ *          the system configuration. 
+ */
+
 #pragma once
 #include "../types/ensemble.hpp"
 

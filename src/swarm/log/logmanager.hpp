@@ -15,6 +15,14 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
+
+/*! \file logmanager.hpp
+ *    \brief Defines the class \ref swarm::log::manager - the logging manager 
+ *           for CPU/GPU logs and writing them to appropriate output. 
+ *
+ *
+ */
+
 #pragma once
 #include "../common.hpp"
 #include "log.hpp"
@@ -81,6 +89,7 @@ class manager {
 
 	gpulog::device_log* get_gpulog() { return pdlog; }
 	gpulog::host_log* get_hostlog() { return &hlog; }
+        Pwriter get_writer() { return log_writer; }
 
 	//! Default log that is initialized in swarm::init(cfg)
 	//! It is automatically used in \ref integrator.

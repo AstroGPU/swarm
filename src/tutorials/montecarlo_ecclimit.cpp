@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file montecarlo_ecclimit.cpp
+ *  \brief Implement Monte Carlo simulation to find planetary systems and generate ensemble. 
+ *
+ */
+
 /** 
  * In writing this monte carlo simulation which is supposed to find planetary
  * systems using Monte Carlo simulations, I used the old monte carlo code.
@@ -9,7 +32,8 @@
 #include <fstream>
 #include <math.h>
 #include <signal.h>
-
+#include <ctime>
+#include <unistd.h>
 #include "swarm/swarm.h"
 #include "swarm/snapshot.hpp"
 #include "swarm/log/log.hpp"
@@ -23,7 +47,7 @@ using namespace swarm;
 using namespace std;
 
 config cfg;
-
+///
 void inspect(defaultEnsemble &ens, const int sys, const int bod ) 
 {
 	  fprintf(stderr,"%d %d: %lg (%lg %lg %lg) (%lg %lg %lg) \n", sys, bod,
@@ -38,7 +62,7 @@ void inspect(defaultEnsemble &ens, const int sys, const int bod )
 }
 
 int maxsysid = 0;
-
+///
 void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &ens, const int sysidx, const int sysid) 
 {
   double time_init = cfg.optional("time_init", 0.0);
@@ -54,7 +78,7 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
   if(sysid>maxsysid) maxsysid = sysid;
 
   // set sun to unit mass and at origin
-  double mass_star = draw_value_from_config(cfg,"mass_star",0.00003,100.0);
+  double mass_star = draw_value_from_config(cfg,"mass_star",0.00003,100.);
   double x=0, y=0, z=0, vx=0, vy=0, vz=0;
   ens.set_body(sysidx, 0, mass_star, x, y, z, vx, vy, vz);
 
@@ -72,7 +96,7 @@ void generate_initial_conditions_for_system(const config& cfg, defaultEnsemble &
       if(transit_ephemeris)
 	{
 	  double period = draw_value_from_config(cfg,"period",bod,0.2,365250.);
-	  double epoch = draw_value_from_config(cfg,"epoch",bod,0.2,365250.);
+	  double epoch = draw_value_from_config(cfg,"epoch",bod,-365250.,365250.);
 	  a = pow((period/365.25)*(period/365.25)*mass_enclosed,1.0/3.0);
 	  if(bod==ecc_body)
 	    e = draw_value_from_config(cfg,"ecc",bod,0.,1.);
@@ -192,7 +216,7 @@ defaultEnsemble generate_ensemble_with_randomized_initial_conditions(const confi
   return ens;
 }
 
-
+/// Output the system
 void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
@@ -265,13 +289,13 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
   os << std::flush;
 }
 
-
+///
 void print_selected_systems(swarm::ensemble& ens, std::vector<unsigned int> systemindices, std::ostream &os = std::cout)
 {
   for(unsigned int i=0; i<systemindices.size(); ++i)
       print_system(ens,systemindices[i], os);
 }
-
+///
 void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, std::ostream &os = std::cout)
 {
   if(nprint>ens.nsys()) nprint = ens.nsys();
@@ -279,7 +303,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, 
       print_system(ens,systemid,os);
 }
 
-
+/// Output the stable systems
 void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init) 
 {
   // find the stable ones and output the initial conditions for the stable
@@ -352,7 +376,7 @@ std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
     }
   return semimajor_axes;
 }
-
+///
 void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vector<double> >& semimajor_axes_init, const double deltaa_threshold )
 {
   for(int sys_idx = 0; sys_idx < ens.nsys() ; sys_idx++)
@@ -519,6 +543,12 @@ int main(int argc, char* argv[] )
   
   cfg = config::load(integ_configfile);
   
+	int pid = getpid();
+	int seed_default = (int) time(NULL); 
+        seed_default = seed_default ^ (pid + (pid << 15) );
+        int seed = cfg.optional("seed", seed_default);
+	srand(seed);
+
   // 1.read keplerian coordinates from a file
   // 2.generate guesses based on the keplerian coordinates
   // 3.convert keplerian coordinates to an ensemble
@@ -528,7 +558,9 @@ int main(int argc, char* argv[] )
   if( cfg.count("input") ) 
     {    ens = snapshot::load(cfg["input"]);  }
   else
-    {    ens = generate_ensemble_with_randomized_initial_conditions( config::load(initc_configfile) );  }
+    { 
+	ens = generate_ensemble_with_randomized_initial_conditions( config::load(initc_configfile) );  
+	}
 	
   // save the ensemble as a snapshot
   if(cfg.count("initial_snapshot"))

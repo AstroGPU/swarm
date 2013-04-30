@@ -1,3 +1,26 @@
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file config.hpp
+ *  \brief Defines data structure to hold the configuration. 
+ *
+ */
+
 #pragma once
 #include <stdexcept>
 
@@ -63,12 +86,6 @@ key2=value2
  */
 	static config load(const std::string &fn,config cfg = config() );
 
-#if 0
-  static add(std::string& key, std::string& val)
-  {
-    insert( std::pair<std::string,std::string>( key, val ) ) ;
-  }
-#endif
 	//! Is v a valid string
 	static bool valid_value(const std::string& v, std::string) {
 		return v.size() > 0;

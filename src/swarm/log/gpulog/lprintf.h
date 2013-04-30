@@ -18,26 +18,33 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+/*! \file lprintf.h 
+ *    \brief Defines and implements the CUDA compatible printf API.
+ *   
+ *    
+ */
+
 #ifndef lprintf_h__
 #define lprintf_h__
 
 #include <cstring>
 #include "gpulog.h"
 
-	/*
-		printf API
-	*/
+/*!
+ *  printf API
+ */
+
 #if 0
-	/* CUDA 2.3 compatible float->double converter */
+        //! CUDA 2.3 compatible float->double converter 
 	template<typename T> __device__ __host__ inline  const T& f2d_fun(const T &v)      { return v; }
 	__device__ inline double f2d_fun(const float &v)		// specialization for cast of float to double (used by printf)
 	{
 		return v;
 	}
 	
-	#define f2d(T, x) f2d_fun(x)
+#define f2d(T, x) f2d_fun(x)
 #else
-	/* CUDA 2.2 compatible float->double converter hack */
+        //! CUDA 2.2 compatible float->double converter hack 
 	template<typename T> struct f2dstruct
 	{
 		typedef const T& cTref;
@@ -48,21 +55,22 @@
 		__host__ __device__ static double cvt(const float &v) { return v; }
 	};
 
-	#define f2d(T, x) f2dstruct<T>::cvt(x)
+#define f2d(T, x) f2dstruct<T>::cvt(x)
 #endif
 
-	#if 0
+#if 0
 	template<typename L, int N, typename T1, typename T2, typename T3>
 		__host__ __device__ inline void lprintf(L &log, const char (&fmt)[N], const T1 &v1, const T2 &v2, const T3 &v3)
 		{
 			log.write(MSG_PRINTF, fmt, f2d(v1), f2d(v2), f2d(v3));
 		}
-	#else
-		#include "bits/gpulog_printf.h"
-	#endif
+#else
+#include "bits/gpulog_printf.h"
+#endif
 
 
-	#if !__CUDACC__
+#if !__CUDACC__
+//! Printf interface, print everything
 	inline std::string run_printf(gpulog::logrecord &lr)
 	{
         	using namespace gpulog;
@@ -162,6 +170,7 @@
 		return out.str();
 	}
 
+//!
 	inline int replay_printf(std::ostream &out, gpulog::ilogstream &ls)
 	{
 		using namespace gpulog;
@@ -178,7 +187,7 @@
 		}
 		return count;
 	}
-
+//!
 	inline int replay_printf(std::ostream &out, const gpulog::host_log &log)
 	{
 		gpulog::ilogstream ls(log);

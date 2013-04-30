@@ -16,11 +16,18 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file writer.h 
+ *    \brief Defines class interface (\ref swarm::writer) for writer plugins.
+ *
+ *
+ */
+
+
 #pragma once
 #include "../common.hpp"
 #include "../types/config.hpp"
 
-namespace swarm {
+namespace swarm { namespace log {
 
 /**
         \brief Abstract output writer interface
@@ -45,4 +52,4 @@ class writer
 };
 typedef shared_ptr<writer> Pwriter;
 
-}
+} } // namespace log::swarm

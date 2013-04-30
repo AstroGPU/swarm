@@ -1,6 +1,25 @@
-/*************
- *  Author : Saleh Dindar
+/*************************************************************************
+ * Copyright (C) 2011 by Saleh Dindar and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file utils.cpp
+ *    \brief Implements the utility functions for swarm. 
  *
+ * @authors Saleh Dindar
  *
  */
 #include "common.hpp"
@@ -17,11 +36,37 @@ int number_of_disabled_systems(defaultEnsemble ens) {
 	return count_running;
 }
 
+
+/**
+ *
+ * The velocity vector for planets is perpendicular to the position vector
+ * (from star to planet) and the magnitude depends on the ejection_factor
+ * |v| = sqrt(2*G*M/r)*ejection_factor. 
+ * We get different type of orbit based on ejection_factor:
+ *    1/sqrt(2) : circular orbit
+ *    < 1 : elliptical orbit
+ *    = 1 : parabolic orbit
+ *    > 1 : hyperbolic orbit
+ *
+ * Configuration options:
+ *   nsys: Number of systems in the ensemble
+ *   nbod: Number of bodies per system
+ *   spacing_factor: determines the spacing between
+ *     the planets, distance of planet i from star is spacing_factor 
+ *     times the distance of planet i-1 from star.
+ *   ejection_factor: determines the type of orbit see above
+ *   planet_mass: ratio of the planet mass to the star mass. defaults
+ *   to Jupiter mass planets (0.001)
+ *
+ *
+ */
 swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
 	double spacing_factor = cfg.optional( "spacing_factor", 1.4 );
-        double planet_mass = cfg.optional( "planet_mass" , .001 );
+    double planet_mass = cfg.optional( "planet_mass" , .001 );
+	double ejection_factor  = cfg.optional("ejection_factor", 1.0/sqrt(2) );
+
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
 
@@ -37,7 +82,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
 			double rmag = pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
-			double vmag = sqrt(mass_sun/rmag);  // spped for uniform circular motion
+			double vmag = sqrt(2*mass_sun/rmag) * ejection_factor ;  // spped for uniform circular motion
 			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
 			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
 			vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
@@ -82,7 +127,7 @@ bool validate_configuration(config& cfg){
 //  if((bs<ENSEMBLE_CHUNK_SIZE)||(bs>64)) valid =false;
 //  if( bs % ENSEMBLE_CHUNK_SIZE != 0 ) valid = false;
   if(!(nsystems>=1)||!(nsystems<=256000)) valid = false;
-  if(!(nbodypersystem>=3)||!(nbodypersystem<=10)) valid = false;
+  if(!(nbodypersystem>=3)||!(nbodypersystem<=MAX_NBODIES)) valid = false;
 
   return valid;
 }
@@ -105,11 +150,10 @@ config default_config() {
 	config cfg;
 	cfg["nsys"] = 16;
 	cfg["nbod"] = 3;
-	cfg["integrator"] = "hermite"; // Set to use a GPU integrator
+	cfg["integrator"] = "hermite_cpu"; // Set to use a GPU integrator
 	cfg["time_step"] = "0.001";       // time step
 	cfg["nbod"] = "3";
 	cfg["nsys"] = "16";
-//	cfg["blocksize"] = "16";
 	cfg["log_writer"] = "null";
 	return cfg;
 }
@@ -128,22 +172,38 @@ bool compare_ensembles( swarm::ensemble& e1, swarm::ensemble &e2 , double & pos_
 	for(int i = 0; i < e1.nsys(); i++) {
 		for(int j = 0; j < e1.nbod() ; j++){
 
+			// Distance between body position in ensemble e1 and e2
 			double dp = sqrt( 
 					  square ( e1[i][j][0].pos() - e2[i][j][0].pos() ) 
 					+ square ( e1[i][j][1].pos() - e2[i][j][1].pos() ) 
 					+ square ( e1[i][j][2].pos() - e2[i][j][2].pos() ) ) ;
 
+			// Average magnitude of the position in e1 and e2
+			double ap = sqrt( 
+					  square ( e1[i][j][0].pos() + e2[i][j][0].pos() ) 
+					+ square ( e1[i][j][1].pos() + e2[i][j][1].pos() ) 
+					+ square ( e1[i][j][2].pos() + e2[i][j][2].pos() ) ) / 2.0 ;
+
+			// Difference between body velocities in ensemble e1 and e2
 			double dv = sqrt( 
 					  square ( e1[i][j][0].vel() - e2[i][j][0].vel() ) 
 					+ square ( e1[i][j][1].vel() - e2[i][j][1].vel() ) 
 					+ square ( e1[i][j][2].vel() - e2[i][j][2].vel() ) ) ;
+
+			// Average magnitude of the velocity in e1 and e2
+			double av = sqrt( 
+					  square ( e1[i][j][0].vel() + e2[i][j][0].vel() ) 
+					+ square ( e1[i][j][1].vel() + e2[i][j][1].vel() ) 
+					+ square ( e1[i][j][2].vel() + e2[i][j][2].vel() ) ) / 2.0 ;
 
 			if ( dp > pos_diff ) pos_diff = dp;
 			if ( dv > vel_diff ) vel_diff = dv;
 
 		}
 
-		double dt = fabs(e1[i].time() - e2[i].time());
+		// Difference between time divided by average of the two
+		double dt = fabs(e1[i].time() - e2[i].time())
+			/(e1[i].time() + e2[i].time())*2;
 		if ( dt > time_diff ) time_diff = dt;
 
 	}

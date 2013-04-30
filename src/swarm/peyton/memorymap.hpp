@@ -17,6 +17,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+
+/*! \file memorymap.hpp
+ *   \brief Defines memory mapping class and interfaces. 
+ *
+ */
+
 #ifndef __astro_system_memorymap_h
 #define __astro_system_memorymap_h
 
@@ -42,9 +48,9 @@
 #include <stdexcept>
 
 namespace peyton {
-
 namespace system {
 
+//! Class for memory mapping 
 class MemoryMap
 {
 protected:
@@ -56,6 +62,7 @@ protected:
 
 	bool closefd;
 public:
+        //! Enumerate IO types
 	enum {
 		ro = PROT_READ,
 		wo = PROT_WRITE,
@@ -64,31 +71,41 @@ public:
 		exec = PROT_EXEC
 	};
 	
+        //! Enumerate mapping types
 	enum {
 		shared = MAP_SHARED,
 		priv = MAP_PRIVATE
 	};
 	
 	static const int pagesize;
+        //! page size alignment
 	static void pagesizealign(std::ostream &out);
 	static void pagesizealign(std::istream &in);
 public:
+        //! open file
 	void open(int fd, size_t length_, size_t offset, int mode, int mapstyle, bool closefd = false);
 public:
+        //! Constructors
 	MemoryMap();
 	MemoryMap(const std::string &filename, size_t length = 0, size_t offset = 0, int mode = ro, int map = shared);
-
+        //! open file with mapping type
 	void open(const std::string &filename, size_t length = 0, size_t offset = 0, int mode = ro, int map = shared);
+        //!
 	void sync();
+        //!
 	void close();
 
+        //! Destructor
 	~MemoryMap();
 
+        //! Define operator
 	operator void *() { return map; }
 
+        //!
 	size_t size() const { return length; }
 };
 
+//! Class for memory map array
 template<typename T>
 class MemoryMapVector : public MemoryMap
 {
@@ -97,25 +114,33 @@ public:
 	size_t siz;
 public:
 	MemoryMapVector() : MemoryMap(), siz(0) {}
+
+        //! Open the file
 	void open(const std::string &filename, size_t size = -1, size_t offset = 0, int mode = ro, int mapstyle = shared)
 	{
 		MemoryMap::open(filename, sizeof(T)*size, offset, mode, mapstyle);
 		if(size < 0) { siz = length/sizeof(T); } else { siz = size; }
 	}
 
+        //! Defines operator
 	const T &operator[](int i) const { return ((const T *)map)[i]; }
 	T &operator[](int i) { return ((T *)map)[i]; }
 
+        //! Returns the first map
 	iterator begin() { return (T *)map; }
+        //! Returns the last map
 	iterator end() { return ((T *)map) + siz; }
 
+        //! Return the map array pointer
 	T& front() { return *(T *)map; }
 	T& back() { return ((T *)map) + (siz-1); }
 
+        //! returns the size of the map arary
 	size_t size() const { return siz; }
 	size_t allocated() { return length / sizeof(T); }
 };
 
+//! Define run time error with memory mapping
 struct MemoryMapError : public std::runtime_error {
 	MemoryMapError(const std::string &msg): std::runtime_error(msg) {};
 	virtual ~MemoryMapError() throw() {};
@@ -125,6 +150,7 @@ struct MemoryMapError : public std::runtime_error {
 } // namespace system
 } // namespace peyton
 
+//! Define class memory map with header
 template<typename Header>
 struct mmapped_file_with_header : public peyton::system::MemoryMap
 {
@@ -134,6 +160,7 @@ struct mmapped_file_with_header : public peyton::system::MemoryMap
 		size_t m_size;
 
 	public:
+                //! Constructor
 		mmapped_file_with_header(const std::string &filename = "", const std::string &type = "", int mode = ro, bool validate = true) 
 			: fh(NULL), m_data(NULL)
 		{
@@ -143,6 +170,7 @@ struct mmapped_file_with_header : public peyton::system::MemoryMap
 			}
 		}
 
+                //! Open the file
 		void open(const std::string &filename, const std::string &type, int mode = ro, bool validate = true)
 		{
 			MemoryMap::open(filename.c_str(), 0, 0, mode, shared);
@@ -164,10 +192,10 @@ struct mmapped_file_with_header : public peyton::system::MemoryMap
 			m_size = length - sizeof(Header);
 		}
 
-		// override MemoryMap::size() to return the length of the data without the header
+		//! override MemoryMap::size() to return the length of the data without the header
 		size_t size() const { return m_size; }
 
-		// accessors
+		//! accessors
 		char *data() const { return m_data; }
 		Header &hdr() const { return *fh; }
 };

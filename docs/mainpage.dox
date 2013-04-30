@@ -1,29 +1,71 @@
 /** @mainpage Swarm-NG library 
 
- @authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
-
- \brief Swarm-NG is a collection of code which to help
+ \brief Swarm-NG is a collection of code to help
 scientists and engineers harness the power of GPUs.  In the early
 releases, Swarm-NG will focus on the integration of an ensemble of
 N-body systems evolving under Newtonian gravity.  There are existing
 libraries to perform the force calculation for large-N systems on
 GPUs.  Swarm-NG does not replicate these, but rather focuses on
-integrating an ensemble of many systems where N is small.  This is of
+integrating an ensemble of many systems where N is small.  This is of a
 partiular interest for astronomers who study the chaotic evolution of
 planetary systems.  In the long term, we hope Swarm-NG will allow for
 the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
+
+ \authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
+
+
+
 \b Table \b of \b contents
- - \ref IntroductionSwarm
  - \ref BuildSwarm
- - \ref UsingSwarm
- - \b Tutorials \b for \b Developers
+ - \ref SwarmExec "Using command-line interface"
+ - **Using C++ library interface**
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
+	- \ref TutorialEnsemble
+ - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
-	- \ref TutorialStopper
-	- \ref TutorialLogger
+	- \ref TutorialMonitor
+	- \ref TutorialIntegrator
+
+ - \ref ReleaseNotes "Release Notes"
+
+
+ @section LicensingCiting Licensing, Citing & Acknowledging Swarm-NG
+
+Citing Swarm-NG
+- When writing papers which made use of Swarm-NG, we strongly encourage you to cite the technical paper describing Swarm-NG and the Swarm-NG Website.  
+- Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy. 
+arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
+
+Licensing Information
+- Swarm-NG v1.0 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
+
+
+ @section Acknowledgements
+Swarm-NG is the product of a collaboration between astrophysicists and computer scientists.  The major contributors to the current Swarm-NG codebase are Saleh Dindar, Eric Ford and Mario Juric.
+
+The Swarm-NG library includes code reused or adapted from:
+- the nVidia CUDA SDK (http://www.nvidia.com/object/cuda_home_new.html),
+- the GNU Science Library (http://www.gnu.org/software/gsl/),
+- Sverre Aarseth’s hermit2 code (http://www.ast.cam.ac.uk/~sverre/web/pages/nbody.htm), and
+- John Chamber’s Mercury code (http://www.arm.ac.uk/~jec/home.html), which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan’s Swift code (http://www.boulder.swri.edu//~hal/swift.html).
+
+We are happy to acknowledge financial support from:
+- the University of Florida’s Research Opportunity Seed Fund,
+- the National Science Foundation (grant CCF-0728797;  http://www.nsf.gov/),
+- NASA’s Hubble Fellowship program (http://www.stsci.edu/institute/org/spd/hubble-fellowship/hubble-fellow-overview), and
+- especially NASA’s Applied Information Systems Research Program (grant NNX09AM41G; http://aisrp.nasa.gov/).
+
+We acknowledge additional support from:
+- the University of Florida Astronomy Department (http://astro.ufl.edu/),
+- UF CISE Prof. Jorg Peters' SurfLab (http://www.cise.ufl.edu/research/SurfLab/)
+- UF’s High Performance Computing Center (http://www.hpc.ufl.edu/),
+- the Harvard-Smithsonian Center for Astrophysics (http://www.cfa.harvard.edu/) and the Institute for Theory and Computation (http://www.cfa.harvard.edu/itc/),
+- the Institute for Advanced Study (http://sns.ias.edu/), and
+- nVidia Corporation (http://www.nvidia.com).
+
 
  @section moreinfo Further Information
  Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
@@ -32,4 +74,9 @@ differential equations.
  
  For more information see http://www.astro.ufl.edu/~eford/code/swarm/
 
+ Source code is hosted on http://github.com/AstroGPU/swarm . 
+
 */
+
+# - \b Using \b Python \b interface
+# 	- \ref TutorialPython

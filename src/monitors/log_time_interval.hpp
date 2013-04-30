@@ -15,13 +15,19 @@
  * Free Software Foundation, Inc.,                                       *
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
-#pragma once
 
+/*! \file log_time_interval.hpp
+ *   \brief Defines and implements the monitor \ref swarm::monitors::log_time_interval
+ *          that logs the entire state of systems at periodic intervals. 
+ *  
+ */
+
+#pragma once
 
 namespace swarm {
   namespace monitors {
 
-/* Parameters for log_time_interval monitor
+/*! Parameters for log_time_interval monitor
  * log_on_interval (bool): 
  * log_interval (real): time between sucessive logging
  * \ingroup monitors_param
@@ -29,6 +35,7 @@ namespace swarm {
 struct log_time_interval_params {
 	double time_interval;
   //        bool log_on;
+        //! Set log time interval
 	log_time_interval_params(const config &cfg)
 	{
 		time_interval = cfg.require("log_interval", 0.0);
@@ -58,6 +65,15 @@ class log_time_interval {
 	log_t& _log;
 
 	public:
+		template<class T>
+		static GENERIC int thread_per_system(T compile_time_param){
+			return 1;
+		}
+
+		template<class T>
+		static GENERIC int shmem_per_system(T compile_time_param) {
+			 return 0;
+		}
         GPUAPI bool is_deactivate_on() { return false; };
   //        GPUAPI bool is_log_on() { return _params.log_on; };
         GPUAPI bool is_log_on() { return _params.time_interval!=0.; };

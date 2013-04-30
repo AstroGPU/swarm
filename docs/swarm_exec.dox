@@ -1,7 +1,7 @@
 namespace swarm {
 /*!
 
-  \page SwarmExec Swarm executable
+  \page SwarmExec Swarm command-line interface
 
   Swarm executable is the average Linus user's interface to Swarm-NG package. Swarm executable can be used
   to accomplish different tasks:

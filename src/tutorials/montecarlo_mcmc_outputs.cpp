@@ -1,3 +1,27 @@
+/*************************************************************************
+ * Copyright (C) 2009-2010 by Eric Ford & the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
+
+/*! \file montecarlo_mcmc_outputs.cpp
+ *  \brief Implement Monte Carlo simulation to find planetary systems and generate ensemble. 
+ *
+ */
+
+
 /** 
  * In writing this monte carlo simulation which is supposed to find planetary
  * systems using Monte Carlo simulations, I used the old monte carlo code.
@@ -16,6 +40,8 @@
 #include "random.hpp"
 #include "kepler.hpp"
 
+#include "swarm/log/host_array_writer.hpp"
+
 #define SYNC cudaThreadSynchronize()
 
 
@@ -25,10 +51,10 @@ using namespace std;
 config cfg;
 
 /**
- * Read in Jacobi coordinates from a text file
+ * Read in Keplerian coordinates from a text file
  *
  */
-defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config& cfg) 
+defaultEnsemble generate_ensemble_with_initial_conditions_keplerian_from_file(const config& cfg) 
 {
   defaultEnsemble ens = defaultEnsemble::create( cfg.require("nbod",0), cfg.require("nsys",0) );
   std::cerr << "# nsystems = " << ens.nsys() << " nbodies/system = " << ens.nbod() << "\n";
@@ -40,7 +66,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
   const bool use_jacobi = cfg.optional("use_jacobi", 0);
 
   //  std::cerr << "# Writing stable system ids\n";
-  ifstream jacobi_input( cfg.optional("input_jacobi", string("mcmc.out")).c_str() ); 
+  ifstream jacobi_input( cfg.optional("input_mcmc_keplerian", string("mcmc.out")).c_str() ); 
 
   for(unsigned int sysid=0;sysid<ens.nsys();++sysid)
     {
@@ -53,6 +79,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
       ens[sysid].set_active();
       double x=0, y=0, z=0, vx=0, vy=0, vz=0;
       ens.set_body(sysid, 0, mass_star, x, y, z, vx, vy, vz);
+      ens[sysid][0].attribute(0) = 0.005; // solar radius
       double mass_enclosed = mass_star;
       for(unsigned int bod=1;bod<ens.nbod();++bod)
 	{
@@ -83,6 +110,7 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
 	  
 	  // assign body a mass, position and velocity
 	  ens.set_body(sysid, bod, mass_planet, x, y, z, vx, vy, vz);
+	  ens[sysid][bod].attribute(0) = 0.;
 
 	  if(cfg.count("verbose")&&(sysid<10))
 	    {
@@ -101,7 +129,152 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
 	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
 	    }
       
+	} // end loop over bodies
+  
+      // Shift into barycentric frame
+      ens.get_barycenter(sysid,x,y,z,vx,vy,vz);
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  ens.set_body(sysid, bod, ens.mass(sysid,bod), 
+		       ens.x(sysid,bod)-x, ens.y(sysid,bod)-y, ens.z(sysid,bod)-z, 
+		       ens.vx(sysid,bod)-vx, ens.vy(sysid,bod)-vy, ens.vz(sysid,bod)-vz);	  
+	  ens[sysid][bod].attribute(0) = 0.;
 	}  // end loop over bodies
+
+    } // end loop over systems
+  return ens;
+}
+
+
+/**
+ * Read in Cartesian coordinates from a text file
+ *
+ */
+defaultEnsemble generate_ensemble_with_initial_conditions_cartesian_from_file(const config& cfg) 
+{
+  defaultEnsemble ens = defaultEnsemble::create( cfg.require("nbod",0), cfg.require("nsys",0) );
+  std::cerr << "# nsystems = " << ens.nsys() << " nbodies/system = " << ens.nbod() << "\n";
+
+  //  std::cerr << "# Set initial time for all systems = ";
+  double time_init = cfg.optional("time_init", 0.0);
+  //  std::cerr << time_init << ".\n";
+
+  const bool use_jacobi = cfg.optional("use_jacobi", 0);
+
+  //  std::cerr << "# Writing stable system ids\n";
+  ifstream mcmc_input( cfg.optional("input_mcmc_cartesian", string("mcmc.out")).c_str() ); 
+
+  assert(mcmc_input.good());
+
+  const int lines_to_skip = cfg.optional("lines_to_skip", 0);
+  for(int i=0;i<lines_to_skip;++i)
+    {
+      assert(mcmc_input.good());
+      char junk[1024];
+      mcmc_input.getline(junk,1024);
+    }
+
+  for(unsigned int sysid=0;sysid<ens.nsys();++sysid)
+    {
+      assert(mcmc_input.good());
+#if 1
+      std::vector<double> masses(ens.nbod(),0.0);
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> masses[bod];
+	}  // end loop over bodies
+
+      ens[sysid].id() = sysid;
+      ens[sysid].time() = time_init;
+      ens[sysid].set_active();
+      double x=0, y=0, z=0, vx=0, vy=0, vz=0;
+      ens.set_body(sysid, 0, masses[0], x, y, z, vx, vy, vz);
+      ens[sysid][0].attribute(0) = 0.005; // solar radius
+      double mass_enclosed = masses[0];
+      for(unsigned int bod=1;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> x >> y >> z >> vx >> vy >> vz;
+
+	  mass_enclosed += masses[bod];
+	  double mass = use_jacobi ? mass_enclosed : masses[0]+masses[bod];
+	  if(cfg.count("verbose")&&(sysid<10))
+	    std::cout << "# Drawing sysid= " << sysid << " bod= " << bod << ' ' << masses[bod] << "  " << x << ' ' << y << ' ' << z << ' ' << vx << ' ' << vy << ' ' << vz << '\n';
+	  
+	  if(use_jacobi)
+	    {
+	      double bx, by, bz, bvx, bvy, bvz;
+	      ens.get_barycenter(sysid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	      x  += bx;	  y  += by;	  z  += bz;
+	      vx += bvx;  vy += bvy;	  vz += bvz;
+	    }
+	  
+	  // assign body a mass, position and velocity
+	  ens.set_body(sysid, bod, masses[bod], x, y, z, vx, vy, vz);
+	  ens[sysid][bod].attribute(0) = 0.0; 
+
+	  if(cfg.count("verbose")&&(sysid<10))
+	    {
+	      double x_t = ens.x(sysid,bod);
+	      double y_t = ens.y(sysid,bod);
+	      double z_t = ens.z(sysid,bod);
+	      double vx_t = ens.vx(sysid,bod);
+	      double vy_t = ens.vy(sysid,bod);
+	      double vz_t = ens.vz(sysid,bod);
+	      
+	      std::cout << " x= " << x << "=" << x_t << " ";
+	      std::cout << " y= " << y << "=" << y_t << " ";
+	      std::cout << " z= " << z << "=" << z_t << " ";
+	      std::cout << "vx= " << vx << "=" << vx_t << " ";
+	      std::cout << "vy= " << vy << "=" << vy_t << " ";
+	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
+	    }
+	}
+#else
+      std::vector<double> masses(ens.nbod(),0.0);
+      double x=0, y=0, z=0, vx=0, vy=0, vz=0;
+      double mass_enclosed = 0.0;
+      ens[sysid].id() = sysid;
+      ens[sysid].time() = time_init;
+      ens[sysid].set_active();
+      for(unsigned int bod=0;bod<ens.nbod();++bod)
+	{
+	  mcmc_input >> masses[bod];
+	  mcmc_input >> x >> y >> z >> vx >> vy >> vz;
+
+	  mass_enclosed += masses[bod];
+	  double mass = use_jacobi ? mass_enclosed : masses[0]+masses[bod];
+	  if(cfg.count("verbose")&&(sysid<10))
+	    std::cout << "# Drawing sysid= " << sysid << " bod= " << bod << ' ' << masses[bod] << "  " << x << ' ' << y << ' ' << z << ' ' << vx << ' ' << vy << ' ' << vz << '\n';
+	  
+	  if(use_jacobi)
+	    {
+	      double bx, by, bz, bvx, bvy, bvz;
+	      ens.get_barycenter(sysid,bx,by,bz,bvx,bvy,bvz,bod-1);
+	      x  += bx;	  y  += by;	  z  += bz;
+	      vx += bvx;  vy += bvy;	  vz += bvz;
+	    }
+	  
+	  // assign body a mass, position and velocity
+	  ens.set_body(sysid, bod, masses[bod], x, y, z, vx, vy, vz);
+
+	  if(cfg.count("verbose")&&(sysid<10))
+	    {
+	      double x_t = ens.x(sysid,bod);
+	      double y_t = ens.y(sysid,bod);
+	      double z_t = ens.z(sysid,bod);
+	      double vx_t = ens.vx(sysid,bod);
+	      double vy_t = ens.vy(sysid,bod);
+	      double vz_t = ens.vz(sysid,bod);
+	      
+	      std::cout << " x= " << x << "=" << x_t << " ";
+	      std::cout << " y= " << y << "=" << y_t << " ";
+	      std::cout << " z= " << z << "=" << z_t << " ";
+	      std::cout << "vx= " << vx << "=" << vx_t << " ";
+	      std::cout << "vy= " << vy << "=" << vy_t << " ";
+	      std::cout << "vz= " << vz << "=" << vz_t << "\n";
+	    }
+	} // end loop over bodies
+#endif      
   
       // Shift into barycentric frame
       ens.get_barycenter(sysid,x,y,z,vx,vy,vz);
@@ -116,13 +289,13 @@ defaultEnsemble generate_ensemble_with_initial_conditions_from_file(const config
   return ens;
 }
 
-
+/// output the system
 void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &os = std::cout)
 {
   enum {
     JACOBI, BARYCENTRIC, ASTROCENTRIC
   } COORDINATE_SYSTEM = BARYCENTRIC;
-  const bool use_jacobi = cfg.optional("use_jacobi", 0);  
+  const bool use_jacobi = cfg.optional("use_jacobi_output", 0);  
   if(use_jacobi) COORDINATE_SYSTEM = JACOBI;
 
   std::streamsize cout_precision_old = os.precision();
@@ -187,13 +360,13 @@ void print_system(const swarm::ensemble& ens, const int systemid, std::ostream &
   os << std::flush;
 }
 
-
+///
 void print_selected_systems(swarm::ensemble& ens, std::vector<unsigned int> systemindices, std::ostream &os = std::cout)
 {
   for(unsigned int i=0; i<systemindices.size(); ++i)
       print_system(ens,systemindices[i], os);
 }
-
+///
 void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, std::ostream &os = std::cout)
 {
   if(nprint>ens.nsys()) nprint = ens.nsys();
@@ -201,7 +374,7 @@ void print_selected_systems_for_demo(swarm::ensemble& ens, unsigned int nprint, 
       print_system(ens,systemid,os);
 }
 
-
+///
 void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init) 
 {
   // find the stable ones and output the initial conditions for the stable
@@ -242,7 +415,7 @@ void write_stable_systems(defaultEnsemble &ens, defaultEnsemble &ens_init)
     }
 
 }
-
+/// Calculate the semi-major axes
 std::vector<std::vector<double> > calc_semimajor_axes(defaultEnsemble& ens)
 {
   std::vector<std::vector<double> > semimajor_axes(ens.nsys(),std::vector<double>(ens.nbod(),0.));
@@ -319,14 +492,14 @@ void disable_unstable_systems(defaultEnsemble& ens, const std::vector<std::vecto
 	  if(disable)
 	    {
 	      if(cfg.count("verbose"))
-		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
+		std::cout << "# Disabling idx=" << sys_idx << " id=" << sys_id << " b=" << bod << " ainit= " << semimajor_axes_init[sys_id][bod-1] << " a= " << a << " e= " << e << " i= " << i << " Omega= " << O << " omega= " << w << " M= " << M << "\n";	  	
 	      break;
 	    }
 	}
       if(disable) ens[sys_idx].set_disabled();
     }
 }
-
+///
 bool needs_shrinking( const defaultEnsemble& ens ) 
 {
   // This is the ratio we use when we are shrinking
@@ -381,7 +554,7 @@ defaultEnsemble trim_disabled_systems( const defaultEnsemble& ens )
 }
 
 
-
+///
 void reactivate_systems(defaultEnsemble&ens)
 {
   for(int i = 0; i < ens.nsys() ; i++)
@@ -390,7 +563,7 @@ void reactivate_systems(defaultEnsemble&ens)
 	ens.set_active(i);
     }
 }
-
+///
 volatile bool integration_loop_not_aborted_yet = true;
 /**
  *   We can use this signal handler function
@@ -408,6 +581,7 @@ void catch_ctrl_c()
   signal(SIGINT, &ctrl_c_trap );
 }
 
+/// The main program
 int main(int argc, char* argv[] ) 
 {
   // We keep it simple, later on one can use boost::program_options to 
@@ -433,8 +607,15 @@ int main(int argc, char* argv[] )
   defaultEnsemble ens ; 
   if( cfg.count("input") ) 
     {    ens = snapshot::load(cfg["input"]);  }
+  else if(cfg.count("input_mcmc_keplerian") )
+    {    ens = generate_ensemble_with_initial_conditions_keplerian_from_file( config::load(initc_configfile) );  }
+  else if(cfg.count("input_mcmc_cartesian") )
+    {    ens = generate_ensemble_with_initial_conditions_cartesian_from_file( config::load(initc_configfile) );  }
   else
-    {    ens = generate_ensemble_with_initial_conditions_from_file( config::load(initc_configfile) );  }
+    {
+      std::cerr << "# Must specify one of input [for binary snapshot], input_mcmc_keplerian or input_mcmc_cartesian.\n";
+      return 255;
+    }
 	
   // save the ensemble as a snapshot
   if(cfg.count("initial_snapshot"))
@@ -478,6 +659,7 @@ int main(int argc, char* argv[] )
   integ->flush_log();
 
   catch_ctrl_c();
+  int num_integrate_calls = 0;
   while( number_of_active_systems(ens) > 0 && integration_loop_not_aborted_yet ) {
 
     // 1. Integrate, we could use core_integrate but the general integrate
@@ -486,7 +668,8 @@ int main(int argc, char* argv[] )
     // the middle, there's no point. It also has a nice for loop and can
     // to several kernel calls.
     integ->integrate();
-    
+    ++num_integrate_calls;
+
     // 2. CPU-based tests to identify systems that can be terminated
     int active_ones = number_of_active_systems(ens);
     const double deltaa_frac_threshold = cfg.optional("deltaa_frac_threshold", 0.5);
@@ -497,8 +680,11 @@ int main(int argc, char* argv[] )
     std::cerr << active_ones << "  max|dE/E|= " << max_deltaE << "\n";
 
     // EBF Experiment trying to expose host log.  
-    swarm::log::ensemble_enabled(*(swarm::log::manager::default_log()->get_hostlog()),ens);
-    integ->flush_log();
+    if(num_integrate_calls%10==0)
+      {
+	swarm::log::ensemble_enabled(*(swarm::log::manager::default_log()->get_hostlog()),ens);
+	integ->flush_log();
+      }
 
     // 3. Now we need to get rid of the inactive ones. There 
     // should be some criteria, whatever it is we are
@@ -547,5 +733,47 @@ int main(int argc, char* argv[] )
     }
 
   write_stable_systems(ens,ens_init);
+
+#if ACCESS_HOST_ARRAY_OF_TRANSIT_TIMES
+
+  static const int max_num_doubles_per_event = 2;
+  typedef swarm::event_record<max_num_doubles_per_event> event_record_type;
+  typedef std::vector<event_record_type>  event_log_one_system_type;
+  typedef std::vector<event_log_one_system_type>  event_log_one_code_type;
+  std::vector<event_log_one_code_type> event_log;
+
+  event_log_one_code_type data = (static_cast<host_array_writer* >(swarm::log::manager::default_log()->get_writer().get()))->get_event_log_all_systems(0);
+  std::vector<std::vector<std::vector<double> > > transit_times_model(ens_init.nsys(), std::vector<std::vector<double> >(ens_init.nbod()));
+  std::vector<std::vector<std::vector<double> > > transit_durations_model(ens_init.nsys(), std::vector<std::vector<double> >(ens_init.nbod()));
+
+  for(int sysid=0;sysid<data.size();++sysid)
+    {
+      for(int e=0;e<data[sysid].size();++e)
+	{
+	  event_record_type er = data[sysid][e];
+	  int bodid = er.bodid1;
+	  double time = er.time;
+	  double b = er.data[0];
+	  double vproj = er.data[1];
+	  transit_times_model[sysid][bodid].push_back(time);
+	  transit_durations_model[sysid][bodid].push_back(sqrt(1.-b*b)/vproj);
+	}
+    }
+
+  std::cout.precision(10);
+
+  for(int sysid=0;sysid<transit_times_model.size();++sysid)
+    {
+      for(int bodid=0;bodid<transit_times_model[sysid].size();++bodid)
+	{
+	  for(int trid=0;trid<transit_times_model[sysid][bodid].size();++trid)
+	    {
+	      std::cout << "s= " << sysid << " b= " << bodid << " n= " << trid << " t= " << transit_times_model[sysid][bodid][trid] << " D= " << transit_durations_model[sysid][bodid][trid] << " \n";
+	    }
+	}
+    }
+
+#endif
+
 }
 

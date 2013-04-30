@@ -16,8 +16,16 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ************************************************************************/
 
+/*! \file helpers.hpp
+ *   \brief Template meta-programming combinators (symbolic helper functions) 
+ * for loop unrolling and selecting the correct templatized integrator at runtime.
+ *          
+ */
+
 #pragma once
 
+#include "device_settings.hpp"
+#include "utilities.hpp"
 
 
 /**
@@ -53,6 +61,7 @@ struct Unroller {
 	}
 };
 
+///
 template<int End, int Step>
 struct Unroller<End, End, Step> {
 	template<typename Action>
@@ -136,18 +145,57 @@ void launch_template(implementation* integ, implementation* gpu_integ, T compile
  * 	 This where the actual kernel is launched. Although all the
  * 	 parameters come from the integ_pair value that is passed in.
  * 	 For more information c.f. choose and launch_templatized_integrator.
+ * Calculate the number of systems that are fit into a block
+ *
+ * Although theoretically system_per_block can be set to 1, for performance reasons it is 
+ * better to set this value to something equal to the 
+ * number of memory banks in the device. This value is directly related to SHMEM_CHUNK_SIZE and
+ * ENSEMBLE_CHUNK_SIZE. For optimal performance all these constants should
+ * be equal to the number of memory banks in the device.
+ *
+ * Theoretical analysis: The load instruction is executed per warp. In Fermi
+ * architecture, a warp consists of 32 threads (CUDA 2.x) with consecutive IDs. A load
+ * instruction in a warp triggers 32 loads sent to the memory controller.
+ * Memory controller has a number of banks that can handle loads independently.
+ * According to CUDA C Programming Guide, there are no memory bank conflicts
+ * for accessing array of 64-bit valuse in devices with compute capabality of 2.x.
+ *
+ * It is essential to set system_per_block, SHMEM_CHUNK_SIZE and ENSEMBLE_CHUNK_SIZE to 
+ * the warp size for optimal performance. Lower values that are a power of 2 will result
+ * in some bank conflicts; the lower the value, higher is the chance of bank conflict.
  */
 template<int N>
 struct launch_template_choose {
 	template<class integ_pair>
 	static void choose(integ_pair p){
-		compile_time_params_t<N> compile_time_param;
-//		$PRINT( "Launch Kernel " << p.first->gridDim().x << "x" << p.first->gridDim().y 
-//				<< "=" << (p.first->gridDim().x * p.first->gridDim().y) <<  ",  "
-//				<< p.first->threadDim().x << "x" << p.first->threadDim().y 
-//				<< "=" << (p.first->threadDim().x * p.first->threadDim().y) <<  ",  "
-//				<< ", " << p.first->shmemSize() );
-		generic_kernel<<<p.first->gridDim(), p.first->threadDim(), p.first->shmemSize() >>>(p.second,compile_time_param);
+		compile_time_params_t<N> ctp;
+		typename integ_pair::first_type integ = p.first;
+
+		int sys_p_block = integ->override_system_per_block();
+		const int nsys = integ->get_ensemble().nsys();
+		const int tps = integ->thread_per_system(ctp);
+		const int shm = integ->shmem_per_system(ctp);
+		if(sys_p_block == 0){
+			sys_p_block = optimized_system_per_block(SHMEM_CHUNK_SIZE, tps, shm);
+		}
+
+
+		const int nblocks = ( nsys + sys_p_block - 1 ) / sys_p_block;
+		const int shmemSize = sys_p_block * shm;
+
+		dim3 gridDim;
+		find_best_factorization(gridDim.x,gridDim.y,nblocks);
+
+		dim3 threadDim;
+		threadDim.x = sys_p_block;
+		threadDim.y = tps;
+
+		int blocksize = threadDim.x * threadDim.y;
+		if(!check_cuda_limits(blocksize, shmemSize )){
+			throw runtime_error("The block size settings exceed CUDA requirements");
+		}
+
+		generic_kernel<<<gridDim, threadDim, shmemSize>>>(p.second, ctp);
 	}
 };
 
@@ -180,10 +228,10 @@ void launch_templatized_integrator(implementation* integ){
 		choose< launch_template_choose, 3, MAX_NBODIES, void, integ_pair > c;
 			c( nbod, p );
 
-		cudaFree(integ);
+		cudaFree(gpu_integ);
 	} else {
 		char b[100];
-		snprintf(b,100,"Invalid number of bodies. (only up to %d bodies per system)",MAX_NBODIES);
+		snprintf(b,100,"Invalid number of bodies. (Swarm-NG was compiled with MAX_NBODIES = %d bodies per system.)",MAX_NBODIES);
 		ERROR(b);
 	}
 
