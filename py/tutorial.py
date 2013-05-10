@@ -3,8 +3,12 @@
 
 
 # @page TutorialPython Beginner Python Tutorial
-from sys import path
-path.append('lib')
+import sys
+import os
+
+BASEDIR = os.path.dirname(os.path.realpath(__file__))
+sys.path.append('lib')
+
 # raoecuh
 #a.,rcuhc,r.uh
 from numpy import *
@@ -35,11 +39,11 @@ def integrate(ens) :
 	sync
 
 
-ref = DefaultEnsemble.load_from_bin( "input_stability_4.bin")
+ref = DefaultEnsemble.load_from_text( os.path.join(BASEDIR , "../test/integrators/test.3.in.txt"))
 
 for s in range(ref.nsys):
 	for b in range(ref.nbod):
-		print ref[s][b].pos, ref[s][b].vel
+		print("pos: %s\tvel:%s" % (ref[s][b].pos, ref[s][b].vel))
 
 ref[0][0].pos = [ 1.0, 2.0 , 5.0 ]
 
@@ -47,5 +51,5 @@ ens = ref.clone()
 integrate(ens)
 
 max_deltaE = find_max_energy_conservation_error( ens, ref)
-print "Max energy conservation error ", max_deltaE
+print("Max energy conservation error %g" % max_deltaE)
 

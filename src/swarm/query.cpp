@@ -30,6 +30,7 @@
 
 #include "query.hpp"
 #include "kepler.h"
+#include "bdb_query.hpp"
 
 
 namespace swarm { namespace query {
@@ -293,8 +294,9 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_ra
 }
 
 
-    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, body_range_t &bod)
+    std::ostream &output_record(std::ostream &out, gpulog::logrecord &lr, const body_range_t &_bod)
 {
+    	body_range_t bod = _bod;
 	int evtid = lr.msgid();
 
 	// Make sure these stay synced with src/swarm/log/log.hpp
@@ -318,8 +320,7 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_ra
 
 
     //    void execute(const std::string &datafile, time_range_t T, sys_range_t sys)
-      void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod)
-{
+void execute_binary_query(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod) {
 	swarmdb db(datafile);
 	swarmdb::result r = db.query(sys, T);
 		//	swarmdb::result r = db.query(sys, bod, T);
@@ -329,6 +330,15 @@ std::ostream& record_output_16(std::ostream &out, gpulog::logrecord &lr, body_ra
 	  output_record(std::cout, lr,bod );
 		std::cout << "\n";
 	}
+}
+
+void execute(const std::string &datafile, time_range_t T, sys_range_t sys, body_range_t bod)
+{
+    if(datafile.substr(datafile.length()-3,datafile.length()) == ".db"){
+        execute_bdb_query(datafile,T,sys,bod);
+    } else {
+        execute_binary_query(datafile,T,sys,bod);
+    }
 }
 
   } } // end namespace swarm::query

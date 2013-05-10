@@ -9,13 +9,27 @@ You can obtain Swarm source codes in two different ways:
 
 - Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
 
-- Checkout the latest development version from Git Repository using the following command:
+- Checkout the latest development version from Git Repository using one of the following commands: \\
+if you are an SSH user and you have set-up SSH with Github, then use:
 \verbatim
 $ git clone  git@github.com:AstroGPU/swarm.git
 \endverbatim
-If you want to download the stable version from git, use this command:
+if you have not set-up SSH or never used SSH with Github, use:
+\verbatim
+$ git clone https://github.com/AstroGPU/swarm.git
+\endverbatim
+- If you want to download the stable version from git, use one of these commands instead:
 \verbatim
 $ git clone -b stable  git@github.com:AstroGPU/swarm.git
+\endverbatim
+Or
+\verbatim
+$ git clone -b stable https://github.com/AstroGPU/swarm.git
+\endverbatim
+If you get an error message when trying to clone the stable branch, then you probably have an older version of git.  In that case, you might try the following commands
+\verbatim
+$ git clone  git@github.com:AstroGPU/swarm.git
+$ git checkout --track -b stable origin/stable
 \endverbatim
 
 \section Pre Pre-requisites
@@ -89,10 +103,7 @@ compile properly:
      - \c CUDA_TOOLKIT_ROOT_DIR  : Path to the CUDA toolkit [/usr/local/cuda, /opt/cuda]
 
  - Once configuration succeeds without errors, press "e" to exit configuration 
-page and then press "g" to generate the make files. If no error, do:
-\verbatim
-cmake .
-\endverbatim
+page and then press "g" to generate the make files.
 
 \subsection compile Compile swarm
 
@@ -120,6 +131,23 @@ If you want to test the computational capacity of your system, do:
 
 Please report your results at 
 http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+
+\section Feedback
+If for any reasons the compilation does not work or the tests do not pass, please use the following 
+command to generate a feedback package.
+
+From the build directory (for simple installs it is the same as swarm directory) run 
+\verbatim cd <build directory>
+sh <source direcotry>/scripts/make_feedback.sh \endverbatim
+
+The script will create a file named feedback.tgz. Email us this file with the description of
+your system so we can work towards fixing the problem.
+
+If you examine the code and you find a bug, please don't hesitate to report it at
+http://github.com/AstroGPU/swarm/issues . Feel free to fork the repository and send
+pull requests if you fix any bugs.
+
+   
 
 
 */
