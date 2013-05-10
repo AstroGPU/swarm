@@ -67,8 +67,14 @@ integrated and synchronized to this time </TD></TR>
 <TR><TD>Adaptive step Runge-Kutta integrator</TD><TD> error_tolerance </TD><TD>       </TD><TD> Amount of error allowed for adaptive integration   </TD></TR>
 
 
-<TR><TD rowspan="2" >  Logging Subsystem   </TD><TD> log_writer</TD><TD>  null  </TD><TD>Output method used for logging: "null" is to discard output, "binary" writes binary files.</TD></TR>
-<TR> <TD> log_output</TD><TD>       </TD><TD>Name of the output file where the log is stored     </TD></TR>
+<TR><TD rowspan="3" >  Logging Subsystem   </TD><TD> log_writer</TD><TD>  null  </TD><TD>Output method used for logging:
+    <ul>
+        <li><em>null</em> is to discard output</li>
+        <li><em>bdb</em> writes to Berkeley DB databes (recommended)</li>
+        <li><em>binary</em> writes binary files.</li>
+   </ul></TD></TR>
+<TR> <TD> log_output</TD><TD>       </TD><TD>For <em>binary</em> logger: name of the output file where the log is stored     </TD></TR>
+<TR> <TD> log_output_db</TD><TD>       </TD><TD>For <em>bdb</em> logger: name of the database where the log is stored(.db extension is added) </TD></TR>
 
 
 <TR><TD>  Log interval monitor   </TD><TD> log_interval    </TD><TD>       </TD><TD>  The fixed interval time at which the system is logged (if enabled)  </TD></TR>

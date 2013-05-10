@@ -22,6 +22,7 @@ cfg["nsys" ] = "16"
 cfg["nbod"] = "3"
 cfg["time_step"] = "0.001"
 cfg["log_writer"] = "null"
+cfg["nogpu"] = "1"
 
 
 def integrate(ens) :
