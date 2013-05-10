@@ -25,6 +25,7 @@
 
 #include "common.hpp"
 #include "types/ensemble.hpp"
+#include "ensemble_alloc.hpp"
 
 using std::string;
 
