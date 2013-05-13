@@ -2,7 +2,7 @@ from swarmng import *
 
 cfg = Config()
 
-cfg["integrator"] = "hermite_adap"
+cfg["integrator"] = "hermite_cpu"
 cfg["time_step_factor"] = "170e-4"
 cfg["min_time_step"] = "1e-7"
 cfg["max_time_step"] = "1e-2"
@@ -10,6 +10,7 @@ cfg["nsys" ] = "16"
 cfg["nbod"] = "3"
 cfg["time_step"] = "0.001"
 cfg["log_writer"] = "null"
+cfg["nogpu" ] = "1"
 
 ref = generate_ensemble( cfg )
 ens = ref.clone()

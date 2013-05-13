@@ -1,21 +1,17 @@
-from sys import path
-path.append('lib')
-from libswarmng_ext import *
-
-from numpy import *
 from math import *
 from random import uniform
+import swarmng
 
-cfg = Config()
-
-cfg["integrator"] = "hermite_adap"
-cfg["time_step_factor"] = "170e-4"
-cfg["min_time_step"] = "1e-7"
-cfg["max_time_step"] = "1e-2"
-
+cfg = swarmng.mkConfig({
+  'integrator' : "hermite_cpu",
+  'time_step' : 170e-4,
+  "min_time_step" : 1e-7,
+  'max_time_step': 1e-2 ,
+  'nogpu' : 1
+  })
 
 def make_test_case(nsys = 16, nbod = 3 , spacing_factor = 1.4, planet_mass = 0.001, ejection_factor = 1):
-    d = DefaultEnsemble.create(nbod,nsys)
+    d = swarmng.DefaultEnsemble.create(nbod,nsys)
     for i in range(0,d.nsys):
         s = d[i]
         s.id = i
@@ -42,14 +38,12 @@ def norm(l):
 
 
 # Initializations
-init(cfg)
-integ = Integrator.create( cfg )
+swarmng.init(cfg)
+integ = swarmng.Integrator.create( cfg )
 
 
 # Integrating
 ref = make_test_case(nsys=20, nbod = 6, spacing_factor=1.01);
-
-ref.save_to_text("hh.txt")
 
 ens = ref.clone()
 integ.ensemble = ens
@@ -57,7 +51,7 @@ integ.destination_time = 100.0
 integ.integrate()
 
 for i in range(0,ens.nsys):
-    for j in range(0,ens.nbod):
+    for j in range(1,ens.nbod):
         ratio  = norm(ens[i][j].pos)/norm(ref[i][j].pos)
         if(ratio > 5):
             print i,j, ratio
