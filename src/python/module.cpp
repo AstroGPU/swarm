@@ -1,5 +1,6 @@
 #include "swarm/swarm.h"
 #include "swarm/snapshot.hpp"
+#include "swarm/kepler.h"
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
@@ -55,6 +56,35 @@ list get_pos_list(const ensemble::Body& b){
 	p.append( b[2].pos() );
 	return p;
 }
+
+list keplerian_for_cartesian(const double& x,const double& y, const double& z, const double vx, const double& vy, const double& vz, const double GM)
+{
+  double a, e, i, O, w, M;
+  calc_keplerian_for_cartesian( a, e, i, O, w, M, x, y, z, vx, vy, vz, GM);
+  list p;
+  p.append( a );
+  p.append( e );
+  p.append( i );
+  p.append( O );
+  p.append( w );
+  p.append( M );
+  return p;
+}
+
+list cartesian_for_keplerian(const double& a, const double& e, const double& i, const double& O, const double& w, const double& M)
+{
+  double x,y,z, vx,vy,vz, GM;
+  calc_cartesian_for_ellipse(x,y,z,vx,vy,vz, a,e,i,O,w,M, GM);
+  list p;
+  p.append( x );
+  p.append( y );
+  p.append( z );
+  p.append( vx );
+  p.append( vy );
+  p.append( vz );
+  return p;
+}
+
 
 void set_vel_list(ensemble::Body& b, const list& v ){
 	b[0].vel() = extract<double>(v[0]);
@@ -146,6 +176,8 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	def("init", swarm::init );
 	def("generate_ensemble", generate_ensemble );
 	def("sync", cudaThreadSynchronize );
+	def("keplerian_for_cartesian", keplerian_for_cartesian);
+	def("cartesian_for_keplerian", cartesian_for_keplerian);
 
 	class_<config>("Config")
 		.def( map_indexing_suite< config >() )

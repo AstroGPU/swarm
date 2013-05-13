@@ -1,9 +1,4 @@
-from sys import path
-path.append('lib')
-
-#from numpy import *
-from libswarmng_ext import *
-
+from swarmng import *
 
 cfg = Config()
 
