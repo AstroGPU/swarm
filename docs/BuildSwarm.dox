@@ -55,7 +55,7 @@ Optional software dependencies:
 Python development requirements:
  - Boost Python module
  - Python 2.7 or later development headers
- - Python bsddb3 module
+ - Python packages: bsddb3, psutil
 
 Installing required packages on your system, here we take Ubuntu as an example:
  - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
