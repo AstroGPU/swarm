@@ -146,14 +146,14 @@ def iter_secondary_cursor(c, mode = DB_NEXT):
             raise StopIteration
 
 class IndexedLogDB:
+    fileFormatVersion = "1"
     def __init__(self, fn):
         """Opens a BDB file that contains the primary database and
         secondary indices. fn is the path to the file"""
 
-        o = DB()
-        o.open(fn, flags=DB_RDONLY)
-        #for k, d in iter_cursor(o.cursor()):
-        #    print "# Database : ", k
+        m = DB()
+        m.open(fn, dbname="metadata", flags=DB_RDONLY)
+        
         p = DB()
         p.set_bt_compare(PKey.compareBinary)
         p.open(fn, dbname="primary", flags=DB_RDONLY)
@@ -181,6 +181,17 @@ class IndexedLogDB:
         self.system_idx = si
         self.time_idx = ti
         self.event_idx = ei
+        self.metadata = m
+        
+        self.validateVersionInfo()
+       
+    def getMetadata(self,name):
+      return self.metadata.get(name)
+    
+    def validateVersionInfo(self):
+      v = self.getMetadata("fileFormatVersion")
+      if v != self.fileFormatVersion :
+        raise RuntimeError("Mismatching file format version: {0}, required {1}".format(v, self.fileFormatVersion))
 
 
     def all_records(self):
