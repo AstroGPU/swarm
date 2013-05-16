@@ -26,6 +26,8 @@ public:
     void createEmpty(const std::string& fileName);
     
     void put(gpulog::logrecord& lr);
+    
+    void flush();
 
     void close(); 
 

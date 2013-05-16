@@ -91,7 +91,7 @@ DbEnv* bdb_database::createDefaultEnv(){
     DbEnv* env = new DbEnv(0);
     char* cwd = get_current_dir_name();
     env->set_cachesize(0,CACHESIZE,0);
-    env->open(cwd,DB_CREATE | DB_INIT_MPOOL,0);
+    env->open(cwd,DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL,0);
     free(cwd);
     return env;
 }
@@ -215,6 +215,10 @@ bool primary_cursor_t::position_at(pkey_t& key,lrw_t& lr){
 }
 
 
+void bdb_database::flush()
+{
+  primary.sync(0);time_idx.sync(0); event_idx.sync(0); system_idx.sync(0);
+}
 
 
 } } // close namespace log :: swarm
