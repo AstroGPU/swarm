@@ -1,3 +1,11 @@
+## @package swarmng
+#  Python interface to the Swarm-NG library
+#  This package loads and verifies the libswarmng_ext.so and
+#  adds some API that is implemented in Python. 
+#
+#  The extensive module for opening log files is also included in this package.
+#  
+
 import sys
 import os
 import imp
@@ -28,20 +36,16 @@ else:
 
 from libswarmng_ext import *
 
-def mkConfig(h):
-  """ Convert a regular python hash to a Swarm-NG
-   config script"""
-  c = Config()
-  for k,v in h.items() :
-    c[k] = str(v)
-  return c
 
 
+
+## Convert hashes and keyword arguments to a Swarm-NG 
+#    config object
+#  @code{.py}
+#  >>> swarmng.config({ 'integrator' : 'hermite_cpu' }, { 'nsys' : 16, 'nbod' : 3 } , nogpu = 1)
+#  @endcode
+#
 def config(*l,**kw):
-    """ Convert hashes and keyword arguments to a Swarm-NG 
-    config object
-    >>> swarmng.config({ 'integrator' : 'hermite_cpu' }, { 'nsys' : 16, 'nbod' : 3 } , nogpu = 1)
-    """
     c = Config()
     def addHash(h):
         for k,v in h.items():
@@ -51,3 +55,6 @@ def config(*l,**kw):
         addHash(h)
     addHash(kw)
     return c
+
+def mkConfig(h):
+  return config(h)

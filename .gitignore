@@ -11,3 +11,4 @@ feedback.*
 .*.swp
 *.pyc
 build/
+*.kdev4
