@@ -12,9 +12,16 @@
  * 
  * This API is not pythonified and implemented in C++ format.
  * 
- *  *EXPERIMENTAL*: This class does not run, gives load-time linker errors.
+ *  
  * 
  */
+
+
+//extern "C" int PYTHON_VERSION = PY_VERSION_HEX;
+
+extern "C" int python_hexversion(){ return PY_VERSION_HEX; }
+extern "C" char* python_version(){ return PY_VERSION; }
+
 
 using std::string;
 using namespace boost::python;
