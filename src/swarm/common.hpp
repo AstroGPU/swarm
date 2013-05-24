@@ -67,17 +67,22 @@
 	#include <valarray>
 #endif
 
-#ifndef __CUDACC__
+// TODO: this is a dirty fix
+#ifdef __CUDACC__
+//#define __int128 long long
+#undef __SIZEOF_INT128__
+#endif
+
 // Boost Libraries
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 
 using boost::shared_ptr;
 
+
 // CUDA libraries
 #include <cuda.h>
 #include <cuda_runtime.h>
-#endif
 
 
 // POSIX headers

@@ -90,6 +90,23 @@ CMAKE_C_FLAGS</em> </td><td>to specify the compiler flags during the compilation
 <td><em>CUDA_TOOLKIT_ROOT_DIR</em> </td><td>The directory where CUDA toolkit is installed. Useful when multiple version of CUDA are installed on one system </td><td>/usr/local/cuda </td></tr>
 </table>
   
+\subsection python Python and Boost related options
+<table>
+<tr>
+<th>Variable </th><th>Description </th><th>Default value </th></tr>
+<tr>
+<td><em>Boost_DIR</em> </td><td>to specify the directory where Boost is installed. </td><td>ON </td></tr>
+<tr>
+<td><em>Boost_INCLUDE_DIR</em> </td><td>to specify the directory where Boost header files are located. </td><td>ON </td></tr>
+<tr>
+<td><em>Boost_LIBRARY_DIR</em> </td><td>to specify the directory where Boost libraries are installed. </td><td>ON </td></tr>
+<tr>
+<td><em>Boost_PYTHON_LIBRARY</em> </td><td>to specify the full file path to libboost_python.so </td><td>ON </td></tr>
+<tr>
+<td><em>PYTHON_INCLUDE_DIR</em> </td><td>to specify the directory where Python header files are located </td><td>ON </td></tr>
+<tr>
+<td><em>PYTHON_LIBRARY</em> </td><td>to specify the full file path to python library file. </td><td>ON </td></tr>
+</table>
 
 \subsection other Miscellaneous options
 
