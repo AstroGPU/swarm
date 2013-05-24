@@ -14,6 +14,10 @@ class binary_reader {
 
 	std::istream& _input;
 
+    char* current;
+    char* buffer_begin;
+    char* buffer_end;
+
 public:
 	binary_reader(std::istream& input);
 
@@ -25,15 +29,19 @@ public:
 	 */
 	bool validate();
 
-	/*!
-	 * Determine if there is more log records. This function should be side
-	 * effect free.
-	 */
-	bool has_next();
 
 	/*!
 	 * Retrieve the next logrecord, may require loading the next chunk of the file.
+     *
+     * If there is the end of file, we return an invalid logrecord.
 	 */
 	gpulog::logrecord next();
 
+    bool ensure(const size_t& len);
+    char* readBytes(const size_t& len);
+
+    void readNextChunk();
+    ptrdiff_t tellg();
+    void seek(ptrdiff_t absolute_position);
+    void readChunk(ptrdiff_t current_offset);
 };

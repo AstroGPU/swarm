@@ -26,7 +26,9 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/positional_options.hpp>
 
+#include <limits>
 #include <iostream>
+#include <signal.h>
 #include <db_cxx.h>
 
 #include "swarm/swarm.h"
@@ -43,9 +45,27 @@ using gpulog::logrecord;
 
 int recordsLimit = 1000;
 int DEBUG_LEVEL = 0;
+const int CACHESIZE = 1024*1024*64 ;
+
+typedef long long idx_t; 
+
+struct logdb_primary_key {
+    double time;
+    int system_id;
+    int event_id;
+    idx_t recno;
+};
+
 
 po::variables_map argvars_map;
 string inputFileName, outputFileName;
+// Number to start with record number, it shouldn't be 
+// very significant since it is only used to remove
+// duplicates
+idx_t start_recno = 0;
+// Absolute position in the input file where the conversion should
+// begin
+idx_t starting_position = 0;
 
 void parse_commandline_and_config(int argc, char* argv[]){
 
@@ -55,6 +75,8 @@ void parse_commandline_and_config(int argc, char* argv[]){
 			("output,o", po::value<std::string>(), "Name of the database output file")
 			("number,n", po::value<int>(), "Number of records to convert")
 			("verbose,v", po::value<int>(), "Verbosity level")
+            ("position,p", po::value<idx_t>(), "Absolute position in the input file where the conversion should begin (in bytes)")
+            ("recno,r", po::value<idx_t>(), "Starting record number")
 			("dump,d", "Dump all the records up to the number")
 			("quiet,q", "Suppress all messages")
 			("help,h", "Help message")
@@ -90,10 +112,22 @@ void parse_commandline_and_config(int argc, char* argv[]){
 	if(vm.count("number"))
 		recordsLimit = vm["number"].as<int>();
 
+    if(vm.count("recno"))
+        start_recno  = vm["recno"].as<idx_t>();
+
+    if(vm.count("position"))
+        starting_position = vm["position"].as<idx_t>();
+
 
 }
 
 
+/**
+ * Helper function to put any constant size
+ * type into a Dbt struct. the flag DB_DBT_APPMALLOC
+ * hints berkeley db that the data is allocated by
+ * the application
+ */
 template<typename T>
 void put_in_dbt(const T& t, Dbt* data){
 	data->set_flags(DB_DBT_APPMALLOC);
@@ -113,6 +147,8 @@ bool extract_from_ptr(void* ptr, size_t size, double& time, int& sys){
 		return true;
 
 	default:
+        sys = -1;
+        time = numeric_limits<double>::quiet_NaN();
 		return false;
 	}
 
@@ -128,34 +164,55 @@ bool extract_from_ptr(void* ptr, size_t size, double& time, int& sys){
  *                   should fill in data and size fields that describe the secondary key or keys.
  */
 int lr_extract_sysid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-	double time = -1; int sys = -1;
-
-	if(extract_from_ptr(data->get_data(), data->get_size(), time, sys)){
-		put_in_dbt(sys, result);
-		return 0;
-	} else
-		return DB_DONOTINDEX;
+    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
+    put_in_dbt(pkey.system_id, result);
+    return 0;
 }
 
 int lr_extract_evtid(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-	logrecord l((char*)data->get_data());
-	assert(l.len() == data->get_size());
-
-	put_in_dbt(l.msgid(), result);
-
-	return 0;
+    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
+    put_in_dbt(pkey.event_id, result);
+    return 0;
 }
 
 int lr_extract_time(Db *secondary, const Dbt *key, const Dbt *data, Dbt *result) {
-	double time = -1; int sys = -1;
-
-	if(extract_from_ptr(data->get_data(), data->get_size(), time, sys)){
-		put_in_dbt(time, result);
-		return 0;
-	} else
-		return DB_DONOTINDEX;
+    logdb_primary_key& pkey = *(logdb_primary_key*) key->get_data();
+    put_in_dbt(pkey.time , result);
+    return 0;
 }
 
+/**
+ * The primary key is a struct
+ * we just convert the key into the struct
+ * and perform lexicographical compare in order
+ * of time , system_id and event_id
+ */
+int compare_logdb_primary_key(DB* db, const DBT *k1, const DBT* k2){
+    const size_t len = sizeof(logdb_primary_key);
+    if(k1->size < k2->size)
+        return -1;
+    else if(k1->size > k2->size)
+        return 1;
+    else{
+        if( (k1->size == len) && (k2->size == len) ) {
+
+            logdb_primary_key& a = *(logdb_primary_key*)(k1->data);
+            logdb_primary_key& b = *(logdb_primary_key*)(k2->data);
+
+            if(a.time < b.time) return -1;
+            else if(a.time > b.time) return 1;
+            else if(a.system_id < b.system_id) return -1;
+            else if(a.system_id > b.system_id) return 1;
+            else if(a.event_id < b.event_id) return -1;
+            else if(a.event_id > b.event_id) return 1;
+            else if(a.recno < b.recno) return -1;
+            else if(a.recno > b.recno) return 1;
+            else return 0;
+        }else{
+            return 0;
+        }
+    }
+}
 int compare_time(DB* db, const DBT *k1, const DBT* k2){
     if(k1->size < k2->size)
         return -1;
@@ -197,20 +254,57 @@ int compare_time(DB* db, const DBT *k1, const DBT* k2){
  * The easiest way to put the records into the file is to use time-system-evtid as the key and build some indices on
  * top of it.
  * However, the actual layout, indices and the primary keys depend on the data and our algorithms.
+ *
+ * TODO: implement -r switch that takes a resume position in the file
  */
 
 using gpulog::logrecord;
 using swarm::query::output_record;
 
+
+volatile bool interruption_received = false;
+
+
+
+/**
+ * When a signal of TERM or INT is received. Save the last position that was
+ * processed successfully and close all the databases before exiting.
+ */
+void sigTERM_handler(int signum) {
+    printf("Received signal %d. interrupting execution\n", signum);
+    if(interruption_received)
+        exit(2);
+    else
+        interruption_received = true;
+}
+
 /// main program
 int main(int argc, char* argv[]){
 	parse_commandline_and_config(argc,argv);
 
+    signal(SIGTERM, sigTERM_handler);
+    signal(SIGINT,  sigTERM_handler);
+
+    ifstream input;
+    Db primary(NULL, 0), system_idx(NULL, 0), time_idx(NULL, 0), event_idx(NULL, 0);
+    binary_reader input_reader(input);
 	// Open the binary file, we should be able to
-	ifstream input(inputFileName.c_str(), ios::binary);
-	binary_reader input_reader(input);
+	input.open(inputFileName.c_str(), ios::binary);
 	if(!input_reader.validate())
 		throw std::runtime_error("The input file is not valid");
+
+
+
+    cout << "Starting to convert at position " << starting_position << 
+        " with record number " << start_recno << endl;
+
+    idx_t current_recno = start_recno;
+
+    // When starting_position is not specified, we shouldn't 
+    // go back to zero, it is incorrect as the header is already
+    // read.
+    if(starting_position > 0)
+        input_reader.seek( starting_position );
 
 	// Open the database files: primary, system_index, time_index, event_index
 	// associate the indices with the primary
@@ -221,37 +315,69 @@ int main(int argc, char* argv[]){
 	dbenv.open(".",  DB_CREATE | DB_INIT_LOG |
             DB_INIT_LOCK | DB_INIT_MPOOL |
             DB_INIT_TXN , 0);*/
-	Db primary(NULL, 0), system_idx(NULL, 0), time_idx(NULL, 0), event_idx(NULL, 0);
+    primary.set_cachesize(0,CACHESIZE,0);
+    primary.set_bt_compare(compare_logdb_primary_key);
 	primary.open(NULL, (outputFileName+".p.db").c_str(), NULL, DB_BTREE, DB_CREATE, 0);
+
+    // Open up the system index database, it has to support
+    // duplicates and it is given a smaller cache size
+    system_idx.set_cachesize(0,CACHESIZE/4,0);
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
 	system_idx.open(NULL, (outputFileName+".sys.db").c_str(), NULL, DB_BTREE, DB_CREATE , 0);
+
+    // Open up the time index database, it has to support
+    // duplicates because our index is not a unique index and
+    // it takes a smaller cache size
+    time_idx.set_cachesize(0,CACHESIZE/4,0);
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
     time_idx.set_bt_compare(compare_time);
 	time_idx.open(NULL, (outputFileName+".time.db").c_str(), NULL, DB_BTREE, DB_CREATE  , 0);
+
+    event_idx.set_cachesize(0,CACHESIZE/4,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
 	event_idx.open(NULL, (outputFileName+".evt.db").c_str(), NULL, DB_BTREE, DB_CREATE , 0);
 
+    // Associate the primary table with the indices
+    // the lr_extract_* is the function that defines
+    // the indexing scheme
 	primary.associate(NULL, &system_idx,  &lr_extract_sysid, DB_IMMUTABLE_KEY);
 	primary.associate(NULL, &time_idx  ,  &lr_extract_time , DB_IMMUTABLE_KEY);
 	primary.associate(NULL, &event_idx ,  &lr_extract_evtid, DB_IMMUTABLE_KEY);
 
 
+    logdb_primary_key pkey;
+    Dbt key(&pkey,sizeof(pkey)),data;
 
-	for(int i=0; i < recordsLimit && input_reader.has_next(); i++) {
+
+	for(int i=0; (i < recordsLimit) && !interruption_received; i++) {
 		// read one record from binary file
 		logrecord l = input_reader.next();
 
-		if(argvars_map.count("dump") > 0) {
+	    /*	if(argvars_map.count("dump") > 0) {
 			output_record(std::cout, l);
 			std::cout << std::endl;
-		}
+		}*/
 
 		// insert it into the primary database, the secondary indices are automatically populated.
-		Dbt key(&i,sizeof(int));
-		Dbt data((void*)l.ptr,l.len());
-		primary.put(NULL,&key,&data,0);
+        if(l){
+
+            // form the primary key
+            pkey.event_id = l.msgid();
+            extract_from_ptr((void*)l.ptr, l.len(), pkey.time, pkey.system_id);
+            pkey.recno = current_recno;
+
+            data.set_data((void*)l.ptr);
+            data.set_size(l.len());
+            primary.put(NULL,&key,&data,0);
+
+            current_recno += 1;
+        }else{
+            break;
+        }
 
 	}
+    cout << "Processed the input file up to position " << input_reader.tellg() << 
+        " and record number " << current_recno << endl;
 
 	// Close all the databases
 	primary.close(0);
@@ -261,6 +387,13 @@ int main(int argc, char* argv[]){
 	//dbenv.close(0);
 
 	// Close the binary file
+    input.close();
+
+    if(interruption_received)
+        exit(1);
+    else
+        exit(0);
+
 }
 
 

@@ -26,6 +26,7 @@
 #pragma once
 
 #include "types/ensemble.hpp"
+#include "ensemble_alloc.hpp"
 #include "types/config.hpp"
 #include "log/logmanager.hpp"
 
