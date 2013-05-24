@@ -87,9 +87,6 @@ If you want to test the computational capacity of your system, type:
 make benchmark 
 \endverbatim
 
-Here is a \ref SampleBench "sample benchmark output" by running the benchmark
-on a machine with NVIDIA GPU Tesla M2090.
-
 */
 
 }

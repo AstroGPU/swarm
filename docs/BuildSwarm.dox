@@ -26,6 +26,11 @@ Or
 \verbatim
 $ git clone -b stable https://github.com/AstroGPU/swarm.git
 \endverbatim
+If you get an error message when trying to clone the stable branch, then you probably have an older version of git.  In that case, you might try the following commands
+\verbatim
+$ git clone  git@github.com:AstroGPU/swarm.git
+$ git checkout --track -b stable origin/stable
+\endverbatim
 
 \section Pre Pre-requisites
 Minimum Hardware requirements:
@@ -40,23 +45,32 @@ Software Requirements:
  - GCC 4.x (Refer to your CUDA Toolkit manual for the correct version of GCC)
  - <a href="http://www.boost.org/">Boost</a> libraries 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
+ - Berkeley DB C++ library (including headers)
 
 Optional software dependencies:
  - <a href="http://www.doxygen.org/">Doxygen</a> 
  - CMake GUI (cmake-gui)
  - Console CMake (ccmake)
 
+Python development requirements:
+ - Boost Python module
+ - Python 2.7 or later development headers
+ - Python bsddb3 module
 
 Installing required packages on your system, here we take Ubuntu as an example:
  - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
  - Install CMake:
 \verbatim
-sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev 
+sudo apt-get install cmake libboost-dev libboost-regex-dev libboost-program-options-dev libdb++-dev
 \endverbatim
  - For generating documentation and using the CMake graphical user interface, 
 install doxygen and cmake-gui:
 \verbatim
 sudo apt-get install doxygen cmake-gui
+\endverbatim
+ - Install Python:
+\verbatim
+sudo apt-get install libboost-python-dev python-dev python-bsddb3
 \endverbatim
 
 \section Compilation

@@ -26,6 +26,7 @@
 
 #include "../peyton/binarystream.hpp"
 #include "../peyton/memorymap.hpp"
+#include "../ensemble_alloc.hpp"
 
 #include "fileformat.hpp"
 #include "log.hpp"
