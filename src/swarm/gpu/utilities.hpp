@@ -36,9 +36,9 @@ namespace swarm {
  *
  *  But this is such a small kernel and it is not very frequently used.
  */
-int number_of_active_systems(deviceEnsemble ens);
+int number_of_active_systems(ensemble ens);
 
-void reactivate_systems(deviceEnsemble ens);
+void reactivate_systems(ensemble ens);
 
 /*!
    \brief Find best factorization
