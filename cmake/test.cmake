@@ -7,9 +7,13 @@ ADD_TEST(NAME ${title}_${config}
 	COMMAND swarm test -c ${TESTDIR}/${title}/${config}.cfg -I ${TESTDIR}/${title}/in.txt -O ${TESTDIR}/${title}/out.txt)
 ENDMACRO(TEST_SCENARIO)
 
+ADD_TEST(NAME "BDB"
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/log_bdb_test.sh" )
+
 ############ ACTUAL TEST Cases Begin Here
 
-ADD_TEST(NAME basic COMMAND swarm integrate --defaults )
+ADD_TEST(NAME Basic_integration_on_CPU COMMAND swarm integrate --defaults --nogpu integrator=hermite_cpu)
+ADD_TEST(NAME Basic_integration_on_GPU COMMAND swarm integrate --defaults )
 
 INCLUDE(cmake/test_integrators.cmake)
 
