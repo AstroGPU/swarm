@@ -24,7 +24,7 @@
  *  \todo put proper refernece to publication or URL.
  */
 
-#ifndef H_SWARM_KEPLER
+#pragma once
 
 double improve_mean_to_eccentric_annomaly_guess(const double e, const double M, const double x);
 double mean_to_eccentric_annomaly(const double e,  double M);
@@ -208,4 +208,3 @@ void calc_keplerian_for_cartesian( double& a,  double& e,  double& i,  double& O
 };
 
 
-#endif
