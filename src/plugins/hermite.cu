@@ -24,6 +24,7 @@
 #include "integrators/hermite_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
+#include "monitors/mercury_mce_stat.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
 #include "monitors/log_transit.hpp"
@@ -36,20 +37,20 @@ using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
 //! Initialize the hermite integrator plugin for stop_on_ejection and gravitation acceleration
-integrator_plugin_initializer<hermite< stop_on_ejection<L> , GravitationAccJerk > >
+integrator_plugin_initializer<hermite< mce_stat<L> , GravitationAccJerk > >
 	hermite_plugin("hermite");
 
 //! Initialize the hermite integrator plugin for stop_on_ejection_or_close_encounter and gravitation acceleration
-integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
-	hermite_close_encounter_plugin("hermite_close_encounter");
+//integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
+//	hermite_close_encounter_plugin("hermite_close_encounter");
 
 //! Initialize the hermite integrator plugin for log_time_interval and gravitation acceleration
-integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
-	hermite_log_plugin("hermite_log");
+//integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
+//	hermite_log_plugin("hermite_log");
 
 //! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
-integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
-	hermite_transit_plugin("hermite_transit");
+//integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
+//	hermite_transit_plugin("hermite_transit");
 
 #if __CUDA_ARCH__ >= 200
 //integrator_plugin_initializer<hermite< log_rvs<L>  , GravitationAccJerk > >
