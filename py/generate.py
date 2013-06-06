@@ -3,8 +3,7 @@
 import sys, getopt
 from sys import path
 
-path.append('../lib')
-from libswarmng_ext import *
+from swarmng import *
 
 # A example for generating a ensemble to a text output
 # from a config file
@@ -29,7 +28,7 @@ def main(argv):
         elif opt in ("-o", "--ofile"):
             outputfile = arg
 
-    cfg = load_config( configfile )
+    cfg = Config.load( configfile )
 
     ref = generate_ensemble( cfg )
     ref.save_to_text( outputfile )
