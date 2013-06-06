@@ -2,8 +2,7 @@
 import sys, getopt
 from sys import path
 
-path.append('../lib')
-from libswarmng_ext import *
+from swarmng import *
 
 # Integrate ensembles based on the config file and input ensemble
  
@@ -29,7 +28,7 @@ def main(argv):
         elif opt in ("-o", "--ofile"):
             outputfile = arg
 
-    cfg = load_config( cfgfile )
+    cfg = Config.load( cfgfile )
 
     ref = generate_ensemble( cfg )
     ens = ref.clone()
