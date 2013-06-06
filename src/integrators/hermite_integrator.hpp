@@ -58,11 +58,18 @@ public: //! Construct for class hermite integrator
 	__device__ void kernel(T compile_time_param){
 
 		if(sysid()>=_dens.nsys()) return;
+		
 		// References to Ensemble and Shared Memory
 		typedef Gravitation<T> Grav;
 		ensemble::SystemRef sys = _dens[sysid()];
+		
+		typedef typename Monitor::shared_data data_t;
+		monitor_t montest(_mon_params,sys,*_log, *((data_t*) system_shared_data_pointer(this,compile_time_param))) ;
+				
 		typedef typename Grav::shared_data grav_t;
 		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		
+		
 
 		// Local variables
 		const int nbod = T::n;
@@ -72,7 +79,7 @@ public: //! Construct for class hermite integrator
 		const int c = thread_component_idx(nbod);
 
 		// local variables
-		monitor_t montest(_mon_params,sys,*_log, (double*)system_shared_data_pointer(this,compile_time_param)) ;
+		montest.init( thread_in_system() );
 
 
 		// local information per component per body
@@ -80,10 +87,6 @@ public: //! Construct for class hermite integrator
 		if( (b < nbod) && (c < 3) )
 			{ pos = sys[b][c].pos(); vel = sys[b][c].vel(); }
 
-
-//		if( thread_in_system()==0  )  {
-		    montest.init( thread_in_system() );
-//		    }
 
 		////////// INTEGRATION //////////////////////
 
@@ -137,15 +140,21 @@ public: //! Construct for class hermite integrator
 #endif
 			}
 			acc0 = acc1, jerk0 = jerk1;
-
+			
+			__syncthreads();
+			montest.storeCurrentStat(thread_in_system());
+			__syncthreads();
+			
 			/// Finalize the step
 			if( (b < nbod) && (c < 3) )
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
+			
 			__syncthreads();
 			montest( thread_in_system() );  
 			__syncthreads();
+			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
 			    {	sys.set_inactive(); }
