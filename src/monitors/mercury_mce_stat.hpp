@@ -24,8 +24,6 @@
 #include <limits>
 #include <cstdlib>
 
-#include "swarm/gpu/gravitation_common.hpp"
-
 #define PI 3.14159265358979
 #define THIRD 0.3333333333333333
 namespace swarm {
@@ -38,7 +36,7 @@ namespace monitors {
   //! Structure for monitor_template_params
 struct mce_stat_params {
 int nbod;
-double rceh, rho, dmin, time_step;
+double rceh, dmin, time_step;
 bool deactivate_on, log_on, verbose_on;
 /*! \param cfg Configuration Paramaters
   */
@@ -48,8 +46,7 @@ bool deactivate_on, log_on, verbose_on;
 	      time_step = cfg.require("time_step", 0.0);
 	      dmin = cfg.optional("close_approach",0.0);
 	      rceh = cfg.optional("rceh",0.001);
-	      rho = cfg.optional("rho",5.52); // density of the earth or planet in general
-	      
+	      	      
 	      deactivate_on = cfg.optional("deactivate_on_close_encounter",false);
 	      log_on = cfg.optional("log_on_close_encounter",false);
 	      verbose_on = cfg.optional("verbose_on_close_encounter",false);
@@ -88,7 +85,7 @@ class mce_stat {
 	  typedef mce_stat_params params;
 	  
 	  const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
-	  //typedef swarm::gpu::bppt::GravitationAccJerkScalars<CHUNK_SIZE> shared_data [3][3];
+	  
 	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[3][3];
 	private:
 	params _params;
@@ -259,17 +256,20 @@ class mce_stat {
       	{
       		if (thread_in_system < pair_count)
       		{
-		      int i = nbod - 1 - thread_in_system / (nbod/2);
-		      int j = thread_in_system % (nbod/2);
-		      if (j >= i) 
-		      {
-			i = nbod - i - nbod%2;
-			j = nbod - j - nbod%2;
-		      }
+		      // j >= i
+		      int j = floor(-1+sqrt(1+8*thread_in_system));
+		      int i = thread_in_system - (i*(i+1))/2;
+		      
+// 		      if (j >= i) 
+// 		      {
+// 			i = nbod - i - nbod%2;
+// 			j = nbod - j - nbod%2;
+// 		      }
 		      /*************************************************************************
 		       * Check if bounding boxes of the trajectories of the two planet intersect
 		       * **********************************************************************/
-		      
+		  if (i > 0)
+		  {
 		      double vi_min[3],vi_max[3];
 		      vi_min[0] = min(shared[i][0].pos(),_sys[i][0].pos());
 		      vi_min[1] = min(shared[i][1].pos(),_sys[i][1].pos());
@@ -399,29 +399,94 @@ class mce_stat {
 			      }
 			      
 			      //---------------- End of minimum distance calculation --------------------------------
-			      float d2ce = max(_sys[i].attribute(1), _sys[j].attribute(1)); // distant for closed encounter
+			      //float d2ce = max(_sys[i].attribute(1), _sys[j].attribute(1)); // distant for closed encounter
 			      float d2hit = max(_sys[i].attribute(2), _sys[j].attribute(2)); // distant for collision
-			      d2ce = d2ce*d2ce;
+			      //d2ce = d2ce*d2ce;
 			      d2hit = d2hit*d2hit;
-			      float d2near = d2hit*4.0;
+			      //float d2near = d2hit*4.0;
 			      
-			      if ((d2min <= d2ce && d0t <= 0 && d1t >= 0) || (d2min <= d2hit))
+			      if (d2min <= d2hit)
 			      {
-				// do something with logging, even halting the system
-			      }
-			      
-			      if (d2min < d2near)
-			      {
-				if (d2min < d2hit)
+				// i is the index of the heavier planet
+				if (_sys[i].mass() < _sys[j].mass()) {int tmp = i; i = j; j = i;}
+				
+				lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, dmin, _sys.time()+tmin);
+				
+				
+				float msum = _sys[i].mass() + _sys[j].mass();
+				float mredu = _sys[i].mass()*_sys[j].mass()/msum;
+				// energy lost
+				_sys.attribute(0) += 0.5*mredu*(du1*du1+dv1*dv1+dw1*dw1) - _sys[i].mass()*_sys[j].mass()/sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+				float tmp1 = _sys[i].mass()/msum;
+				float tmp2 = _sys[j].mass()/msum;
+				
+				// Does it need to use atomicAdd ?
+				for (int c = 0; c < 3;c++)
 				{
-				  // Resolve collision
-				  
+				  _sys[i][c].pos() = _sys[i][c].pos()*tmp1 + _sys[j][c].pos()*tmp2;
+				  _sys[i][c].vel() = _sys[i][c].vel()*tmp1 + _sys[j][c].vel()*tmp2;
 				}
-				// Resolve closed encounter
+				_sys[i].mass() = msum;
+				
+				//eliminate the planet j
+				for (int c = 0; c < 3;c++)
+				{
+				  _sys[j][c].pos() *= -1.0;
+				  _sys[j][c].vel() *= -1.0;
+				}
+				_sys[j].mass() = 0.0;
+				   
+				
 			      }
 			      
 			      
 		      }// endif: two bounding boxes have non-zero intersection*/
+		  }//endif: 2 planet
+		  
+		  if (i==0 && j > 0) //
+		  {
+		    float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();
+		    float rr1 = _sys[j][0].pos()*_sys[j][0].pos() + _sys[j][1].pos()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
+		    float rv0 = shared[j][0].vel()*shared[j][0].pos() + shared[j][1].vel()*shared[j][1].pos() + shared[j][2].vel()*shared[j][2].pos();
+		    float rv1 = _sys[j][0].vel()*_sys[j][0].pos() + _sys[j][1].vel()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
+		    
+		    //If inside the central body, or passing through pericentre, use 2-body approx.
+		    if ((rv0*timestep <= 0.0 && rv1*timestep >=0.0)||min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0))
+		    {
+		      //x cross v
+		      float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
+		      float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
+		      float hz = shared[j][0].pos()*shared[j][1].vel() - shared[j][1].pos()*shared[j][0].vel();
+		      
+		      float v2 = shared[j][0].vel()*shared[j][0].vel() + shared[j][1].vel()*shared[j][1].vel() + shared[j][2].vel()*shared[j][2].vel();
+		      float h2 = hx*hx+hy*hy+hz*hz;
+		      float p = h2/(_sys[i].mass() + _sys[j].mass());
+		      float r0 = sqrt(rr0);
+		      float temp = 1.0 + p*(v2/(_sys[i].mass() + _sys[j].mass()) -2.0/r0);
+		      float e = sqrt(max(temp,0.0));
+		      float q = p/(1.0+e);
+		      
+		      if (q <= _sys[i].attribute(0))
+		      {
+			float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
+			for( int c = 0; c<3 ; c++)
+			{
+			  _sys[i][c].pos() = tmp2*_sys[j][c].pos();
+			  _sys[i][c].vel() = tmp2*_sys[j][c].vel();
+			}
+			_sys[i].mass() = _sys[j].mass()+_sys[i].mass();
+			//eliminate the planet j
+			for (int c = 0; c < 3;c++)
+			{
+			  _sys[j][c].pos() *= -1.0;
+			  _sys[j][c].vel() *= -1.0;
+			}
+			_sys[j].mass() = 0.0;
+		      }
+			
+		    }
+		    
+		  }
 		} 
 		
 // 		if(is_condition_met() && is_deactivate_on() && (thread_in_system==0) )
