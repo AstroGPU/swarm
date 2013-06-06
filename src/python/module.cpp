@@ -185,7 +185,6 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	def("sync", cudaThreadSynchronize );
 	def("keplerian_for_cartesian", keplerian_for_cartesian);
 	def("cartesian_for_keplerian", cartesian_for_keplerian);
-	def("load_config", load_config );
 
 	class_<config>("Config")
 		.def( map_indexing_suite< config >() )
