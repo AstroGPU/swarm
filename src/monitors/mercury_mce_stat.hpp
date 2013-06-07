@@ -348,8 +348,8 @@ class mce_stat {
 			      float dy0 = shared[i][1].pos() - shared[j][1].pos();
 			      float dz0 = shared[i][2].pos() - shared[j][2].pos();
 			      float du0 = shared[i][0].vel() - shared[j][0].vel();
-			      float dv0 = shared[i][0].vel() - shared[j][0].vel();
-			      float dw0 = shared[i][0].vel() - shared[j][0].vel();
+			      float dv0 = shared[i][1].vel() - shared[j][1].vel();
+			      float dw0 = shared[i][2].vel() - shared[j][2].vel();
 			      float d0t = (dx0*du0 + dy0*dv0 + dz0*dw0)*2.0; 
 			      
 			      float dx1 = _sys[i][0].pos() - _sys[j][0].pos();
