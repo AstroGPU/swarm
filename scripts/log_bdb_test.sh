@@ -20,9 +20,4 @@ $SWARM query -f testing_log.db > testing_log.db.txt
 $SWARM query -f testing_log.bin.raw > testing_log.bin.txt
 
 
-if diff testing_log.db.txt testing_log.bin.txt
-then
-    echo "Passed"
-else
-    echo "Fail"
-fi
+diff testing_log.db.txt testing_log.bin.txt
