@@ -152,8 +152,6 @@ config default_config() {
 	cfg["nbod"] = 3;
 	cfg["integrator"] = "hermite_cpu"; // Set to use a GPU integrator
 	cfg["time_step"] = "0.001";       // time step
-	cfg["nbod"] = "3";
-	cfg["nsys"] = "16";
 	cfg["log_writer"] = "null";
 	return cfg;
 }
