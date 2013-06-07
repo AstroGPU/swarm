@@ -36,4 +36,5 @@ ADD_CUSTOM_TARGET(benchmark_block_${cfg}
 ADD_DEPENDENCIES(benchmark_block_${cfg} swarm)
 ADD_DEPENDENCIES(benchmark benchmark_block_${cfg})	
 
+ADD_CUSTOM_TARGET(pytest COMMAND "${CMAKE_SOURCE_DIR}/py/runtests.py")
 

@@ -7,17 +7,22 @@ ADD_TEST(NAME ${title}_${config}
 	COMMAND swarm test -c ${TESTDIR}/${title}/${config}.cfg -I ${TESTDIR}/${title}/in.txt -O ${TESTDIR}/${title}/out.txt)
 ENDMACRO(TEST_SCENARIO)
 
-ADD_TEST(NAME "BDB"
-    COMMAND "${CMAKE_SOURCE_DIR}/scripts/log_bdb_test.sh" )
-
 ############ ACTUAL TEST Cases Begin Here
 
 ADD_TEST(NAME Basic_integration_on_CPU COMMAND swarm integrate --defaults --nogpu integrator=hermite_cpu)
 ADD_TEST(NAME Basic_integration_on_GPU COMMAND swarm integrate --defaults )
 
+ADD_TEST(NAME "BDB"
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/log_bdb_test.sh" )
+
+
 INCLUDE(cmake/test_integrators.cmake)
 
+
 INCLUDE(cmake/test_monitors.cmake)
+
+ADD_TEST(NAME "Python_Tests"
+	COMMAND "${CMAKE_SOURCE_DIR}/py/runtests.py")
 
 # TEST_SCENARIO makes it easy to create scenarios and add it to the system
 # The first argument in the name of the folder and the second argument is the name of the 
