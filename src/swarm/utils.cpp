@@ -148,11 +148,11 @@ void outputConfigSummary(std::ostream& o,swarm::config& cfg) {
 //           This makes it easy to use a default value by accident
 config default_config() {
 	config cfg;
-	cfg["nsys"] = 16;
-	cfg["nbod"] = 3;
 	cfg["integrator"] = "hermite_cpu"; // Set to use a GPU integrator
 	cfg["time_step"] = "0.001";       // time step
 	cfg["log_writer"] = "null";
+	cfg["nsys"] = "16";
+	cfg["nbod"] = "3";
 	return cfg;
 }
 std::ostream& operator << (std::ostream& o, const swarm::ensemble::range_t& r){
