@@ -22,7 +22,6 @@
 #pragma once
 
 #include <limits>
-#include <cstdlib>
 
 #define PI 3.14159265358979
 #define THIRD 0.3333333333333333
@@ -86,7 +85,9 @@ class mce_stat {
 	  
 	  const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 	  
-	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[3][3];
+	  const static int nbod = 3;
+	  
+	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[nbod][3];
 	private:
 	params _params;
 	ensemble::SystemRef& _sys;
@@ -94,8 +95,7 @@ class mce_stat {
 	
 	shared_data &shared;
 	
-	int nbod;
-	int pair_count;
+	const static int pair_count = (nbod*(nbod-1))/2;;
 	
 	double timestep;
 	
@@ -113,10 +113,7 @@ class mce_stat {
 	GPUAPI mce_stat(const params& p,ensemble::SystemRef& s,log_t& l, shared_data &shared_mem)
 		:_params(p),_sys(s),_log(l), shared(shared_mem)
 		{
-		    nbod = _params.nbod;
-		    timestep = _params.time_step;
-		    pair_count = (nbod*(nbod-1))/2;
-		   
+		    timestep = _params.time_step;   
 		}
 	
 	template<class T>
@@ -124,9 +121,10 @@ class mce_stat {
 	  return (T::n*(T::n-1))/2;
 	}
 		
+        //! The amount of memory per system
 	template<class T>
 	static GENERIC int shmem_per_system(T compile_time_param) {
-		  return 6*CHUNK_SIZE*T::n*sizeof(double);
+		 return sizeof(shared_data)/CHUNK_SIZE;
 	}
 	
         //! Provide these functions, so two monitors can be combined
@@ -256,18 +254,24 @@ class mce_stat {
       	{
       		if (thread_in_system < pair_count)
       		{
-		      // j >= i
-		      int j = floor(-1+sqrt(1+8*thread_in_system));
-		      int i = thread_in_system - (i*(i+1))/2;
+		  // j >= i
+// 		  int j = int(-0.5+0.5*sqrt(1.0+8.0*thread_in_system));
+// 		  int i = thread_in_system - (j*(j+1))/2;
+		  
+		  int j = nbod - 1 - thread_in_system / (nbod/2);
+		  int i = thread_in_system % (nbod/2);
+		  if (i >= j)
+		  {
+		    i = nbod - i - nbod%2-1;
+		    j = nbod - j - nbod%2;
+		  }
+		  
+		  lprintf(_log,"BBox: thread=%d,i=%d, j=%d\n",thread_in_system,i,j);
 		      
-// 		      if (j >= i) 
-// 		      {
-// 			i = nbod - i - nbod%2;
-// 			j = nbod - j - nbod%2;
-// 		      }
-		      /*************************************************************************
-		       * Check if bounding boxes of the trajectories of the two planet intersect
-		       * **********************************************************************/
+		      
+		  /*************************************************************************
+		    * Check if bounding boxes of the trajectories of the two planet intersect
+		    * **********************************************************************/
 		  if (i > 0)
 		  {
 		      double vi_min[3],vi_max[3];
@@ -338,12 +342,13 @@ class mce_stat {
 		      /************************************************************************
 		       * If intersect, then calculating minimum distance and resolving collision
 		       * **********************************************************************/
-	      
-		      if ( vi_max[0] >= vj_min[0] && vj_max[0] >= vi_min[0] && 
-			   vi_max[1] >= vj_min[1] && vj_max[1] >= vi_min[1] && 
-			   vi_max[2] >= vj_min[2] && vj_max[2] >= vi_min[2] && 
+		      
+		      if ( vi_max[0] >= vj_min[0] && vj_max[0] >= vi_min[0] &&
+			   vi_max[1] >= vj_min[1] && vj_max[1] >= vi_min[1] &&
+			   vi_max[2] >= vj_min[2] && vj_max[2] >= vi_min[2] &&
 			   _sys[i].mass() > 0 && _sys[j].mass() > 0)
 		      {
+			
 			      float dx0 = shared[i][0].pos() - shared[j][0].pos();
 			      float dy0 = shared[i][1].pos() - shared[j][1].pos();
 			      float dz0 = shared[i][2].pos() - shared[j][2].pos();
@@ -362,6 +367,7 @@ class mce_stat {
 			      
 			      float d0 = dx0*dx0 + dy0*dy0 + dz0*dz0;
 			      float d1 = dx1*dx1 + dy1*dy1 + dz1*dz1;
+			     
 			      
 			      float d2min, tmin, tau;
 			      //Calculating the mininum distance between two trajectories of particle i and j
@@ -407,20 +413,20 @@ class mce_stat {
 			      
 			      if (d2min <= d2hit)
 			      {
-				// i is the index of the heavier planet
-				if (_sys[i].mass() < _sys[j].mass()) {int tmp = i; i = j; j = i;}
+				//i is the index of the heavier planet
 				
-				lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, dmin, _sys.time()+tmin);
+				if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
 				
+				lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, d2min, _sys.time()+tmin);
 				
 				float msum = _sys[i].mass() + _sys[j].mass();
 				float mredu = _sys[i].mass()*_sys[j].mass()/msum;
-				// energy lost
-				_sys.attribute(0) += 0.5*mredu*(du1*du1+dv1*dv1+dw1*dw1) - _sys[i].mass()*_sys[j].mass()/sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+				//energy lost
+				_sys.attribute(0) = 0.5*mredu*(du1*du1+dv1*dv1+dw1*dw1) - _sys[i].mass()*_sys[j].mass()/sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
 				float tmp1 = _sys[i].mass()/msum;
 				float tmp2 = _sys[j].mass()/msum;
-				
-				// Does it need to use atomicAdd ?
+// 				
+				//Does it need to use atomicAdd ?
 				for (int c = 0; c < 3;c++)
 				{
 				  _sys[i][c].pos() = _sys[i][c].pos()*tmp1 + _sys[j][c].pos()*tmp2;
@@ -435,14 +441,14 @@ class mce_stat {
 				  _sys[j][c].vel() *= -1.0;
 				}
 				_sys[j].mass() = 0.0;
-				   
+// 				   
 				
 			      }
 			      
 			      
 		      }// endif: two bounding boxes have non-zero intersection*/
 		  }//endif: 2 planet
-		  
+// 		  
 		  if (i==0 && j > 0) //
 		  {
 		    float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();

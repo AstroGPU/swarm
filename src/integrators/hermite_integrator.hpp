@@ -48,6 +48,23 @@ public: //! Construct for class hermite integrator
 	virtual void launch_integrator() {
 		launch_templatized_integrator(this);
 	}
+	
+	
+        //! Define the number of thread per system
+	template<class T>
+	static GENERIC int thread_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::thread_per_system();
+		const int moni = Monitor::thread_per_system(compile_time_param);
+		return max( grav, moni);
+	}
+
+        //! Define the amount of shared memory per system
+	template<class T>
+	static GENERIC int shmem_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::shmem_per_system();
+		const int moni = Monitor::shmem_per_system(compile_time_param);
+		return max( grav, moni);
+	}	
 
         //! Convert internal coordinates to std coordinates
         GPUAPI void convert_internal_to_std_coord() {} 
