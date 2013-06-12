@@ -462,7 +462,7 @@ void swarmdb::open(const std::string &datafile)
 	this->datafile = datafile;
 
 	// open the datafile
-	mmdata.open(datafile, UNSORTED_HEADER_CHECK);
+	mmdata.open(datafile, SORTED_HEADER_CHECK);
 
 	// open the indexes
 	open_indexes();

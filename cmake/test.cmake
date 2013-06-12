@@ -13,7 +13,7 @@ ADD_TEST(NAME Basic_integration_on_CPU COMMAND swarm integrate --defaults --nogp
 ADD_TEST(NAME Basic_integration_on_GPU COMMAND swarm integrate --defaults )
 
 ADD_TEST(NAME "BDB"
-    COMMAND "${CMAKE_SOURCE_DIR}/scripts/log_bdb_test.sh" )
+    COMMAND "${CMAKE_SOURCE_DIR}/test/bdb/bdb.sh" )
 
 
 INCLUDE(cmake/test_integrators.cmake)
