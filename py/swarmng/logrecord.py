@@ -1,3 +1,7 @@
+## @file logrecord.py Routines and classes to access a binary log record structure
+#
+# To read the documentation generated from this file refer to @ref swarmng.logrecord
+
 ## @package swarmng.logrecord
 #  Contains the support functions for accessing the C++ logrecord data strcture
 

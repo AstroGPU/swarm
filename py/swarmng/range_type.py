@@ -1,3 +1,5 @@
+## @file range_type.py Support routines for the defining ranges to use with queries.
+
 ## @package swarmng.range_type
 #  Classes for defining arbitrary ranges easily in Python
 #

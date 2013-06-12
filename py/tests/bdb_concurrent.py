@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Testing that concurrent reads from a file works
+## @file bdb_concurrent.py Testing that concurrent reads from a BDB log file works
 # 
 # swarm command is run to generate a log file and it is scheduled to remove it
 # immedaitely after the integration is done.
@@ -9,6 +9,7 @@
 #
 #
 # 
+
 import swarmng
 import sys
 import os

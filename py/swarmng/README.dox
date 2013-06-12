@@ -1,0 +1,7 @@
+/**
+  \dir py/swarmng  Python package interface to the Swarm library
+  
+This directory is a Python package, to use it. You must make sure the parent directory is on the 
+Python path. The package is documented in \ref swarmng
+
+*/

@@ -1,3 +1,9 @@
+## @file query.py Support routines for @ref swarm-query "swarm-query.py" command-line utility.
+#
+#  The routines here are not documented because it solely consists of generating
+#  a table output consistent with "swarm query" command.
+#
+
 from logdb import IndexedLogDB, PKey
 from bsddb3.db import *
 from logrecord import LogRecord

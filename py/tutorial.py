@@ -1,4 +1,6 @@
-#
+## @file tutorial.py Beginner tutorial on how to interface with the integrators.
+#  refer to @ref TutorialPython for the formatted version
+
 
 # @page TutorialPython Beginner Python Tutorial
 # First thing is to import swarmng package. It is located in \<SOURCE DIRECTORY\>/py/swarmng/.

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 *-*
+## @file swarm-query.py Command-line utility to examine BDB log file, for usage see @ref swarm-query
 import sys
 from os.path import dirname, realpath
 sys.path.append(dirname(dirname(realpath(__file__))))
@@ -26,7 +27,7 @@ def parse_cmd():
     return args
 
 
-##################### MAIN #################################
+
 if __name__ == '__main__':
     args = parse_cmd()
     print args

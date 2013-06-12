@@ -1,4 +1,6 @@
-==== Python source codes
+/**
+  \dir py Python interface, testing and tutorial code.
+  
 This directory is the root of all Python code in Swarm-NG repository. 
 
 The directory structure is:
@@ -8,3 +10,5 @@ as well as other API that is implemented in Python
 * samples: is for sample code that is distributed with swarm as a starting point
 * bin: some Python code that is meant to be used as command-line commands.
 
+
+*/

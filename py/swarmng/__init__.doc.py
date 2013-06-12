@@ -1,11 +1,19 @@
+## @file __init__.doc.py 
+# This is the documentation for libswarmng_ext, but because
+# all the symbols from libswarmng_ext are included in the swarmng module
+# we document it under swarmng package.
+#
+# The implementation of all of these is in src/python/module.cpp but
+# we have to separate the documentation and put it here.
+# 
+# To read the documentation generated from this file refer to @ref swarmng
+# 
 
 ## @package swarmng
 
 # The reason for lib prefix is because CMake automatically
 # adds lib prefix to the name of the target
 #
-# This is the documentation for libswarmng_ext
-# It is included here because we cannot put it in module.cpp
 
 
 ## Initialize the Swarm library, registering the GPU and Logging subsystem.

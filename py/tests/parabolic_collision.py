@@ -1,3 +1,4 @@
+## @file parabolic_collision.py Testing collision detection module by putting planets on a parabolic orbit.
 from common import *
 from math import sqrt
 def norm(*args):

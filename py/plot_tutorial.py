@@ -1,4 +1,5 @@
-#
+## @file plot_tutorial.py Tutorial for extracting and plotting information from the BDB log files.
+#  refer to @ref TutorialPythonQueryPlot for the formatted version
 
 # @page TutorialPythonQueryPlot Plotting results from a log file
 #

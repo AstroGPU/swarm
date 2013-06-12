@@ -1,11 +1,11 @@
 from common import *
-
-
-##  Testing the monitor stop_on_ejection, some planets are put in orbits
-##  very close to one another (1.01 separation) and they are expected to
-##  eject out of the system. Since not all of the eject, in the
-##  verification stage we check that if the body has ejected, the system
-##  should have been deactivated
+## @file trivial.py Trivial unit tests that basic features work.
+#
+#  Testing the monitor stop_on_ejection, some planets are put in orbits
+#  very close to one another (1.01 separation) and they are expected to
+#  eject out of the system. Since not all of the eject, in the
+#  verification stage we check that if the body has ejected, the system
+#  should have been deactivated
 
 def fill(list_like,initial_value):
     for i in range(0,len(list_like)):
