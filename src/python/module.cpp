@@ -17,8 +17,6 @@
  */
 
 
-//extern "C" int PYTHON_VERSION = PY_VERSION_HEX;
-
 extern "C" int python_hexversion(){ return PY_VERSION_HEX; }
 extern "C" char* python_version(){ return PY_VERSION; }
 
@@ -180,12 +178,6 @@ void bodattr_setitem(ensemble::Body::attributes_t& bodattr, const int& i, const 
 }
 
 
-/** Swarm as a python module
- *
- * The reason for lib prefix is because CMake automatically
- * adds lib prefix to the name of the target
- *
- */
 BOOST_PYTHON_MODULE(libswarmng_ext) {
 
 	def("init", swarm::init );
