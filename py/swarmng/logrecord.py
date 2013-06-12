@@ -1,3 +1,6 @@
+## @package swarmng.logrecord
+#  Contains the support functions for accessing the C++ logrecord data strcture
+
 from bsddb3.db import *
 from struct import *
 from collections import namedtuple
