@@ -61,14 +61,15 @@ struct CurrentSysStat
   
   double _pos[CHUNK_SIZE];
   double _vel[CHUNK_SIZE];
-//   double _BB_SW[CHUNK_SIZE];
-//   double _BB_NE[CHUNK_SIZE];
+  double _BB_SW[CHUNK_SIZE];
+  double _BB_NE[CHUNK_SIZE];
+  int64_t _crash[CHUNK_SIZE];
   // Accessors
   GENERIC double& pos() { return _pos[0];  }
   GENERIC double& vel() { return _vel[0];  }
-//   GENERIC double& bb_sw() { return _BB_SW[0];  }
-//   GENERIC double& bb_ne() { return _BB_NE[0];  }
-  
+  GENERIC double& bb_sw() { return _BB_SW[0];  }
+  GENERIC double& bb_ne() { return _BB_NE[0];  }
+  GENERIC int64_t& crash() { return _crash[0];  }
 };
 
 /** Empty monitor to use as a template.  
@@ -85,9 +86,7 @@ class mce_stat {
 	  
 	  const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
 	  
-	  const static int nbod = 3;
-	  
-	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[nbod][3];
+	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[MAX_NBODIES][3];
 	private:
 	params _params;
 	ensemble::SystemRef& _sys;
@@ -95,26 +94,20 @@ class mce_stat {
 	
 	shared_data &shared;
 	
-	const static int pair_count = (nbod*(nbod-1))/2;;
+	int nbod,pair_count;
 	
 	double timestep;
-	
-	/// Bounding box of each particle between two position x0 at time t0 and x1 at time t1
-	double *BBox;
-	
-	/// Position and velocity of the previous time step
-	double *X0, *V0;
-	
-
 	
 	public:
 
 	  //! default monitor_template construct
 	GPUAPI mce_stat(const params& p,ensemble::SystemRef& s,log_t& l, shared_data &shared_mem)
-		:_params(p),_sys(s),_log(l), shared(shared_mem)
-		{
-		    timestep = _params.time_step;   
-		}
+	:_params(p),_sys(s),_log(l), shared(shared_mem)
+	{
+	    nbod = _params.nbod;
+	    pair_count = (nbod*(nbod-1))/2;
+	    timestep = _params.time_step;   
+	}
 	
 	template<class T>
 	static GENERIC int thread_per_system(T compile_time_param){
@@ -124,7 +117,7 @@ class mce_stat {
         //! The amount of memory per system
 	template<class T>
 	static GENERIC int shmem_per_system(T compile_time_param) {
-		 return sizeof(shared_data)/CHUNK_SIZE;
+		 return sizeof(shared_data);
 	}
 	
         //! Provide these functions, so two monitors can be combined
@@ -155,12 +148,13 @@ class mce_stat {
 	if ( a <=0 ) a = r;
 	double hill = a*pow(THIRD*_sys[thread_in_system].mass()/_sys[0].mass(), THIRD);
 	
-	// assume attribute 0 is the radis of the planet
+	// assume attribute 0 is the radius of the planet
 	// rho is the density of the planet = mass/volume = mass/(4/3piR^3)
 	double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
 	
 	_sys[thread_in_system].attribute(1) = hill*_params.rceh; // rce
 	_sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
+	
 	
       }
       if (thread_in_system == 0)
@@ -206,47 +200,46 @@ class mce_stat {
         /// Calculate bounding box of the trajectory of each planet between time steps t0 and t1
 	GPUAPI void pass_one (int thread_in_system) 
           {
-//           	         	
-//           	if (thread_in_system < nbod)
-// 		{
-// 			double x[3], v[3];
-// 			_sys[thread_in_system].get(x[0],x[1],x[2],v[0],v[1],v[2]); // get current position and velocity
-// 			
-// 			BBox[6*thread_in_system] = min(X0[3*thread_in_system],x[0]); // xmin
-// 			BBox[6*thread_in_system+1] = max(X0[3*thread_in_system],x[0]); // xmax
-// 			
-// 			BBox[6*thread_in_system+2] = min(X0[3*thread_in_system+1],x[1]); // ymin
-// 			BBox[6*thread_in_system+3] = max(X0[3*thread_in_system+1],x[1]); // ymax
-// 			
-// 			BBox[6*thread_in_system+4] = min(X0[3*thread_in_system+2],x[2]); // zmin
-// 			BBox[6*thread_in_system+5] = max(X0[3*thread_in_system+2],x[2]); // zmax
-// 			
-// 			// if velocity changes sign, do an interpolation
-// 			
-// 			for (int c = 0; c < 3; c++)
-// 			{
-// 			  if ( (V0[3*thread_in_system+c] < 0 && v[c] > 0 ) || 
-// 				    (V0[3*thread_in_system+c] > 0 && v[c] < 0 ) )
-// 			  {
-// 				  double temp = V0[3*thread_in_system+c]*x[c] - v[c]*X0[3*thread_in_system+c]
-// 							  - 0.5*timestep*V0[3*thread_in_system+c]*v[c]/(V0[3*thread_in_system+c]-v[c]);
-// 				  BBox[6*thread_in_system + 2*c] = min(BBox[6*thread_in_system + 2*c],temp);
-// 				  BBox[6*thread_in_system + 2*c+1] = max(BBox[6*thread_in_system + 2*c+1],temp);
-// 				  
-// 			  }
-// 			}
-// 			
-// 			
-// 			// Adjust values by the maximum close-encounter radius plus a fudge factor
-// 			float temp = _sys[thread_in_system].attribute(0)*1.2; //Assume that rce is an attribute of each body
-// 			for (int c = 0; c < 3; c++)
-// 			{
-// 			  BBox[6*thread_in_system + 2*c] -= temp;
-// 			  BBox[6*thread_in_system + 2*c+1] += temp;
-// 			}
-// 		}
-// 			
-// 			
+	      /*************************************************************************
+	      * Calculate the bounding box of the trajectory of a planet between time step t0 and t0 + h
+	      * **********************************************************************/
+          	         	
+          	if (0< thread_in_system < nbod)
+		{
+			
+		      for(int c = 0; c<3 ; c++)
+		      {
+			shared[thread_in_system][c].bb_sw() = min(shared[thread_in_system][c].pos(),_sys[thread_in_system][c].pos()); // component min
+			shared[thread_in_system][c].bb_ne() = max(shared[thread_in_system][c].pos(),_sys[thread_in_system][c].pos()); // component max
+		      }
+			
+			
+			// if velocity changes sign, do an interpolation
+		      for (int c = 0; c < 3; c++)
+		      {
+			if ( (shared[thread_in_system][c].vel() < 0 && _sys[thread_in_system][c].vel() > 0 ) || 
+			      (shared[thread_in_system][c].vel() > 0 && _sys[thread_in_system][c].vel() < 0 ) )
+			{
+				double temp = shared[thread_in_system][c].vel()*_sys[thread_in_system][c].pos() 
+					      - _sys[thread_in_system][c].vel()*shared[thread_in_system][c].pos()
+					      - 0.5*timestep*shared[thread_in_system][c].vel()*_sys[thread_in_system][c].vel()/(shared[thread_in_system][c].vel()-_sys[thread_in_system][c].vel());
+				shared[thread_in_system][c].bb_sw() = min(shared[thread_in_system][c].bb_sw(),temp);
+				shared[thread_in_system][c].bb_ne() = max(shared[thread_in_system][c].bb_ne(),temp);
+				
+			}
+		      }
+		      
+		      
+		      //Then adjust values by the maximum close-encounter radius plus a fudge factor
+		      double tmp = _sys[thread_in_system].attribute(1)*1.2; 
+		      for (int c = 0; c < 3; c++)
+		      {
+			shared[thread_in_system][c].bb_sw() -= tmp;
+			shared[thread_in_system][c].bb_ne() += tmp;
+		      }
+		}
+			
+			
           }
 
         //! set the system state to disabled when three conditions are met
@@ -254,10 +247,6 @@ class mce_stat {
       	{
       		if (thread_in_system < pair_count)
       		{
-		  // j >= i
-// 		  int j = int(-0.5+0.5*sqrt(1.0+8.0*thread_in_system));
-// 		  int i = thread_in_system - (j*(j+1))/2;
-		  
 		  int j = nbod - 1 - thread_in_system / (nbod/2);
 		  int i = thread_in_system % (nbod/2);
 		  if (i >= j)
@@ -270,84 +259,23 @@ class mce_stat {
 		      
 		      
 		  /*************************************************************************
-		    * Check if bounding boxes of the trajectories of the two planet intersect
+		    * Consider planet - planet first
 		    * **********************************************************************/
 		  if (i > 0)
 		  {
-		      double vi_min[3],vi_max[3];
-		      vi_min[0] = min(shared[i][0].pos(),_sys[i][0].pos());
-		      vi_min[1] = min(shared[i][1].pos(),_sys[i][1].pos());
-		      vi_min[2] = min(shared[i][2].pos(),_sys[i][2].pos());
-		      
-		      vi_max[0] = max(shared[i][0].pos(),_sys[i][0].pos());
-		      vi_max[1] = max(shared[i][1].pos(),_sys[i][1].pos());
-		      vi_max[2] = max(shared[i][2].pos(),_sys[i][2].pos());
-		      
-		      // if velocity changes sign, do an interpolation
-		      for (int c = 0; c < 3; c++)
-		      {
-			if ( (shared[i][c].vel() < 0 && _sys[i][c].vel() > 0 ) || 
-			      (shared[i][c].vel() > 0 && _sys[i][c].vel() < 0 ) )
-			{
-				double temp = shared[i][c].vel()*_sys[i][c].pos() 
-					      - _sys[i][c].vel()*shared[i][c].pos()
-					      - 0.5*timestep*shared[i][c].vel()*_sys[i][c].vel()/(shared[i][c].vel()-_sys[i][c].vel());
-				vi_min[c] = min(vi_min[c],temp);
-				vi_max[c] = max(vi_max[c],temp);
-				
-			}
-		      }
-		      
-		      //Adjust values by the maximum close-encounter radius plus a fudge factor
-		      
-		      float temp = _sys[i].attribute(1)*1.2; //Assume that rce is an attribute of each body
-		      for (int c = 0; c < 3; c++)
-		      {
-			vi_min[c] -= temp;
-			vi_max[c] += temp;
-		      }
-		      
-		      double vj_min[3],vj_max[3];
-		      vj_min[0] = min(shared[j][0].pos(),_sys[j][0].pos());
-		      vj_min[1] = min(shared[j][1].pos(),_sys[j][1].pos());
-		      vj_min[2] = min(shared[j][2].pos(),_sys[j][2].pos());
-		      
-		      vj_max[0] = max(shared[j][0].pos(),_sys[j][0].pos());
-		      vj_max[1] = max(shared[j][1].pos(),_sys[j][1].pos());
-		      vj_max[2] = max(shared[j][2].pos(),_sys[j][2].pos());
-		      
-		      // if velocity changes sign, do an interpolation
-		      for (int c = 0; c < 3; c++)
-		      {
-			if ( (shared[j][c].vel() < 0 && _sys[j][c].vel() > 0 ) || 
-			      (shared[j][c].vel() > 0 && _sys[j][c].vel() < 0 ) )
-			{
-				double temp = shared[j][c].vel()*_sys[j][c].pos() 
-					      - _sys[j][c].vel()*shared[j][c].pos()
-					      - 0.5*timestep*shared[j][c].vel()*_sys[j][c].vel()/(shared[j][c].vel()-_sys[j][c].vel());
-				vj_min[c] = min(vj_min[c],temp);
-				vj_max[c] = max(vj_max[c],temp);
-				
-			}
-		      }
-		      
-		      //Adjust values by the maximum close-encounter radius plus a fudge factor
-		      
-		      temp = _sys[j].attribute(1)*1.2; //Assume that rce is an attribute of each body
-		      for (int c = 0; c < 3; c++)
-		      {
-			vj_min[c] -= temp;
-			vj_max[c] += temp;
-		      }
+
 		      /************************************************************************
-		       * If intersect, then calculating minimum distance and resolving collision
+		       * Check if bounding boxes of the trajectories of the two planet intersect.
+		       * If intersect, then calculating minimum distance and resolving collision.
 		       * **********************************************************************/
 		      
-		      if ( vi_max[0] >= vj_min[0] && vj_max[0] >= vi_min[0] &&
-			   vi_max[1] >= vj_min[1] && vj_max[1] >= vi_min[1] &&
-			   vi_max[2] >= vj_min[2] && vj_max[2] >= vi_min[2] &&
+		      if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw() &&
+			   shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw() &&
+			   shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw() &&
 			   _sys[i].mass() > 0 && _sys[j].mass() > 0)
 		      {
+			      atomicAdd(&shared[i][0].crash(),1);
+			      atomicAdd(&shared[j][0].crash(),1);
 			
 			      float dx0 = shared[i][0].pos() - shared[j][0].pos();
 			      float dy0 = shared[i][1].pos() - shared[j][1].pos();
@@ -448,7 +376,10 @@ class mce_stat {
 			      
 		      }// endif: two bounding boxes have non-zero intersection*/
 		  }//endif: 2 planet
-// 		  
+		  
+		  /*************************************************************************
+		  * Now consider sun - planet
+		  * **********************************************************************/
 		  if (i==0 && j > 0) //
 		  {
 		    float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();

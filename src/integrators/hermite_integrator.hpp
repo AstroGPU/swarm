@@ -97,7 +97,7 @@ public: //! Construct for class hermite integrator
 
 		// local variables
 		montest.init( thread_in_system() );
-
+		__syncthreads();
 
 		// local information per component per body
 		double pos = 0.0, vel = 0.0 , acc0 = 0.0, jerk0 = 0.0;
@@ -170,6 +170,8 @@ public: //! Construct for class hermite integrator
 			
 			__syncthreads();
 			montest( thread_in_system() );  
+			__syncthreads();
+			montest.init( thread_in_system() );
 			__syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
