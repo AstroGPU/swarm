@@ -36,3 +36,18 @@ def mkConfig(h):
     c[k] = str(v)
   return c
 
+
+def config(*l,**kw):
+    """ Convert hashes and keyword arguments to a Swarm-NG 
+    config object
+    >>> swarmng.config({ 'integrator' : 'hermite_cpu' }, { 'nsys' : 16, 'nbod' : 3 } , nogpu = 1)
+    """
+    c = Config()
+    def addHash(h):
+        for k,v in h.items():
+            c[k] = str(v)
+
+    for h in l:
+        addHash(h)
+    addHash(kw)
+    return c
