@@ -5,7 +5,7 @@ from ctypes import CDLL, c_char_p
 import platform
 
 # First find the source directory of Swarm
-SWARMDIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+SWARMDIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 # We have some guesses as where to find the library
 DEFAULT_PLACES = [ 'lib', os.path.join(SWARMDIR,'build/lib'), os.path.join(SWARMDIR,'lib') ]
@@ -32,7 +32,7 @@ def mkConfig(h):
   """ Convert a regular python hash to a Swarm-NG
    config script"""
   c = Config()
-  for k in h :
-    c[k] = str(h[k])
+  for k,v in h.items() :
+    c[k] = str(v)
   return c
 

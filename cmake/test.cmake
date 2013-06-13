@@ -22,7 +22,7 @@ INCLUDE(cmake/test_integrators.cmake)
 INCLUDE(cmake/test_monitors.cmake)
 
 ADD_TEST(NAME "Python_Tests"
-	COMMAND "${CMAKE_SOURCE_DIR}/py/runtests.py")
+	COMMAND "${CMAKE_SOURCE_DIR}/py/tests/run.py")
 
 # TEST_SCENARIO makes it easy to create scenarios and add it to the system
 # The first argument in the name of the folder and the second argument is the name of the 
