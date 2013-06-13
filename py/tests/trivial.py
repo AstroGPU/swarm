@@ -1,10 +1,5 @@
-from math import *
-import random
-import swarmng
-import unittest
-from os import system,path
+from common import *
 
-TESTDIR = path.dirname(path.realpath(__file__))
 
 ##  Testing the monitor stop_on_ejection, some planets are put in orbits
 ##  very close to one another (1.01 separation) and they are expected to
@@ -45,24 +40,19 @@ def make_test_case(nsys = 16, nbod = 3 , spacing_factor = 1.4, planet_mass = 0.0
 def norm(l):
 	return sqrt(sum(x**2 for x in l))
 
-class BasicIntegration(unittest.TestCase):
-    def runTest(self):
-        cfg = swarmng.config(
-                integrator = 'hermite_cpu',
-                time_step  = 1e-4,
-                nogpu      = 1
-                )
-        swarmng.init(cfg)
-        integ = swarmng.Integrator.create( cfg )
-        ref = make_test_case(nsys = 16, nbod = 3, spacing_factor=1.4)
-        ens = ref.clone()
 
-        integ.ensemble = ens
-        integ.destination_time = 1.0
-        integ.integrate()
-
-        max_deltaE = swarmng.find_max_energy_conservation_error( ens, ref)
+class BasicIntegration(abstract.IntegrationTest):
+    cfg = swarmng.config(
+            integrator = 'hermite_cpu',
+            time_step  = 1e-4,
+            nogpu      = 1
+            )
+    def createEnsemble(self):
+        return make_test_case(nsys = 16, nbod = 3, spacing_factor=1.4)
+    def examine(self):
+        max_deltaE = swarmng.find_max_energy_conservation_error( self.ens, self.ref)
         self.assertLess(max_deltaE, 1e-13)
+
 
 class InitialConditions(unittest.TestCase):
     def runTest(self):
@@ -72,33 +62,25 @@ class InitialConditions(unittest.TestCase):
         self.assertEqual(r, 0)
 
 
-class EjectionTest(unittest.TestCase):
-	RMAX = 10
-	def runTest(self):
-		cfg = swarmng.config(
-		  integrator = "hermite_cpu",
-		  time_step  = 1e-3,
-		  nogpu      = 1,
-		  deactivate_on_ejection = 1,
-		  rmax       = self.RMAX
-		  )
+class EjectionTest(abstract.IntegrationTest):
+    RMAX = 10
+    cfg = swarmng.config(
+            integrator = "hermite_cpu",
+            time_step  = 1e-3,
+            nogpu      = 1,
+            deactivate_on_ejection = 1,
+            rmax       = RMAX
+            )
+    destination_time = 100
 
-		# Initializations
-		swarmng.init(cfg)
-		integ = swarmng.Integrator.create( cfg )
+    def createEnsemble(self):
+        return make_test_case(nsys=20, nbod = 6, spacing_factor=1.01);
 
-		# Integrating
-		ref = make_test_case(nsys=20, nbod = 6, spacing_factor=1.01);
-
-		ens = ref.clone()
-		integ.ensemble = ens
-		integ.destination_time = 100.0
-		integ.integrate()
-
-		for sys in ens:
-			for b in sys:
-				if( b.distance_to_origin() > self.RMAX ):
-					self.assertEqual(sys.state, -1, "a system with an ejected body should be disabled")
+    def examine(self):
+        for sys in self.ens:
+            for b in sys:
+                if( b.distance_to_origin() > self.RMAX ):
+                    self.assertEqual(sys.state, -1, "a system with an ejected body should be disabled")
 
 
 
