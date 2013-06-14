@@ -14,6 +14,7 @@ class bdb_database {
 public:
     bdb_database(DbEnv* e):
         env(e),
+        metadata(e, 0),
         primary(e, 0),
         system_idx(e, 0),
         time_idx(e, 0),
@@ -26,17 +27,27 @@ public:
     void createEmpty(const std::string& fileName);
     
     void put(gpulog::logrecord& lr);
+    
+    void flush();
 
     void close(); 
 
     shared_ptr<primary_cursor_t> primary_cursor();
+    
+    // Methods for accessing metadata
+    void addMetaData(const std::string name, const std::string value);
+    std::string getMetaData(const std::string name) ;
+    void fillVersionInfo() ;
+    bool validateVersionInfo() ;
+    
 
 private:
     void openInternal(const std::string& fileName, int open_mode);
 
 
     DbEnv* env;
-    Db primary,
+    Db metadata,
+       primary,
        system_idx,
        time_idx,
        event_idx;

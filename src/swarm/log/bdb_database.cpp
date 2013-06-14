@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <limits>
+#include <boost/concept_check.hpp>
 
 #include "bdb_database.hpp"
 
@@ -11,6 +12,8 @@ using gpulog::logrecord;
 
 const int CACHESIZE = 1024*1024*64 ;
 
+const char* fileFormatVersion = "1";
+const char* swarmngVersion = "1.1";
 
 
 bool operator <(const pkey_t& a, const pkey_t& b){
@@ -91,7 +94,7 @@ DbEnv* bdb_database::createDefaultEnv(){
     DbEnv* env = new DbEnv(0);
     char* cwd = get_current_dir_name();
     env->set_cachesize(0,CACHESIZE,0);
-    env->open(cwd,DB_CREATE | DB_INIT_MPOOL,0);
+    env->open(cwd,DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL,0);
     free(cwd);
     return env;
 }
@@ -100,6 +103,8 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
 
     const char * fn = fileName.c_str();
+    
+    metadata.open(NULL, fn, "metadata", DB_BTREE, open_mode, 0);
 
     primary.set_bt_compare(bdb_compare<pkey_t>);
 	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, 0);
@@ -137,14 +142,17 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
 void bdb_database::openForReading(const std::string& fileName) {
     openInternal(fileName, DB_RDONLY);
+    validateVersionInfo();
 }
 
 void bdb_database::create(const std::string& fileName){
     openInternal(fileName, DB_CREATE);
+    fillVersionInfo();
 }
 
 void bdb_database::createEmpty(const std::string& fileName){
     openInternal(fileName, DB_CREATE );
+    fillVersionInfo();
 }
     
 void bdb_database::put(logrecord& lr){
@@ -168,6 +176,35 @@ void bdb_database::put(logrecord& lr){
     Dbt key(&pkey,sizeof(pkey));
     Dbt data((void*)lr.ptr,lr.len());
     primary.put(NULL,&key,&data,0);
+}
+
+void bdb_database::addMetaData(const std::string name, const std::string value){
+  Dbt key((void *)name.data(),name.size()), data((void*)value.data(), value.size());
+  metadata.put(NULL,&key,&data,0);
+}
+std::string bdb_database::getMetaData(const std::string name) {
+  Dbt key((void*)name.data(),name.size()), data;
+  data.set_flags(DB_DBT_MALLOC);
+  
+  metadata.get(NULL,&key,&data,0);
+  
+  // Create a new string and free the buffer
+  size_t n = data.get_size();
+  char* ptr = (char*) data.get_data();
+  std::string value(data.get_size(),0);
+  std::copy(ptr, ptr+n, value.begin());
+  free(ptr); data.set_data(0);
+  
+  return value;
+}
+
+void bdb_database::fillVersionInfo() {
+  addMetaData("fileFormatVersion", fileFormatVersion);
+  addMetaData("swarmngVersion", swarmngVersion);
+}
+bool bdb_database::validateVersionInfo() {
+  return (getMetaData("fileFormatVersion") == fileFormatVersion ) ;
+    // && (getMetaData("swarmngVersion") == swarmngVersion );
 }
 
 Pprimary_cursor_t bdb_database::primary_cursor(){
@@ -215,6 +252,10 @@ bool primary_cursor_t::position_at(pkey_t& key,lrw_t& lr){
 }
 
 
+void bdb_database::flush()
+{
+  primary.sync(0);time_idx.sync(0); event_idx.sync(0); system_idx.sync(0);
+}
 
 
 } } // close namespace log :: swarm

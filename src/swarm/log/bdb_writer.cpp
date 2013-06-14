@@ -81,6 +81,7 @@ public:
 		while(logrecord lr = stream.next()){
             db.put(lr);
 		}
+		db.flush();
 	}
 
         //! Destructor
