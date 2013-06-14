@@ -8,11 +8,13 @@ class ParabolicTest(abstract.IntegrationTest):
     collision happens at exactly t= 1.885638833885 for nbod=3
     """
     cfg = swarmng.config(
-            integrator = "hermite_cpu",
+            integrator = "hermite",
+            nbod       = 3,
             time_step  = 1e-3,
-            nogpu      = 1,
+            nogpu      = 0,
             )
-    destination_time = 1.885638833885
+    required_destination_time = 1.885638833885
+    destination_time = 5
 
     def createEnsemble(self):
         nsys = 16
@@ -30,6 +32,7 @@ class ParabolicTest(abstract.IntegrationTest):
             s[0].pos = [ 0, 0, 0 ]
             s[0].vel = [ 0, 0, 0 ]
             s[0].mass = 1
+            s[0].attributes[0] = 1
             for j in range(1,ens.nbod):
                 x = ((j % 2)*2-1)*2*((j+1)/2)
                 y = x * x / 4 / R - R
@@ -39,6 +42,7 @@ class ParabolicTest(abstract.IntegrationTest):
                 s[j].pos = [ x, y, 0 ]
                 s[j].vel = [ -vmag*vdirx, -vmag*vdiry, 0 ]
                 s[j].mass = mass_planet
+                s[j].attributes[0] = 1e-3
         return ens
 
 
@@ -47,9 +51,12 @@ class ParabolicTest(abstract.IntegrationTest):
         s = self.ens[0]
         print rs[1].pos, rs[2].pos, rs[1].vel, rs[2].vel
         print s[1].pos, s[2].pos
+        print s.time
 
         x1,y1,z1 = s[1].pos
         x2,y2,z2 = s[2].pos
-        self.assertAlmostEqual(norm(x2-x1,y2-y1,z2-z1),0)
+        self.assertEqual(s.state, -1)
+        self.assertLess(norm(x2-x1,y2-y1,z2-z1),0.011)
+        self.assertAlmostEqual(s.time,self.required_destination_time,2)
 
 
