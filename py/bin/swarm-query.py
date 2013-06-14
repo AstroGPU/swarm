@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 *-*
-from query import *
-from range_type import *
+import sys
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from swarmng.query import *
+from swarmng.range_type import *
 import argparse
 
 MAX_RECORDS = 10000;

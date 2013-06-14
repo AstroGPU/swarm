@@ -12,7 +12,7 @@
 #
 #---------------------------------------------------------------------------
 
-
+$extension="py";
 
 print "/** \n";
 
@@ -51,7 +51,7 @@ do {
     {
 	$state = $program_mode;
 	print " * \n";
-	print " * \@code\n";
+	print " * \@code{.py}\n";
     }
 
     if ($state == $comment_mode)

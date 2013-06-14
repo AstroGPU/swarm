@@ -9,4 +9,6 @@ src/*~
 docs/*.html
 feedback.*
 .*.swp
+*.pyc
 build/
+*.kdev4

@@ -73,3 +73,4 @@ ADD_SUBDIRECTORY(src)
 INCLUDE(cmake/test.cmake)
 INCLUDE(cmake/custom.cmake)
 
+tutorial_python(TutorialPython py/tutorial.py)

@@ -69,6 +69,13 @@ public:
 	~binary_writer()
 	{
 		output.reset(NULL);
+        if(swarm::query::sort_binary_log_file(binfn, rawfn))
+        {
+            unlink(rawfn.c_str());
+
+            // just touch it to auto-generate the indices
+            swarm::query::swarmdb db(binfn);
+        } 
 	}
 
         //! Process the log data and write to output

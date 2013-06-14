@@ -135,6 +135,10 @@ ensemble::Body::Component& bod_getitem(ensemble::Body& bod,const int& i){
 	}
 }
 
+int sysattr_len(ensemble::Sys::attributes_t& sysattr){
+    return NUM_SYSTEM_ATTRIBUTES;
+}
+
 double sysattr_getitem(ensemble::Sys::attributes_t& sysattr, const int& i){
 	if( i >= 0 && i < NUM_SYSTEM_ATTRIBUTES)
 		return sysattr.getitem(i);
@@ -142,6 +146,10 @@ double sysattr_getitem(ensemble::Sys::attributes_t& sysattr, const int& i){
 		PyErr_SetString(PyExc_IndexError,"");
 		throw_error_already_set();
 	}
+}
+
+int bodattr_len(ensemble::Body::attributes_t& bodattr){
+    return NUM_PLANET_ATTRIBUTES;
 }
 
 double bodattr_getitem(ensemble::Body::attributes_t& bodattr, const int& i){
@@ -195,11 +203,13 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	class_<ensemble::Sys::attributes_t, noncopyable >( "Sys.Attributes", no_init )
 		.def("__getitem__", &sysattr_getitem )
 		.def("__setitem__", &sysattr_setitem )
+        .def("__len__", &sysattr_len)
 		;
 
 	class_<ensemble::Body::attributes_t, noncopyable >( "Body.Attributes", no_init )
 		.def("__getitem__", &bodattr_getitem )
 		.def("__setitem__", &bodattr_setitem )
+        .def("__len__", &bodattr_len)
 		;
 
 	class_<ensemble::Body::Component >("Body.Components", no_init)

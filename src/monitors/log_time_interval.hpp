@@ -100,7 +100,7 @@ class log_time_interval {
 	    condition_met = false;
 	    if(is_log_on())
 	      {
-		if(_sys.time() >= _next_log_time )  
+		if(thread_in_system == 0 && _sys.time() >= _next_log_time )  
 		  {
 		    condition_met = true; 
 		    _next_log_time += _params.time_interval; 
