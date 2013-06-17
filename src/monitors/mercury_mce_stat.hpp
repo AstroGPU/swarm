@@ -63,13 +63,13 @@ struct CurrentSysStat
   double _vel[CHUNK_SIZE];
   double _BB_SW[CHUNK_SIZE];
   double _BB_NE[CHUNK_SIZE];
-  int64_t _crash[CHUNK_SIZE];
+  unsigned long long int _crash[CHUNK_SIZE];
   // Accessors
   GENERIC double& pos() { return _pos[0];  }
   GENERIC double& vel() { return _vel[0];  }
   GENERIC double& bb_sw() { return _BB_SW[0];  }
   GENERIC double& bb_ne() { return _BB_NE[0];  }
-  GENERIC int64_t& crash() { return _crash[0];  }
+  GENERIC unsigned long long int& crash() { return _crash[0];  }
 };
 
 /** Empty monitor to use as a template.  
@@ -152,7 +152,7 @@ class mce_stat {
 	// rho is the density of the planet = mass/volume = mass/(4/3piR^3)
 	double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
 	
-	_sys[thread_in_system].attribute(1) = hill*_params.rceh; // rce
+	_sys[thread_in_system].attribute(1) = hill;//*_params.rceh; // rce
 	_sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
 	
 	
@@ -237,7 +237,11 @@ class mce_stat {
 			shared[thread_in_system][c].bb_sw() -= tmp;
 			shared[thread_in_system][c].bb_ne() += tmp;
 		      }
+		      
+		      shared[thread_in_system][0].crash() = 0;
 		}
+		if (thread_in_system == 0) 
+		  shared[thread_in_system][0].crash() = 0;
 			
 			
           }
@@ -255,7 +259,7 @@ class mce_stat {
 		    j = nbod - j - nbod%2;
 		  }
 		  
-		  lprintf(_log,"BBox: thread=%d,i=%d, j=%d\n",thread_in_system,i,j);
+		  //lprintf(_log,"BBox: thread=%d,i=%d, j=%d\n",thread_in_system,i,j);
 		      
 		      
 		  /*************************************************************************
@@ -274,9 +278,6 @@ class mce_stat {
 			   shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw() &&
 			   _sys[i].mass() > 0 && _sys[j].mass() > 0)
 		      {
-			      atomicAdd(&shared[i][0].crash(),1);
-			      atomicAdd(&shared[j][0].crash(),1);
-			
 			      float dx0 = shared[i][0].pos() - shared[j][0].pos();
 			      float dy0 = shared[i][1].pos() - shared[j][1].pos();
 			      float dz0 = shared[i][2].pos() - shared[j][2].pos();
@@ -341,6 +342,9 @@ class mce_stat {
 			      
 			      if (d2min <= d2hit)
 			      {
+				atomicAdd(&shared[i][0].crash(),1);
+				atomicAdd(&shared[j][0].crash(),1);
+				
 				//i is the index of the heavier planet
 				
 				if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
@@ -390,6 +394,8 @@ class mce_stat {
 		    //If inside the central body, or passing through pericentre, use 2-body approx.
 		    if ((rv0*timestep <= 0.0 && rv1*timestep >=0.0)||min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0))
 		    {
+		      atomicAdd(&shared[i][0].crash(),1);
+		      atomicAdd(&shared[j][0].crash(),1);
 		      //x cross v
 		      float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
 		      float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
@@ -403,8 +409,9 @@ class mce_stat {
 		      float e = sqrt(max(temp,0.0));
 		      float q = p/(1.0+e);
 		      
-		      if (q <= _sys[i].attribute(0))
+		      if (q <= _sys[i].attribute(0)) // less than or equal the radius of the sun
 		      {
+			// modify the position and velocity of the sun
 			float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
 			for( int c = 0; c<3 ; c++)
 			{
@@ -419,12 +426,38 @@ class mce_stat {
 			  _sys[j][c].vel() *= -1.0;
 			}
 			_sys[j].mass() = 0.0;
+			// TODO: calculate the energy lost
 		      }
 			
 		    }
 		    
 		  }
 		} 
+		__syncthreads();
+		if (thread_in_system == 0)
+		{
+		  for(int iter = 0; iter < nbod; iter++)
+		    if (shared[iter][0].crash()> 1)
+		    {
+		      lprintf(_log,"Can not deal with the situation that has larger than 3 planets in collision!!! \n");
+		      _sys.set_disabled();
+		    }
+		}
+		__syncthreads();
+		/** Modify position of the system if the sun is hitted.
+		 *  Just translate the coordinate system by the new position of the sun.
+		 */
+		if (0 < thread_in_system < nbod)
+		{
+		  for (int c = 0; c<3 ; c++)
+		  {
+		    _sys[thread_in_system][c].pos() = _sys[thread_in_system ][c].pos() - _sys[0][c].pos();
+		    _sys[thread_in_system][c].vel() = _sys[thread_in_system ][c].vel() - _sys[0][c].vel();
+		  }
+		  
+		}
+		
+		
 		
 // 		if(is_condition_met() && is_deactivate_on() && (thread_in_system==0) )
 // 		  {  _sys.set_disabled(); }
