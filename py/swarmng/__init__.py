@@ -1,9 +1,10 @@
 ## @package swarmng
 #  Python interface to the Swarm-NG library
+#
 #  This package loads and verifies the libswarmng_ext.so and
 #  adds some API that is implemented in Python. 
 #
-#  The extensive module for opening log files is also included in this package.
+#  The extensive module for opening log files is also included in \ref swarmng.logdb
 #  
 
 import sys

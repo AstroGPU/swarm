@@ -192,7 +192,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.staticmethod("load")
 		;
 
-	class_<ensemble::Sys::attributes_t, noncopyable >( "Sys.Attributes", no_init )
+	class_<ensemble::Sys::attributes_t, noncopyable >( "System.Attributes", no_init )
 		.def("__getitem__", &sysattr_getitem )
 		.def("__setitem__", &sysattr_setitem )
         .def("__len__", &sysattr_len)
@@ -230,7 +230,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	/*
 	 *  All important methods are covered for this class
 	 */
-	class_<ensemble::SystemRef  >("SystemRef", no_init )
+	class_<ensemble::SystemRef  >("System", no_init )
 		.def("__len__", &ensemble::SystemRef::nbod , return_value_policy<copy_const_reference>())
 		.add_property("time", &get_time, &set_time)
 		.add_property("id", &get_id, &set_id)
