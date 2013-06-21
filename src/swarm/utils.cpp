@@ -44,9 +44,9 @@ int number_of_disabled_systems(defaultEnsemble ens) {
  * |v| = sqrt(2*G*M/r)*ejection_factor. 
  * We get different type of orbit based on ejection_factor:
  *    1/sqrt(2) : circular orbit
- *    < 1 : elliptical orbit
+ *    &lt; 1 : elliptical orbit
  *    = 1 : parabolic orbit
- *    > 1 : hyperbolic orbit
+ *    &gt; 1 : hyperbolic orbit
  *
  * Configuration options:
  *   nsys: Number of systems in the ensemble
