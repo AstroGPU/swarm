@@ -63,13 +63,13 @@ struct CurrentSysStat
   double _vel[CHUNK_SIZE];
   double _BB_SW[CHUNK_SIZE];
   double _BB_NE[CHUNK_SIZE];
-  unsigned long long int _crash[CHUNK_SIZE];
+  //unsigned long long int _crash[CHUNK_SIZE];
   // Accessors
   GENERIC double& pos() { return _pos[0];  }
   GENERIC double& vel() { return _vel[0];  }
   GENERIC double& bb_sw() { return _BB_SW[0];  }
   GENERIC double& bb_ne() { return _BB_NE[0];  }
-  GENERIC unsigned long long int& crash() { return _crash[0];  }
+  //GENERIC unsigned long long int& crash() { return _crash[0];  }
 };
 
 /** Empty monitor to use as a template.  
@@ -238,10 +238,9 @@ class mce_stat {
 			shared[thread_in_system][c].bb_ne() += tmp;
 		      }
 		      
-		      shared[thread_in_system][0].crash() = 0;
+		     
 		}
-		if (thread_in_system == 0) 
-		  shared[thread_in_system][0].crash() = 0;
+		
 			
 			
           }
@@ -249,223 +248,214 @@ class mce_stat {
         //! set the system state to disabled when three conditions are met
 	GPUAPI void pass_two (int thread_in_system) 
       	{
-      		if (thread_in_system < pair_count)
-      		{
-		  int j = nbod - 1 - thread_in_system / (nbod/2);
-		  int i = thread_in_system % (nbod/2);
-		  if (i >= j)
-		  {
-		    i = nbod - i - nbod%2-1;
-		    j = nbod - j - nbod%2;
-		  }
-		  
-		  //lprintf(_log,"BBox: thread=%d,i=%d, j=%d\n",thread_in_system,i,j);
-		      
-		      
-		  /*************************************************************************
-		    * Consider planet - planet first
-		    * **********************************************************************/
-		  if (i > 0)
-		  {
-
-		      /************************************************************************
-		       * Check if bounding boxes of the trajectories of the two planet intersect.
-		       * If intersect, then calculating minimum distance and resolving collision.
-		       * **********************************************************************/
-		      
-		      if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw() &&
-			   shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw() &&
-			   shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw() &&
-			   _sys[i].mass() > 0 && _sys[j].mass() > 0)
-		      {
-			      float dx0 = shared[i][0].pos() - shared[j][0].pos();
-			      float dy0 = shared[i][1].pos() - shared[j][1].pos();
-			      float dz0 = shared[i][2].pos() - shared[j][2].pos();
-			      float du0 = shared[i][0].vel() - shared[j][0].vel();
-			      float dv0 = shared[i][1].vel() - shared[j][1].vel();
-			      float dw0 = shared[i][2].vel() - shared[j][2].vel();
-			      float d0t = (dx0*du0 + dy0*dv0 + dz0*dw0)*2.0; 
-			      
-			      float dx1 = _sys[i][0].pos() - _sys[j][0].pos();
-			      float dy1 = _sys[i][1].pos() - _sys[j][1].pos();
-			      float dz1 = _sys[i][2].pos() - _sys[j][2].pos();
-			      float du1 = _sys[i][0].vel() - _sys[j][0].vel();
-			      float dv1 = _sys[i][1].vel() - _sys[j][1].vel();
-			      float dw1 = _sys[i][2].vel() - _sys[j][2].vel();
-			      float d1t = (dx1*du1 + dy1*dv1 + dz1*dw1)*2.0;
-			      
-			      float d0 = dx0*dx0 + dy0*dy0 + dz0*dz0;
-			      float d1 = dx1*dx1 + dy1*dy1 + dz1*dz1;
-			     
-			      
-			      float d2min, tmin, tau;
-			      //Calculating the mininum distance between two trajectories of particle i and j
-			      if (d0t > 0 && d1t < 0)
-				      if (d0 < d1)
-				      {
-					      d2min = d0;
-					      tmin = -timestep;
-				      }
-				      else
-				      {
-					      d2min = d1;
-					      tmin = 0.0;
-				      }
-			      else // using Hermite interpolation to calculate trajectories and the possible intersections
-			      {
-				      float tmp = 6.0*(d0 - d1);
-				      float a = tmp + 3.0*timestep*(d0t + d1t);
-				      float b = tmp + 2.0*timestep*(d0t + 2.0*d1t);
-				      float c = timestep * d1t;
-				      
-				      tmp = -0.5*(b + ((b>0)?1.0:(-1.0))*sqrt(max(b*b-4*a*c,0.0)));
-				      if (tmp == 0.0) 
-					tau = 0.0;
-				      else
-					tau = c/tmp;
-				      tau = min(tau,0.0);
-				      tau = max(tau,-1.0);
-				      tmin = tau*timestep;
-				      tmp = 1.0 + tau;
-				      d2min = tau*tau*((3.0+2.0*tau)*d0 + tmp*timestep*d0t)
-						      + tmp*tmp*((1.0-2.0*tau)*d1 + tau*timestep*d1t);
-				      d2min = max(d2min, 0.0);
-				      
-			      }
-			      
-			      //---------------- End of minimum distance calculation --------------------------------
-			      //float d2ce = max(_sys[i].attribute(1), _sys[j].attribute(1)); // distant for closed encounter
-			      float d2hit = max(_sys[i].attribute(2), _sys[j].attribute(2)); // distant for collision
-			      //d2ce = d2ce*d2ce;
-			      d2hit = d2hit*d2hit;
-			      //float d2near = d2hit*4.0;
-			      
-			      if (d2min <= d2hit)
-			      {
-				atomicAdd(&shared[i][0].crash(),1);
-				atomicAdd(&shared[j][0].crash(),1);
-				
-				//i is the index of the heavier planet
-				
-				if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
-				
-				lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, d2min, _sys.time()+tmin);
-				
-				float msum = _sys[i].mass() + _sys[j].mass();
-				float mredu = _sys[i].mass()*_sys[j].mass()/msum;
-				//energy lost
-				_sys.attribute(0) = 0.5*mredu*(du1*du1+dv1*dv1+dw1*dw1) - _sys[i].mass()*_sys[j].mass()/sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
-				float tmp1 = _sys[i].mass()/msum;
-				float tmp2 = _sys[j].mass()/msum;
-// 				
-				//Does it need to use atomicAdd ?
-				for (int c = 0; c < 3;c++)
-				{
-				  _sys[i][c].pos() = _sys[i][c].pos()*tmp1 + _sys[j][c].pos()*tmp2;
-				  _sys[i][c].vel() = _sys[i][c].vel()*tmp1 + _sys[j][c].vel()*tmp2;
-				}
-				_sys[i].mass() = msum;
-				
-				//eliminate the planet j
-				for (int c = 0; c < 3;c++)
-				{
-				  _sys[j][c].pos() *= -1.0;
-				  _sys[j][c].vel() *= -1.0;
-				}
-				_sys[j].mass() = 0.0;
-// 				   
-				
-			      }
-			      
-			      
-		      }// endif: two bounding boxes have non-zero intersection*/
-		  }//endif: 2 planet
-		  
-		  /*************************************************************************
-		  * Now consider sun - planet
-		  * **********************************************************************/
-		  if (i==0 && j > 0) //
-		  {
-		    float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();
-		    float rr1 = _sys[j][0].pos()*_sys[j][0].pos() + _sys[j][1].pos()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
-		    float rv0 = shared[j][0].vel()*shared[j][0].pos() + shared[j][1].vel()*shared[j][1].pos() + shared[j][2].vel()*shared[j][2].pos();
-		    float rv1 = _sys[j][0].vel()*_sys[j][0].pos() + _sys[j][1].vel()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
-		    
-		    //If inside the central body, or passing through pericentre, use 2-body approx.
-		    if ((rv0*timestep <= 0.0 && rv1*timestep >=0.0)||min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0))
-		    {
-		      atomicAdd(&shared[i][0].crash(),1);
-		      atomicAdd(&shared[j][0].crash(),1);
-		      //x cross v
-		      float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
-		      float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
-		      float hz = shared[j][0].pos()*shared[j][1].vel() - shared[j][1].pos()*shared[j][0].vel();
-		      
-		      float v2 = shared[j][0].vel()*shared[j][0].vel() + shared[j][1].vel()*shared[j][1].vel() + shared[j][2].vel()*shared[j][2].vel();
-		      float h2 = hx*hx+hy*hy+hz*hz;
-		      float p = h2/(_sys[i].mass() + _sys[j].mass());
-		      float r0 = sqrt(rr0);
-		      float temp = 1.0 + p*(v2/(_sys[i].mass() + _sys[j].mass()) -2.0/r0);
-		      float e = sqrt(max(temp,0.0));
-		      float q = p/(1.0+e);
-		      
-		      if (q <= _sys[i].attribute(0)) // less than or equal the radius of the sun
-		      {
-			// modify the position and velocity of the sun
-			float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
-			for( int c = 0; c<3 ; c++)
-			{
-			  _sys[i][c].pos() = tmp2*_sys[j][c].pos();
-			  _sys[i][c].vel() = tmp2*_sys[j][c].vel();
-			}
-			_sys[i].mass() = _sys[j].mass()+_sys[i].mass();
-			//eliminate the planet j
-			for (int c = 0; c < 3;c++)
-			{
-			  _sys[j][c].pos() *= -1.0;
-			  _sys[j][c].vel() *= -1.0;
-			}
-			_sys[j].mass() = 0.0;
-			// TODO: calculate the energy lost
-		      }
-			
-		    }
-		    
-		  }
-		} 
-		__syncthreads();
-		if (thread_in_system == 0)
-		{
-		  for(int iter = 0; iter < nbod; iter++)
-		    if (shared[iter][0].crash()> 1)
-		    {
-		      lprintf(_log,"Can not deal with the situation that has larger than 3 planets in collision!!! \n");
-		      _sys.set_disabled();
-		    }
-		}
-		__syncthreads();
-		/** Modify position of the system if the sun is hitted.
-		 *  Just translate the coordinate system by the new position of the sun.
-		 */
-		if (0 < thread_in_system < nbod)
-		{
-		  for (int c = 0; c<3 ; c++)
-		  {
-		    _sys[thread_in_system][c].pos() = _sys[thread_in_system ][c].pos() - _sys[0][c].pos();
-		    _sys[thread_in_system][c].vel() = _sys[thread_in_system ][c].vel() - _sys[0][c].vel();
-		  }
-		  
-		}
-		
-		
-		
-// 		if(is_condition_met() && is_deactivate_on() && (thread_in_system==0) )
-// 		  {  _sys.set_disabled(); }
-// 		return _sys.state();
-		
-	}
-	
-	
+      
+        /** Because most of the time, planets dont collide each other. So, it is not necessary to use parallel here
+         *  We use only the first thread in the system.     
+         */
+              if (thread_in_system == 0)
+              {
+                int i,j;
+                /*************************************************************************
+                * Consider planet - planet first
+                * **********************************************************************/
+                for(j = 2; j < nbod; j++)
+                  for(i = 1; i<j ; i++)
+                  {
+                    if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw())
+                      if (shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw())
+                        if (shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw())
+                        {
+                          if (_sys[i].mass() > 0 && _sys[j].mass() > 0)
+                          {
+                            double dx0 = shared[i][0].pos() - shared[j][0].pos();
+                            double dy0 = shared[i][1].pos() - shared[j][1].pos();
+                            double dz0 = shared[i][2].pos() - shared[j][2].pos();
+                            double du0 = shared[i][0].vel() - shared[j][0].vel();
+                            double dv0 = shared[i][1].vel() - shared[j][1].vel();
+                            double dw0 = shared[i][2].vel() - shared[j][2].vel();
+                            double d0t = (dx0*du0 + dy0*dv0 + dz0*dw0)*2.0; 
+                            
+                            double dx1 = _sys[i][0].pos() - _sys[j][0].pos();
+                            double dy1 = _sys[i][1].pos() - _sys[j][1].pos();
+                            double dz1 = _sys[i][2].pos() - _sys[j][2].pos();
+                            double du1 = _sys[i][0].vel() - _sys[j][0].vel();
+                            double dv1 = _sys[i][1].vel() - _sys[j][1].vel();
+                            double dw1 = _sys[i][2].vel() - _sys[j][2].vel();
+                            double d1t = (dx1*du1 + dy1*dv1 + dz1*dw1)*2.0;
+                            
+                            double d0 = dx0*dx0 + dy0*dy0 + dz0*dz0;
+                            double d1 = dx1*dx1 + dy1*dy1 + dz1*dz1;
+                            
+                            
+                            double d2min, tmin, tau;
+                            //Calculating the mininum distance between two trajectories of particle i and j
+                            if (d0t > 0 && d1t < 0)
+                                    if (d0 < d1)
+                                    {
+                                            d2min = d0;
+                                            tmin = -timestep;
+                                    }
+                                    else
+                                    {
+                                            d2min = d1;
+                                            tmin = 0.0;
+                                    }
+                            else // using Hermite interpolation to calculate trajectories and the possible intersections
+                            {
+                                    float tmp = 6.0*(d0 - d1);
+                                    float a = tmp + 3.0*timestep*(d0t + d1t);
+                                    float b = tmp + 2.0*timestep*(d0t + 2.0*d1t);
+                                    float c = timestep * d1t;
+                                    
+                                    tmp = -0.5*(b + ((b>0)?1.0:(-1.0))*sqrt(max(b*b-4*a*c,0.0)));
+                                    if (tmp == 0.0) 
+                                      tau = 0.0;
+                                    else
+                                      tau = c/tmp;
+                                    tau = min(tau,0.0);
+                                    tau = max(tau,-1.0);
+                                    tmin = tau*timestep;
+                                    tmp = 1.0 + tau;
+                                    d2min = tau*tau*((3.0+2.0*tau)*d0 + tmp*timestep*d0t)
+                                                    + tmp*tmp*((1.0-2.0*tau)*d1 + tau*timestep*d1t);
+                                    d2min = max(d2min, 0.0);
+                                    
+                            }//---------------- End of minimum distance calculation --------------------------------
+                            
+                            //float d2ce = max(_sys[i].attribute(1), _sys[j].attribute(1)); // distant for closed encounter
+                            float d2hit = max(_sys[i].attribute(2), _sys[j].attribute(2)); // distant for collision
+                            //d2ce = d2ce*d2ce;
+                            d2hit = d2hit*d2hit;
+                            //float d2near = d2hit*4.0;
+                            
+                            if (d2min <= d2hit)
+                            {
+                              
+                              //i is the index of the heavier planet
+                              
+                              if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
+                              
+                              lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, d2min, _sys.time()+tmin);
+                              
+                              
+                              float msum = _sys[i].mass() + _sys[j].mass();
+                              float mredu = _sys[i].mass()*_sys[j].mass()/msum;
+                              //energy lost
+                              _sys.attribute(0) = 0.5*mredu*(du1*du1+dv1*dv1+dw1*dw1) - _sys[i].mass()*_sys[j].mass()/sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+                              float tmp1 = _sys[i].mass()/msum;
+                              float tmp2 = _sys[j].mass()/msum;
+       
+                              for (int c = 0; c < 3;c++)
+                              {
+                                _sys[i][c].pos() = _sys[i][c].pos()*tmp1 + _sys[j][c].pos()*tmp2;
+                                _sys[i][c].vel() = _sys[i][c].vel()*tmp1 + _sys[j][c].vel()*tmp2;
+                              }
+                              _sys[i].mass() = msum;
+                              
+                              //eliminate the planet j
+                              for (int c = 0; c < 3;c++)
+                              {
+                                _sys[j][c].pos() *= -1.0;
+                                _sys[j][c].vel() *= -1.0;
+                              }
+                              _sys[j].mass() = 0.0;
+        //                              
+                                                            
+                            }
+                            
+                          }
+                          else
+                          {
+                            lprintf(_log,"3 planets in collision: System halted ! T=%f\n",_sys.time());
+                            log::system(_log, _sys);
+                            _sys.set_disabled();
+                          }
+                        }
+                    
+                  }//endfor
+                  
+                  /*************************************************************************
+                  * Now consider sun - planet
+                  * **********************************************************************/
+                  i = 0;
+                  for (int j = 1; j < nbod; j++)
+                  {
+                    float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();
+                    float rr1 = _sys[j][0].pos()*_sys[j][0].pos() + _sys[j][1].pos()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
+                    float rv0 = shared[j][0].vel()*shared[j][0].pos() + shared[j][1].vel()*shared[j][1].pos() + shared[j][2].vel()*shared[j][2].pos();
+                    float rv1 = _sys[j][0].vel()*_sys[j][0].pos() + _sys[j][1].vel()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
+                    
+                    //If inside the central body, or passing through pericentre, use 2-body approx.
+                    if ((rv0*timestep <= 0.0 && rv1*timestep >=0.0)||min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0))
+                    {
+                      if (_sys[j].mass() > 0)
+                      {
+                        lprintf(_log,"Hitting with the sun detected: j=%d \n", j);
+                      
+                        //x cross v
+                        float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
+                        float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
+                        float hz = shared[j][0].pos()*shared[j][1].vel() - shared[j][1].pos()*shared[j][0].vel();
+                        
+                        float v2 = shared[j][0].vel()*shared[j][0].vel() + shared[j][1].vel()*shared[j][1].vel() + shared[j][2].vel()*shared[j][2].vel();
+                        float h2 = hx*hx+hy*hy+hz*hz;
+                        float p = h2/(_sys[i].mass() + _sys[j].mass());
+                        float r0 = sqrt(rr0);
+                        float temp = 1.0 + p*(v2/(_sys[i].mass() + _sys[j].mass()) -2.0/r0);
+                        float e = sqrt(max(temp,0.0));
+                        float q = p/(1.0+e);
+                        
+                        if (q <= _sys[i].attribute(0)) // less than or equal the radius of the sun
+                        {
+                          // modify the position and velocity of the sun
+                          float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
+                          for( int c = 0; c<3 ; c++)
+                          {
+                            _sys[i][c].pos() = tmp2*_sys[j][c].pos();
+                            _sys[i][c].vel() = tmp2*_sys[j][c].vel();
+                          }
+                          _sys[i].mass() = _sys[j].mass()+_sys[i].mass();
+                          //eliminate the planet j
+                          for (int c = 0; c < 3;c++)
+                          {
+                            _sys[j][c].pos() *= -1.0;
+                            _sys[j][c].vel() *= -1.0;
+                          }
+                          _sys[j].mass() = 0.0;
+                          
+                          /** TODO: calculate the energy lost
+                           * 
+                           */
+                          
+                            
+                          /** Modify position of the system if the sun is hitted.
+                          *  Just translate the coordinate system by the new position of the sun.
+                          */
+                          for (int k = 1; k < nbod; k++)
+                            if (k != j)
+                            {
+                              for(int c = 0; c < 3; c++)
+                              {
+                                _sys[k][c].pos() = _sys[k][c].pos() - _sys[0][c].pos();
+                                _sys[k][c].vel() = _sys[k][c].vel() - _sys[0][c].vel();
+                              }
+                            }
+                        }
+                        
+                      }
+                      else
+                      {
+                        lprintf(_log,"3 planets in collision: System halted !\n");
+                        log::system(_log, _sys);
+                        _sys.set_disabled();
+                        
+                      }
+                    }
+                    
+                  }
+                    
+              }// endif: thread_in_system = 0
+        }	
 };
 
 } // namespace monitor

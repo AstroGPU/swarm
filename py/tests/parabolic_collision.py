@@ -12,14 +12,17 @@ class ParabolicTest(abstract.IntegrationTest):
             nbod       = 3,
             time_step  = 1e-3,
             nogpu      = 0,
+            log_writer= "bdb",
+            log_output_db = "prab.db",
+            deactivate_on_collision= 1
             )
     required_destination_time = 1.885638833885
-    destination_time = 5
+    destination_time = 100
 
     def createEnsemble(self):
-        nsys = 16
+        nsys = 4
         nbod = 3
-        R = 1
+        R = 5
         mu = 1
         mass_planet = 0.0001
 
@@ -34,7 +37,7 @@ class ParabolicTest(abstract.IntegrationTest):
             s[0].mass = 1
             s[0].attributes[0] = 1
             for j in range(1,ens.nbod):
-                x = ((j % 2)*2-1)*2*((j+1)/2)
+                x = ((j % 2)*2-1)*10*((j+1)/2)
                 y = x * x / 4 / R - R
                 vmag = sqrt(2*mu/norm(x,y))
                 vdirx = (x/abs(x))/norm(1,x/2/R)
@@ -50,13 +53,13 @@ class ParabolicTest(abstract.IntegrationTest):
         rs = self.ref[0]
         s = self.ens[0]
         print rs[1].pos, rs[2].pos, rs[1].vel, rs[2].vel
-        print s[1].pos, s[2].pos
+        print s[0].pos, s[1].pos, s[2].pos
         print s.time
 
         x1,y1,z1 = s[1].pos
         x2,y2,z2 = s[2].pos
         self.assertEqual(s.state, -1)
-        self.assertLess(norm(x2-x1,y2-y1,z2-z1),0.011)
+        self.assertLess(norm(x2+x1,y2+y1,z2+z1),0.011)
         self.assertAlmostEqual(s.time,self.required_destination_time,2)
 
 
