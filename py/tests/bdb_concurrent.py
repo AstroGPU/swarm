@@ -19,6 +19,7 @@ from swarmng.range_type import Range
 from swarmng.query import truncate
 from argparse import Namespace
 import unittest
+from bsddb3.db import DBError
 
 class BDBConcurrencyTest(unittest.TestCase):
   def runTest(self):
@@ -72,18 +73,21 @@ class BDBConcurrencyTest(unittest.TestCase):
     else:
       child = psutil.Process(pid)
       
-      time.sleep(.1)
+      time.sleep(.5)
       counter = 0
       while child.status != psutil.STATUS_ZOMBIE:
-	# Get the last_time for system 0, it
-	# should be greater than 0
-	last_time = do_query()
-	self.assertGreater(last_time,0)
-	
-	# Only increment the counter if it is not at
-	# the final time
-	if(last_time < final_time):
-	  counter += 1
+	try:
+	    # Get the last_time for system 0, it
+	    # should be greater than 0
+	    last_time = do_query()
+	    self.assertGreater(last_time,0)
+	    
+	    # Only increment the counter if it is not at
+	    # the final time
+	    if(last_time < final_time):
+	      counter += 1
+	except DBError:
+	    print "Querying failed"
 	time.sleep(.05)
 	
       # The query must have run before the integration
