@@ -89,12 +89,13 @@ int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
     }
 }
 
+const int create_mode = 00600;
 
 DbEnv* bdb_database::createDefaultEnv(){
     DbEnv* env = new DbEnv(0);
     char* cwd = get_current_dir_name();
     env->set_cachesize(0,CACHESIZE,0);
-    env->open(cwd,DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL,0);
+    env->open(cwd,DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL,create_mode);
     free(cwd);
     return env;
 }
@@ -104,10 +105,10 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
     const char * fn = fileName.c_str();
     
-    metadata.open(NULL, fn, "metadata", DB_BTREE, open_mode, 0);
+    metadata.open(NULL, fn, "metadata", DB_BTREE, open_mode, create_mode);
 
     primary.set_bt_compare(bdb_compare<pkey_t>);
-	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, 0);
+	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, create_mode);
 
     // Open up the system index database, it has to support
     // duplicates and it is given a smaller cache size
@@ -115,7 +116,7 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
     system_idx.set_bt_compare(bdb_compare<sysid_t>);
     system_idx.set_dup_compare(bdb_compare<pkey_t>);
-	system_idx.open(NULL, fn, "system_idx", DB_BTREE, open_mode , 0);
+	system_idx.open(NULL, fn, "system_idx", DB_BTREE, open_mode , create_mode);
 
     // Open up the time index database, it has to support
     // duplicates because our index is not a unique index and
@@ -124,13 +125,13 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
     time_idx.set_bt_compare(bdb_compare<float>);
     time_idx.set_dup_compare(bdb_compare<pkey_t>);
-	time_idx.open(NULL, fn, "time_idx", DB_BTREE, open_mode  , 0);
+	time_idx.open(NULL, fn, "time_idx", DB_BTREE, open_mode  , create_mode);
 
   //  event_idx.set_cachesize(0,CACHESIZE,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
     event_idx.set_bt_compare(bdb_compare<evtid_t>);
     event_idx.set_dup_compare(bdb_compare<pkey_t>);
-	event_idx.open(NULL, fn, "event_idx", DB_BTREE, open_mode , 0);
+	event_idx.open(NULL, fn, "event_idx", DB_BTREE, open_mode , create_mode);
 
     // Associate the primary table with the indices
     // the lr_extract_* is the function that defines
