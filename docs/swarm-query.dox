@@ -1,9 +1,9 @@
 namespace swarm {
 /**
  
-  @page querypy  query.py command-line interface
+  @page swarm-query  swarm-query.py command-line interface
 
-  query.py is a utility written in Python that provides a command-line 
+  swarm-query.py (located at SOURCE_DIRECTORY/py/bin/swarm-query.py) is a utility written in Python that provides a command-line 
   interface to the basic querying functionalities of 
   BDB log querying API (refer to Query API).
 

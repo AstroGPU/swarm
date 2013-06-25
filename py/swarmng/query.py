@@ -1,6 +1,6 @@
 from logdb import IndexedLogDB, PKey
 from bsddb3.db import *
-from log import LogRecord
+from logrecord import LogRecord
 from struct import pack, unpack
 from functools import partial
 import math
