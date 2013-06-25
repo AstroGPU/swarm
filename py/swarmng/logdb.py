@@ -170,7 +170,7 @@ class IndexedLogDB:
         e = DBEnv()
         e.set_cachesize(0,CACHESIZE,0)
         #print("Trying to initialize environment for `{0}`".format(os.path.dirname(pathName)))
-        e.open(os.path.dirname(pathName),DB_INIT_CDB)
+        e.open(os.path.dirname(pathName),DB_INIT_CDB | DB_INIT_MPOOL)
         fn = os.path.basename(pathName);
         #print("Opening `{0}`".format(fn))
 

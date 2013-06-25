@@ -278,6 +278,7 @@ bool primary_cursor_t::position_at(pkey_t& key,lrw_t& lr){
 
 void bdb_database::flush()
 {
+    metadata.sync(0);
   primary.sync(0);time_idx.sync(0); event_idx.sync(0); system_idx.sync(0);
 }
 
