@@ -21,6 +21,7 @@ public:
     {}
 
     static DbEnv* createDefaultEnv();
+    void openEnv(const std::string& basedir);
     void openForReading(const std::string& fileName);
     void create(const std::string& fileName);
     void createEmpty(const std::string& fileName);

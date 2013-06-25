@@ -1,5 +1,6 @@
 #include "../common.hpp"
 
+#include <libgen.h>
 #include <unistd.h>
 #include <limits>
 
@@ -86,18 +87,44 @@ int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
     }
 }
 
+void bdb_database::openEnv(const std::string& basedir){
+    std::cerr << "Initializing BDB environment in `" << basedir << "`" << std::endl;
+    env->open(basedir.c_str(),DB_CREATE | DB_INIT_MPOOL,0);
+}
 
 DbEnv* bdb_database::createDefaultEnv(){
     DbEnv* env = new DbEnv(0);
-    char* cwd = get_current_dir_name();
     env->set_cachesize(0,CACHESIZE,0);
+    /*
+    char* cwd = get_current_dir_name();
     env->open(cwd,DB_CREATE | DB_INIT_MPOOL,0);
     free(cwd);
+    */
     return env;
 }
 
-void bdb_database::openInternal(const std::string& fileName, int open_mode){
+std::string directory_name(const std::string& s){
+    //std::cerr << "dirname for `"<< s << "`";
+    char* w = strdup(s.c_str());
+    std::string d(dirname(w));
+    free(w);
+    //std::cerr << " is `" << d << "`" << std::endl;
+    return d;
+}
 
+std::string base_name(const std::string& s){
+    //std::cerr << "basename for `"<< s << "`";
+    char* w = strdup(s.c_str());
+    std::string d(basename(w));
+    free(w);
+    //std::cerr << " is `" << d << "`" << std::endl;
+    return d;
+}
+
+void bdb_database::openInternal(const std::string& pathName, int open_mode){
+
+    openEnv(directory_name(pathName));
+    std::string fileName = base_name(pathName);
 
     const char * fn = fileName.c_str();
 
