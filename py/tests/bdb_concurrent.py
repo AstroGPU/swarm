@@ -24,8 +24,8 @@ from bsddb3.db import DBError
 class BDBConcurrencyTest(unittest.TestCase):
   def runTest(self):
     ## Setting up the output log file
-    output_file_name='testing_log.db'
-    final_time = 10
+    output_file_name='Testing/testing_log.db'
+    final_time = 100
     
     try:
       os.remove(output_file_name)
@@ -73,7 +73,7 @@ class BDBConcurrencyTest(unittest.TestCase):
     else:
       child = psutil.Process(pid)
       
-      time.sleep(.5)
+      time.sleep(.05)
       counter = 0
       while child.status != psutil.STATUS_ZOMBIE:
 	try:
@@ -86,8 +86,8 @@ class BDBConcurrencyTest(unittest.TestCase):
 	    # the final time
 	    if(last_time < final_time):
 	      counter += 1
-	except DBError:
-	    print "Querying failed"
+	except DBError as e:
+	    print("Querying failed", e)
 	time.sleep(.05)
 	
       # The query must have run before the integration

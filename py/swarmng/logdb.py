@@ -5,6 +5,7 @@ from bsddb3.db import *
 from logrecord import LogRecord
 from struct import pack, unpack
 import sys
+import os
 
 TIME_EPSILON = sys.float_info.epsilon
 
@@ -160,29 +161,37 @@ class IndexedLogDB:
     #
     fileFormatVersion = "1"
     
+
     ## Opens a BDB file that contains the primary database and
     #    secondary indices.
     #  @arg @c fn: path to the database file name
-    def __init__(self, fn):
+    def __init__(self, pathName):
+        CACHESIZE = 1024*1024*64 ;
+        e = DBEnv()
+        e.set_cachesize(0,CACHESIZE,0)
+        #print("Trying to initialize environment for `{0}`".format(os.path.dirname(pathName)))
+        e.open(os.path.dirname(pathName),DB_INIT_CDB)
+        fn = os.path.basename(pathName);
+        #print("Opening `{0}`".format(fn))
 
-        m = DB()
+        m = DB(e)
         m.open(fn, dbname="metadata", flags=DB_RDONLY)
         
-        p = DB()
+        p = DB(e)
         p.set_bt_compare(PKey.compareBinary)
         p.open(fn, dbname="primary", flags=DB_RDONLY)
 
-        si = DB()
+        si = DB(e)
         si.set_bt_compare(compare_sys)
         si.set_dup_compare(PKey.compareBinary)
         si.open(fn, dbname="system_idx", flags=DB_RDONLY)
 
-        ti = DB()
+        ti = DB(e)
         ti.set_bt_compare(compare_time)
         ti.set_dup_compare(PKey.compareBinary)
         ti.open(fn, dbname="time_idx", flags=DB_RDONLY)
 
-        ei = DB()
+        ei = DB(e)
         ei.set_bt_compare(compare_evt)
         ei.set_dup_compare(PKey.compareBinary)
         ei.open(fn, dbname="event_idx", flags=DB_RDONLY)
