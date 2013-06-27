@@ -2,6 +2,7 @@ namespace swarm {
 
 /** \page BuildSwarm Getting Started with Swarm-NG
 
+The guidelines on using Swarm-NG.
 
 \section Obtain Obtaining the source code
 Currently we do not have any binary packages available. 
