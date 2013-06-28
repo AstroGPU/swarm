@@ -25,7 +25,7 @@ SINGLE, INTERVAL, UNIVERSAL = range(3)
 #
 #  A range object can be iterated on just like the Python range object
 #  @code{.py}
-#  >>> for i in Range.interval((1,10)):
+#  >>> for i in Range.interval(1,10):
 #  ...  print(i)
 #  1
 #  2
@@ -53,13 +53,23 @@ class Range:
         return x
       
     ## Create a range from a tuple. 
-    #  For some reasons, this function takes a tuple
-    #  and NOT two arguments.
+    # This function can take one tuple as an argument
+    # or two arguments.
+    # @code{.py}
+    # >>> t = (3,8)
+    # >>> Range.interval(t)
+    # >>> Range.interval(10,20)
+    # @endcode
     @staticmethod
-    def interval(tuple):
+    def interval(t, u = None):
+        if u != None :
+          tpl = (t,u)
+        else:
+          tpl = t
+          
         x = Range()
         x.type = INTERVAL
-        x.interval = tuple
+        x.interval = t
         return x
     ## Create a range that contains everything.
     #  The contain method for this object always returns true.

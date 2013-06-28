@@ -9,11 +9,22 @@ import os
 
 TIME_EPSILON = sys.float_info.epsilon
 
+## Primary key of the log file database
+#
+# Most of methods are only for internal use and are not documented.
 class PKey:
-    def __init__(self, t, e, s):
-        self.time = t
-        self.event_id = e
-        self.system_id = s
+    ## time field of the associated LogRecord, a floating point value representing time in AU
+    time = property
+    ## Event ID of the associated LogRecord, integer value that is usually 1.
+    event_id = property
+    ## Integer ID of the system that the associated LogRecord has a snapshot.
+    system_id = property
+    
+    ## Create a primary key object from time, event_id and system_id respectively.
+    def __init__(self, time, event_id, system_id):
+        self.time = time
+        self.event_id = event_id
+        self.system_id = system_id
 
     @staticmethod
     def decomposeBinary(bin):
@@ -153,8 +164,15 @@ def iter_secondary_cursor(c, mode = DB_NEXT):
 #
 # @code{.py}
 # >>> db = IndexedLogDB('mydatabase.db')
-# >>> print(list(db.all_records()))
+# >>> records = db.all_records()
+# >>> print(next(records))
+# >>> print(next(records))
 # @endcode
+#
+# Note that most of the methods below return key-value pairs. The 
+# key-value pair is a Python tuple where the first element is of type \ref PKey
+# and has time, system_id, event_id properties. the second element is a \ref swarmng.logrecord.LogRecord "LogRecord" 
+# object and contains all the information about the planetary system and its attributes.
 #
 class IndexedLogDB:
     ## Supported version of BDB log files
@@ -207,7 +225,16 @@ class IndexedLogDB:
         self.metadata = m
         
         self.validateVersionInfo()
-       
+      
+    ## Get meta data from the database for the provided `name` string.
+    #  
+    #  There are two metadata that are always available: `fileFormatVersion` and `swarmngVersion`
+    #
+    #  Meta data for the log file is a mapping of string -> string.
+    #
+    #
+    #  @arg \c name : string :name of the property we are looking for.
+    #  returns : string value for the provided property, None if the property is not found.
     def getMetadata(self,name):
       return self.metadata.get(name)
     
@@ -217,13 +244,20 @@ class IndexedLogDB:
         raise RuntimeError("Mismatching file format version: {0}, required {1}".format(v, self.fileFormatVersion))
 
 
+    ## Return an iterable for all of the records, the records are
+    # sorted by time, then event id then system id.
+    #
+    # The elements of the returend iterable or key-value pairs.
+    #
     def all_records(self):
         c = self.primary.cursor()
         for k,l in iter_cursor(c):
             yield IndexedLogDB.decodeKVP((k,l))
 
-    ## Returns a list of times for a time range, it is used for making 
-    #    range queries
+    ## Returns a iterable of times for a time range, it is used for making 
+    #    range queries. 
+    #
+    #  The elements of the returned iterable are floating point values.
     def time_sequence(self, time_range):
 
         t0, t1 = time_range
@@ -237,7 +271,9 @@ class IndexedLogDB:
                 yield t
             else:
                 raise StopIteration
-    ## Return all the records that have system id in the system range
+    ## Query for all the records that have system id in the system range
+    #
+    #  Return an iterable of key-value pairs.
     def system_range_records(self, sys_range):
         s0, s1 = sys_range
         c = self.system_idx.cursor()
@@ -250,7 +286,9 @@ class IndexedLogDB:
                 yield IndexedLogDB.decodeKVP((p,l))
             else:
                 raise StopIteration
-    ## Return all the records that have time in the time range
+    ## Query for all the records that have time in the time range
+    #
+    #  Return an iterable of key-value pairs.
     def time_range_records(self, time_range):
         t0, t1 = time_range
         c = self.time_idx.cursor()
@@ -264,6 +302,9 @@ class IndexedLogDB:
             else:
                 raise StopIteration
 
+    ## Query for all the records for a system in a given time range.
+    #
+    #  Return an iterable of key-value pairs.
     def system_at_time(self, sysid, time_range):
         t0, t1 = time_range
         c = self.system_idx.cursor()
@@ -279,31 +320,49 @@ class IndexedLogDB:
                 raise StopIteration
 
     ## Return initial coniditions for the system range
+    #
+    #  Return an iterable of a tuple of system id and LogRecord.
+    #
+    #  Usage:
+    #  @code{.py}
+    #  for system_id, lr in d.initial_conditions(Range.interval(10,20)):
+    #     print(system_id) # prints integers
+    #     print(lr.time)   # lr is a LogRecord object and has a time property
+    #  @endcode
+    #
     def initial_conditions(self, system_range):
         c = self.system_idx.cursor()
 
         if system_range.isUniversal() :
             s0 = 0
             s1 = sys.maxint
-            c.first()
+            r = c.first()
         else:
             s0, s1 = system_range.ulPair()
             k = PKey.packSys(s0)
-            c.set_range(k) 
+            r  = c.set_range(k) 
 
         sysid = s0
         while sysid < s1 :
-            r = c.get(DB_NEXT_NODUP)
             if r : 
                 ks, l = r
                 sysid = PKey.unpackSys(ks)
                 yield sysid, LogRecord.from_binary(l)
             else:
                 break
+            r = c.get(DB_NEXT_NODUP)
     ## Return the final conditions for a range of systems that
     #    is the largest time for which the system has a valid entry
-    #    right now we don't support going through all systems
-    #    but that should not be difficult to add
+    #
+    #  Return an iterable of a tuple of system id and LogRecord.
+    #
+    #  Usage:
+    #  @code{.py}
+    #  for system_id, lr in d.final_conditions(Range.interval(10,20)):
+    #     print(system_id) # prints integers
+    #     print(lr.time)   # lr is a LogRecord object and has a time property
+    #  @endcode
+    #
     def final_conditions(self,system_range):
         c = self.system_idx.cursor()
 
@@ -352,6 +411,8 @@ class IndexedLogDB:
     #  @arg tr: time range (of type swarmng.range_type.Range)
     #  @arg sr: system range (of type swarmng.range_type.Range)
     #  @arg er: event ID range (of type swarmng.range_type.Range)
+    #
+    #  Return an iterable of key-value pairs.
     def query(d , tr, sr, er ):
 
         def filterEventID(q,er):

@@ -26,6 +26,8 @@ differential equations.
 	- \ref TutorialEnsemble
  - **Using Python library interface**
         - \ref TutorialPython
+        - \ref TutorialPythonQueryPlot
+        - \ref TutorialPythonLogRecord
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor

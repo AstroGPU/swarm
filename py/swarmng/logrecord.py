@@ -11,6 +11,16 @@ from keplerian import calc_keplerian_for_cartesian
 #  \arg \c planet : a tuple of structure ((x,y,z),(vx,vy,vz),mass) mass is not used in the calculations
 #  \arg \c center : the supposed center of the orbit that planet is orbiting around
 #
+#  \ret Return type: a named tuple that has the following attributes
+#  * a : semi-major axis
+#  * e : eccentricity
+#  * i : inclination
+#  * O : Longitude of the ascending node
+#  * w : Argument of periapsis
+#  * M : mean anomaly.
+#
+#  Refer to <a href="https://en.wikipedia.org/wiki/Orbital_elements">Wikipedia:Orbital elements</a> for meaning of these.
+#
 #  \TODO: change this function to use the C implementation of calc_keplerian_for_cartesian
 def keplerian_for_cartesian(planet,center):
     ((x,y,z),(vx,vy,vz),mass) = planet
@@ -48,19 +58,36 @@ def with_index(list,starting_index = 0):
 #  Static method from_binary should be used to parse binary strings
 #  and create instances of this class
 #
-#  Once instantiated properly, this class has following properties
-#  - bodies : List of bodies (planets and star)
-#  - time   : Time of the snapshot in AU
-#  - sys    : Serial number of the system
-#  - flags  : The current state of system, different codes may be used by
-#  any software that writes the logrecord
 #
 #
 #  \TODO: make the constructor private
 #
 class LogRecord:
 
+    ##  List of bodies (planets and star) each element is of type \ref swarmng.logrecord.LogRecord.Body "Body"
+    bodies = property
+    ## Time of the snapshot in AU (floating point)
+    time = property
+    ## Integer identifier of the system
+    sys = property
+    ## The current state of system, different codes may be used by
+    #  any software that writes the logrecord
+    #  
+    #  Regular values:
+    #  * 0 : active :   currently integrating, this wouldn't happen in a log file
+    #  * 1 : inactive : not currently integrating, but will be
+    #  * -1: disabled system : is ignored by integrators.
+    state = property
+    
+
+
     ## Data structure for properties of a body (planet or star) in a system
+    #
+    # It has following properties:
+    # * `position` : a list of 3 floating point values for `x`, `y` and `z`
+    # * `velocity` : a list of 3 floating point values for `vx`, `vy` and `vz`
+    # * `mass`     : a floating point value for the mass (relative to the star)
+    # it can be treated as a tuple, and destructed
     Body = namedtuple('Body', ['position', 'velocity', 'mass'])
 
 
@@ -109,7 +136,7 @@ class LogRecord:
 
 
     ## Parse a binary string representing a C++ logrecord struct
-    #  and return a LogRecord object. Only snapshot logrecords are
+    #  and return a LogRecord object. Only snapshot logrecords (where event_id = 1) are
     #  supported at the moment
     @staticmethod
     def from_binary(s):
@@ -117,7 +144,7 @@ class LogRecord:
         l = LogRecord()
         l.msgid = msgid
         if msgid == 1 :
-            (time,sys,flags,nbod) = unpack('diii',s[8:28])
+            (time,sys,state,nbod) = unpack('diii',s[8:28])
             bodies = []
             for b in range(1,nbod+1):
                 (x,y,z,vx,vy,vz,mass,body_id) = \
@@ -125,7 +152,7 @@ class LogRecord:
                 bodies.append(LogRecord.Body((x,y,z),(vx,vy,vz) ,mass))
             l.time = time
             l.sys = sys
-            l.flags = flags
+            l.state = state
             l.bodies = bodies
             return l
         else:
@@ -133,7 +160,7 @@ class LogRecord:
           
     def as_map(self):
         return {'time':self.time, 'sys':self.sys,
-        'flags':self.flags, 'bodies':self.bodies }
+        'state':self.state, 'bodies':self.bodies }
 
     ## String representation of the planetary system
     #  the representation is shown like a Hash.
