@@ -74,5 +74,7 @@ INCLUDE(cmake/test.cmake)
 INCLUDE(cmake/custom.cmake)
 
 tutorial_python(TutorialPython py/tutorial.py)
+tutorial_python(TutorialPythonEnsemble py/ensemble_tutorial.py)
+tutorial_python(TutorialPythonEjection py/ejection_tutorial.py)
 tutorial_python(PlotTutorial py/plot_tutorial.py)
 tutorial_python(LogRecordTutorial py/logrecord_tutorial.py)

@@ -28,6 +28,8 @@ differential equations.
         - \ref TutorialPython
         - \ref TutorialPythonQueryPlot
         - \ref TutorialPythonLogRecord
+        - \ref TutorialPythonEnsemble
+        - \ref TutorialPythonEjection
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
