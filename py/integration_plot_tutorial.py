@@ -12,7 +12,7 @@
 # velocity of planets into orbital elements and finally,
 # we plot the difference in semi-major axis of planets.
 #
-# \section Set-up
+# \section setup Set-up
 #
 # The set-up is quite similar to approach taken in @ref TutorialPythonResume. 
 #
@@ -43,7 +43,7 @@ integ.ensemble = ens
 integ.destination_time = float(cfg["destination_time"])
 integ.integrate()
 
-# \section Examining data
+# \section ed Examining data
 # 
 # At this point, the integration is completed. For analysis
 # we have two ensembles: `ref`, the reference ensemble
@@ -104,7 +104,7 @@ final   = extract_semi_major(ens)
 change = (final-initial)/initial
 
 #
-# \section Plotting
+# \section plt Plotting
 #
 # For every planet, we plot a scatter plot of change of semi-major axis
 # where each data point represents the change in one of the systems.
@@ -130,7 +130,7 @@ P.savefig("semi_major_axis_comparison")
 # The generated plot is saved as `semi_major_axis_comparison` 
 # in the currenty working directory.
 #
-# \section Conclusion
+# \section conc Conclusion
 #
 # In this, tutorial we explored how to extract information from an ensemble
 # in a real application. You can change the tutorial to plot other
@@ -145,9 +145,9 @@ P.savefig("semi_major_axis_comparison")
 # * @ref swarmng.keplerian_for_cartesian documentation for using other orbital element parameters.
 # * @ref swarmng.Body documentation for other attributes of bodies that can be extracted from the ensemble
 # * <a href="http://wiki.scipy.org/Tentative_NumPy_Tutorial">
-#   Tentative NumPy Tutorial</a> for explanation of NumPy objects 
+#   Tentative NumPy Tutorial</a> for explanation of NumPy objects and
 #   operators defined on them. There is also examples on element-wise 
 #   operations on n-dimensional arrays.
 # * <a href="http://matplotlib.org/users/pyplot_tutorial.html">
-#   MatPlotLib tutorial</a> for customizing plots and creating different ones.
+#   MatPlotLib tutorial</a> for customizing plots and creating other types of plots.
 #  

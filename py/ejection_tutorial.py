@@ -10,7 +10,7 @@
 # @ref TutorialPythonEnsemble "Ensemble generation tutorial" to generate our test case.
 import swarmng
 from ensemble_tutorial import make_test_case
-# \subsection Configuration and initial conditions
+# \subsection candi Configuration and initial conditions
 # RMAX is the maximum radius of the planetary system. If the planets is farther than RMAX from
 # the origin, we consider it ejected.
 RMAX = 10
@@ -32,7 +32,7 @@ destination_time = 100
 # will come close at some point and the result would be an ejection.
 ens = make_test_case(nsys=20, nbod = 6, spacing_factor=1.01);
 #
-# \subsection Integration
+# \section int Integration
 # Same procedure as in @ref TutorialPython. Set-up the integrator parameters and
 # call the method @ref swarmng.Integrator.integrate "integrate".
 swarmng.init(cfg)
@@ -41,7 +41,7 @@ integ.ensemble = ens
 integ.destination_time = destination_time
 integ.integrate()
 #
-# \subsection Examine
+# \section ex Examine
 # After the integration finished, we can look into the ensemble to see if
 # in fact the integrator has worked as expected.
 #

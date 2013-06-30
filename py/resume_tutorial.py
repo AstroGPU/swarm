@@ -1,10 +1,10 @@
 #!/usr/bin/env python2
-## @file Tutorial on resuming integration from saved snapshots
+## @file resume_tutorial.py Tutorial on resuming integration from saved snapshots
 # 
 # refer to @ref TutorialPythonResume for formatted version.
 
-# @page TutorialPythonResume Resume an integration
 
+# @page TutorialPythonResume Resume an integration
 # In this tutorial, we explore more details about data files and integration.
 # 
 # The goals of this utility is to:
@@ -19,7 +19,7 @@
 # * Find the median of integrated time from the ensemble and
 # add the predefined amount to it
 #
-# \section Arguments and Initialization
+# \section ai Arguments
 #
 # First, we parse the comand line arguments using argparse
 #
@@ -32,6 +32,8 @@ parser.add_argument("-c", "--config" , help="Config file", required = True)
 parser.add_argument("-d", "--duration"   , help ="Duration of integration in AU", default=10.0, type=float )
 args = parser.parse_args()
 
+# \section cc Configuration and Initial conditions
+#
 # We load the Config object from a file
 # 
 cfg = swarmng.Config.load(args.config)
@@ -49,6 +51,7 @@ ext = path.splitext(fn)[1]
 if ext == "txt" : ens = swarmng.DefaultEnsemble.load_from_text(fn)
 else : ens = swarmng.DefaultEnsemble.load_from_bin(fn)
 
+# \section Resuming the integration
 # Using some functional features, we can easily calculate the median of 
 # all system times to estimate a starting time for the whole ensemble.
 times = sorted(map(lambda s : s.time, ens))
@@ -73,7 +76,7 @@ integ.integrate()
 # Finally we have to save the snapshot for resuming the integration later
 ens.save_to_bin(snapshotFileName)
 #
-# \section Conclusion
+# \section conc Conclusion
 #
 # In this tutorial, we explored how to save/load snapshot files.
 # You can use snapshot files in many integration schemes

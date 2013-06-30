@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-# @page TutorialPythonEnsemble
+# @page TutorialPythonEnsemble Tutorial for generating ensembles
 #
 # In this tutorial, we will see how to generate test cases and save/load them from files.
 #
