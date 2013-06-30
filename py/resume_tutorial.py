@@ -19,6 +19,7 @@
 # * Find the median of integrated time from the ensemble and
 # add the predefined amount to it
 #
+# Source code for this tutorial can be found at @ref py/resume_tutorial.py
 # \section ai Arguments
 #
 # First, we parse the comand line arguments using argparse

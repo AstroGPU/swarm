@@ -12,6 +12,7 @@
 # velocity of planets into orbital elements and finally,
 # we plot the difference in semi-major axis of planets.
 #
+# Source code for this tutorial can be found at @ref py/integration_plot_tutorial.py
 # \section setup Set-up
 #
 # The set-up is quite similar to approach taken in @ref TutorialPythonResume. 

@@ -6,6 +6,8 @@
 # as expected. It involves generating a test case that causes some planets to eject and
 # examining the ensemble after the integration.
 #
+# Source code for this tutorial can be found at @ref py/ejection_tutorial.py
+#
 # The first step is to import the swarmng module. We also use make_test_case from the 
 # @ref TutorialPythonEnsemble "Ensemble generation tutorial" to generate our test case.
 import swarmng
