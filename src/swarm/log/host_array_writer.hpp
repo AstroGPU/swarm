@@ -165,6 +165,19 @@ public:
       return 0;
   }
 
+
+  void reset()
+  {
+      for(int i=0;i<event_log.size();++i)
+      {
+          for(int sys=0;sys<event_log[i].size();++sys)
+          {
+              event_log[i][sys].clear();
+          }
+      }
+  }
+
+
   //! Destructor
   ~host_array_writer()
   {	}
