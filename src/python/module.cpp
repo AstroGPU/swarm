@@ -62,7 +62,7 @@ list get_pos_list(const ensemble::Body& b){
 	return p;
 }
 
-list keplerian_for_cartesian(const double& x,const double& y, const double& z, const double vx, const double& vy, const double& vz, const double GM)
+list calc_keplerian_for_cartesian_wrap(const double& x,const double& y, const double& z, const double vx, const double& vy, const double& vz, const double GM)
 {
   double a, e, i, O, w, M;
   calc_keplerian_for_cartesian( a, e, i, O, w, M, x, y, z, vx, vy, vz, GM);
@@ -76,7 +76,7 @@ list keplerian_for_cartesian(const double& x,const double& y, const double& z, c
   return p;
 }
 
-list cartesian_for_keplerian(const double& a, const double& e, const double& i, const double& O, const double& w, const double& M)
+list calc_cartesian_for_keplerian_wrap(const double& a, const double& e, const double& i, const double& O, const double& w, const double& M)
 {
   double x,y,z, vx,vy,vz, GM;
   calc_cartesian_for_ellipse(x,y,z,vx,vy,vz, a,e,i,O,w,M, GM);
@@ -183,8 +183,8 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	def("init", swarm::init );
 	def("generate_ensemble", generate_ensemble );
 	def("sync", cudaThreadSynchronize );
-	def("keplerian_for_cartesian", keplerian_for_cartesian);
-	def("cartesian_for_keplerian", cartesian_for_keplerian);
+	def("calc_keplerian_for_cartesian", calc_keplerian_for_cartesian_wrap);
+	def("calc_cartesian_for_keplerian", calc_cartesian_for_keplerian_wrap);
 
 	class_<config>("Config")
 		.def( map_indexing_suite< config >() )

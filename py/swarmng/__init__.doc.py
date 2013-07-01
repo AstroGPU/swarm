@@ -53,14 +53,14 @@ def generate_ensemble(cfg): pass
 def sync(): pass
 
 ## Returns Keplerian coordinates (as a list) from position and
-# velocity of a body in cartesian coordinates. 
+# velocity of a body in cartesian coordinates.
 # 
 # The returned list has the following structure:
 # @code{.py}
 # [ a, e, i, O, w, M ]
 # @endcode
 #
-def keplerian_for_cartesian(x,y,z,vx,vy,vz,GM): pass
+def calc_keplerian_for_cartesian(x,y,z,vx,vy,vz,GM): pass
 ## Returns cartesian coordinates (position and velocity) of
 # an object for the given Keplerian coordinates.
 #
@@ -69,7 +69,7 @@ def keplerian_for_cartesian(x,y,z,vx,vy,vz,GM): pass
 # [ x, y, z, vx, vy, vz ]
 # @endcode
 # 
-def cartesian_for_keplerian(a,e,i,O,w,M): pass
+def calc_cartesian_for_keplerian(a,e,i,O,w,M): pass
 
 
 ## Specialization of std::map to hold all our configuration attributes

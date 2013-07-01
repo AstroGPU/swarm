@@ -34,7 +34,7 @@ def print_record(print_mode, r, body_range):
         i = 0
         for b in l.bodies:
             if(body_range.contains(i)):
-                print "%10d %lg  %6d %6d  %9.2g  %10.4g %10.4g %10.4g  %10.5lg %10.5lg %10.5lg  %d" % (l.msgid, l.time, l.sys, i, b.mass, b.position[0], b.position[1], b.position[2], b.velocity[0], b.velocity[1], b.velocity[2], l.flags)
+                print "%10d %lg  %6d %6d  %9.2g  %10.4g %10.4g %10.4g  %10.5lg %10.5lg %10.5lg  %d" % (l.msgid, l.time, l.sys, i, b.mass, b.position[0], b.position[1], b.position[2], b.velocity[0], b.velocity[1], b.velocity[2], l.state)
             i = i + 1
 
     elif isinstance( print_mode , Keplerian ):
@@ -54,7 +54,7 @@ def print_record(print_mode, r, body_range):
         
         for i, b, orbit in body_orbits:
             if(body_range.contains(i)):
-                print "%10d %lg  %6d %6d  %9.2g  %9.5lg %9.5lg %9.5lg  %9.5lg %9.5lg %9.5lg  %d" % (l.msgid, l.time, l.sys, i, b.mass, orbit.a, orbit.e , orbit.i*RAD2DEG, orbit.O*RAD2DEG, orbit.w *RAD2DEG, orbit.M*RAD2DEG, l.flags)
+                print "%10d %lg  %6d %6d  %9.2g  %9.5lg %9.5lg %9.5lg  %9.5lg %9.5lg %9.5lg  %d" % (l.msgid, l.time, l.sys, i, b.mass, orbit.a, orbit.e , orbit.i*RAD2DEG, orbit.O*RAD2DEG, orbit.w *RAD2DEG, orbit.M*RAD2DEG, l.state)
 
     elif print_mode == KEYS :
         print k

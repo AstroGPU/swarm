@@ -40,6 +40,7 @@ else:
   imp.load_dynamic('libswarmng_ext', fn)
 
 from libswarmng_ext import *
+from collections import namedtuple
 
 
 
@@ -81,6 +82,33 @@ def config(*l,**kw):
         addHash(h)
     addHash(kw)
     return c
+
+KeplerianCoordinates = namedtuple('KeplerianCoordinates',
+    ['a', 'e', 'i', 'O', 'w', 'M' ])
+
+
+## Caluclate Keplerian coordinates for a planet with respect to a predefined center
+#  
+#  \arg \c planet : a tuple of structure ((x,y,z),(vx,vy,vz),mass)
+#  \arg \c center : the supposed center of the orbit that planet is orbiting ( around of structure ((x,y,z),(vx,vy,vz),mass) )
+#
+#  \ret Return type: a named tuple that has the following attributes
+#  * a : semi-major axis
+#  * e : eccentricity
+#  * i : inclination
+#  * O : Longitude of the ascending node
+#  * w : Argument of periapsis
+#  * M : mean anomaly.
+#
+#  Refer to <a href="https://en.wikipedia.org/wiki/Orbital_elements">Wikipedia:Orbital elements</a> for meaning of these.
+#
+def keplerian_for_cartesian(planet,center):
+    ((x,y,z),(vx,vy,vz),mass) = planet
+    ((cx,cy,cz),(cvx,cvy,cvz),cmass) = center
+    (a,e,i,O,w,M) =  calc_keplerian_for_cartesian(x-cx,y-cy,z-cz, vx-cvx,vy-cvy,vz-cvz, mass + cmass)
+    return KeplerianCoordinates(a,e,i,O,w,M)
+
+
 
 def mkConfig(h):
   return config(h)

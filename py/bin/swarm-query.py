@@ -30,5 +30,4 @@ def parse_cmd():
 
 if __name__ == '__main__':
     args = parse_cmd()
-    print args
     run_with_args(args)

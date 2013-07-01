@@ -8,34 +8,15 @@
 from bsddb3.db import *
 from struct import *
 from collections import namedtuple
-from keplerian import calc_keplerian_for_cartesian
-
-## Caluclate Keplerian coordinates for a planet with respect to a predefined center
-#  
-#  \arg \c planet : a tuple of structure ((x,y,z),(vx,vy,vz),mass) mass is not used in the calculations
-#  \arg \c center : the supposed center of the orbit that planet is orbiting around
-#
-#  \ret Return type: a named tuple that has the following attributes
-#  * a : semi-major axis
-#  * e : eccentricity
-#  * i : inclination
-#  * O : Longitude of the ascending node
-#  * w : Argument of periapsis
-#  * M : mean anomaly.
-#
-#  Refer to <a href="https://en.wikipedia.org/wiki/Orbital_elements">Wikipedia:Orbital elements</a> for meaning of these.
-#
-#  \TODO: change this function to use the C implementation of calc_keplerian_for_cartesian
-def keplerian_for_cartesian(planet,center):
-    ((x,y,z),(vx,vy,vz),mass) = planet
-    ((cx,cy,cz),(cvx,cvy,cvz),cmass) = center
-    pv = ( (x-cx,y-cy,z-cz), (vx-cvx,vy-cvy,vz-cvz) )
-    m  = mass + cmass
-    return calc_keplerian_for_cartesian(pv,m)
+from . import keplerian_for_cartesian
 
 ## Compute the physical center of mass (weighted average of properties by mass) of an array of planets
 #
-#  \arg \c bodies an array of structure [((x,y,z),(vx,vy,vz),mass),...]
+#  \arg \c bodies : an array of structure [((x,y,z),(vx,vy,vz),mass),...]
+#
+#  Returns a tuple of structure ((x,y,z),(vx,vy,vz),mass), where x,y,z,vx,vy,vz
+#  are weighted average of the corresponding attributes in orginial array. mass is 
+#  the sum of all mass.
 #
 def center_of_mass(bodies):
     cx = cy = cz = cvx = cvy = cvz = cmass = 0
