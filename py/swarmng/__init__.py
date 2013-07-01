@@ -44,12 +44,33 @@ from libswarmng_ext import *
 
 
 
-## Convert hashes and keyword arguments to a Swarm-NG 
-#    config object
+## Convert hashes and keyword arguments to a @ref swarmng.Config object
+#
+#
+#  There are three ways to use this function:
+#  # Combining one or more hashes into a @ref swarmng.Config object
 #  @code{.py}
-#  >>> swarmng.config({ 'integrator' : 'hermite_cpu' }, { 'nsys' : 16, 'nbod' : 3 } , nogpu = 1)
+#  >>> cc = { 'nsys' : 16, 'nbod' : 3 }
+#  >>> c1 = { 'integrator' : 'hermite_cpu' , 'time_step' : 0.001, 'log_writer' : 'bdb' }
+#  >>> swarmng.config(c1)
+#  >>> swarmng.config(c1, c2)
+#  @endcode
+#  # Create a config object for inline use using keyword arguments. Following snippet initializes Swarm with `nogpu = 1`
+#  @code{.py}
+#  >>> c = swarmng.config(nogpu = 1)
+#  >>> swarmng.init(c) 
+#  @endcode
+#  # Combine hashes and keyword arguments.
+#  @code{.py}
+#  >>> c1 = { 'integrator' : 'hermite_cpu' , 'time_step' : 0.001, 'log_writer' : 'bdb' }
+#  >>> swarmng.config(c1, { 'nsys' : 16, 'nbod' : 3 } , nogpu = 1)
 #  @endcode
 #
+#  Arguments and return type:
+#  @arg arbitrary number of Hash objects and keyword arguments
+#
+#  Returns: a @ref swarmng.Config object that combines configuration options
+#  from the hashes and keyword arguments.
 def config(*l,**kw):
     c = Config()
     def addHash(h):

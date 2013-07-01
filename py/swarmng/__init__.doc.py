@@ -22,16 +22,25 @@
 #  any integration can be done. However, data structure
 #  manipulation and loading can be done before swarm.init
 #
+#  @arg \c cfg : an object of type @ref swarmng.Config, for inline creation
+#  of Config objects look at @ref swarmng.config.
+#
+#  For more info on what configuration options are available for swarmng.init
+#  refer to @ref Configuration page.
+#
 #  If you are trying to Swarm on a system without GPUs
 #  try setting nogpu = 1 in the configuration.
 #
 def init(cfg): pass
 
 ##  Generate an trivial ensemble with planets in circular orbits
-#   Following parameters are used from the cfg
-#   - nsys : number of system
-#   - nbod : number of bodies
-#   For more details refer to \ref swarm.generate_ensemble
+# 
+#   @arg @c cfg : a @ref swarmng.Config object with properties for creating the ensemble
+#   only `nsys` and `nbod` are mandatory.
+#   
+#   Returns a @ref swarmng.defaultEnsemble populated with generated systems.
+#
+#   This function is a wrapper for \ref swarm.generate_ensemble. For more details refer to it.
 def generate_ensemble(cfg): pass
 
 ## Synchronize all CUDA kernels
@@ -40,7 +49,7 @@ def generate_ensemble(cfg): pass
 # running an integration to make sure that
 # the data structures have been updated.
 #
-# Note: this is an alias to \c cudaThreadSynchronize from CUDA runtime.
+# Note: this is an wrapper for \c cudaThreadSynchronize from CUDA runtime.
 def sync(): pass
 
 ## Returns Keplerian coordinates (as a list) from position and
@@ -65,28 +74,32 @@ def cartesian_for_keplerian(a,e,i,O,w,M): pass
 
 ## Specialization of std::map to hold all our configuration attributes
 #  
-#  to construct an object of this type easily refer to \ref swarmng.config
+#  To construct an object of this type easily refer to \ref swarmng.config
+#
+#  For a complete list of configuration options used in Swarm refer to @ref Configuration
 class Config:
   
   ## Load a Config object from a file name. 
-  #
-  # File format is similar to INI format.
+  # 
+  # @arg @c filename : path to a text file in swarm config format. The file format is similar to INI format.
   @staticmethod
-  def load(file_name): pass
+  def load(filename): pass
   
-## A planetary system within an ensemble
+## A planetary system within an ensemble. 
+#
+#  To obtain an instance of System class you should index into an ensemble.
 #  
 #  This class can be treated as a collection
-#  of bodies. the bodies can be accessed using
+#  of bodies. The bodies can be accessed using
 #  brackets or a for loop.
 class System:
-  ## Time of the system
+  ## Time of the system (floating point value)
   time = property
-  ## Unique identifier for the system
+  ## Unique integer identifier for the system
   id = property
-  ## Total kinetic and potential energy of the planetary system
+  ## Total kinetic and potential energy of the planetary system (floating point value)
   total_energy = property
-  ## State of the system
+  ## Integer value representing the state of the system
   #   - 0 means active
   #   - 1 means inactive
   #   - -1 means disabled
@@ -152,25 +165,24 @@ class Body:
   ## mass of the body (floating point)
   mass = property
 
-  ##  Position: a list of 3 floating point values: x,y,z
+  ##  Position: a list of 3 floating point values: [ x,y,z ]
   pos = property
 
-  ##  Velocity: a list of 3 floating point values: vx,vy,vz
+  ##  Velocity: a list of 3 floating point values: [ vx,vy,vz ]
   vel = property
   
-  ## Distance to (0,0,0)
+  ## Distance to (0,0,0) (floating point value)
   def distance_to_origin(self): pass
 
-  ## Magnitude of the velocity
-  # basically x*x + y*y + z*z
+  ## Magnitude of the velocity (floating point value)
   def speed(self):pass
 
   ## Representetive for one component (x,y,z) of the object
   # Contains position and velocity for that component.
   class Components:
-    ## Position for the specified component
+    ## Position for the specified component (single floating point value)
     pos = property
-    ## Velocity for the specified property
+    ## Velocity for the specified property (single floating point value)
     vel = property
     
   ## Attributes of the body, it is just
@@ -204,13 +216,13 @@ class Body:
 #  it is only abstract in terms of storage. Because
 #  an ensemble can be stored on GPU memory or system memory.
 #
-#  To create an ensemble refer to DefaultEnsemble.create
+#  To create an ensemble refer to DefaultEnsemble.create or DefaultEnsemble.load_from_bin or DefaultEnsemble.load_from_text
 class Ensemble:
-  ## Number of systems in the ensemble
+  ## Number of systems in the ensemble (integer value)
   nsys = property
-  ## Number of bodies per system
+  ## Number of bodies per system (integer value)
   nbod = property
-  ## Get the ith system
+  ## Get the ith system as a @ref swarmng.System object.
   #  Usage
   #  @code{.py}
   #  >>> self[i]
@@ -230,18 +242,27 @@ class DefaultEnsemble(Ensemble):
   #  Create an ensemble with specified
   #  number of systems and bodies
   #
+  #  @arg @c number_of_bodies : number of bodies per system
+  #  @arg @c number_of_systems: total number of systems in the ensemble.
+  #
   #  Note that an ensemble is not resizable and all
   #  systems have the same number of bodies.
   def create(number_of_bodies,number_of_systems):pass
   ## Save a binary representation of the whole ensemble to a file
+  # @arg @c fileName : name of the file to save the contents to
   def save_to_bin(self, fileName):pass
   ## Save a textual representation of the whole ensemble to a file
+  # @arg @c fileName : name of the file to save the contents to
   def save_to_text(self, fileName):pass
   ## @static
   #  Load an ensemble from a text file
+  # 
+  #  returns a @ref swarmng.DefaultEnsemble
   def load_from_text(fileName):pass
   ## @static
   #  Load an ensemble from a binary file
+  #
+  #  returns a @ref swarmng.DefaultEnsemble
   def load_from_bin(fileName):pass
   
 ## An ODE integration algorithms
@@ -251,19 +272,22 @@ class DefaultEnsemble(Ensemble):
 # the create method loads a specific implementation based
 # on the configuration that is passed to the method.
 class Integrator: 
-  ## The ensemble data structure to operate on
+  ## The ensemble data structure to operate on, of type @ref swarmng.Ensemble
   ensemble = property
   ## All of the systems will be integrated to this
-  # specified time.
+  # specified time. (scalar floating point value)
   destination_time = property
   ## @static
   #  Create an integrator object from the configuration specified
   #  the only mandatory items is an identifier for the
   #  integrator, namely the value 'integrator'.
   #
+  #  @arg @c cfg : configuration object of type @ref swarmng.Config for selecting
+  #  and configuring the integrator.
+  #
   #  For more information refer to \ref swarm.integrator.create
   def create(cfg):pass
-  ## Run the integration
+  ## Run the integration up to the specified @ref destination_time
   def integrate(self):pass
   
 ## GPU accelerated integrator
@@ -275,10 +299,10 @@ class GpuIntegrator(Integrator):
   ## GPU ensemble that is used for the integration
   #
   # this seems redundant since ensemble property is already
-  # defined in Integrator
+  # defined in Integrator.
   ensemble = property
   
-  ## Same as Integrator.create, but returns an instance of GpuIntegrator
+  ## Same as @ref Integrator.create, but returns an instance of GpuIntegrator
   def create(cfg):pass
   ## The default integrate method updates the GPU ensemble
   # every time. The core_integrate just launches the kernel.
@@ -290,4 +314,11 @@ class GpuIntegrator(Integrator):
   
 ## Compare two ensembles and find the maximum of energy
 # conservation error amongst systems.
+#
+# @arg ref : Reference ensemble, possibly from the initial conditions, (should be of type swarmng.Ensemble)
+# @arg ens : Ensemble to check (should be of type swarmng.Ensemble)
+# Returns one number, that is the maximum of energy conservation error.
+# Energy conservation error for a system is the difference in total energy compared
+# to the reference system normalized by the amount of energy in the reference system.
+# 
 def find_max_energy_conservation_error(ref,ens):pass
