@@ -35,10 +35,10 @@ def init(cfg): pass
 
 ##  Generate an trivial ensemble with planets in circular orbits
 # 
-#   @arg @c cfg : a @ref swarmng.Config object with properties for creating the ensemble
+#   @arg @c cfg : a @ref Config object with properties for creating the ensemble
 #   only `nsys` and `nbod` are mandatory.
 #   
-#   Returns a @ref swarmng.defaultEnsemble populated with generated systems.
+#   Returns a @ref DefaultEnsemble populated with generated systems.
 #
 #   This function is a wrapper for \ref swarm.generate_ensemble. For more details refer to it.
 def generate_ensemble(cfg): pass
@@ -74,7 +74,7 @@ def cartesian_for_keplerian(a,e,i,O,w,M): pass
 
 ## Specialization of std::map to hold all our configuration attributes
 #  
-#  To construct an object of this type easily refer to \ref swarmng.config
+#  To construct an object of this type easily refer to @ref config
 #
 #  For a complete list of configuration options used in Swarm refer to @ref Configuration
 class Config:
@@ -222,7 +222,7 @@ class Ensemble:
   nsys = property
   ## Number of bodies per system (integer value)
   nbod = property
-  ## Get the ith system as a @ref swarmng.System object.
+  ## Get the ith system as a @ref System object.
   #  Usage
   #  @code{.py}
   #  >>> self[i]
@@ -257,12 +257,12 @@ class DefaultEnsemble(Ensemble):
   ## @static
   #  Load an ensemble from a text file
   # 
-  #  returns a @ref swarmng.DefaultEnsemble
+  #  returns a @ref DefaultEnsemble
   def load_from_text(fileName):pass
   ## @static
   #  Load an ensemble from a binary file
   #
-  #  returns a @ref swarmng.DefaultEnsemble
+  #  returns a @ref DefaultEnsemble
   def load_from_bin(fileName):pass
   
 ## An ODE integration algorithms
@@ -272,7 +272,7 @@ class DefaultEnsemble(Ensemble):
 # the create method loads a specific implementation based
 # on the configuration that is passed to the method.
 class Integrator: 
-  ## The ensemble data structure to operate on, of type @ref swarmng.Ensemble
+  ## The ensemble data structure to operate on, of type @ref Ensemble
   ensemble = property
   ## All of the systems will be integrated to this
   # specified time. (scalar floating point value)
@@ -315,8 +315,8 @@ class GpuIntegrator(Integrator):
 ## Compare two ensembles and find the maximum of energy
 # conservation error amongst systems.
 #
-# @arg ref : Reference ensemble, possibly from the initial conditions, (should be of type swarmng.Ensemble)
-# @arg ens : Ensemble to check (should be of type swarmng.Ensemble)
+# @arg ref : Reference ensemble, possibly from the initial conditions, (should be of type @ref swarmng.Ensemble)
+# @arg ens : Ensemble to check (should be of type @ref swarmng.Ensemble)
 # Returns one number, that is the maximum of energy conservation error.
 # Energy conservation error for a system is the difference in total energy compared
 # to the reference system normalized by the amount of energy in the reference system.
