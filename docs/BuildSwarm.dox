@@ -46,7 +46,11 @@ Software Requirements:
  - GCC 4.x (Refer to your CUDA Toolkit manual for the correct version of GCC)
  - <a href="http://www.boost.org/">Boost</a> libraries 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
- - Berkeley DB C++ library (including headers)
+ - Berkeley DB C++ library (including headers) 
+
+#### NOTE: Although Berkeley DB C library is installed on most Linux systems, the C++ headers and library are not
+usually installed. Please make sure the file `db_cxx.h` exists on your system.
+Use `locate` to find it. It is usually found in `/usr/include/db_cxx.h`.
 
 Optional software dependencies:
  - <a href="http://www.doxygen.org/">Doxygen</a> 
