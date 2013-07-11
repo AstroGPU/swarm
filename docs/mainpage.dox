@@ -30,6 +30,8 @@ differential equations.
         - \ref TutorialPythonLogRecord
         - \ref TutorialPythonEnsemble
         - \ref TutorialPythonEjection
+        - \ref TutorialPythonResume
+        - \ref TutorialPythonIntegrationPlot
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor

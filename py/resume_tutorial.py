@@ -1,4 +1,7 @@
 #!/usr/bin/env python2
+## @file Tutorial on resuming integration from saved snapshots
+# 
+# refer to @ref TutorialPythonResume for formatted version.
 
 # @page TutorialPythonResume Resume an integration
 
@@ -13,7 +16,6 @@
 # Detail:
 # * Do the integration based on a cfg file, input file is required
 # * Save the state of data file in a snapshot file
-# * Trap Ctrl-C or SIGTERM and store the snapshot
 # * Find the median of integrated time from the ensemble and
 # add the predefined amount to it
 #
@@ -22,9 +24,8 @@
 # First, we parse the comand line arguments using argparse
 #
 # 
-import swarmng
+import swarmng, argparse
 from os import path
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config" , help="Config file", required = True)
@@ -71,4 +72,15 @@ integ.integrate()
 #
 # Finally we have to save the snapshot for resuming the integration later
 ens.save_to_bin(snapshotFileName)
-
+#
+# \section Conclusion
+#
+# In this tutorial, we explored how to save/load snapshot files.
+# You can use snapshot files in many integration schemes
+# where complex and long simulations are required and
+# you may need to end them early sometimes.
+#
+# Where to go from here:
+# * Read documentation for @ref swarmng.DefaultEnsemble for details of load/save methods.
+# * Read documentation for @ref swammng.System and @ref swarmng.Body for other attributes on systems and bodies.
+# * Follow along to @ref TutorialPythonIntegrationPlot "next tutorial"
