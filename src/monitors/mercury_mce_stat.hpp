@@ -63,17 +63,21 @@ struct CurrentSysStat
   double _vel[CHUNK_SIZE];
   double _BB_SW[CHUNK_SIZE];
   double _BB_NE[CHUNK_SIZE];
-  //unsigned long long int _crash[CHUNK_SIZE];
+  
   // Accessors
   GENERIC double& pos() { return _pos[0];  }
   GENERIC double& vel() { return _vel[0];  }
   GENERIC double& bb_sw() { return _BB_SW[0];  }
   GENERIC double& bb_ne() { return _BB_NE[0];  }
-  //GENERIC unsigned long long int& crash() { return _crash[0];  }
+  
 };
 
-/** Empty monitor to use as a template.  
- * Signal is always false.  Does not do any logging.
+/** Re-implemenation of mce_stat in Mercurial using CUDA 
+ * The monitor is a 2-pass algorithm. The first pass, we compute bounding box
+ * of trajectory in two consecutive time step of each planet. Then, we compare
+ * bounding boxes and find overlapping bounding boxes. Then, more complicated 
+ * computation is performed to find the intersect of the trajectories. After a
+ * a collision is found, we update status of the whole system.
  * \ingroup monitors
  *
  */
