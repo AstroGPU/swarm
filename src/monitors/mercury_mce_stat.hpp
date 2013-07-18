@@ -139,25 +139,27 @@ class mce_stat {
     {
       if (0< thread_in_system < nbod)
       {
-	
-	double gm = _sys[0].mass() + _sys[thread_in_system].mass();
-	
-	double r = sqrt(_sys[thread_in_system][0].pos()*_sys[thread_in_system][0].pos() 
-			+ _sys[thread_in_system][1].pos()*_sys[thread_in_system][1].pos()
-			+ _sys[thread_in_system][2].pos()*_sys[thread_in_system][2].pos());
-	double vi_max = _sys[thread_in_system][0].vel()*_sys[thread_in_system][0].vel()
-		    + _sys[thread_in_system][1].vel()*_sys[thread_in_system][1].vel()
-		    + _sys[thread_in_system][2].vel()*_sys[thread_in_system][2].vel();
-	double a = gm*r/(2*gm - r*vi_max);
-	if ( a <=0 ) a = r;
-	double hill = a*pow(THIRD*_sys[thread_in_system].mass()/_sys[0].mass(), THIRD);
-	
-	// assume attribute 0 is the radius of the planet
-	// rho is the density of the planet = mass/volume = mass/(4/3piR^3)
-	double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
-	
-	_sys[thread_in_system].attribute(1) = hill;//*_params.rceh; // rce
-	_sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
+	if (_sys[thread_in_system].mass() > 0)
+        {
+          double gm = _sys[0].mass() + _sys[thread_in_system].mass();
+          
+          double r = sqrt(_sys[thread_in_system][0].pos()*_sys[thread_in_system][0].pos() 
+                          + _sys[thread_in_system][1].pos()*_sys[thread_in_system][1].pos()
+                          + _sys[thread_in_system][2].pos()*_sys[thread_in_system][2].pos());
+          double vi_max = _sys[thread_in_system][0].vel()*_sys[thread_in_system][0].vel()
+                      + _sys[thread_in_system][1].vel()*_sys[thread_in_system][1].vel()
+                      + _sys[thread_in_system][2].vel()*_sys[thread_in_system][2].vel();
+          double a = gm*r/(2*gm - r*vi_max);
+          if ( a <=0 ) a = r;
+          double hill = a*pow(THIRD*_sys[thread_in_system].mass()/_sys[0].mass(), THIRD);
+          
+          // assume attribute 0 is the radius of the planet
+          // rho is the density of the planet = mass/volume = mass/(4/3piR^3)
+          double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
+          
+          _sys[thread_in_system].attribute(1) = hill;//*_params.rceh; // rce
+          _sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
+        }
 	
 	
       }
@@ -382,7 +384,7 @@ class mce_stat {
                   * Now consider sun - planet
                   * **********************************************************************/
                   i = 0;
-                  for (int j = 1; j < nbod; j++)
+                  for (j = 1; j < nbod; j++)
                   {
                     float rr0 = shared[j][0].pos()*shared[j][0].pos() + shared[j][1].pos()*shared[j][1].pos() + shared[j][2].pos()*shared[j][2].pos();
                     float rr1 = _sys[j][0].pos()*_sys[j][0].pos() + _sys[j][1].pos()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();

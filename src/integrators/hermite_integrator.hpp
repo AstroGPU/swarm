@@ -171,8 +171,8 @@ public: //! Construct for class hermite integrator
 			__syncthreads();
 			montest( thread_in_system() );  
 			__syncthreads();
-// 			montest.init( thread_in_system() );
-// 			__syncthreads();
+			montest.init( thread_in_system() );
+			__syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
