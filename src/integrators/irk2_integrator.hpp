@@ -1,236 +1,267 @@
-#include <math.h>
-#include <stdio.h>
+/*************************************************************************
+ * Copyright (C) 2013 by Thien Nguyen and the Swarm-NG Development Team  *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 3 of the License.        *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ * GNU General Public License for more details.                          *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the                         *
+ * Free Software Foundation, Inc.,                                       *
+ * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ************************************************************************/
 
-#define max(a,b) ((a)<(b))?(b):(a)
-#define sqr(x) (x)*(x)
+/*! \file irk2_integrator.hpp
+ *   \brief Defines and implements \ref swarm::gpu::bppt::irk2_integrator class - the 
+ *          GPU implementation of Implicit Runge Kutta described in 
+ *          E. HAIRER, M. HAIRER, GNI-CODES - MATLAB PROGRAMS FOR
+ *          GEOMETRIC NUMERICAL INTEGRATION..
+ *
+ */
 
-typedef double REAL;
-typedef int INT;
+#include "swarm/common.hpp"
+#include "swarm/gpu/bppt.hpp"
 
-typedef void (*FCN)(INT,REAL,REAL*,REAL*,REAL*,INT*);
+namespace swarm { namespace gpu { namespace bppt {
 
-typedef void (*SOLFIX)(INT,REAL,REAL,REAL*, REAL*,INT,REAL*,INT*);
-
-template<size_t nsd,size_t nmd>
-void coef(INT ns, REAL* C, REAL* B, REAL* BC, REAL (&AA)[nsd][nsd], REAL (&E)[nsd][nsd+nmd], REAL* SM, REAL* AM, REAL hStep);
-
-template<size_t ndgl,size_t nsd, size_t nmd>
-void startb(FCN fcn, INT N, REAL X, REAL h,REAL* P, REAL* Q, INT ns, REAL* FS, REAL* PS, REAL (&ZQ)[ndgl][nsd], REAL (&E)[nsd][nsd+nmd], REAL* YH, REAL* SM, REAL* AM, REAL* F, REAL* C, REAL* RPAR, INT* IPAR);
-
-template<size_t ndgl, size_t nsd>
-void rknife(FCN fcn, INT N, INT ns, REAL X, REAL* Q, REAL* P,REAL (&AA)[nsd][nsd], REAL* C, REAL* QQ, REAL (&ZQ)[ndgl][nsd],REAL* F, REAL& dyno, REAL* RPAR, INT* IPAR);
-/**
-* C  SOLVES SECOND ORDER ORDINARY DIFFERENTIAL EQUATIONS OF THE FORM
-C                       Q'' = F(X,Q)
-C  BASED ON THE SYMPLECTIC AND SYMMETRIC GAUSS (IRK) METHODS
-C  DESCRIBED IN SECTIONS II.1, VIII.6 OF THE BOOK:
-C
-C      E. HAIRER, C. LUBICH, G. WANNER, GEOMETRIC NUMERICAL INTEGRATION,
-C         STRUCTURE-PRESERVING ALGORITHMS FOR ODES.
-C         SPRINGER SERIES IN COMPUT. MATH. 31, SPRINGER 2002.
-C
-C  AND IN THE PUBLICATION
-C
-C      E. HAIRER, M. HAIRER, GNI-CODES - MATLAB PROGRAMS FOR
-C         GEOMETRIC NUMERICAL INTEGRATION.
-C
-C  INPUT..
-C     N           DIMENSION OF Q AND F(X,Q) 
-C
-C     FCN         NAME (EXTERNAL) OF SUBROUTINE COMPUTING F(X,Q):
-C                    SUBROUTINE FCN(N,X,Q,F,RPAR,IPAR)
-C                    REAL*8 Q(N),F(N)
-C                    F(1)=...   ETC.
-C
-C     NSTEP       NUMBER OF INTEGRATION STEPS
-C                    CONSTANT STEP SIZE, H=(XEND-X)/NSTEP
-C
-C     X           INITIAL X-VALUE
-C     P(N)        INITIAL VELOCITY VECTOR
-C     Q(N)        INITIAL POSITION VECTOR
-C     XEND        FINAL X-VALUE
-C
-C     METH        NUMBER OF STAGES OF THE GAUSS METHOD
-C                    FOR THE MOMENT ONLY POSSIBLE VALUES: 2,4,6.
-C
-C     SOLFIX      NAME (EXTERNAL) OF SUBROUTINE PROVIDING THE
-C                 NUMERICAL SOLUTION DURING INTEGRATION. 
-C                 IF IOUT=1, IT IS CALLED AFTER EVERY STEP.
-C                 SUPPLY A DUMMY SUBROUTINE IF IOUT=0. 
-C                    SUBROUTINE SOLFIX (NR,XOLD,X,P,Q,N,IRTRN,RPAR,IPAR)
-C                    DOUBLE PRECISION X,Y(N),CONT(LRC)
-C                      ....  
-C                 SOLFIX FURNISHES THE SOLUTION "Q,P" AT THE NR-TH
-C                    GRID-POINT "X" (INITIAL VALUE FOR NR=0).
-C                 "XOLD" IS THE PRECEEDING GRID-POINT.
-C                 "IRTRN" SERVES TO INTERRUPT THE INTEGRATION. IF IRTRN
-C                    IS SET <0, RETURN TO THE CALLING PROGRAM.
-C     IOUT        SWITCH FOR CALLING THE SUBROUTINE SOLFIX:
-C                    IOUT=0: SUBROUTINE IS NEVER CALLED
-C                    IOUT=1: SUBROUTINE IS AVAILABLE FOR OUTPUT.
-C
-C     RPAR(LR)    REAL PARAMETER ARRAY; LR MUST BE AT LEAST LR=10
-C                    RPAR(1),...,RPAR(10) SERVE AS PARAMETERS FOR
-C                    THE CODE. FURTHER VALUES CAN BE USED FOR DEFINING
-C                    PARAMETERS IN THE PROBLEM
-C     IPAR(LI)    INTEGER PARAMETER ARRAY; LI MUST BE AT LEAST LI=10
-C                    IPAR(1),...,IPAR(10) SERVE AS PARAMETERS FOR
-C                    THE CODE. FURTHER VALUES CAN BE USED FOR DEFINING
-C                    PARAMETERS IN THE PROBLEM
-C
-C  OUTPUT..
-C     P(N)        SOLUTION (VELOCITY) AT XEND
-C     Q(N)        SOLUTION (POSITION) AT XEND
-C-----------------------------------------------------------------------
-C     SOPHISTICATED SETTING OF PARAMETERS 
-C-----------------------------------------------------------------------
-C    RPAR(1)   UROUND, THE ROUNDING UNIT, DEFAULT 1.D-16.
-C    IPAR(1)   NITMAX, MAXIMAL NUMER OF FIXED POINT ITERAT., DEFAULT 50
-C-----------------------------------------------------------------------
-*/
-inline void gni_irk2(INT N, FCN fcn,INT nStep,REAL X,REAL* P, REAL* Q, REAL XEnd,INT method, SOLFIX solfix,bool IOUT, REAL* RPAR, INT* IPAR)
-{
-	const static INT nsd = 6, nmd = 3, ndgl = 2; // ndgl = N
-	REAL F[ndgl*nsd], YH[ndgl], QQ[ndgl];
-	REAL C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd];
-	REAL SM[nmd],AM[nsd+nmd];
-	REAL FS[ndgl],PS[ndgl], ZQ[ndgl][nsd];
-
-	REAL uround;
-	if (RPAR[0] == 0.0)
-		uround = 1e-16;
-	else
-		uround = RPAR[0];
-	int nitmax;
-	if (IPAR[0] == 0)
-		nitmax = 50;
-	else
-		nitmax = IPAR[0];
+/*! GPU implementation of Implicit Runge Kutta
+ * \ingroup integrators
+ *
+ */
+template< class Monitor , template<class T> class Gravitation >
+class hermite: public integrator {
+	typedef integrator base;
+	typedef Monitor monitor_t;
+	typedef typename monitor_t::params mon_params_t;
 	
-	INT ns = method;
-	REAL h = (XEnd - X)/nStep;
+private:
+	double _time_step;
 	
-	coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,h);
+	int ns; // method
+	
+	mon_params_t _mon_params;
 
-	if (IOUT) solfix(0,X,X,P,Q,N,RPAR,IPAR);
-
-	fcn(N,X,Q,FS,RPAR,IPAR);
-	for(int is = 0; is<ns; is++)
-	{
-		REAL FAC = C[is]*C[is]/2.0;
-		for (int i = 0; i<N; i++)
-			ZQ[i][is] = C[is]*P[i] + FAC*FS[i];
-
-	}
-	for(int i = 0; i<N; i++)
-	{
-		PS[i] = P[i];
+public: //! Construct for class hermite integrator
+	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
+		_time_step =  cfg.require("time_step", 0.0);
+		ns = cfg.optional("method",4);
 		
 	}
-	// main loop
-	REAL dynold, dyno;
-	for(int istep = 0; istep < nStep; istep++)
-	{
-		//printf("%d..",istep);
-		if (istep > 0) 
-			startb<ndgl,nsd,nmd>(fcn,N,X,h,P,Q,ns,FS,PS,ZQ,E,YH,SM,AM,F,C,RPAR,IPAR);
-		// fixed point iteration
-		INT niter = 0;
-		dynold = 0.0;
-		dyno = 1.0;
-		while (dyno > uround)
+
+	virtual void launch_integrator() {
+		launch_templatized_integrator(this);
+	}
+	
+	
+        //! Define the number of thread per system
+	template<class T>
+	static GENERIC int thread_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::thread_per_system();
+		const int moni = Monitor::thread_per_system(compile_time_param);
+		return max( grav, moni);
+	}
+
+        //! Define the amount of shared memory per system
+	template<class T>
+	static GENERIC int shmem_per_system(T compile_time_param){
+		const int grav = Gravitation<T>::shmem_per_system();
+		const int moni = Monitor::shmem_per_system(compile_time_param);
+		return max( grav, moni);
+	}	
+
+        //! Convert internal coordinates to std coordinates
+        GPUAPI void convert_internal_to_std_coord() {} 
+        //! Convert std coordinates to internal coordinates
+        GPUAPI void convert_std_to_internal_coord() {}  
+
+	template<class T>
+	__device__ void kernel(T compile_time_param){
+
+		if(sysid()>=_dens.nsys()) return;
+		
+		// References to Ensemble and Shared Memory
+		typedef Gravitation<T> Grav;
+		ensemble::SystemRef sys = _dens[sysid()];
+		
+		typedef typename Monitor::shared_data data_t;
+		monitor_t montest(_mon_params,sys,*_log, *((data_t*) system_shared_data_pointer(this,compile_time_param))) ;
+				
+		typedef typename Grav::shared_data grav_t;
+		Grav calcForces(sys,*( (grav_t*) system_shared_data_pointer(this,compile_time_param) ) );
+		
+		
+
+		// Local variables
+		const int nbod = T::n;
+		// Body number
+		const int b = thread_body_idx(nbod);
+		// Component number
+		const int c = thread_component_idx(nbod);
+		
+		const static int nsd = 6, nmd = 3;
+		const static double C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd],SM[nmd],AM[nsd+nmd];
+		coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step_);
+		
+		double F[nsd], YH, QQ, FS, PS, ZQ[nsd];
+		
+		const static uround = 1e-16;
+		
+		// local variables
+		montest.init( thread_in_system() );
+		__syncthreads();
+
+		// local information per component per body
+		double pos = 0.0, vel = 0.0 , acc0 = 0.0 ; // P = vel; Q = pos;
+		if( (b < nbod) && (c < 3) )
+			{ pos = sys[b][c].pos(); vel = sys[b][c].vel(); }
+
+
+		////////// INTEGRATION //////////////////////
+
+		/// Calculate acceleration and jerk
+		calcForces(thread_in_system(),b,c,pos,vel,acc0);
+		
+		if( (b < nbod) && (c < 3) )
 		{
-			rknife<ndgl,nsd>(fcn,N,ns,X,Q,P,AA,C,QQ,ZQ,F,dyno,RPAR,IPAR);
-			
-			niter++;
-			if ((dynold < dyno) && (dyno < 10*uround)) 
-				break;
-			if (niter >= nitmax)
-			{
-				printf("no convergence of iteration: %f\n", dyno);
-				return;
-			}
-			dynold = dyno;
+			FS = acc0; 
+			for (int is = 0; is<ns; is++)
+				ZQ[is] = C[is]*sys[b][c].vel() + 0.5*C[is]*C[is]*FS;
+				
+			PS = vel;
 		}
-		// update of the solution
-		X = X + h;
-		for(int i = 0; i < N; i++)
+		
+		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
+		shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
+		
+		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
 		{
-			REAL sum = 0.0;
+			double h = _time_step;
+
+			if( sys.time() + h > _destination_time ) {
+				h = _destination_time - sys.time();
+			}
+			// startb
+			if (iter > 0)
+			{
+				
+				double sav = 0.0
+				for(int js = 0; js<ns; js++)
+					sav += AM[js]*ZQ[js];
+				YH = sav + AM[ns]*PS + AM[ns+1]*vel+pos;
+				for(int is=0; is < ns; is++)
+				{
+					sav = 0.0;
+					for(int js = 0; js < ns; js++)
+						sav += E[is][js]*F[js];
+					ZQ[is] = sav + E[is][ns]*FS;
+				}
+				calcForces(thread_in_system(),b,c,pos,vel,FS);
+				calcForces(thread_in_system(),b,c,YH,vel,F[0]);
+				PS = vel;
+				for (int is = 0; is < ns;is++)
+				{
+					ZQ[is] += E[is][ns+1]*FS+E[is][ns + nmd - 1]*F[0] + C[is]*vel; 
+				}
+				
+			}// end of startb			
+			
+			// fixed point iteration
+			if (thread_in_system() == 0)
+			{
+				shared_para[0] = 0;//int nit = 0;
+				shared_para[1] = 0;//double dynold = 0.0;
+				shared_para[2] = 1.0;//double dyno = 1.0;
+			}
+			while (shared_para[2] > uround)
+			{
+				// rknife
+				if (thread_in_system() == 0)
+				{
+					shared_para[2] = 0.0;
+				}
+				__syncthreads();
+				
+				for(int js=0; js<ns; js++)
+				{
+					QQ = Q + ZQ[js];
+					calcForces(thread_in_system(),b,c,QQ,vel,F[js]); 
+				}
+				
+				double dnom = max(1e-1,abs(Q));
+				for(int is = 0; is<ns; is++)
+				{
+					double sum = C[is]*vel;
+					for(int js=0; js<ns; js++)
+						sum += AA[is][js]*F[js];
+					atomicAdd(&shared_para[2],sqr((sum - ZQ[is])/dnom));
+					ZQ[is] = sum;
+				}
+				__syncthreads();
+
+				if (thread_in_system() == 0)
+				{
+					shared_para[2] = sqrt(shared_para[2]/(ns*3*nbod));
+					// end of rknife
+					shared_para[0] = shared_para[0] + 1;
+														
+					if ((shared_para[1] < shared_para[2]) && (shared_para[2] < 10*uround)) 
+						break;
+					if (shared_para[0] >= 50)
+					{
+						lprintf(_log,"no convergence of iteration: %f\n", shared_para[2]);
+						return;
+					}
+					shared_para[1] = shared_para[2];
+				}
+				__syncthreads();
+			}// end of fixed point iteration.
+			
+			// update solution
+			
+			double sum = 0.0;
 			for(int is = 0; is<ns; is++)
-				sum += F[i+is*N]*BC[is];
-			Q[i] += h*P[i] + sum;
+				sum += F[is]*BC[is];
+			pos = pos + h*vel + sum;
 
 			sum = 0.0;
 			for(int is = 0; is<ns; is++)
-				sum += F[i+is*N]*B[is];
-			P[i] += sum;
+				sum += F[is]*B[is];
+			vel = vel + sum;
 			
-			//printf("q%d = %f, p%d = %f ", i, Q[i], i, P[i]);
-		}
-		//printf("\n");
-		if (IOUT) solfix(istep,X-h,X,P,Q,N,RPAR,IPAR);
-	}
-}
-template<size_t ndgl,size_t nsd, size_t nmd>
-void startb(FCN fcn, INT N, REAL X, REAL h,REAL* P, REAL* Q, INT ns, REAL* FS, REAL* PS, REAL (&ZQ)[ndgl][nsd], REAL (&E)[nsd][nsd+nmd], REAL* YH, REAL* SM, REAL* AM, REAL* F, REAL* C, REAL* RPAR, INT* IPAR)
-{
-	INT ns1 = ns;
-	INT ns2 = ns + 1;
-	INT nsm = ns + nmd - 1;
-	for( int i = 0; i < N; i++)
-	{
-		REAL sav = 0.0;
-		for(int js = 0; js<ns; js++)
-			sav += AM[js]*ZQ[i][js];
-		YH[i] = sav + AM[ns1]*PS[i] + AM[ns2]*P[i]+Q[i];
-		for(int is=0; is < ns; is++)
-		{
-			REAL sav = 0.0;
-			for(int js = 0; js < ns; js++)
-				sav += E[is][js]*F[i+js*N];
-			ZQ[i][is] = sav + E[is][ns1]*FS[i];
-		}
-	}
-	fcn(N,X+h,Q,FS,RPAR,IPAR);
-	fcn(N,X+h*SM[nmd-1],YH,F,RPAR,IPAR);
-	for(int i = 0; i<N; i++)
-	{
-		PS[i] = P[i];
-		for (int is = 0; is < ns;is++)
-		{
-			ZQ[i][is] += E[is][ns2]*FS[i]+E[is][nsm]*F[i] + C[is]*P[i]; 
-		}
-	}
-}
-template<size_t ndgl, size_t nsd>
-void rknife(FCN fcn, INT N, INT ns, REAL X, REAL* Q, REAL* P,REAL (&AA)[nsd][nsd], REAL* C, REAL* QQ, REAL (&ZQ)[ndgl][nsd],REAL* F, REAL& dyno, REAL* RPAR, INT* IPAR)
-{
-	for(int js=0; js<ns; js++)
-	{
-		for(int j=0; j<N; j++)
-			QQ[j] = Q[j] + ZQ[j][js];
-		fcn(N,X+C[js],QQ,F+js*N,RPAR,IPAR); 
-	}
-	dyno = 0.0;
-	for(int i = 0; i<N; i++)
-	{
-		REAL dnom = max(1e-1,abs(Q[i]));
-		for(int is = 0; is<ns; is++)
-		{
-			REAL sum = C[is]*P[i];
-			for(int js=0; js<ns; js++)
-				sum += AA[is][js]*F[i + js*N];
-			dyno += sqr((sum - ZQ[i][is])/dnom);
-			ZQ[i][is] = sum;
+			__syncthreads();
+			montest.storeCurrentStat(thread_in_system());
+			__syncthreads();
+			
+			/// Finalize the step
+			if( (b < nbod) && (c < 3) )
+				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
+			if( thread_in_system()==0 ) 
+				sys.time() += h;
+			
+			__syncthreads();
+			montest( thread_in_system() );  
+			__syncthreads();
+// 			montest.init( thread_in_system() );
+// 			__syncthreads();
+			
+			if( sys.is_active() && thread_in_system()==0 )  {
+			    if( sys.time() >= _destination_time ) 
+			    {	sys.set_inactive(); }
+			}
+
+			__syncthreads();
+
+
 		}
 
 	}
-	dyno = sqrt(dyno/(ns*N));
-
-}
 template<size_t nsd,size_t nmd>
-void coef(INT ns, REAL* C, REAL* B, REAL* BC, REAL (&AA)[nsd][nsd], REAL (&E)[nsd][nsd+nmd], REAL* SM, REAL* AM, REAL hStep)
+void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {
 	
 	if (ns == 2)
@@ -358,3 +389,6 @@ void coef(INT ns, REAL* C, REAL* B, REAL* BC, REAL (&AA)[nsd][nsd], REAL (&E)[ns
 }
 
 
+};
+
+} } } // end namespace bppt :: integrators :: swarm
