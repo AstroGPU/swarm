@@ -45,7 +45,7 @@ Software Requirements:
  - GCC 4.x (Refer to your CUDA Toolkit manual for the correct version of GCC)
  - <a href="http://www.boost.org/">Boost</a> libraries 1.33 or later (including program_options, regex)
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
- - Berkeley DB C++ library (including headers)
+ - Berkeley DB C++ library (including headers: db.h db_cxx.h)
 
 Optional software dependencies:
  - <a href="http://www.doxygen.org/">Doxygen</a> 
