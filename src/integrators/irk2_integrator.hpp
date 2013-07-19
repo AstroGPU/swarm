@@ -27,13 +27,15 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 
+#define sqr(x) (x)*(x)
+
 namespace swarm { namespace gpu { namespace bppt {
 
 /*! GPU implementation of Implicit Runge Kutta
  * \ingroup integrators
  *
  */
-template< class Monitor , template<class T> class Gravitation >
+template< class Monitor , template<class T> class Gravitation > //Gravitation should be GravitationAcc defined in gravitation_acc.hpp
 class hermite: public integrator {
 	typedef integrator base;
 	typedef Monitor monitor_t;
@@ -105,7 +107,10 @@ public: //! Construct for class hermite integrator
 		
 		const static int nsd = 6, nmd = 3;
 		const static double C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd],SM[nmd],AM[nsd+nmd];
-		coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step_);
+		
+		if (thread_in_system() == 0)
+			coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step_);
+		__syncthreads();
 		
 		double F[nsd], YH, QQ, FS, PS, ZQ[nsd];
 		
@@ -123,7 +128,7 @@ public: //! Construct for class hermite integrator
 
 		////////// INTEGRATION //////////////////////
 
-		/// Calculate acceleration and jerk
+		/// Calculate acceleration
 		calcForces(thread_in_system(),b,c,pos,vel,acc0);
 		
 		if( (b < nbod) && (c < 3) )
@@ -174,7 +179,7 @@ public: //! Construct for class hermite integrator
 			if (thread_in_system() == 0)
 			{
 				shared_para[0] = 0;//int nit = 0;
-				shared_para[1] = 0;//double dynold = 0.0;
+				shared_para[1] = 0.0;//double dynold = 0.0;
 				shared_para[2] = 1.0;//double dyno = 1.0;
 			}
 			while (shared_para[2] > uround)
@@ -188,11 +193,11 @@ public: //! Construct for class hermite integrator
 				
 				for(int js=0; js<ns; js++)
 				{
-					QQ = Q + ZQ[js];
+					QQ = pos + ZQ[js];
 					calcForces(thread_in_system(),b,c,QQ,vel,F[js]); 
 				}
 				
-				double dnom = max(1e-1,abs(Q));
+				double dnom = max(1e-1,abs(pos));
 				for(int is = 0; is<ns; is++)
 				{
 					double sum = C[is]*vel;
@@ -214,7 +219,7 @@ public: //! Construct for class hermite integrator
 					if (shared_para[0] >= 50)
 					{
 						lprintf(_log,"no convergence of iteration: %f\n", shared_para[2]);
-						return;
+						sys.set_inactive();
 					}
 					shared_para[1] = shared_para[2];
 				}
