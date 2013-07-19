@@ -125,6 +125,9 @@ For a complete list of compute capabilities, refer to https://developer.nvidia.c
 It is possible to compile Swarm for a compute capability that is not included in this list. Just open the file cmake/variables.cmake
 and look for \c GENERATE_FERMI. Copy and paste the section and change the names and compute capabilities.
 
+After fixing all the paths and other options, make sure to run `cmake .` in the build directory
+to rebuild the make files.
+
 \subsection compile Compile swarm
 
  - To compile and build executables and libraries, type: 
