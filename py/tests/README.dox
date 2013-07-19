@@ -1,0 +1,8 @@
+/**
+  \dir py/tests  Python unit testing
+
+  Unit tests for Swarm-NG library written in Python. The tests are run in `make test`. 
+  To run the tests defined here you can either use `make pytest` or execute @ref py/tests/run.py "run.py" in
+  this folder.
+
+*/

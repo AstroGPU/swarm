@@ -37,7 +37,7 @@ if(BDB_FOUND)
 endif()
 
 ADD_PLUGIN(swarm/log/binary_writer.cpp Binary_Writer TRUE "Binary file writer")
-ADD_PLUGIN(swarm/log/host_array_writer.cpp Host_Array_Writer TRUE "Writer to the host arrays")
+ADD_PLUGIN(swarm/log/host_array_writer.cpp Host_Array_Writer FALSE "Writer to the host arrays")
 
 
 ADD_PLUGIN(tutorials/tutorial_integrator_plugin.cu TutorialIntegrator FALSE  "Sample integrator mentioned in the tutorials.")

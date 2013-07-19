@@ -17,8 +17,6 @@
  */
 
 
-//extern "C" int PYTHON_VERSION = PY_VERSION_HEX;
-
 extern "C" int python_hexversion(){ return PY_VERSION_HEX; }
 extern "C" char* python_version(){ return PY_VERSION; }
 
@@ -64,7 +62,7 @@ list get_pos_list(const ensemble::Body& b){
 	return p;
 }
 
-list keplerian_for_cartesian(const double& x,const double& y, const double& z, const double vx, const double& vy, const double& vz, const double GM)
+list calc_keplerian_for_cartesian_wrap(const double& x,const double& y, const double& z, const double vx, const double& vy, const double& vz, const double GM)
 {
   double a, e, i, O, w, M;
   calc_keplerian_for_cartesian( a, e, i, O, w, M, x, y, z, vx, vy, vz, GM);
@@ -78,7 +76,7 @@ list keplerian_for_cartesian(const double& x,const double& y, const double& z, c
   return p;
 }
 
-list cartesian_for_keplerian(const double& a, const double& e, const double& i, const double& O, const double& w, const double& M)
+list calc_cartesian_for_keplerian_wrap(const double& a, const double& e, const double& i, const double& O, const double& w, const double& M)
 {
   double x,y,z, vx,vy,vz, GM;
   calc_cartesian_for_ellipse(x,y,z,vx,vy,vz, a,e,i,O,w,M, GM);
@@ -135,6 +133,10 @@ ensemble::Body::Component& bod_getitem(ensemble::Body& bod,const int& i){
 	}
 }
 
+int sysattr_len(ensemble::Sys::attributes_t& sysattr){
+    return NUM_SYSTEM_ATTRIBUTES;
+}
+
 double sysattr_getitem(ensemble::Sys::attributes_t& sysattr, const int& i){
 	if( i >= 0 && i < NUM_SYSTEM_ATTRIBUTES)
 		return sysattr.getitem(i);
@@ -142,6 +144,10 @@ double sysattr_getitem(ensemble::Sys::attributes_t& sysattr, const int& i){
 		PyErr_SetString(PyExc_IndexError,"");
 		throw_error_already_set();
 	}
+}
+
+int bodattr_len(ensemble::Body::attributes_t& bodattr){
+    return NUM_PLANET_ATTRIBUTES;
 }
 
 double bodattr_getitem(ensemble::Body::attributes_t& bodattr, const int& i){
@@ -172,19 +178,13 @@ void bodattr_setitem(ensemble::Body::attributes_t& bodattr, const int& i, const 
 }
 
 
-/** Swarm as a python module
- *
- * The reason for lib prefix is because CMake automatically
- * adds lib prefix to the name of the target
- *
- */
 BOOST_PYTHON_MODULE(libswarmng_ext) {
 
 	def("init", swarm::init );
 	def("generate_ensemble", generate_ensemble );
 	def("sync", cudaThreadSynchronize );
-	def("keplerian_for_cartesian", keplerian_for_cartesian);
-	def("cartesian_for_keplerian", cartesian_for_keplerian);
+	def("calc_keplerian_for_cartesian", calc_keplerian_for_cartesian_wrap);
+	def("calc_cartesian_for_keplerian", calc_cartesian_for_keplerian_wrap);
 
 	class_<config>("Config")
 		.def( map_indexing_suite< config >() )
@@ -192,14 +192,16 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 		.staticmethod("load")
 		;
 
-	class_<ensemble::Sys::attributes_t, noncopyable >( "Sys.Attributes", no_init )
+	class_<ensemble::Sys::attributes_t, noncopyable >( "System.Attributes", no_init )
 		.def("__getitem__", &sysattr_getitem )
 		.def("__setitem__", &sysattr_setitem )
+        .def("__len__", &sysattr_len)
 		;
 
 	class_<ensemble::Body::attributes_t, noncopyable >( "Body.Attributes", no_init )
 		.def("__getitem__", &bodattr_getitem )
 		.def("__setitem__", &bodattr_setitem )
+        .def("__len__", &bodattr_len)
 		;
 
 	class_<ensemble::Body::Component >("Body.Components", no_init)
@@ -228,7 +230,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	/*
 	 *  All important methods are covered for this class
 	 */
-	class_<ensemble::SystemRef  >("SystemRef", no_init )
+	class_<ensemble::SystemRef  >("System", no_init )
 		.def("__len__", &ensemble::SystemRef::nbod , return_value_policy<copy_const_reference>())
 		.add_property("time", &get_time, &set_time)
 		.add_property("id", &get_id, &set_id)

@@ -1,7 +1,9 @@
 #include "../common.hpp"
 
+#include <libgen.h>
 #include <unistd.h>
 #include <limits>
+#include <boost/concept_check.hpp>
 
 #include "bdb_database.hpp"
 
@@ -11,6 +13,8 @@ using gpulog::logrecord;
 
 const int CACHESIZE = 1024*1024*64 ;
 
+const char* fileFormatVersion = "1";
+const char* swarmngVersion = "1.1";
 
 
 bool operator <(const pkey_t& a, const pkey_t& b){
@@ -86,23 +90,48 @@ int bdb_compare(DB* db, const DBT *k1, const DBT* k2){
     }
 }
 
+const int create_mode = 00600;
+
+void bdb_database::openEnv(const std::string& basedir){
+    std::cerr << "Initializing BDB environment in `" << basedir << "`" << std::endl;
+    env->open(basedir.c_str(),DB_CREATE | DB_INIT_CDB | DB_INIT_MPOOL,create_mode);
+}
 
 DbEnv* bdb_database::createDefaultEnv(){
     DbEnv* env = new DbEnv(0);
-    char* cwd = get_current_dir_name();
     env->set_cachesize(0,CACHESIZE,0);
-    env->open(cwd,DB_CREATE | DB_INIT_MPOOL,0);
-    free(cwd);
     return env;
 }
 
-void bdb_database::openInternal(const std::string& fileName, int open_mode){
+std::string directory_name(const std::string& s){
+    //std::cerr << "dirname for `"<< s << "`";
+    char* w = strdup(s.c_str());
+    std::string d(dirname(w));
+    free(w);
+    //std::cerr << " is `" << d << "`" << std::endl;
+    return d;
+}
 
+std::string base_name(const std::string& s){
+    //std::cerr << "basename for `"<< s << "`";
+    char* w = strdup(s.c_str());
+    std::string d(basename(w));
+    free(w);
+    //std::cerr << " is `" << d << "`" << std::endl;
+    return d;
+}
+
+void bdb_database::openInternal(const std::string& pathName, int open_mode){
+
+    openEnv(directory_name(pathName));
+    std::string fileName = base_name(pathName);
 
     const char * fn = fileName.c_str();
+    
+    metadata.open(NULL, fn, "metadata", DB_BTREE, open_mode, create_mode);
 
     primary.set_bt_compare(bdb_compare<pkey_t>);
-	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, 0);
+	primary.open(NULL, fn, "primary", DB_BTREE, open_mode, create_mode);
 
     // Open up the system index database, it has to support
     // duplicates and it is given a smaller cache size
@@ -110,7 +139,7 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 	system_idx.set_flags(DB_DUP | DB_DUPSORT);
     system_idx.set_bt_compare(bdb_compare<sysid_t>);
     system_idx.set_dup_compare(bdb_compare<pkey_t>);
-	system_idx.open(NULL, fn, "system_idx", DB_BTREE, open_mode , 0);
+	system_idx.open(NULL, fn, "system_idx", DB_BTREE, open_mode , create_mode);
 
     // Open up the time index database, it has to support
     // duplicates because our index is not a unique index and
@@ -119,13 +148,13 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 	time_idx.set_flags(DB_DUP | DB_DUPSORT);
     time_idx.set_bt_compare(bdb_compare<float>);
     time_idx.set_dup_compare(bdb_compare<pkey_t>);
-	time_idx.open(NULL, fn, "time_idx", DB_BTREE, open_mode  , 0);
+	time_idx.open(NULL, fn, "time_idx", DB_BTREE, open_mode  , create_mode);
 
   //  event_idx.set_cachesize(0,CACHESIZE,0);
 	event_idx.set_flags(DB_DUP | DB_DUPSORT);
     event_idx.set_bt_compare(bdb_compare<evtid_t>);
     event_idx.set_dup_compare(bdb_compare<pkey_t>);
-	event_idx.open(NULL, fn, "event_idx", DB_BTREE, open_mode , 0);
+	event_idx.open(NULL, fn, "event_idx", DB_BTREE, open_mode , create_mode);
 
     // Associate the primary table with the indices
     // the lr_extract_* is the function that defines
@@ -137,14 +166,17 @@ void bdb_database::openInternal(const std::string& fileName, int open_mode){
 
 void bdb_database::openForReading(const std::string& fileName) {
     openInternal(fileName, DB_RDONLY);
+    validateVersionInfo();
 }
 
 void bdb_database::create(const std::string& fileName){
     openInternal(fileName, DB_CREATE);
+    fillVersionInfo();
 }
 
 void bdb_database::createEmpty(const std::string& fileName){
     openInternal(fileName, DB_CREATE );
+    fillVersionInfo();
 }
     
 void bdb_database::put(logrecord& lr){
@@ -168,6 +200,35 @@ void bdb_database::put(logrecord& lr){
     Dbt key(&pkey,sizeof(pkey));
     Dbt data((void*)lr.ptr,lr.len());
     primary.put(NULL,&key,&data,0);
+}
+
+void bdb_database::addMetaData(const std::string name, const std::string value){
+  Dbt key((void *)name.data(),name.size()), data((void*)value.data(), value.size());
+  metadata.put(NULL,&key,&data,0);
+}
+std::string bdb_database::getMetaData(const std::string name) {
+  Dbt key((void*)name.data(),name.size()), data;
+  data.set_flags(DB_DBT_MALLOC);
+  
+  metadata.get(NULL,&key,&data,0);
+  
+  // Create a new string and free the buffer
+  size_t n = data.get_size();
+  char* ptr = (char*) data.get_data();
+  std::string value(data.get_size(),0);
+  std::copy(ptr, ptr+n, value.begin());
+  free(ptr); data.set_data(0);
+  
+  return value;
+}
+
+void bdb_database::fillVersionInfo() {
+  addMetaData("fileFormatVersion", fileFormatVersion);
+  addMetaData("swarmngVersion", swarmngVersion);
+}
+bool bdb_database::validateVersionInfo() {
+  return (getMetaData("fileFormatVersion") == fileFormatVersion ) ;
+    // && (getMetaData("swarmngVersion") == swarmngVersion );
 }
 
 Pprimary_cursor_t bdb_database::primary_cursor(){
@@ -215,6 +276,11 @@ bool primary_cursor_t::position_at(pkey_t& key,lrw_t& lr){
 }
 
 
+void bdb_database::flush()
+{
+    metadata.sync(0);
+  primary.sync(0);time_idx.sync(0); event_idx.sync(0); system_idx.sync(0);
+}
 
 
 } } // close namespace log :: swarm

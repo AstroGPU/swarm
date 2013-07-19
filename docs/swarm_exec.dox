@@ -238,7 +238,7 @@ swarm benchmark -c basecpu.cfg -I testcase.txt integrator=hermite,rkck_fixed
 
 
 
-   \subsection Query query: Examine log files
+   \subsection Query query: Examine log files, for more advanced querying refer to \ref swarm-query
    - -f [ --logfile ] &lt;file name&gt; Input binary log file
    - -s [ --system ] &lt;range&gt; Range of the systems that should appear in the query report
    - -b [ --body ] &lt;range&gt; Range of the bodies that should appear in the query report

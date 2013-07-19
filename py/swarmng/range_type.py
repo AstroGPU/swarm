@@ -1,19 +1,81 @@
+## @file range_type.py Support routines for the defining ranges to use with queries.
+
+## @package swarmng.range_type
+#  Classes for defining arbitrary ranges easily in Python
+#
+
 import argparse
 
 SINGLE, INTERVAL, UNIVERSAL = range(3)
+## Simple data structure to specify a range and test against it
+#  This is different from Python range object since it has methods
+#  for testing if a number is in range and also supports infinite ranges.
+#
+#  To create a Range object: use one of the following static methods:
+#    - Range.single
+#    - Range.interval
+#    - Range.universal
+#
+#  One of the main uses of Range is to test if it contains a number in the range
+#  @code{.py}
+#  >>> r = Range.interval(5,8)
+#  >>> r.contains(7)
+#  true
+#  >>> r.contains(9)
+#  false
+#  @endcode{.py}
+#
+#  A range object can be iterated on just like the Python range object
+#  @code{.py}
+#  >>> for i in Range.interval(1,10):
+#  ...  print(i)
+#  1
+#  2
+#  3
+#  4
+#  5
+#  6
+#  7
+#  8
+#  9
+#  10
+#  @endcode
+#  Note that these ranges contain the upper bound.
+#
+#
+#  \TODO: make the constructor private
 class Range:
+    ## Create a range that contains only one number
+    #  The upper and lower bound are set to \c s.
     @staticmethod
     def single(s):
         x = Range()
         x.type = SINGLE
         x.singleton = s
         return x
+      
+    ## Create a range from a tuple. 
+    # This function can take one tuple as an argument
+    # or two arguments.
+    # @code{.py}
+    # >>> t = (3,8)
+    # >>> Range.interval(t)
+    # >>> Range.interval(10,20)
+    # @endcode
     @staticmethod
-    def interval(tuple):
+    def interval(t, u = None):
+        if u != None :
+          tpl = (t,u)
+        else:
+          tpl = t
+          
         x = Range()
         x.type = INTERVAL
-        x.interval = tuple
+        x.interval = t
         return x
+    ## Create a range that contains everything.
+    #  The contain method for this object always returns true.
+    #  The upper and lower for this object are undefined.
     @staticmethod
     def universal():
         x = Range()
@@ -28,6 +90,7 @@ class Range:
         return self.type == UNIVERSAL
 
 
+    ## Test that the range contains the number \c i
     def contains(self,i):
         if(self.type == SINGLE):
             return i == self.singleton
@@ -37,6 +100,10 @@ class Range:
         elif(self.type == UNIVERSAL):
             return True
 
+    ## Create an iterator limiting this range to lower and upper.
+    #  this is very useful for cases where UNIVERSAL ranges are
+    #  allowed, because the UNIVERSAL range will be clamped to
+    #  the provided lower and uppper bound.
     def with_limits(self,lower,upper):
         if(self.type == SINGLE):
             if(lower <= self.single <= upper):
@@ -61,18 +128,28 @@ class Range:
         else:
             raise StopIteration
 
+    ## Lower bound for the range.
+    #  WARNING it is undefined for Universal range type.
     def lower(self):
         if(self.type == SINGLE):
             return self.singleton
         elif(self.type == INTERVAL):
             return self.interval[0]
+        else:
+            raise ArgumentError
 
+    ## Upper bound for the range.
+    #  WARNING it is undefined for Universal range type.
     def upper(self):
         if(self.type == SINGLE):
             return self.singleton
         elif(self.type == INTERVAL):
             return self.interval[1]
+        else:
+            raise ArgumentError
 
+    ## Lower/Upper bound as a tuple.
+    #  WARNING it is undefined for Universal range type.
     def ulPair(self):
         if(self.type == SINGLE):
             return (self.singleton,self.singleton)

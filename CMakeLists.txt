@@ -1,7 +1,7 @@
 # Project Settings
 PROJECT(Swarm_NG)
 SET(Swarm_NG_VERSION_MAJOR 1)
-SET(Swarm_NG_VERSION_MINOR 0)
+SET(Swarm_NG_VERSION_MINOR 1)
 
 # CMake Settings
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -74,3 +74,9 @@ INCLUDE(cmake/test.cmake)
 INCLUDE(cmake/custom.cmake)
 
 tutorial_python(TutorialPython py/tutorial.py)
+tutorial_python(TutorialPythonEnsemble py/ensemble_tutorial.py)
+tutorial_python(TutorialPythonEjection py/ejection_tutorial.py)
+tutorial_python(PlotTutorial py/plot_tutorial.py)
+tutorial_python(LogRecordTutorial py/logrecord_tutorial.py)
+tutorial_python(TutorialPythonIntegrationPlot py/integration_plot_tutorial.py)
+tutorial_python(TutorialPythonResume py/resume_tutorial.py)

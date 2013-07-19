@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 *-*
-from query import *
-from range_type import *
+## @file swarm-query.py Command-line utility to examine BDB log file, for usage see @ref swarm-query
+import sys
+from os.path import dirname, realpath
+sys.path.append(dirname(dirname(realpath(__file__))))
+
+from swarmng.query import *
+from swarmng.range_type import *
 import argparse
 
 MAX_RECORDS = 10000;
@@ -22,8 +27,7 @@ def parse_cmd():
     return args
 
 
-##################### MAIN #################################
+
 if __name__ == '__main__':
     args = parse_cmd()
-    print args
     run_with_args(args)

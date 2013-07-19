@@ -2,6 +2,7 @@ namespace swarm {
 
 /** \page BuildSwarm Getting Started with Swarm-NG
 
+The guidelines on using Swarm-NG.
 
 \section Obtain Obtaining the source code
 Currently we do not have any binary packages available. 
@@ -47,6 +48,10 @@ Software Requirements:
  - <a href="http://www.cmake.org/">CMake</a> 2.8 or later
  - Berkeley DB C++ library (including headers: db.h db_cxx.h)
 
+#### NOTE: Although Berkeley DB C library is installed on most Linux systems, the C++ headers and library are not
+usually installed. Please make sure the file `db_cxx.h` exists on your system.
+Use `locate` to find it. It is usually found in `/usr/include/db_cxx.h`.
+
 Optional software dependencies:
  - <a href="http://www.doxygen.org/">Doxygen</a> 
  - CMake GUI (cmake-gui)
@@ -55,8 +60,10 @@ Optional software dependencies:
 Python development requirements:
  - Boost Python module
  - Python 2.7 or later development headers
- - Python bsddb3 module
-
+ - Python packages: bsddb3, psutil
+ 
+#### WARNING: Boost Python module must be compiled against the same version of Python headers and libraries you are linking to the swarm library. A mismatch is very likely to happen on systems with two version of Python installed (2.x and 3.x); and would result in misleading symbol binding errors when you try to load the module with the Python interpreter.
+ 
 Installing required packages on your system, here we take Ubuntu as an example:
  - Download and Install CUDA Toolkit SDK and CUDA Development Drivers for Ubuntu from <a href="http://developer.nvidia.com/cuda-downloads">CUDA Downloads</a>
  - Install CMake:
@@ -70,7 +77,7 @@ sudo apt-get install doxygen cmake-gui
 \endverbatim
  - Install Python:
 \verbatim
-sudo apt-get install libboost-python-dev python-dev python-bsddb3
+sudo apt-get install libboost-python-dev python-dev python-bsddb3 python-psutil
 \endverbatim
 
 \section Compilation
@@ -104,6 +111,19 @@ compile properly:
 
  - Once configuration succeeds without errors, press "e" to exit configuration 
 page and then press "g" to generate the make files.
+\subsubsection compute_capability Configuring the GPU type
+CUDA requires the code to be optimized for special compute capability. In Swarm there are
+three variables for configuring Compute Capability:
+ - \c GENERATE_GT200 : devices with compute capability 1.3, incluse Gefore 200 series and Tesla 1000 series.
+ - \c GENERATE_FERMI : devices with compute capability 2.0, Swarm is mostly tested and is optimized to work best
+ for this category of devices, this includes Gefore 400 series and Tesla 2000 series.
+ - \c GENERATE_KEPLER: devices with compute capability 3.0, although not tested thoroughly, these devices are backward 
+ compatible and Swarm can take advantage of more resources being available. includes Gefore 600 series.
+ 
+For a complete list of compute capabilities, refer to https://developer.nvidia.com/cuda-gpus
+
+It is possible to compile Swarm for a compute capability that is not included in this list. Just open the file cmake/variables.cmake
+and look for \c GENERATE_FERMI. Copy and paste the section and change the names and compute capabilities.
 
 \subsection compile Compile swarm
 

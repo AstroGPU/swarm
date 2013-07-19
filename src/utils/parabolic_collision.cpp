@@ -87,7 +87,7 @@ int main(int argc, char* argv[]){
 			
 			double x = xpos[b-1], y = x*x/4/R - R ;
 			double vmag = sqrt(2*mu/norm(x,y)) ;
-			double vdirx = (x/abs(x))/norm(1,x/2/R), vdiry = x/2/R / norm(1,x/2/R);
+			double vdirx = (x/abs(x))/norm(1,x/2/R), vdiry = abs(x)/2/R / norm(1,x/2/R);
 			
 			
 			s[b][0].pos() = x  ,  s[b][0].vel() = -vmag*vdirx ;

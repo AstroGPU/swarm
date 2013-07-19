@@ -1,4 +1,4 @@
-/** @mainpage Swarm-NG library 
+/** @mainpage Overview
 
  \brief Swarm-NG is a collection of code to help
 scientists and engineers harness the power of GPUs.  In the early
@@ -19,10 +19,19 @@ differential equations.
 \b Table \b of \b contents
  - \ref BuildSwarm
  - \ref SwarmExec "Using command-line interface"
+ - \ref swarm-query "Running queries on log files from command line"
  - **Using C++ library interface**
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialEnsemble
+ - **Using Python library interface**
+        - \ref TutorialPython
+        - \ref TutorialPythonQueryPlot
+        - \ref TutorialPythonLogRecord
+        - \ref TutorialPythonEnsemble
+        - \ref TutorialPythonEjection
+        - \ref TutorialPythonResume
+        - \ref TutorialPythonIntegrationPlot
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
@@ -37,9 +46,11 @@ Citing Swarm-NG
 
 When writing papers which made use of Swarm-NG, we strongly encourage you to cite the following technical paper describing Swarm-NG and the Swarm-NG Website. 
  
-- Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters "Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems", to be submitted to New Astronomy. 
-DOI: <a href="http://dx.doi.org/10.1016/j.newast.2013.01.002">10.1016/j.newast.2013.01.002</a>
-arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157v1</a> [astro-ph.EP].
+- Dindar, S., E.B. Ford, M. Juric, Y.I. Yeo, J. Gao, A.C. Boley, B. Nelson, J. Peters 
+  __Swarm-NG: A CUDA Library for Parallel n-body Integrations with focus on Simulations of Planetary Systems__
+  , New Astronomy, Volumes 23-24, October 2013, Pages 6-18 <br/>
+DOI: <a href="http://dx.doi.org/10.1016/j.newast.2013.01.002">10.1016/j.newast.2013.01.002</a> <br/>
+arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157</a> [astro-ph.EP]. 
 
 - Website: http://www.astro.ufl.edu/~eford/code/swarm/docs
 

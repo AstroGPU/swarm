@@ -13,7 +13,7 @@ ADD_TEST(NAME Basic_integration_on_CPU COMMAND swarm integrate --defaults --nogp
 ADD_TEST(NAME Basic_integration_on_GPU COMMAND swarm integrate --defaults )
 
 ADD_TEST(NAME "BDB"
-    COMMAND "${CMAKE_SOURCE_DIR}/scripts/log_bdb_test.sh" )
+    COMMAND "${CMAKE_SOURCE_DIR}/test/bdb/bdb.sh" )
 
 
 INCLUDE(cmake/test_integrators.cmake)
@@ -22,7 +22,7 @@ INCLUDE(cmake/test_integrators.cmake)
 INCLUDE(cmake/test_monitors.cmake)
 
 ADD_TEST(NAME "Python_Tests"
-	COMMAND "${CMAKE_SOURCE_DIR}/py/runtests.py")
+	COMMAND "${CMAKE_SOURCE_DIR}/py/tests/run.py")
 
 # TEST_SCENARIO makes it easy to create scenarios and add it to the system
 # The first argument in the name of the folder and the second argument is the name of the 
