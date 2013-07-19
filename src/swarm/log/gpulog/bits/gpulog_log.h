@@ -27,22 +27,25 @@
 #ifndef bits_gpulog_log_h__
 #define bits_gpulog_log_h__
 
+
+#ifdef __CUDACC__
+__device__ static inline int global_atomicAdd(int *x, int add) {
+        return atomicAdd(x,add);
+}
+#else
+__host__ static inline int global_atomicAdd(int *x, int add) {
+        assert(0); // this must not be called from host code.
+        return 0;
+}
+#endif
+
+
 namespace gpulog
 {
 
 	namespace internal
 	{
 
-#ifdef __CUDACC__
-		__device__ static inline int global_atomicAdd(int *x, int add) {
-			return ::atomicAdd(x,add);
-		}
-#else
-		__host__ static inline int global_atomicAdd(int *x, int add) {
-			assert(0); // this must not be called from host code.
-			return 0;
-		}
-#endif
 
 	//! device internals encapsulation for log_base<> template
 	struct dev_internals
@@ -134,7 +137,17 @@ namespace gpulog
 			}
 
 	        //!
-		static inline int atomicAdd(int *x, int add) { int tmp = *x; *x += add; return tmp; }
+		static inline int atomicAdd(int *x, int add) { 
+                  
+                  int tmp;
+                  #pragma omp critical
+                  {
+                    tmp = *x;
+                    *x += add; 
+                  }
+                  return tmp; 
+                  
+                }
 		static int threadId() { return -1; }
 	};
 
