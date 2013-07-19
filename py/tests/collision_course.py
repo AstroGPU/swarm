@@ -1,6 +1,7 @@
 ## @file collision_course.py Testing collision detection module by putting planets on the same orbit in opposite directions
 from common import *
 from math import sqrt
+from random import uniform
 
 def sphericalToCartesian(r,theta, phi = 0):
   return [ r*cos(theta)*cos(phi), r*sin(theta)*cos(phi), r*sin(phi) ]
@@ -9,11 +10,11 @@ def sphericalToCartesian(r,theta, phi = 0):
 class CollisionCourseTest(abstract.IntegrationTest):
 
   cfg = swarmng.config(
-    integrator="hermite_adap_collision",
+    integrator="hermite_cpu",
     time_step_factor=0.017,
-    min_time_step=0.00001,
+    min_time_step=0.001,
     time_step=0.0001,
-    destination_time=4,
+    destination_time=1,
     deactivate_on_collision=1,
     collision_radius=.05
     )
@@ -24,7 +25,7 @@ class CollisionCourseTest(abstract.IntegrationTest):
     orbit_radius = 1.0
     orbit_velocity = sqrt(1/orbit_radius)
     
-    ens = DefaultEnsemble.create(nbod,nsys)
+    ens = swarmng.DefaultEnsemble.create(nbod,nsys)
 
     for i,s in enumerate(ens):
       # Trivial attributes of the system
@@ -50,9 +51,9 @@ class CollisionCourseTest(abstract.IntegrationTest):
                 
       return ens
     
-    def examine(self):
-      for s in ens:
-        self.assertEqual(s.state, -1)
+  def examine(self):
+    for s in self.ens:
+      self.assertEqual(s.state, -1)
     
     
     
