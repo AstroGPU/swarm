@@ -19,7 +19,7 @@ EOF
 
 SWARM=bin/swarm
 
-rm -f testing_log.db testing_log.bin.raw
+rm -f $OUTPUTDIR/testing_log.db $OUTPUTDIR/testing_log.bin.raw $OUTPUTDIR/__db.*
 
 $SWARM integrate -I $TESTDIR/test.4.in.txt  -c testing_log.cfg  log_writer=bdb
 $SWARM integrate -I $TESTDIR/test.4.in.txt  -c testing_log.cfg  log_writer=binary
