@@ -32,6 +32,7 @@ differential equations.
         - \ref TutorialPythonEjection
         - \ref TutorialPythonResume
         - \ref TutorialPythonIntegrationPlot
+        - \ref TutorialPythonStats
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor
