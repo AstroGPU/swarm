@@ -8,6 +8,8 @@
 # on a log file and get the records in a for loop, to learn how
 # to do that refer to @ref TutorialPythonQueryPlot.
 #
+# Source code for this tutorial can be found at @ref py/logrecord_tutorial.py
+
 # To run the examples in this tutorial, change the code
 # in @ref TutorialPythonQueryPlot to use the function defined 
 # here. by default the plot tutorial uses get_semi_major_axis from

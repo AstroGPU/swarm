@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 
-# @page TutorialPythonEnsemble
+# @page TutorialPythonEnsemble Tutorial for generating ensembles
 #
 # In this tutorial, we will see how to generate test cases and save/load them from files.
+#
+# Source code for this tutorial can be found at @ref py/ensemble_tutorial.py
 #
 # The first step is always to import swarmng module, make sure that it is in PYTHONPATH.
 import swarmng
