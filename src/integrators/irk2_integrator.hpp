@@ -266,7 +266,7 @@ public: //! Construct for class hermite integrator
 
 	}
 template<size_t nsd,size_t nmd>
-void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
+__device__ void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {
 	
 	if (ns == 2)
