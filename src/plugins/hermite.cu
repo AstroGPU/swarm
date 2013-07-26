@@ -20,13 +20,14 @@
  *   \brief Initializes the hermite integrator plugins. 
  *
  */
-
+#include "integrators/irk2_integrator.hpp"
 #include "integrators/hermite_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/mercury_mce_stat.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
+#include "swarm/gpu/gravitation_acc.hpp"
 #include "monitors/log_transit.hpp"
 #include "monitors/log_rvs.hpp"
 
@@ -37,8 +38,8 @@ using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
 //! Initialize the hermite integrator plugin for stop_on_ejection and gravitation acceleration
-integrator_plugin_initializer<hermite< mce_stat<L> , GravitationAccJerk > >
-	hermite_plugin("hermite");
+integrator_plugin_initializer<irk2< mce_stat<L> , GravitationAcc > >
+	hermite_plugin("irk2");
 
 //! Initialize the hermite integrator plugin for stop_on_ejection_or_close_encounter and gravitation acceleration
 //integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >

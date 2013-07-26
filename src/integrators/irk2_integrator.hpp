@@ -27,16 +27,15 @@
 #include "swarm/common.hpp"
 #include "swarm/gpu/bppt.hpp"
 
-#define sqr(x) (x)*(x)
-
 namespace swarm { namespace gpu { namespace bppt {
 
 /*! GPU implementation of Implicit Runge Kutta
  * \ingroup integrators
  *
  */
+
 template< class Monitor , template<class T> class Gravitation > //Gravitation should be GravitationAcc defined in gravitation_acc.hpp
-class hermite: public integrator {
+class irk2: public integrator {
 	typedef integrator base;
 	typedef Monitor monitor_t;
 	typedef typename monitor_t::params mon_params_t;
@@ -49,7 +48,7 @@ private:
 	mon_params_t _mon_params;
 
 public: //! Construct for class hermite integrator
-	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
+	irk2(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
 		ns = cfg.optional("method",4);
 		
@@ -105,16 +104,16 @@ public: //! Construct for class hermite integrator
 		// Component number
 		const int c = thread_component_idx(nbod);
 		
-		const static int nsd = 6, nmd = 3;
-		const static double C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd],SM[nmd],AM[nsd+nmd];
+		const int nsd = 6, nmd = 3;
+		double C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd],SM[nmd],AM[nsd+nmd];
 		
 		if (thread_in_system() == 0)
-			coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step_);
+			coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step);
 		__syncthreads();
 		
 		double F[nsd], YH, QQ, FS, PS, ZQ[nsd];
 		
-		const static uround = 1e-16;
+		const double uround = 1e-16;
 		
 		// local variables
 		montest.init( thread_in_system() );
@@ -142,8 +141,11 @@ public: //! Construct for class hermite integrator
 		
 		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
 		shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
-		
-		for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
+		//__shared__ double tmp;
+		//if (thread_in_system() == 0) tmp = 0.0;
+		//__syncthreads();
+		//atomicAdd(&tmp,1.0);	
+                for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
 		{
 			double h = _time_step;
 
@@ -154,7 +156,7 @@ public: //! Construct for class hermite integrator
 			if (iter > 0)
 			{
 				
-				double sav = 0.0
+				double sav = 0.0;
 				for(int js = 0; js<ns; js++)
 					sav += AM[js]*ZQ[js];
 				YH = sav + AM[ns]*PS + AM[ns+1]*vel+pos;
@@ -178,16 +180,17 @@ public: //! Construct for class hermite integrator
 			// fixed point iteration
 			if (thread_in_system() == 0)
 			{
-				shared_para[0] = 0;//int nit = 0;
-				shared_para[1] = 0.0;//double dynold = 0.0;
-				shared_para[2] = 1.0;//double dyno = 1.0;
+				shared_para[0].value() = 0;//int nit = 0;
+				shared_para[1].value() = 0.0;//double dynold = 0.0;
+				shared_para[2].value() = 1.0;//double dyno = 1.0;
 			}
-			while (shared_para[2] > uround)
+			__syncthreads();	
+			while (shared_para[2].value() > uround)
 			{
 				// rknife
 				if (thread_in_system() == 0)
 				{
-					shared_para[2] = 0.0;
+					shared_para[2].value() = 0.0;
 				}
 				__syncthreads();
 				
@@ -198,30 +201,34 @@ public: //! Construct for class hermite integrator
 				}
 				
 				double dnom = max(1e-1,abs(pos));
+                                double ss = 0;
 				for(int is = 0; is<ns; is++)
 				{
 					double sum = C[is]*vel;
 					for(int js=0; js<ns; js++)
 						sum += AA[is][js]*F[js];
-					atomicAdd(&shared_para[2],sqr((sum - ZQ[is])/dnom));
+					ss += (sum - ZQ[is])*(sum - ZQ[is])/(dnom*dnom);
+                                       
 					ZQ[is] = sum;
 				}
+				atomicAdd(&shared_para[2].value(),ss);
+                                
 				__syncthreads();
 
 				if (thread_in_system() == 0)
 				{
-					shared_para[2] = sqrt(shared_para[2]/(ns*3*nbod));
+					shared_para[2].value() = sqrt(shared_para[2].value()/(ns*3*nbod));
 					// end of rknife
-					shared_para[0] = shared_para[0] + 1;
+					shared_para[0].value() = shared_para[0].value() + 1;
 														
-					if ((shared_para[1] < shared_para[2]) && (shared_para[2] < 10*uround)) 
+					if ((shared_para[1].value() < shared_para[2].value()) && (shared_para[2].value() < 10*uround)) 
 						break;
-					if (shared_para[0] >= 50)
+					if (shared_para[0].value() >= 50)
 					{
-						lprintf(_log,"no convergence of iteration: %f\n", shared_para[2]);
+						lprintf(*_log,"no convergence of iteration: %f\n", shared_para[2].value());
 						sys.set_inactive();
 					}
-					shared_para[1] = shared_para[2];
+					shared_para[1].value() = shared_para[2].value();
 				}
 				__syncthreads();
 			}// end of fixed point iteration.
@@ -265,6 +272,19 @@ public: //! Construct for class hermite integrator
 		}
 
 	}
+__device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
+}
 template<size_t nsd,size_t nmd>
 __device__ void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {
@@ -369,7 +389,7 @@ __device__ void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd]
          AM[5]= 0.31173050390625000000e+02;
          AM[6]= 0.00000000000000000000e+00;
 	}
-	REAL hstep2 = hStep*hStep;
+	double hstep2 = hStep*hStep;
 	for (int i = 0; i<ns; i++)
 	{
 		B[i] *= hStep;
