@@ -1,5 +1,5 @@
 /** Implementation of the algorithm for collision detection in Mecurial 
- *	by John E. Chambers which could be found at 
+ *      by John E. Chambers which could be found at 
  *  https://github.com/smirik/mercury
  *************************************************************************
  * Copyright (C) 2011 by Thien Nguyen and the Swarm-NG Development Team  *
@@ -41,15 +41,15 @@ bool deactivate_on, log_on, verbose_on;
   */
       mce_stat_params(const config &cfg)
       {
-	      nbod = cfg.require<int>("nbod");
-	      time_step = cfg.require("time_step", 0.0);
-	      dmin = cfg.optional("close_approach",0.0);
-	      rceh = cfg.optional("rceh",0.001);
-	      	      
-	      deactivate_on = cfg.optional("deactivate_on_close_encounter",false);
-	      log_on = cfg.optional("log_on_close_encounter",false);
-	      verbose_on = cfg.optional("verbose_on_close_encounter",false);
-	      
+              nbod = cfg.require<int>("nbod");
+              time_step = cfg.require("time_step", 0.0);
+              dmin = cfg.optional("close_approach",0.0);
+              rceh = cfg.optional("rceh",1e-6);
+                      
+              deactivate_on = cfg.optional("deactivate_on_close_encounter",false);
+              log_on = cfg.optional("log_on_close_encounter",false);
+              verbose_on = cfg.optional("verbose_on_close_encounter",false);
+              
       } 
   
 };
@@ -63,67 +63,63 @@ struct CurrentSysStat
   double _vel[CHUNK_SIZE];
   double _BB_SW[CHUNK_SIZE];
   double _BB_NE[CHUNK_SIZE];
-  
+  //unsigned long long int _crash[CHUNK_SIZE];
   // Accessors
   GENERIC double& pos() { return _pos[0];  }
   GENERIC double& vel() { return _vel[0];  }
   GENERIC double& bb_sw() { return _BB_SW[0];  }
   GENERIC double& bb_ne() { return _BB_NE[0];  }
-  
+  //GENERIC unsigned long long int& crash() { return _crash[0];  }
 };
 
-/** Re-implemenation of mce_stat in Mercurial using CUDA 
- * The monitor is a 2-pass algorithm. The first pass, we compute bounding box
- * of trajectory in two consecutive time step of each planet. Then, we compare
- * bounding boxes and find overlapping bounding boxes. Then, more complicated 
- * computation is performed to find the intersect of the trajectories. After a
- * a collision is found, we update status of the whole system.
+/** Empty monitor to use as a template.  
+ * Signal is always false.  Does not do any logging.
  * \ingroup monitors
  *
  */
 
 template<class log_t>
 class mce_stat {
-	public:
-	
-	  typedef mce_stat_params params;
-	  
-	  const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
-	  
-	  typedef CurrentSysStat<CHUNK_SIZE>  shared_data[MAX_NBODIES][3];
-	private:
-	params _params;
-	ensemble::SystemRef& _sys;
-	log_t& _log;
-	
-	shared_data &shared;
-	
-	int nbod,pair_count;
-	
-	double timestep;
-	
-	public:
+        public:
+        
+          typedef mce_stat_params params;
+          
+          const static int CHUNK_SIZE = SHMEM_CHUNK_SIZE;
+          
+          typedef CurrentSysStat<CHUNK_SIZE>  shared_data[MAX_NBODIES][3];
+        private:
+        params _params;
+        ensemble::SystemRef& _sys;
+        log_t& _log;
+        
+        shared_data &shared;
+        
+        int nbod,pair_count;
+        
+        double timestep;
+        
+        public:
 
-	  //! default monitor_template construct
-	GPUAPI mce_stat(const params& p,ensemble::SystemRef& s,log_t& l, shared_data &shared_mem)
-	:_params(p),_sys(s),_log(l), shared(shared_mem)
-	{
-	    nbod = _params.nbod;
-	    pair_count = (nbod*(nbod-1))/2;
-	    timestep = _params.time_step;   
-	}
-	
-	template<class T>
-	static GENERIC int thread_per_system(T compile_time_param){
-	  return (T::n*(T::n-1))/2;
-	}
-		
+          //! default monitor_template construct
+        GPUAPI mce_stat(const params& p,ensemble::SystemRef& s,log_t& l, shared_data &shared_mem)
+        :_params(p),_sys(s),_log(l), shared(shared_mem)
+        {
+            nbod = _params.nbod;
+            pair_count = (nbod*(nbod-1))/2;
+            timestep = _params.time_step;   
+        }
+        
+        template<class T>
+        static GENERIC int thread_per_system(T compile_time_param){
+          return (T::n*(T::n-1))/2;
+        }
+                
         //! The amount of memory per system
-	template<class T>
-	static GENERIC int shmem_per_system(T compile_time_param) {
-		 return sizeof(shared_data);
-	}
-	
+        template<class T>
+        static GENERIC int shmem_per_system(T compile_time_param) {
+                 return sizeof(shared_data);
+        }
+        
         //! Provide these functions, so two monitors can be combined
         GPUAPI bool is_deactivate_on() { return false; }
         GPUAPI bool is_log_on() { return false; }
@@ -139,121 +135,94 @@ class mce_stat {
     {
       if (0< thread_in_system < nbod)
       {
-	if (_sys[thread_in_system].mass() > 0)
-        {
-          double gm = _sys[0].mass() + _sys[thread_in_system].mass();
-          
-          double r = sqrt(_sys[thread_in_system][0].pos()*_sys[thread_in_system][0].pos() 
-                          + _sys[thread_in_system][1].pos()*_sys[thread_in_system][1].pos()
-                          + _sys[thread_in_system][2].pos()*_sys[thread_in_system][2].pos());
-          double vi_max = _sys[thread_in_system][0].vel()*_sys[thread_in_system][0].vel()
-                      + _sys[thread_in_system][1].vel()*_sys[thread_in_system][1].vel()
-                      + _sys[thread_in_system][2].vel()*_sys[thread_in_system][2].vel();
-          double a = gm*r/(2*gm - r*vi_max);
-          if ( a <=0 ) a = r;
-          double hill = a*pow(THIRD*_sys[thread_in_system].mass()/_sys[0].mass(), THIRD);
-          
-          // assume attribute 0 is the radius of the planet
-          // rho is the density of the planet = mass/volume = mass/(4/3piR^3)
-          double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
-          
-          _sys[thread_in_system].attribute(1) = hill;//*_params.rceh; // rce
-          _sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
-        }
-	
-	
+        
+        double gm = _sys[0].mass() + _sys[thread_in_system].mass();
+        
+        double r = sqrt(_sys[thread_in_system][0].pos()*_sys[thread_in_system][0].pos() 
+                        + _sys[thread_in_system][1].pos()*_sys[thread_in_system][1].pos()
+                        + _sys[thread_in_system][2].pos()*_sys[thread_in_system][2].pos());
+        double vi_max = _sys[thread_in_system][0].vel()*_sys[thread_in_system][0].vel()
+                    + _sys[thread_in_system][1].vel()*_sys[thread_in_system][1].vel()
+                    + _sys[thread_in_system][2].vel()*_sys[thread_in_system][2].vel();
+        double a = gm*r/(2*gm - r*vi_max);
+        if ( a <=0 ) a = r;
+        double hill = a*pow(THIRD*_sys[thread_in_system].mass()/_sys[0].mass(), THIRD);
+        
+        // assume attribute 0 is the radius of the planet
+        // rho is the density of the planet = mass/volume = mass/(4/3piR^3)
+        double rho =  _sys[thread_in_system].mass()/(4*THIRD*PI*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0)*_sys[thread_in_system].attribute(0));
+        
+        _sys[thread_in_system].attribute(1) = hill*_params.rceh; // rce
+        _sys[thread_in_system].attribute(2) = hill/a * pow(2.25 * _sys[0].mass()/(PI*rho),THIRD); // rphysics
+        
+        
       }
       if (thread_in_system == 0)
       {
-	_sys[thread_in_system].attribute(1) = 0.0;
-	_sys[thread_in_system].attribute(2) = 0.0;
-	
+        _sys[thread_in_system].attribute(1) = 0.0;
+        _sys[thread_in_system].attribute(2) = 0.0;
+        
       }
     }
-    GPUAPI void storeCurrentStat(const int thread_in_system)
+    GPUAPI void storeCurrentStat(const int b, const int c, double pos, double vel)
     {
-      if (thread_in_system < nbod)
-      {
-	shared[thread_in_system][0].pos() = _sys[thread_in_system][0].pos();
-	shared[thread_in_system][1].pos() = _sys[thread_in_system][1].pos();
-	shared[thread_in_system][2].pos() = _sys[thread_in_system][2].pos();
-	
-	shared[thread_in_system][0].vel() = _sys[thread_in_system][0].vel();
-	shared[thread_in_system][1].vel() = _sys[thread_in_system][1].vel();
-	shared[thread_in_system][2].vel() = _sys[thread_in_system][2].vel();
-      }
+        if(b < nbod && c < 3)
+          shared[b][c].pos() = pos , shared[b][c].vel() = vel;
+        __syncthreads();
     }
-    GPUAPI void operator () (const int thread_in_system) 
+    GPUAPI void operator () (const int thread_in_system, const int b, const int c) 
     { 
-    	
-	    pass_one(thread_in_system);
-	    
-	    __syncthreads();
-	    
-	    pass_two(thread_in_system);
-	    
-	    __syncthreads();
-	    
-	    if(need_to_log_system() && (thread_in_system==0) )
-	      log::system(_log, _sys);
-	      
-	       	
+        
+            pass_one(b, c);
+            
+            __syncthreads();
+            
+            pass_two(thread_in_system);
+            
+            __syncthreads();
+            
+            if(need_to_log_system() && (thread_in_system==0) )
+              log::system(_log, _sys);
+              
+                
     }
 
-	private:
-		
+        private:
+                
         /// This is mce_box() routine in Mercury,
         /// Calculate bounding box of the trajectory of each planet between time steps t0 and t1
-	GPUAPI void pass_one (int thread_in_system) 
+        GPUAPI void pass_one (const int b, const int c) 
           {
-	      /*************************************************************************
-	      * Calculate the bounding box of the trajectory of a planet between time step t0 and t0 + h
-	      * **********************************************************************/
-          	         	
-          	if (0< thread_in_system < nbod)
-		{
-			
-		      for(int c = 0; c<3 ; c++)
-		      {
-			shared[thread_in_system][c].bb_sw() = min(shared[thread_in_system][c].pos(),_sys[thread_in_system][c].pos()); // component min
-			shared[thread_in_system][c].bb_ne() = max(shared[thread_in_system][c].pos(),_sys[thread_in_system][c].pos()); // component max
-		      }
-			
-			
-			// if velocity changes sign, do an interpolation
-		      for (int c = 0; c < 3; c++)
-		      {
-			if ( (shared[thread_in_system][c].vel() < 0 && _sys[thread_in_system][c].vel() > 0 ) || 
-			      (shared[thread_in_system][c].vel() > 0 && _sys[thread_in_system][c].vel() < 0 ) )
-			{
-				double temp = shared[thread_in_system][c].vel()*_sys[thread_in_system][c].pos() 
-					      - _sys[thread_in_system][c].vel()*shared[thread_in_system][c].pos()
-					      - 0.5*timestep*shared[thread_in_system][c].vel()*_sys[thread_in_system][c].vel()/(shared[thread_in_system][c].vel()-_sys[thread_in_system][c].vel());
-				shared[thread_in_system][c].bb_sw() = min(shared[thread_in_system][c].bb_sw(),temp);
-				shared[thread_in_system][c].bb_ne() = max(shared[thread_in_system][c].bb_ne(),temp);
-				
-			}
-		      }
-		      
-		      
-		      //Then adjust values by the maximum close-encounter radius plus a fudge factor
-		      double tmp = _sys[thread_in_system].attribute(1)*1.2; 
-		      for (int c = 0; c < 3; c++)
-		      {
-			shared[thread_in_system][c].bb_sw() -= tmp;
-			shared[thread_in_system][c].bb_ne() += tmp;
-		      }
-		      
-		     
-		}
-		
-			
-			
+              /*************************************************************************
+              * Calculate the bounding box of the trajectory of a planet between time step t0 and t0 + h
+              * **********************************************************************/
+                if(0 < b && b < nbod && c < 3)
+                {
+                  shared[b][c].bb_sw() = min(shared[b][c].pos(),_sys[b][c].pos());
+                  shared[b][c].bb_ne() = max(shared[b][c].pos(),_sys[b][c].pos());
+                  if ( (shared[b][c].vel() < 0 && _sys[b][c].vel() > 0 ) || 
+                              (shared[b][c].vel() > 0 && _sys[b][c].vel() < 0 ) )
+                  {
+                          double temp = shared[b][c].vel()*_sys[b][c].pos() 
+                                        - _sys[b][c].vel()*shared[b][c].pos()
+                                        - 0.5*timestep*shared[b][c].vel()*_sys[b][c].vel()/(shared[b][c].vel()-_sys[b][c].vel());
+                          shared[b][c].bb_sw() = min(shared[b][c].bb_sw(),temp);
+                          shared[b][c].bb_ne() = max(shared[b][c].bb_ne(),temp);
+                          
+                  }
+                  double tmp = _sys[b].attribute(1)*1.2;
+                  shared[b][c].bb_sw() -= tmp;
+                  shared[b][c].bb_ne() += tmp;
+                }
+                
+                
+                        
+                        
           }
 
         //! set the system state to disabled when three conditions are met
-	GPUAPI void pass_two (int thread_in_system) 
-      	{
+        GPUAPI void pass_two (int thread_in_system) 
+        {
       
         /** Because most of the time, planets dont collide each other. So, it is not necessary to use parallel here
          *  We use only the first thread in the system.     
@@ -267,12 +236,15 @@ class mce_stat {
                 for(j = 2; j < nbod; j++)
                   for(i = 1; i<j ; i++)
                   {
+                    
                     if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw())
                       if (shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw())
                         if (shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw())
                         {
+                          //lprintf(_log,"time= %f,%f %f %f,%f %f %f\n", _sys.time(), shared[i][0].bb_ne(),shared[i][1].bb_ne(),shared[i][2].bb_ne(), shared[i][0].bb_sw(), shared[i][1].bb_sw(), shared[i][2].bb_sw());
                           if (_sys[i].mass() > 0 && _sys[j].mass() > 0)
                           {
+                            
                             double dx0 = shared[i][0].pos() - shared[j][0].pos();
                             double dy0 = shared[i][1].pos() - shared[j][1].pos();
                             double dz0 = shared[i][2].pos() - shared[j][2].pos();
@@ -337,12 +309,10 @@ class mce_stat {
                             if (d2min <= d2hit)
                             {
                               
-                              //i is the index of the heavier planet
-                              
+                              ///i is the index of the heavier planet
                               if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
                               
-                              lprintf(_log,"Hitting detected: i=%d, j=%d, d=%f, T=%f \n", i,j, d2min, _sys.time()+tmin);
-                              
+                              lprintf(_log,"Hitting detected: i = %d, j = %d, time= %f\n", i,j,_sys.time()+tmin);
                               
                               float msum = _sys[i].mass() + _sys[j].mass();
                               float mredu = _sys[i].mass()*_sys[j].mass()/msum;
@@ -365,8 +335,8 @@ class mce_stat {
                                 _sys[j][c].vel() *= -1.0;
                               }
                               _sys[j].mass() = 0.0;
-        //                              
-                                                            
+                              
+                                                                                  
                             }
                             
                           }
@@ -392,12 +362,12 @@ class mce_stat {
                     float rv1 = _sys[j][0].vel()*_sys[j][0].pos() + _sys[j][1].vel()*_sys[j][1].pos() + _sys[j][2].pos()*_sys[j][2].pos();
                     
                     //If inside the central body, or passing through pericentre, use 2-body approx.
-                    if ((rv0*timestep <= 0.0 && rv1*timestep >=0.0)||min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0))
+                    if ((rv0*timestep <= -1e-6 && rv1*timestep >=1e-6)||(min(rr0,rr1) <= _sys[0].attribute(0)*_sys[0].attribute(0)))
                     {
                       if (_sys[j].mass() > 0)
                       {
-                        lprintf(_log,"Hitting with the sun detected: j=%d \n", j);
-                      
+                        //lprintf(_log,"Hitting with the sun detected: j=%d, %f %f %f, %f %f %f\n", j, shared[j][0].vel(), shared[j][1].vel(), shared[j][2].vel(), _sys[j][0].vel(), _sys[j][1].vel(), _sys[j][2].vel());
+                        lprintf(_log,"Hitting with the sun detected: time = %f, j=%d,\n", _sys.time(),j);
                         //x cross v
                         float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
                         float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
@@ -461,7 +431,7 @@ class mce_stat {
                   }
                     
               }// endif: thread_in_system = 0
-        }	
+        }       
 };
 
 } // namespace monitor

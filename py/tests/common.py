@@ -9,7 +9,7 @@ TESTDIR = path.dirname(path.realpath(__file__))
 class abstract:
     class IntegrationTest(unittest.TestCase):
         cfg = None
-        destination_time = 1.0
+        destination_time = 10.0
         def runTest(self):
             swarmng.init(self.cfg)
             integ = swarmng.Integrator.create( self.cfg )
@@ -19,5 +19,5 @@ class abstract:
             integ.ensemble = self.ens
             integ.destination_time = self.destination_time
             integ.integrate()
-
+            self.ens.save_to_text("integrator_test.txt")
             self.examine()

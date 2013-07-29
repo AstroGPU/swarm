@@ -52,7 +52,7 @@ class ParabolicTest(abstract.IntegrationTest):
     def examine(self):
         rs = self.ref[0]
         s = self.ens[0]
-        print rs[1].pos, rs[2].pos, rs[1].vel, rs[2].vel
+        print rs[0].pos, rs[1].pos, rs[2].pos, rs[1].vel, rs[2].vel
         print s[0].pos, s[1].pos, s[2].pos
         print s.time
 

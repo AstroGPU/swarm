@@ -105,11 +105,12 @@ public: //! Construct for class hermite integrator
 		const int c = thread_component_idx(nbod);
 		
 		const int nsd = 6, nmd = 3;
+		// the following coefficients should be declared as __constant__, but I dont know how 
 		double C[nsd],AA[nsd][nsd],E[nsd][nsd+nmd],B[nsd],BC[nsd],SM[nmd],AM[nsd+nmd];
 		
-		if (thread_in_system() == 0)
-			coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step);
-		__syncthreads();
+		//if (thread_in_system() == 0)
+		coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,_time_step);
+		//__syncthreads();
 		
 		double F[nsd], YH, QQ, FS, PS, ZQ[nsd];
 		
@@ -141,14 +142,11 @@ public: //! Construct for class hermite integrator
 		
 		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
 		shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
-		//__shared__ double tmp;
-		//if (thread_in_system() == 0) tmp = 0.0;
-		//__syncthreads();
-		//atomicAdd(&tmp,1.0);	
+		
                 for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
 		{
 			double h = _time_step;
-
+                        
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
 			}
@@ -258,8 +256,8 @@ public: //! Construct for class hermite integrator
 			__syncthreads();
 			montest( thread_in_system() );  
 			__syncthreads();
-// 			montest.init( thread_in_system() );
-// 			__syncthreads();
+			montest.init( thread_in_system() );
+			__syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
