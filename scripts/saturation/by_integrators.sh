@@ -23,7 +23,7 @@ do
 	echo "Starting $N bodies, $I --------------------------------"
 	mkdir -p $OUTPUTDIR/$I
 	O=$OUTPUTDIR/$I/$N.csv
-	$BUILD/bin/swarm benchmark -c $SOURCE/samples/$I.cfg --range nsys=$NSYS \
+	$BUILD/bin/swarm benchmark -c $SOURCE/samples/$I.cfg --range nsys=$NSYS verbose=1 \
 		nsys=2000 nbod=$N -d $DTIME -v 100 2> $OUTPUTDIR/$I/$N-log.txt | tail -n +10 > $O 
 done
 done
