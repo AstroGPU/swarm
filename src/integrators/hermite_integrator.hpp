@@ -162,6 +162,7 @@ public: //! Construct for class hermite integrator
                         }
                         acc0 = acc1, jerk0 = jerk1;
                         
+                        //lprintf(*_log,"%d %d %d: %f %f\n", iter, b,c, pos,vel);
                         /// Finalize the step
                         if( (b < nbod) && (c < 3) )
                                 { sys[b][c].pos() = pos; sys[b][c].vel() = vel; }

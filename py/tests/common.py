@@ -19,5 +19,5 @@ class abstract:
             integ.ensemble = self.ens
             integ.destination_time = self.destination_time
             integ.integrate()
-            self.ens.save_to_text("integrator_test.txt")
+            self.ens.save_to_text("integrator_test_hermite.txt")
             self.examine()

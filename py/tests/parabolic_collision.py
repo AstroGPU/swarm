@@ -10,14 +10,14 @@ class ParabolicTest(abstract.IntegrationTest):
     cfg = swarmng.config(
             integrator = "hermite",
             nbod       = 3,
-            time_step  = 1e-3,
+            time_step  = 0.1,
             nogpu      = 0,
             log_writer= "bdb",
             log_output_db = "prab.db",
             deactivate_on_collision= 1
             )
     required_destination_time = 1.885638833885
-    destination_time = 100
+    destination_time = 1
 
     def createEnsemble(self):
         nsys = 4

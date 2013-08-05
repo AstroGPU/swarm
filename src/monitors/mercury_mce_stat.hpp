@@ -236,12 +236,13 @@ class mce_stat {
                 for(j = 2; j < nbod; j++)
                   for(i = 1; i<j ; i++)
                   {
-                    
+                    if (_sys.time() > 2)
+                      lprintf(_log,"time= %f,%f %f %f,%f %f %f\n", _sys.time(), shared[i][0].pos(),shared[i][1].pos(),shared[i][2].pos(), shared[j][0].pos(), shared[j][1].pos(), shared[j][2].pos());
                     if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw())
                       if (shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw())
                         if (shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw())
                         {
-                          //lprintf(_log,"time= %f,%f %f %f,%f %f %f\n", _sys.time(), shared[i][0].bb_ne(),shared[i][1].bb_ne(),shared[i][2].bb_ne(), shared[i][0].bb_sw(), shared[i][1].bb_sw(), shared[i][2].bb_sw());
+                          
                           if (_sys[i].mass() > 0 && _sys[j].mass() > 0)
                           {
                             

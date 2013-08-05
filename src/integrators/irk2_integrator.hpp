@@ -121,7 +121,7 @@ public: //! Construct for class hermite integrator
 		__syncthreads();
 
 		// local information per component per body
-		double pos = 0.0, vel = 0.0 , acc0 = 0.0 ; // P = vel; Q = pos;
+		double pos = 0.0, vel = 0.0 , acc0 = 0.0 , c_pos, c_vel; // P = vel; Q = pos;
 		if( (b < nbod) && (c < 3) )
 			{ pos = sys[b][c].pos(); vel = sys[b][c].vel(); }
 
@@ -140,8 +140,8 @@ public: //! Construct for class hermite integrator
 			PS = vel;
 		}
 		
-		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
-		shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
+		//typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
+		//shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
 		
                 for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
 		{
@@ -150,6 +150,8 @@ public: //! Construct for class hermite integrator
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
 			}
+			c_pos = sys[b][c].pos();
+                        c_vel = sys[b][c].vel();
 			// startb
 			if (iter > 0)
 			{
@@ -175,20 +177,20 @@ public: //! Construct for class hermite integrator
 				
 			}// end of startb			
 			
-			// fixed point iteration
+			/// fixed point iteration
 			if (thread_in_system() == 0)
 			{
-				shared_para[0].value() = 0;//int nit = 0;
-				shared_para[1].value() = 0.0;//double dynold = 0.0;
-				shared_para[2].value() = 1.0;//double dyno = 1.0;
+				sys.attribute(0) = 0;//int nit = 0;
+				sys.attribute(1) = 0.0;//double dynold = 0.0;
+				sys.attribute(2) = 1.0;//double dyno = 1.0;
 			}
 			__syncthreads();	
-			while (shared_para[2].value() > uround)
+			while (sys.attribute(2) > uround)
 			{
-				// rknife
+				/// rknife
 				if (thread_in_system() == 0)
 				{
-					shared_para[2].value() = 0.0;
+					sys.attribute(2) = 0.0;
 				}
 				__syncthreads();
 				
@@ -209,26 +211,42 @@ public: //! Construct for class hermite integrator
                                        
 					ZQ[is] = sum;
 				}
-				atomicAdd(&shared_para[2].value(),ss);
+				atomicAdd(&sys.attribute(2),ss);
                                 
 				__syncthreads();
 
 				if (thread_in_system() == 0)
 				{
-					shared_para[2].value() = sqrt(shared_para[2].value()/(ns*3*nbod));
+					sys.attribute(2) = sqrt(sys.attribute(2)/(ns*3*nbod));
 					// end of rknife
-					shared_para[0].value() = shared_para[0].value() + 1;
-														
-					if ((shared_para[1].value() < shared_para[2].value()) && (shared_para[2].value() < 10*uround)) 
-						break;
-					if (shared_para[0].value() >= 50)
-					{
-						lprintf(*_log,"no convergence of iteration: %f\n", shared_para[2].value());
-						sys.set_inactive();
-					}
-					shared_para[1].value() = shared_para[2].value();
+                                        
+					sys.attribute(0) = sys.attribute(0) + 1;
+                                                                                
+                                        //lprintf(*_log,"%d %d %d: %f %f\n", iter,b,c, sys.attribute(0),sys.attribute(2));
+                                        
+                                        if (sys.attribute(0) >= 50)
+                                        {
+                                                lprintf(*_log,"no convergence of iteration: %f\n", sys.attribute(0));
+                                                sys.set_inactive();
+                                                
+                                        }
+                                                                  
 				}
 				__syncthreads();
+                                
+                                if (sys.attribute(0) >= 50) break;
+                                                                
+                                if ((sys.attribute(1) < sys.attribute(2)) && (sys.attribute(2) < 10*uround)) 
+                                   break;
+                                
+                                __syncthreads();
+                                
+                                if (thread_in_system() == 0)
+                                {
+                                  sys.attribute(1) = sys.attribute(2);
+                                }
+                                
+                                
 			}// end of fixed point iteration.
 			
 			// update solution
@@ -243,21 +261,17 @@ public: //! Construct for class hermite integrator
 				sum += F[is]*B[is];
 			vel = vel + sum;
 			
-			__syncthreads();
-			montest.storeCurrentStat(thread_in_system());
-			__syncthreads();
-			
-			/// Finalize the step
+                        //lprintf(*_log,"%d %d %d: %f %f\n", iter, b,c, pos,vel);
+                        /// Finalize the step
 			if( (b < nbod) && (c < 3) )
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
 			
-			__syncthreads();
-			montest( thread_in_system() );  
-			__syncthreads();
-			montest.init( thread_in_system() );
-			__syncthreads();
+			/// Monitor collision-detection
+//                         montest.storeCurrentStat(b,c,c_pos,c_vel);
+//                         montest(thread_in_system(), b, c);  
+//                         __syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
@@ -284,7 +298,7 @@ __device__ double atomicAdd(double* address, double val)
     return __longlong_as_double(old);
 }
 template<size_t nsd,size_t nmd>
-__device__ void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
+GPUAPI void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {
 	
 	if (ns == 2)
