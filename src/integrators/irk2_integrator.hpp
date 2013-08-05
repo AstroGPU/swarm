@@ -269,9 +269,8 @@ public: //! Construct for class hermite integrator
 				sys.time() += h;
 			
 			/// Monitor collision-detection
-//                         montest.storeCurrentStat(b,c,c_pos,c_vel);
-//                         montest(thread_in_system(), b, c);  
-//                         __syncthreads();
+                         montest(thread_in_system(), b, c, c_pos, c_vel);  
+                         __syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 

@@ -169,8 +169,8 @@ public: //! Construct for class hermite integrator
                         if( thread_in_system()==0 ) 
                                 sys.time() += h;
                                                 
-                        montest.storeCurrentStat(b,c,c_pos,c_vel);
-                        montest(thread_in_system(), b, c);  
+                       
+                        montest(thread_in_system(), b, c, c_pos,c_vel);
                         __syncthreads();
 
                         

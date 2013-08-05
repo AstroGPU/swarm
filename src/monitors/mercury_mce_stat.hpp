@@ -164,14 +164,12 @@ class mce_stat {
         
       }
     }
-    GPUAPI void storeCurrentStat(const int b, const int c, double pos, double vel)
-    {
-        if(b < nbod && c < 3)
-          shared[b][c].pos() = pos , shared[b][c].vel() = vel;
-        __syncthreads();
-    }
-    GPUAPI void operator () (const int thread_in_system, const int b, const int c) 
+    
+    GPUAPI void operator () (const int thread_in_system, const int b, const int c, double pos, double vel) 
     { 
+            if(b < nbod && c < 3)
+                shared[b][c].pos() = pos , shared[b][c].vel() = vel;
+              __syncthreads();
         
             pass_one(b, c);
             
