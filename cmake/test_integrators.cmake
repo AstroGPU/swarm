@@ -32,7 +32,10 @@ MESSAGE("Will Test: ${TEST_integrator_nbod_list}")
 
 MACRO(TEST_INTEGRATOR title nbod)
 	ADD_TEST(NAME Verify_${title}_${nbod}_Bodies
-		COMMAND swarm test -c ${TEST_INTEGRATOR_DIR}/${title}.cfg -I ${TEST_INTEGRATOR_DIR}/test.${nbod}.in.txt -O ${TEST_INTEGRATOR_DIR}/test.${nbod}.out.txt -v 100 nbod=${nbod}) 
+		COMMAND swarm test -c ${TEST_INTEGRATOR_DIR}/${title}.cfg -v 100
+        -I ${TEST_INTEGRATOR_DIR}/test.${nbod}.in.txt 
+        -O ${TEST_INTEGRATOR_DIR}/test.${nbod}.out.txt 
+        nbod=${nbod} destination_time=1 pos_threshold=1E-8 vel_threshold=1E-8) 
 ENDMACRO(TEST_INTEGRATOR)
 
 
