@@ -26,7 +26,16 @@
 #include "device_settings.hpp"
 
 
-const int registers_per_thread = 64;  
+#if __CUDA_ARCH__ < 200 
+    const int registers_per_thread = 128;
+#elif __CUDA_ARCH__ >= 200 && __CUDA_ARCH__ < 350
+    const int registers_per_thread = 64;  
+#elif __CUDA_ARCH__ >= 350
+    const int registers_per_thread = 255;
+#else
+    #error "Current compute capability is not supported"
+#endif
+
 cudaDeviceProp deviceInfo;
 
 /**
