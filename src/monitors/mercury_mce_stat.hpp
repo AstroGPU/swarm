@@ -234,8 +234,7 @@ class mce_stat {
                 for(j = 2; j < nbod; j++)
                   for(i = 1; i<j ; i++)
                   {
-                    //if (_sys.time() > 2)
-                    // lprintf(_log,"time= %f,%f %f %f,%f %f %f\n", _sys.time(), shared[i][0].pos(),shared[i][1].pos(),shared[i][2].pos(), shared[j][0].pos(), shared[j][1].pos(), shared[j][2].pos());
+                    
                     if ( shared[i][0].bb_ne() >= shared[j][0].bb_sw() && shared[j][0].bb_ne() >= shared[i][0].bb_sw())
                       if (shared[i][1].bb_ne() >= shared[j][1].bb_sw() && shared[j][1].bb_ne() >= shared[i][1].bb_sw())
                         if (shared[i][2].bb_ne() >= shared[j][2].bb_sw() && shared[j][2].bb_ne() >= shared[i][2].bb_sw())
@@ -243,6 +242,7 @@ class mce_stat {
                           
                           if (_sys[i].mass() > 0 && _sys[j].mass() > 0)
                           {
+                            //lprintf(_log,"time= %f,%f %f %f,%f %f %f\n", _sys.time(), shared[i][0].pos(),shared[i][1].pos(),shared[i][2].pos(), shared[j][0].pos(), shared[j][1].pos(), shared[j][2].pos());
                             
                             double dx0 = shared[i][0].pos() - shared[j][0].pos();
                             double dy0 = shared[i][1].pos() - shared[j][1].pos();
@@ -330,8 +330,8 @@ class mce_stat {
                               //eliminate the planet j
                               for (int c = 0; c < 3;c++)
                               {
-                                _sys[j][c].pos() *= -1.0;
-                                _sys[j][c].vel() *= -1.0;
+                                _sys[j][c].pos() *= 100;
+                                _sys[j][c].vel() = 0.0;
                               }
                               _sys[j].mass() = 0.0;
                               
@@ -365,8 +365,7 @@ class mce_stat {
                     {
                       if (_sys[j].mass() > 0)
                       {
-                        //lprintf(_log,"Hitting with the sun detected: j=%d, %f %f %f, %f %f %f\n", j, shared[j][0].vel(), shared[j][1].vel(), shared[j][2].vel(), _sys[j][0].vel(), _sys[j][1].vel(), _sys[j][2].vel());
-                        lprintf(_log,"Hitting with the sun detected: time = %f, j=%d,\n", _sys.time(),j);
+                                          
                         //x cross v
                         float hx = shared[j][1].pos()*shared[j][2].vel() - shared[j][2].pos()*shared[j][1].vel();
                         float hy = shared[j][2].pos()*shared[j][0].vel() - shared[j][0].pos()*shared[j][2].vel();
@@ -382,6 +381,7 @@ class mce_stat {
                         
                         if (q <= _sys[i].attribute(0)) // less than or equal the radius of the sun
                         {
+                          lprintf(_log,"Hitting with the sun detected: time = %f, j=%d\n", _sys.time(),j);
                           // modify the position and velocity of the sun
                           float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
                           for( int c = 0; c<3 ; c++)
@@ -420,7 +420,7 @@ class mce_stat {
                       }
                       else
                       {
-                        lprintf(_log,"3 planets in collision: System halted !\n");
+                        lprintf(_log,"2 planets and the sun in collision: System halted !\n");
                         log::system(_log, _sys);
                         _sys.set_disabled();
                         

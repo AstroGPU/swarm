@@ -139,9 +139,9 @@ public: //! Construct for class hermite integrator
 				
 			PS = vel;
 		}
-		
-		//typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[3]; // shared data for nit, dynold, dyno in nonlinear solver
-		//shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
+		//! shared data to store temporary for calculating nit, dynold, dyno in nonlinear solver
+		typedef DoubleCoalescedStruct<SHMEM_CHUNK_SIZE> shared_para_t[nbod][3]; 
+		shared_para_t& shared_para = * (shared_para_t*) system_shared_data_pointer(this,compile_time_param) ;
 		
                 for(int iter = 0 ; (iter < _max_iterations) && sys.is_active() ; iter ++ ) 
 		{
@@ -178,21 +178,14 @@ public: //! Construct for class hermite integrator
 			}// end of startb			
 			
 			/// fixed point iteration
-			if (thread_in_system() == 0)
-			{
-				sys.attribute(0) = 0;//int nit = 0;
-				sys.attribute(1) = 0.0;//double dynold = 0.0;
-				sys.attribute(2) = 1.0;//double dyno = 1.0;
-			}
+			int nit = 0;
+			double dynold = 0.0;
+			double dyno = 1.0;
+			
 			__syncthreads();	
-			while (sys.attribute(2) > uround)
+			while (dyno > uround)
 			{
 				/// rknife
-				if (thread_in_system() == 0)
-				{
-					sys.attribute(2) = 0.0;
-				}
-				__syncthreads();
 				
 				for(int js=0; js<ns; js++)
 				{
@@ -211,40 +204,42 @@ public: //! Construct for class hermite integrator
                                        
 					ZQ[is] = sum;
 				}
-				atomicAdd(&sys.attribute(2),ss);
+				
+				shared_para[b][c].value() = ss;
                                 
 				__syncthreads();
-
+                                //! use thread 0 to sum up the error
 				if (thread_in_system() == 0)
 				{
-					sys.attribute(2) = sqrt(sys.attribute(2)/(ns*3*nbod));
-					// end of rknife
-                                        
-					sys.attribute(0) = sys.attribute(0) + 1;
-                                                                                
-                                        //lprintf(*_log,"%d %d %d: %f %f\n", iter,b,c, sys.attribute(0),sys.attribute(2));
-                                        
-                                        if (sys.attribute(0) >= 50)
-                                        {
-                                                lprintf(*_log,"no convergence of iteration: %f\n", sys.attribute(0));
-                                                sys.set_inactive();
-                                                
-                                        }
-                                                                  
+                                  double sum = 0;
+                                  for (int i1 = 0; i1 < nbod; i1++)
+                                    for (int i2 = 0; i2 < 3; i2++)
+                                      sum += shared_para[i1][i2].value();
+                                  shared_para[0][0].value() = sum;
+				
 				}
 				__syncthreads();
+                                //! store the accumulated error to the local variable
+                                dyno = sqrt(shared_para[0][0].value()/(ns*3*nbod));
+                                //! increase the number of iteration
+                                nit++;
                                 
-                                if (sys.attribute(0) >= 50) break;
+                                if (nit >= 50) 
+                                {
+                                  if (thread_in_system() == 0)
+                                  {
+                                    lprintf(*_log,"no convergence of iteration: %d\n", nit);
+                                    sys.set_inactive();
+                                  }
+                                  break;
+                                }
                                                                 
-                                if ((sys.attribute(1) < sys.attribute(2)) && (sys.attribute(2) < 10*uround)) 
+                                if ((dynold < dyno) && (dyno < 10*uround)) 
                                    break;
                                 
                                 __syncthreads();
                                 
-                                if (thread_in_system() == 0)
-                                {
-                                  sys.attribute(1) = sys.attribute(2);
-                                }
+                                dynold = dyno;
                                 
                                 
 			}// end of fixed point iteration.
@@ -261,13 +256,15 @@ public: //! Construct for class hermite integrator
 				sum += F[is]*B[is];
 			vel = vel + sum;
 			
-                        //lprintf(*_log,"%d %d %d: %f %f\n", iter, b,c, pos,vel);
+                        
                         /// Finalize the step
 			if( (b < nbod) && (c < 3) )
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
-			
+                        __syncthreads();
+// 			if (sys.time() >= 21)
+//                           lprintf(*_log,"%f %d %d: %f %f\n", sys.time(), b,c, pos,vel);
 			/// Monitor collision-detection
                          montest(thread_in_system(), b, c, c_pos, c_vel);  
                          __syncthreads();
@@ -283,19 +280,7 @@ public: //! Construct for class hermite integrator
 		}
 
 	}
-__device__ double atomicAdd(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                              (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed,
-                        __double_as_longlong(val +
-                               __longlong_as_double(assumed)));
-    } while (assumed != old);
-    return __longlong_as_double(old);
-}
+
 template<size_t nsd,size_t nmd>
 GPUAPI void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {

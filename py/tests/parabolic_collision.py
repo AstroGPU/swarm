@@ -8,23 +8,23 @@ class ParabolicTest(abstract.IntegrationTest):
     collision happens at exactly t= 1.885638833885 for nbod=3
     """
     cfg = swarmng.config(
-            integrator = "irk2",
+            integrator = "hermite",
             nbod       = 3,
-            time_step  = .01,
+            time_step  = .001,
             nogpu      = 0,
             log_writer= "bdb",
             log_output_db = "prab.db",
             deactivate_on_collision= 1
             )
     required_destination_time = 1.885638833885
-    destination_time = 21
+    destination_time = 21.1
 
     def createEnsemble(self):
         nsys = 4
         nbod = 3
         R = 5
         mu = 1
-        mass_planet = 0.001
+        mass_planet = 1e-4
 
 
         ens = swarmng.DefaultEnsemble.create(nbod,nsys)
@@ -53,7 +53,7 @@ class ParabolicTest(abstract.IntegrationTest):
         rs = self.ref[0]
         s = self.ens[0]
         print rs[0].pos, rs[1].pos, rs[2].pos, rs[1].vel, rs[2].vel
-        print s[0].pos, s[1].pos, s[2].pos
+        print s[0].pos, s[1].pos, s[1].vel, s[2].pos, s[2].vel
         print s.time
         max_deltaE = swarmng.find_max_energy_conservation_error(self.ens,self.ref)
         print("Max energy conservation error %g" % max_deltaE)
