@@ -311,7 +311,7 @@ class mce_stat {
                               ///i is the index of the heavier planet
                               if (_sys[i].mass() < _sys[j].mass()) {int k=i; i=j;j=k; }
                               
-                              lprintf(_log,"Hitting detected: i = %d, j = %d, time= %f\n", i,j,_sys.time()+tmin);
+                              lprintf(_log,"Hitting detected: sysid = %d, i = %d, j = %d, time= %f\n",_sys.id(), i,j,_sys.time()+tmin);
                               
                               float msum = _sys[i].mass() + _sys[j].mass();
                               float mredu = _sys[i].mass()*_sys[j].mass()/msum;
@@ -330,10 +330,10 @@ class mce_stat {
                               //eliminate the planet j
                               for (int c = 0; c < 3;c++)
                               {
-                                _sys[j][c].pos() *= 100;
-                                _sys[j][c].vel() = 0.0;
-                              }
-                              _sys[j].mass() = 0.0;
+                                 _sys[j][c].pos() *= 100;
+                                 _sys[j][c].vel() = 0.0;
+                               }
+                               _sys[j].mass() = 0.0;
                               
                                                                                   
                             }
@@ -381,7 +381,7 @@ class mce_stat {
                         
                         if (q <= _sys[i].attribute(0)) // less than or equal the radius of the sun
                         {
-                          lprintf(_log,"Hitting with the sun detected: time = %f, j=%d\n", _sys.time(),j);
+                          lprintf(_log,"Hitting with the sun detected: sysid = %d, time = %f, j=%d\n", _sys.id(),_sys.time(),j);
                           // modify the position and velocity of the sun
                           float tmp2 = _sys[j].mass()/(_sys[j].mass()+_sys[i].mass());
                           for( int c = 0; c<3 ; c++)
@@ -393,8 +393,8 @@ class mce_stat {
                           //eliminate the planet j
                           for (int c = 0; c < 3;c++)
                           {
-                            _sys[j][c].pos() *= -1.0;
-                            _sys[j][c].vel() *= -1.0;
+                            _sys[j][c].pos() *= 100.0;
+                            _sys[j][c].vel() *= 0.0;
                           }
                           _sys[j].mass() = 0.0;
                           

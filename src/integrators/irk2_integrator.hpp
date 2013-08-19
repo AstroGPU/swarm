@@ -150,8 +150,11 @@ public: //! Construct for class hermite integrator
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
 			}
+			//! Save the current state to the local variables
 			c_pos = sys[b][c].pos();
                         c_vel = sys[b][c].vel();
+			pos = c_pos;
+			vel = c_vel;
 			// startb
 			if (iter > 0)
 			{
@@ -224,7 +227,7 @@ public: //! Construct for class hermite integrator
                                 //! increase the number of iteration
                                 nit++;
                                 
-                                if (nit >= 50) 
+                                if (nit >= 100) 
                                 {
                                   if (thread_in_system() == 0)
                                   {
@@ -267,7 +270,7 @@ public: //! Construct for class hermite integrator
 //                           lprintf(*_log,"%f %d %d: %f %f\n", sys.time(), b,c, pos,vel);
 			/// Monitor collision-detection
                          montest(thread_in_system(), b, c, c_pos, c_vel);  
-                         __syncthreads();
+                        __syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 

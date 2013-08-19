@@ -8,7 +8,7 @@ class ParabolicTest(abstract.IntegrationTest):
     collision happens at exactly t= 1.885638833885 for nbod=3
     """
     cfg = swarmng.config(
-            integrator = "hermite",
+            integrator = "irk2",
             nbod       = 3,
             time_step  = .001,
             nogpu      = 0,
@@ -17,14 +17,14 @@ class ParabolicTest(abstract.IntegrationTest):
             deactivate_on_collision= 1
             )
     required_destination_time = 1.885638833885
-    destination_time = 21.1
+    destination_time = 50
 
     def createEnsemble(self):
         nsys = 4
         nbod = 3
         R = 5
         mu = 1
-        mass_planet = 1e-4
+        mass_planet = 1e-8
 
 
         ens = swarmng.DefaultEnsemble.create(nbod,nsys)
