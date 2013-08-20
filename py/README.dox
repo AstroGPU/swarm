@@ -7,7 +7,6 @@ The directory structure is:
 * swarmng: meant to be used as a Python package, it defines the interface to C++ library
 as well as other API that is implemented in Python
 * test: is for unit testing. The tests can be run by running the test/run.py in that directory.
-* samples: is for sample code that is distributed with swarm as a starting point
 * bin: some Python code that is meant to be used as command-line commands.
 
 
