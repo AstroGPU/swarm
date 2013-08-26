@@ -1,4 +1,5 @@
 SET(REQUIRED_CUDA_VERSION 3.2)
+SET(CUDA_MAXREGCOUNT 63 CACHE STRING "Maximum number of regiters per thread")
 SET(GENERATE_FERMI TRUE CACHE BOOL "Wether to generate machine code for Fermi architecture")
 SET(GENERATE_GT200 FALSE CACHE BOOL "Wether to generate machine code for GT200 architecture")
 SET(GENERATE_KEPLER FALSE CACHE BOOL "Wether to generate machine code for Kepler architecture [Experimental, not thoroughly tested]")
@@ -11,6 +12,13 @@ SET(CUDA_NVCC_FLAGS
 	-Xcudafe --diag_suppress=initialization_not_reachable;
 	-w
 	)
+
+IF(${CUDA_MAXREGCOUNT} GREATER 0)
+	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
+		-maxrregcount=${CUDA_MAXREGCOUNT};
+		)
+ENDIF()
+
 IF(${GENERATE_FERMI})
 	SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} 
 		-gencode arch=compute_20,code=sm_20;
