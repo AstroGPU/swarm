@@ -50,7 +50,7 @@ private:
 public: //! Construct for class hermite integrator
 	irk2(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
-		ns = cfg.optional("method",4);
+		ns = cfg.optional("method",6);
 		
 	}
 
