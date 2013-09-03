@@ -15,6 +15,8 @@ endif()
 
 # GPU Integrators
 ADD_PLUGIN(plugins/hermite.cu Hermite FALSE  "Hermite w/ Fixed Time step GPU Integrator")
+ADD_PLUGIN(plugins/irk2.cu irk2 FALSE  "Implicit Runge-Kutta w/ Fixed Time step GPU Integrator")
+ADD_PLUGIN(plugins/irk2_cpu.cpp irk2_cpu TRUE  "Implicit Runge-Kutta w/ Fixed Time step CPU Integrator")
 ADD_PLUGIN(plugins/hermite_adap.cu Hermite_Adaptive TRUE  "Hermite w/ Adaptive Time step GPU Integrator")
 ADD_PLUGIN(plugins/rkck_adaptive.cu RKCK_Adaptive TRUE  "Runge-Kutta Adaptive time step Integrator")
 ADD_PLUGIN(plugins/rkck_fixed.cu    RKCK_Fixed    FALSE  "Runge-Kutta Fixed time step Integrator")

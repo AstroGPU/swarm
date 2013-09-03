@@ -64,7 +64,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
 	double spacing_factor = cfg.optional( "spacing_factor", 1.4 );
-    double planet_mass = cfg.optional( "planet_mass" , .001 );
+    double planet_mass = cfg.optional( "planet_mass" , .0001 );
 	double ejection_factor  = cfg.optional("ejection_factor", 1.0/sqrt(2) );
 
 
@@ -81,9 +81,10 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		// add near-Jupiter-mass planets on nearly circular orbits
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
 		{
-			double rmag = pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
+			double rmag = 10*pow( spacing_factor ,int(bod-1));  // semi-major axes exceeding this spacing results in systems are stable for nbody=3 and mass_planet=0.001
 			double vmag = sqrt(2*mass_sun/rmag) * ejection_factor ;  // spped for uniform circular motion
-			double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
+			//double theta = (2.*M_PI*rand())/static_cast<double>(RAND_MAX);  // randomize initial positions along ecah orbit
+			double theta = bod*M_PI/4;
 			x  =  rmag*cos(theta); y  = rmag*sin(theta); z  = 0;
 			vx = -vmag*sin(theta); vy = vmag*cos(theta); vz = 0.;
 

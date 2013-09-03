@@ -162,20 +162,20 @@ public: //! Construct for class hermite integrator
                         }
                         acc0 = acc1, jerk0 = jerk1;
                         
-                        //lprintf(*_log,"%d %d %d: %f %f\n", iter, b,c, pos,vel);
+                        
                         /// Finalize the step
                         if( (b < nbod) && (c < 3) )
                                 { sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
                         if( thread_in_system()==0 ) 
                                 sys.time() += h;
-                                                
-                       
+                        __syncthreads();                        
+                        
                         montest(thread_in_system(), b, c, c_pos,c_vel);
                         __syncthreads();
 
                         
                         if( sys.is_active() && thread_in_system()==0 )  {
-                            if( sys.time() >= _destination_time ) 
+                            if( sys.time() > _destination_time -1e-12) 
                             {   sys.set_inactive(); }
                         }
 

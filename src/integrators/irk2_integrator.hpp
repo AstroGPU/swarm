@@ -50,7 +50,7 @@ private:
 public: //! Construct for class hermite integrator
 	irk2(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
 		_time_step =  cfg.require("time_step", 0.0);
-		ns = cfg.optional("method",6);
+		ns = cfg.optional("method",4);
 		
 	}
 
@@ -114,7 +114,7 @@ public: //! Construct for class hermite integrator
 		
 		double F[nsd], YH, QQ, FS, PS, ZQ[nsd];
 		
-		const double uround = 1e-16;
+		const double uround = 2.221e-16;
 		
 		// local variables
 		montest.init( thread_in_system() );
@@ -149,6 +149,7 @@ public: //! Construct for class hermite integrator
                         
 			if( sys.time() + h > _destination_time ) {
 				h = _destination_time - sys.time();
+                                coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,h);
 			}
 			//! Save the current state to the local variables
 			c_pos = sys[b][c].pos();
@@ -232,7 +233,7 @@ public: //! Construct for class hermite integrator
                                   if (thread_in_system() == 0)
                                   {
                                     lprintf(*_log,"no convergence of iteration: %d\n", nit);
-                                    sys.set_inactive();
+                                    sys.set_disabled();
                                   }
                                   break;
                                 }
@@ -266,14 +267,13 @@ public: //! Construct for class hermite integrator
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
                         __syncthreads();
-// 			if (sys.time() >= 21)
-//                           lprintf(*_log,"%f %d %d: %f %f\n", sys.time(), b,c, pos,vel);
+                        
 			/// Monitor collision-detection
-                         montest(thread_in_system(), b, c, c_pos, c_vel);  
+                        montest(thread_in_system(), b, c, c_pos, c_vel);  
                         __syncthreads();
 			
 			if( sys.is_active() && thread_in_system()==0 )  {
-			    if( sys.time() >= _destination_time ) 
+			    if( sys.time() > _destination_time - 1e-12) 
 			    {	sys.set_inactive(); }
 			}
 
