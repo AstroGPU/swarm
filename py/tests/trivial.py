@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 from common import *
 ## @file trivial.py Trivial unit tests that basic features work.
 #

@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 *-*
 ## @file stats_tutorial.py Tutorial on extracting statistical information
 # from a data file

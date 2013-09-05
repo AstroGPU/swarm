@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file __init__.py Loader of libswarmng_ext and root of the @ref swarmng package.
 #
 # To read the documentation generated from this file refer to @ref swarmng

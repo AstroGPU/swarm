@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf8 -*-
 
 # @page TutorialPythonEjection Testing for ejection of planets
 #
@@ -11,6 +12,7 @@
 # The first step is to import the swarmng module. We also use make_test_case from the 
 # @ref TutorialPythonEnsemble "Ensemble generation tutorial" to generate our test case.
 import swarmng
+import random
 from ensemble_tutorial import make_test_case
 # \subsection candi Configuration and initial conditions
 # RMAX is the maximum radius of the planetary system. If the planets is farther than RMAX from
@@ -51,7 +53,7 @@ integ.integrate()
 for s in ens:
   for b in s:
     if( b.distance_to_origin() > RMAX ):
-      assert(sys.state == -1)
+      assert(s.state == -1)
 #
 #
 # 

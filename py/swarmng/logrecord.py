@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file logrecord.py Routines and classes to access a binary log record structure
 #
 # To read the documentation generated from this file refer to @ref swarmng.logrecord

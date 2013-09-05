@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file plot_tutorial.py Tutorial for extracting and plotting information from the BDB log files.
 #  refer to @ref TutorialPythonQueryPlot for the formatted version
 

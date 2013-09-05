@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file parabolic_collision.py Testing collision detection module by putting planets on a parabolic orbit.
 from common import *
 from math import sqrt

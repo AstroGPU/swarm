@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file resume_tutorial.py Tutorial on resuming integration from saved snapshots
 # 
 # refer to @ref TutorialPythonResume for formatted version.

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file integration_plot_tutorial.py Advanced tutorial
 # on how to examine the ensemble before and after
 # the integration to plot meaningful results

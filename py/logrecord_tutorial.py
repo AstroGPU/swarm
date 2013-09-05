@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file logrecord_tutorial.py Tutorial for using the @ref swarmng.logrecord.LogRecord class for accessing records from a BDB log file.
 
 # @page TutorialPythonLogRecord Examining records from the log file.

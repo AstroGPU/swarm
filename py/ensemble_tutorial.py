@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf8 -*-
 
 # @page TutorialPythonEnsemble Tutorial for generating ensembles
 #
@@ -8,6 +9,12 @@
 #
 # The first step is always to import swarmng module, make sure that it is in PYTHONPATH.
 import swarmng
+import random
+import math
+
+def fill(e, v):
+    for i in range(0,len(e)):
+        e[i] = v
 #
 #
 # For a trivial test case, we create an ensemble of systems with star at the origin and planets orbiting in
@@ -36,10 +43,10 @@ def make_test_case(nsys = 16, nbod = 3 , spacing_factor = 1.4, planet_mass = 0.0
 
       for j in range(1,d.nbod):
           r = spacing_factor ** (j-1)
-          v = sqrt(1/r) * ejection_factor
-          phi = random.uniform(0,2*pi)
-          s[j].pos = [  r*cos(phi), r*sin(phi), 0 ]
-          s[j].vel = [ -v*sin(phi), v*cos(phi), 0 ]
+          v = math.sqrt(1/r) * ejection_factor
+          phi = random.uniform(0,2*math.pi)
+          s[j].pos = [  r*math.cos(phi), r*math.sin(phi), 0 ]
+          s[j].vel = [ -v*math.sin(phi), v*math.cos(phi), 0 ]
           s[j].mass = planet_mass 
   return d;
 

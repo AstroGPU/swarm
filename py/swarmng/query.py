@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file query.py Support routines for @ref swarm-query "swarm-query.py" command-line utility.
 #
 #  The routines here are not documented because it solely consists of generating

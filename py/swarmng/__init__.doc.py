@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file __init__.doc.py 
 # This is the documentation for libswarmng_ext, but because
 # all the symbols from libswarmng_ext are included in the swarmng module

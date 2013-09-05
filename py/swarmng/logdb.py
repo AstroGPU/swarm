@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file logdb.py Routines and classes to access the BDB log file
 # To read the documentation generated from this file refer to @ref swarmng.logdb
 

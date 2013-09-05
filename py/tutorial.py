@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file tutorial.py Beginner tutorial on how to interface with the integrators.
 #  refer to @ref TutorialPython for the formatted version
 

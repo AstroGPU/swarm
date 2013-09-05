@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file run.py Runner for all the unittests. Execute this file from the interpreter to run all the unit tests.
 #
 #  for more information on command-line arguments, look at 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 ## @file collision_course.py Testing collision detection module by putting planets on the same orbit in opposite directions
 from common import *
 from math import sqrt

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 *-*
 ## @file swarm-query.py Command-line utility to examine BDB log file, for usage see @ref swarm-query
 import sys

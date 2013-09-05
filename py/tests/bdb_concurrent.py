@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 
 ## @file bdb_concurrent.py Testing that concurrent reads from a BDB log file works
 # 
