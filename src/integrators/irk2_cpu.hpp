@@ -18,7 +18,8 @@
 
 /*! \file irk2_cpu.hpp
  *   \brief Defines and implements \ref swarm::cpu::irk2_cpu class - the 
- *          CPU implementation of PEC2 Hermite integrator.
+ *          CPU implementation of implicit Runge-Kutta integrator,
+ *          see the paper \ref http://www.math.mcgill.ca/~gantumur/docs/down/gnicodes.pdf for more details.
  *
  */
 
@@ -51,7 +52,7 @@ class irk2_cpu : public integrator {
         double _time_step;
         mon_params_t _mon_params;
 
-public:  //! Construct for hermite_cpu class
+public:  //! Construct for irk2_cpu class
         irk2_cpu(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
                 _time_step =  cfg.require("time_step", 0.0);
         }
@@ -70,7 +71,9 @@ public:  //! Construct for hermite_cpu class
                 return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
         }
 
-        //! Calculate the force field. 
+        /** Calculate the force field,
+        * given position and acceleration of all bodies in the system
+        */
         void calcForces(ensemble::SystemRef& sys,double* pos, double* acc){
                
           const int nbod = sys.nbod();
@@ -92,14 +95,14 @@ public:  //! Construct for hermite_cpu class
                         double r2 = dx[0]*dx[0] + dx[1]*dx[1] + dx[2] * dx[2];
                         double rinv = 1 / ( sqrt(r2) * r2 ) ;
                         
-                        /// Update acc/jerk for i
+                        /// Update acc for i
                         const double scalar_i = +rinv*sys[j].mass();
                         for(int c = 0; c < 3; c++) {
                                 acc[3*i+c] += dx[c]* scalar_i;
                                 
                         }
 
-                        /// Update acc/jerk for j
+                        /// Update acc for j
                         const double scalar_j = -rinv*sys[i].mass();
                         for(int c = 0; c < 3; c++) {
                                 acc[3*j+c] += dx[c]* scalar_j;
@@ -108,7 +111,9 @@ public:  //! Construct for hermite_cpu class
                 }
         }
 
-        //! Integrate ensembles
+        /** Integrate ensembles
+         * Default method is the order of 12
+         */
         void integrate_system(ensemble::SystemRef sys){
                 const int nbod = sys.nbod();
                 const static int nsd = 6, nmd = 3, ndgl = 3*nbod;
@@ -163,7 +168,7 @@ public:  //! Construct for hermite_cpu class
                                 coef<nsd,nmd>(ns,C,B,BC,AA,E,SM,AM,h);
                         }
                         
-                        
+                        // Update 
                         if (iter > 0) 
                         {
                           int ns1 = ns;
@@ -266,6 +271,9 @@ public:  //! Construct for hermite_cpu class
 
                 }
         }
+        /** Set coefficients for a particular method of oder 4, 8 or 12
+         * The meaning of the coefficients is described in the paper \ref http://www.math.mcgill.ca/~gantumur/docs/down/gnicodes.pdf
+         */
 template<size_t nsd,size_t nmd>
 void coef(int ns, double* C, double* B, double* BC, double (&AA)[nsd][nsd], double (&E)[nsd][nsd+nmd], double* SM, double* AM, double hStep)
 {
