@@ -2,10 +2,11 @@
 
 TESTDIR=`dirname $0`
 
+OUTPUTDIR=Testing
 
 cat > testing_log.cfg <<EOF
-log_output_db=testing_log.db
-log_output=testing_log.bin
+log_output_db=$OUTPUTDIR/testing_log.db
+log_output=$OUTPUTDIR/testing_log.bin
 log_interval=0.1
 destination_time=1
 integrator=hermite_cpu_log
@@ -18,12 +19,12 @@ EOF
 
 SWARM=bin/swarm
 
-rm -f testing_log.db testing_log.bin.raw
+rm -f $OUTPUTDIR/testing_log.db $OUTPUTDIR/testing_log.bin.raw $OUTPUTDIR/__db.*
 
 $SWARM integrate -I $TESTDIR/test.4.in.txt  -c testing_log.cfg  log_writer=bdb
 $SWARM integrate -I $TESTDIR/test.4.in.txt  -c testing_log.cfg  log_writer=binary
-$SWARM query -f testing_log.db > testing_log.db.txt
-$SWARM query -f testing_log.bin > testing_log.bin.txt
+$SWARM query -f $OUTPUTDIR/testing_log.db > $OUTPUTDIR/testing_log.db.txt
+$SWARM query -f $OUTPUTDIR/testing_log.bin > $OUTPUTDIR/testing_log.bin.txt
 
 
-diff testing_log.db.txt $TESTDIR/test.4.ref.txt && diff testing_log.bin.txt $TESTDIR/test.4.ref.txt
+diff $OUTPUTDIR/testing_log.db.txt $TESTDIR/test.4.ref.txt && diff $OUTPUTDIR/testing_log.bin.txt $TESTDIR/test.4.ref.txt

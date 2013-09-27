@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 from math import *
 import random
 import swarmng

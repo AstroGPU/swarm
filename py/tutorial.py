@@ -1,5 +1,16 @@
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
+## @file tutorial.py Beginner tutorial on how to interface with the integrators.
+#  refer to @ref TutorialPython for the formatted version
+
+
 # @page TutorialPython Beginner Python Tutorial
-# First thing is to import swarmng package. It is located in \<SOURCE DIRECTORY\>/py/swarmng/.
+# In this tutorial, we explore the basic functionality of Swarm-NG, note that this tutorial
+# is too short and only covers commonly used API. For more examples look at other Python tutorials.
+#
+# Source code for this tutorial can be found at @ref py/tutorial.py
+#
+# First thing is to import swarmng package. It is located in `\<SOURCE DIRECTORY\>/py/swarmng/`
 # It takes care of loading the libswarmng_ext.so; it also contains some Pythonified
 # API on top of libswarmng_ext. But please run the scripts
 # from your build directory so swarmng can find your libraries.

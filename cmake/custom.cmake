@@ -26,7 +26,7 @@ ENDMACRO()
 ADD_CUSTOM_TARGET(benchmark)
 
 BENCHMARK_INTEGRATOR(Hermite)
-BENCHMARK_INTEGRATOR(Hermite_Adaptive)
+#BENCHMARK_INTEGRATOR(Hermite_Adaptive)
 
 SET(cfg Hermite)
 SET(nbod 3)

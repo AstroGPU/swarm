@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+# -*- coding: utf8 -*-
 
-# Testing that concurrent reads from a file works
+## @file bdb_concurrent.py Testing that concurrent reads from a BDB log file works
 # 
 # swarm command is run to generate a log file and it is scheduled to remove it
 # immedaitely after the integration is done.
@@ -9,6 +10,7 @@
 #
 #
 # 
+
 import swarmng
 import sys
 import os
@@ -19,12 +21,13 @@ from swarmng.range_type import Range
 from swarmng.query import truncate
 from argparse import Namespace
 import unittest
+from bsddb3.db import DBError
 
 class BDBConcurrencyTest(unittest.TestCase):
   def runTest(self):
     ## Setting up the output log file
-    output_file_name='testing_log.db'
-    final_time = 10
+    output_file_name='Testing/testing_log.db'
+    final_time = 100
     
     try:
       os.remove(output_file_name)
@@ -72,18 +75,21 @@ class BDBConcurrencyTest(unittest.TestCase):
     else:
       child = psutil.Process(pid)
       
-      time.sleep(.1)
+      time.sleep(.05)
       counter = 0
       while child.status != psutil.STATUS_ZOMBIE:
-	# Get the last_time for system 0, it
-	# should be greater than 0
-	last_time = do_query()
-	self.assertGreater(last_time,0)
-	
-	# Only increment the counter if it is not at
-	# the final time
-	if(last_time < final_time):
-	  counter += 1
+	try:
+	    # Get the last_time for system 0, it
+	    # should be greater than 0
+	    last_time = do_query()
+	    self.assertGreater(last_time,0)
+	    
+	    # Only increment the counter if it is not at
+	    # the final time
+	    if(last_time < final_time):
+	      counter += 1
+	except DBError as e:
+	    print("Querying failed", e)
 	time.sleep(.05)
 	
       # The query must have run before the integration

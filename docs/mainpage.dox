@@ -1,4 +1,4 @@
-/** @mainpage Swarm-NG library 
+/** @mainpage Overview
 
  \brief Swarm-NG is a collection of code to help
 scientists and engineers harness the power of GPUs.  In the early
@@ -13,18 +13,26 @@ the efficient parallel integration of user-defined systems of ordinary
 differential equations.
 
 
- \Authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, and others from the Swarm-NG development team
+ \Authors Aaron Boley, Saleh Dindar, Eric B. Ford, Mario Juric, Young In Yeo, Thien Nguyen, Ying Zhang and others from the Swarm-NG development team
 
 
 \b Table \b of \b contents
  - \ref BuildSwarm
  - \ref SwarmExec "Using command-line interface"
+ - \ref swarm-query "Running queries on log files from command line"
  - **Using C++ library interface**
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialEnsemble
  - **Using Python library interface**
         - \ref TutorialPython
+        - \ref TutorialPythonQueryPlot
+        - \ref TutorialPythonLogRecord
+        - \ref TutorialPythonEnsemble
+        - \ref TutorialPythonEjection
+        - \ref TutorialPythonResume
+        - \ref TutorialPythonIntegrationPlot
+        - \ref TutorialPythonStats
  - **Using the plugin system to extend the library**
 	- \ref TutorialPropagator
 	- \ref TutorialMonitor

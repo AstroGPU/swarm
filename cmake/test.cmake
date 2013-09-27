@@ -19,8 +19,6 @@ ADD_TEST(NAME "BDB"
 INCLUDE(cmake/test_integrators.cmake)
 
 
-INCLUDE(cmake/test_monitors.cmake)
-
 ADD_TEST(NAME "Python_Tests"
 	COMMAND "${CMAKE_SOURCE_DIR}/py/tests/run.py")
 
@@ -29,7 +27,7 @@ ADD_TEST(NAME "Python_Tests"
 # config file (without extension). Just put in.txt and out.txt in that folder alongside with
 # configuration files and TEST_SCENARIO integrates the configuration and verifies it against 
 # the test case (in.txt/out.txt).
-TEST_SCENARIO(sample CPU)
+#TEST_SCENARIO(sample CPU)
 
 ## Add your test cases after this line (or include a file containing test cases)
 

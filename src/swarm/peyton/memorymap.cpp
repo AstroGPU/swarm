@@ -69,7 +69,9 @@ void MemoryMap::open(const std::string &fn, size_t length_, size_t offset, int m
 	else if(mode & wo) { flags |= O_WRONLY | O_CREAT; }
 	else ERROR("Invalid mode parameter - mode needs to include ro, wo or rw");
 
-	int fd = ::open(fn.c_str(), flags);
+	int create_mode = 00600;
+
+	int fd = ::open(fn.c_str(), flags, create_mode);
 
 	if(fd == -1)
 	{

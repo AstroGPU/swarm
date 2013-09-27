@@ -18,6 +18,14 @@ There is a default set of tests that you can run by simpily type:
 make test 
 \endverbatim
 
+\subsection pytest Running Python tests separately
+Python tests are included in the master make test, but the individual Python
+tests are not shown. To run Python tests separately and see their status, run
+\verbatim
+make pytest
+\endverbatim
+
+
 \subsection option Running special test set
 
 Besides the default test suite, Swarm provides options for users to select different

@@ -50,17 +50,17 @@ integrated and synchronized to this time </TD></TR>
 <TR><TD> text_output  </TD><TD>    </TD><TD> Text output file    </TD></TR>
 
 
-<TR><TD rowspan="5" >  SwarmNG library   </TD><TD> integrator </TD> <TD> hermite </TD> <TD> Name of The integrator plugin used for integration</TD> </TR>
+<TR><TD rowspan="3" >  SwarmNG library   </TD> <TD> nogpu </TD> <TD> 0 </TD> <TD> If set to 1, the GPU is not initialized. `nogpu = 1` should be used when running Swarm without an actual GPU on the system. </TD></TR>
 <TR><TD> system_per_block    </TD><TD>   SHMEM_CHUNK_SIZE    </TD><TD>  Number of systems in a CUDA block    </TD></TR>
 <TR><TD> CUDA_DEVICE    </TD><TD> 0       </TD><TD> Number of the CUDA devices to use (Only used if there are more than one GPUs on a system)  </TD></TR>
+
+<TR><TD rowspan="3" > Integrator <TD> integrator </TD> <TD>  </TD> <TD> Name of The integrator plugin used for integration</TD> </TR>
 <TR><TD> max_iterations   </TD><TD>       </TD><TD> Maximum number of iterations in the integration kernel internal loop    </TD></TR>
 <TR><TD> max_attempts    </TD><TD>       </TD><TD> Maximum number of attempts on running the integration kernel to finish the integration   </TD></TR>
 
 
 
-
-
-<TR><TD>Fixed step integrators</TD> <TD> time_step  </TD><TD> 0.0001 </TD> </TD></TR>
+<TR><TD>Fixed time step integrators</TD> <TD> time_step  </TD><TD> 0.0001 </TD> <TD>&nbsp; </TD></TR>
 <TR><TD rowspan="2">Adaptive step integrators</TD><TD> min_time_step </TD> <TD> </TD> <TD> Smallest step size allowed in adaptive mode </TD> </TR>
 <TR><TD> max_time_step </TD> <TD> </TD> <TD> largest step size allowed in adaptive mode </TD> </TR>
 <TR> <TD> Adaptive step Hermite Integrator </TD><TD> time_step_factor </TD> <TD> </TD> <TD> A factor that determines the effect of energy estimate on the time step </TD> </TR>
@@ -73,8 +73,8 @@ integrated and synchronized to this time </TD></TR>
         <li><em>bdb</em> writes to Berkeley DB databes (recommended)</li>
         <li><em>binary</em> writes binary files.</li>
    </ul></TD></TR>
-<TR> <TD> log_output</TD><TD>       </TD><TD>For <em>binary</em> logger: name of the output file where the log is stored     </TD></TR>
-<TR> <TD> log_output_db</TD><TD>       </TD><TD>For <em>bdb</em> logger: name of the database where the log is stored(.db extension is added) </TD></TR>
+<TR> <TD> log_output</TD><TD>       </TD><TD>For <em>binary</em> logger: path to the output file where the log is stored     </TD></TR>
+<TR> <TD> log_output_db</TD><TD>       </TD><TD>For <em>bdb</em> logger: path to the database file where the log is stored </TD></TR>
 
 
 <TR><TD>  Log interval monitor   </TD><TD> log_interval    </TD><TD>       </TD><TD>  The fixed interval time at which the system is logged (if enabled)  </TD></TR>

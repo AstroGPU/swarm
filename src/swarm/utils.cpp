@@ -44,9 +44,9 @@ int number_of_disabled_systems(defaultEnsemble ens) {
  * |v| = sqrt(2*G*M/r)*ejection_factor. 
  * We get different type of orbit based on ejection_factor:
  *    1/sqrt(2) : circular orbit
- *    < 1 : elliptical orbit
+ *    &lt; 1 : elliptical orbit
  *    = 1 : parabolic orbit
- *    > 1 : hyperbolic orbit
+ *    &gt; 1 : hyperbolic orbit
  *
  * Configuration options:
  *   nsys: Number of systems in the ensemble
@@ -64,8 +64,10 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 	int nsys = cfg.require("nsys",0);
 	int nbod = cfg.require("nbod",0);
 	double spacing_factor = cfg.optional( "spacing_factor", 1.4 );
-    double planet_mass = cfg.optional( "planet_mass" , .0001 );
+        double planet_mass = cfg.optional( "planet_mass" , .0001 );
 	double ejection_factor  = cfg.optional("ejection_factor", 1.0/sqrt(2) );
+        double star_radius = cfg.optional("star_radius", 0.1);
+        double planet_radius = cfg.optional("planet_radius", 0.001);
 
 
 	hostEnsemble ens = hostEnsemble::create( nbod, nsys );
@@ -77,6 +79,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 		double mass_sun = 1.;
 		double x=0, y=0, z=0, vx=0, vy=0, vz=0;
 		ens.set_body(sys, 0, mass_sun, x, y, z, vx, vy, vz);
+                ens[sys][0].attribute(0) = star_radius;
 
 		// add near-Jupiter-mass planets on nearly circular orbits
 		for(unsigned int bod=1;bod<ens.nbod();++bod)
@@ -90,6 +93,7 @@ swarm::hostEnsemble generate_ensemble(swarm::config& cfg)  {
 
 			// assign body a mass, position and velocity
 			ens.set_body(sys, bod, planet_mass , x, y, z, vx, vy, vz);
+                        ens[sys][bod].attribute(0) = planet_radius;
 		}
 		ens[sys].set_active();
 		ens[sys].time() = 0;
