@@ -115,26 +115,16 @@ public: //! Construct for class hermite integrator
 				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
-#if 0 // OLD
-				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#else
 				pos = pre_pos + ( (0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h) * h * h;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h )* h ;
-#endif
 			}
 			{
 				// Evaluation
 				calcForces(thread_in_system(),b,c,pos,vel,acc1,jerk1);
 				
 				// Correct
-#if 0 // OLD
-				pos = pre_pos + (0.1-0.25) * (acc0 - acc1) * h * h - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h * h * h;
-				vel = pre_vel + ( -0.5 ) * (acc0 - acc1 ) * h -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h * h;
-#else
 				pos = pre_pos + ((0.1-0.25) * (acc0 - acc1) - 1.0/60.0 * ( 7.0 * jerk0 + 2.0 * jerk1 ) * h )* h * h ;
 				vel = pre_vel + (( -0.5 ) * (acc0 - acc1 ) -  1.0/12.0 * ( 5.0 * jerk0 + jerk1 ) * h ) * h ;
-#endif
 			}
 			acc0 = acc1, jerk0 = jerk1;
 
@@ -143,15 +133,12 @@ public: //! Construct for class hermite integrator
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
-			__syncthreads();
 			montest( thread_in_system() );  
-			__syncthreads();
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
 			    {	sys.set_inactive(); }
 			}
 
-			__syncthreads();
 
 
 		}

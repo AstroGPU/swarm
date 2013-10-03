@@ -144,10 +144,10 @@ class GravitationAcc {
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		__syncthreads();
+		__threadfence_block();
 		if(ij < pair_count)
 			calc_pair(ij);
-		__syncthreads();
+		__threadfence_block();
 		if(b < nbod && c < 3){
 			acc = sum_acc(b,c);
 		}
@@ -171,7 +171,7 @@ class GravitationAcc {
 	GPUAPI double acc_planets (int ij,int b,int c)const{
 		if(ij < pair_count)
 			calc_pair(ij);
-		__syncthreads();
+		__threadfence_block();
 		if(b < nbod && c < 3){
 			return sum_acc_planets(b,c);
 		}else
@@ -194,10 +194,10 @@ class GravitationAcc {
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		__syncthreads();
+		__threadfence_block();
 		if(ij < pair_count)
 			calc_pair(ij);
-		__syncthreads();
+		__threadfence_block();
 		if(b < nbod && c < 3){
 			return sum_acc(b,c);
 		}else

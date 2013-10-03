@@ -175,9 +175,11 @@ struct launch_template_choose {
 		const int nsys = integ->get_ensemble().nsys();
 		const int tps = integ->thread_per_system(ctp);
 		const int shm = integ->shmem_per_system(ctp);
+        /*
 		if(sys_p_block == 0){
 			sys_p_block = optimized_system_per_block(SHMEM_CHUNK_SIZE, tps, shm);
 		}
+        */
 
 
 		const int nblocks = ( nsys + sys_p_block - 1 ) / sys_p_block;

@@ -187,10 +187,10 @@ class GravitationAccJerk {
 		// Write positions to shared (global) memory
 		if(b < nbod && c < 3)
 			sys[b][c].pos() = pos , sys[b][c].vel() = vel;
-		__syncthreads();
+        __threadfence_block();
 		if(ij < pair_count)
 			calc_pair(ij);
-		__syncthreads();
+        __threadfence_block();
 		if(b < nbod && c < 3){
 			sum(b,c,acc,jerk);
 		}

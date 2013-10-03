@@ -22,18 +22,25 @@
  *
  */
 
+#include "config.h"
 #include "swarm/common.hpp"
 #include "device_settings.hpp"
 
-
 #if __CUDA_ARCH__ < 200 
-    const int registers_per_thread = 128;
+        const int device_registers_per_thread = 127;
 #elif __CUDA_ARCH__ >= 200 && __CUDA_ARCH__ < 350
-    const int registers_per_thread = 64;  
+        const int device_registers_per_thread = 63;  
 #elif __CUDA_ARCH__ >= 350
-    const int registers_per_thread = 255;
+        const int device_registers_per_thread = 255;
 #else
-    #error "Current compute capability is not supported"
+        #error "Current compute capability is not supported"
+#endif
+
+        const int selected_registers_per_thread = CUDA_MAXREGCOUNT;
+#if CUDA_MAXREGCOUNT > 0
+  const int registers_per_thread = CUDA_MAXREGCOUNT;
+#else
+  const int registers_per_thread = device_registers_per_thread;
 #endif
 
 cudaDeviceProp deviceInfo;
@@ -44,8 +51,9 @@ cudaDeviceProp deviceInfo;
  */
 int optimized_system_per_block(int chunk_size, int thread_per_system
 		, int shmem_per_system){
-	return blocks_per_mp( chunk_size * thread_per_system, chunk_size * shmem_per_system) 
+	int limit =  blocks_per_mp( chunk_size * thread_per_system, chunk_size * shmem_per_system) 
 		* chunk_size ;
+    return std::min(deviceInfo.warpSize, limit);
 }
 
 //! Select cuda device
@@ -57,6 +65,8 @@ void select_cuda_device(int dev) {
 		std::cerr << "Cannot select the CUDA device. GPU integrators are disabled" << std::endl;
 
 	  cudaErrCheck( cudaGetDeviceProperties(&deviceInfo, dev) );
+    cudaDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte);
+	//cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 
 
 }
@@ -79,6 +89,8 @@ void print_device_information(){
 		  << "Max Blocksize\t"  << deviceInfo.maxThreadsPerBlock << "\n"
 		  << "Warp Size    \t"  << deviceInfo.warpSize   << "\n"
 		  << "Registers/MP \t"  << deviceInfo.regsPerBlock       << "\n"
+          << "Max Regs/thread\t"<< device_registers_per_thread  << "\n"
+          << "Current regs/thread\t"<< registers_per_thread << "\n"
 		  ;
 	  
 }

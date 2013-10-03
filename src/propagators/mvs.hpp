@@ -99,7 +99,7 @@ struct MVSPropagator {
 	GPUAPI void init()  { 
 		sqrtGM = sqrt(sys[0].mass());
 		convert_std_to_helio_pos_bary_vel_coord();
-		__syncthreads();
+		__threadfence_block();
 		acc_bc = calcForces.acc_planets(ij,b,c);
                 }
 
@@ -136,7 +136,7 @@ struct MVSPropagator {
 		}
 
 		}
-		__syncthreads();
+		__threadfence_block();
 
 		if( is_in_body_component_grid() )
 		{
@@ -171,7 +171,7 @@ struct MVSPropagator {
 			}
 		sumv /= mtot;
 		}
-		__syncthreads();
+		__threadfence_block();
 
 		if( is_in_body_component_grid() )
 		{
@@ -211,7 +211,7 @@ struct MVSPropagator {
 			}
 		sump /= mtot;
 		}
-		__syncthreads();
+		__threadfence_block();
 
 		if ( is_in_body_component_grid() ) 
 		   {
@@ -269,12 +269,12 @@ struct MVSPropagator {
 			if( is_in_body_component_grid_no_star() ) 
 			   sys[b][c].vel() += hby2 * acc_bc;
 
-			__syncthreads();
+			__threadfence_block();
 
 			// 3: Kepler Drift Step (Keplerian orbit about sun/central body)
 			if( (ij>0) && (ij<nbod)  ) 
 			    drift_kepler( sys[ij][0].pos(),sys[ij][1].pos(),sys[ij][2].pos(),sys[ij][0].vel(),sys[ij][1].vel(),sys[ij][2].vel(),sqrtGM, 2.0*hby2 );
-			__syncthreads();
+			__threadfence_block();
 
 			// TODO: check for close encounters here
 			acc_bc = calcForces.acc_planets(ij,b,c);
@@ -282,7 +282,6 @@ struct MVSPropagator {
 			// Step 4: Kick Step
 			if( is_in_body_component_grid_no_star() ) 
 			   sys[b][c].vel() += hby2 * acc_bc;
-			__syncthreads();
 
 			// Step 5
 			if ( is_in_body_component_grid() ) 

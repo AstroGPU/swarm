@@ -26,8 +26,8 @@
 #include "monitors/stop_on_ejection.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
-#include "monitors/log_transit.hpp"
-#include "monitors/log_rvs.hpp"
+//#include "monitors/log_transit.hpp"
+//#include "monitors/log_rvs.hpp"
 
 //! Declare devide_log variable
 typedef gpulog::device_log L;
@@ -48,8 +48,8 @@ integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJer
 	hermite_log_plugin("hermite_log");
 
 //! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
-integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
-	hermite_transit_plugin("hermite_transit");
+//integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
+//	hermite_transit_plugin("hermite_transit");
 
 #if __CUDA_ARCH__ >= 200
 //integrator_plugin_initializer<hermite< log_rvs<L>  , GravitationAccJerk > >
