@@ -179,10 +179,17 @@ public:  //! Construct for hermite_cpu class
 				acc0[b][c] = acc1[b][c], jerk0[b][c] = jerk1[b][c];
 			
 			sys.time() += h;
+//                         if (sys.time() >= 1)
+//                         {
+//                           printf("System at time:%.12f, iter = %d\n", sys.time(), iter);
+//                           for(int b = 0; b < nbod; b++)
+//                             printf("  Body %d Pos:%.12f %.12f %.12f Vel:%.12f %.12f %.12f\n", b, sys[b][0].pos(), sys[b][1].pos(), sys[b][2].pos(), sys[b][0].vel(),sys[b][1].vel(),sys[b][2].vel());
+//                             
+//                         }
 
 			if( sys.is_active() )  {
 				montest(0);
-				if( sys.time() >= _destination_time ) 
+				if( sys.time() > _destination_time - 1e-12 ) 
 					sys.set_inactive();
 			}
 

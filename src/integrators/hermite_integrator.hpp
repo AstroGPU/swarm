@@ -33,21 +33,38 @@ namespace swarm { namespace gpu { namespace bppt {
  */
 template< class Monitor , template<class T> class Gravitation >
 class hermite: public integrator {
-	typedef integrator base;
-	typedef Monitor monitor_t;
-	typedef typename monitor_t::params mon_params_t;
-	private:
-	double _time_step;
-	mon_params_t _mon_params;
+        typedef integrator base;
+        typedef Monitor monitor_t;
+        typedef typename monitor_t::params mon_params_t;
+        private:
+        double _time_step;
+        mon_params_t _mon_params;
 
 public: //! Construct for class hermite integrator
-	hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
-		_time_step =  cfg.require("time_step", 0.0);
-	}
+        hermite(const config& cfg): base(cfg),_time_step(0.001), _mon_params(cfg) {
+                _time_step =  cfg.require("time_step", 0.0);
+        }
 
-	virtual void launch_integrator() {
-		launch_templatized_integrator(this);
-	}
+        virtual void launch_integrator() {
+                launch_templatized_integrator(this);
+        }
+        
+        
+        //! Define the number of thread per system
+        template<class T>
+        static GENERIC int thread_per_system(T compile_time_param){
+                const int grav = Gravitation<T>::thread_per_system();
+                const int moni = Monitor::thread_per_system(compile_time_param);
+                return max( grav, moni);
+        }
+
+        //! Define the amount of shared memory per system
+        template<class T>
+        static GENERIC int shmem_per_system(T compile_time_param){
+                const int grav = Gravitation<T>::shmem_per_system();
+                const int moni = Monitor::shmem_per_system(compile_time_param);
+                return max( grav, moni);
+        }       
 
         //! Convert internal coordinates to std coordinates
         GPUAPI void convert_internal_to_std_coord() {} 
@@ -133,7 +150,7 @@ public: //! Construct for class hermite integrator
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
-			montest( thread_in_system() );  
+            montest(thread_in_system(), b, c, c_pos,c_vel);
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
 			    {	sys.set_inactive(); }

@@ -20,14 +20,20 @@
  *   \brief Initializes the hermite integrator plugins. 
  *
  */
-
 #include "integrators/hermite_integrator.hpp"
 #include "monitors/composites.hpp"
 #include "monitors/stop_on_ejection.hpp"
+#include "monitors/mercury_mce_stat.hpp"
 #include "monitors/log_time_interval.hpp"
 #include "swarm/gpu/gravitation_accjerk.hpp"
+<<<<<<< HEAD
 //#include "monitors/log_transit.hpp"
 //#include "monitors/log_rvs.hpp"
+=======
+#include "swarm/gpu/gravitation_acc.hpp"
+#include "monitors/log_transit.hpp"
+#include "monitors/log_rvs.hpp"
+>>>>>>> 91577997fe1338d97cd0b0871ce0e71f7ed1e2d8
 
 //! Declare devide_log variable
 typedef gpulog::device_log L;
@@ -36,10 +42,10 @@ using namespace swarm::gpu::bppt;
 using swarm::integrator_plugin_initializer;
 
 //! Initialize the hermite integrator plugin for stop_on_ejection and gravitation acceleration
-integrator_plugin_initializer<hermite< stop_on_ejection<L> , GravitationAccJerk > >
-	hermite_plugin("hermite");
+integrator_plugin_initializer<hermite< mce_stat<L> , GravitationAccJerk > > hermite_plugin("hermite");
 
 //! Initialize the hermite integrator plugin for stop_on_ejection_or_close_encounter and gravitation acceleration
+<<<<<<< HEAD
 integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
 	hermite_close_encounter_plugin("hermite_close_encounter");
 
@@ -50,6 +56,18 @@ integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJer
 //! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
 //integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
 //	hermite_transit_plugin("hermite_transit");
+=======
+// integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
+// 	hermite_close_encounter_plugin("hermite_close_encounter");
+// 
+// //! Initialize the hermite integrator plugin for log_time_interval and gravitation acceleration
+// integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
+// 	hermite_log_plugin("hermite_log");
+// 
+// //! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
+// integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
+// 	hermite_transit_plugin("hermite_transit");
+>>>>>>> 91577997fe1338d97cd0b0871ce0e71f7ed1e2d8
 
 #if __CUDA_ARCH__ >= 200
 //integrator_plugin_initializer<hermite< log_rvs<L>  , GravitationAccJerk > >

@@ -61,6 +61,10 @@ integ.destination_time = 1.0
 # Now do the integration
 integ.integrate()
 
+integ.destination_time = 2.0
+
+# Now do the integration
+integ.integrate()
 
 # A very common task is to check the energy conservation 
 # the function swarmng.find_max_energy_conservation_error does this
