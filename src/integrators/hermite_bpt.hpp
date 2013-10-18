@@ -25,7 +25,6 @@
 #include "vector_types.h"
 #include "vector_functions.h"
 
-
 namespace swarm { namespace gpu {
 
 
@@ -151,8 +150,7 @@ public:
       double3 acc1, jerk1;
       {
         // Evaluate
-        sys[b].set_pos(pos), sys[b].set_vel(vel);
-        __syncthreads();
+        sys[b].set_pos(pos), sys[b].set_vel(vel);__syncthreads();
         calcForces(pos, vel, acc1, jerk1);
         
         // Correct
@@ -161,8 +159,7 @@ public:
       }
       {
         // Evaluate
-        sys[b].set_pos(pos), sys[b].set_vel(vel);
-        __syncthreads();
+        sys[b].set_pos(pos), sys[b].set_vel(vel);__syncthreads();
         calcForces(pos, vel, acc1, jerk1);
         
         // Correct
