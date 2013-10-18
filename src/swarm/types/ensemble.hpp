@@ -215,6 +215,11 @@ class EnsembleBase {
 			vy = operator[](1).vel();
 			vz = operator[](2).vel();
 		}
+		
+		GENERIC const double3& pos() { return make_double3(x(),y(),z()); }
+		GENERIC void set_pos(const double3& p) { x() = p.x, y() = p.y, z() = p.z; }
+                GENERIC const double3& vel() { return make_double3(vx(),vy(),vz()); }
+                GENERIC void set_vel(const double3& v) { vx() = v.x, vy() = v.y, vz() = v.z; }
 
 	};
 

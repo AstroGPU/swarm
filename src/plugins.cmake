@@ -29,7 +29,7 @@ ADD_PLUGIN(plugins/hermite_prop.cu Hermite_Propagator FALSE  "Propagator version
 ADD_PLUGIN(plugins/euler.cu Euler FALSE "Euler Integrator")
 ADD_PLUGIN(plugins/verlet.cu Verlet FALSE "Verlet Integrator")
 ADD_PLUGIN(plugins/midpoint.cu Midpoint FALSE "Midpoint Integrator")
-
+ADD_PLUGIN(plugins/hermite_bpt.cu HermiteBPT FALSE "Hermite body-per-thread integrator")
 
 ## Writer plugins
 

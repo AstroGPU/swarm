@@ -89,7 +89,7 @@ public: //! Construct for class hermite integrator
 		const int c = thread_component_idx(nbod);
 
 		// local variables
-		monitor_t montest(_mon_params,sys,*_log) ;
+		//monitor_t montest(_mon_params,sys,*_log) ;
 
 
 		// local information per component per body
@@ -99,7 +99,7 @@ public: //! Construct for class hermite integrator
 
 
 //		if( thread_in_system()==0  )  {
-		    montest( thread_in_system() );
+		    //montest( thread_in_system() );
 //		    }
 
 		////////// INTEGRATION //////////////////////

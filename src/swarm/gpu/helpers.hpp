@@ -171,21 +171,24 @@ struct launch_template_choose {
 		compile_time_params_t<N> ctp;
 		typename integ_pair::first_type integ = p.first;
 
-		int sys_p_block = integ->override_system_per_block();
+
+                int sys_p_block = integ->override_system_per_block();
 		const int nsys = integ->get_ensemble().nsys();
 		const int tps = integ->thread_per_system(ctp);
 		const int shm = integ->shmem_per_system(ctp);
-        /*
-		if(sys_p_block == 0){
+        
+
+                if(sys_p_block == 0){
 			sys_p_block = optimized_system_per_block(SHMEM_CHUNK_SIZE, tps, shm);
 		}
-        */
+        
 
 
 		const int nblocks = ( nsys + sys_p_block - 1 ) / sys_p_block;
 		const int shmemSize = sys_p_block * shm;
 
-		dim3 gridDim;
+
+                dim3 gridDim;
 		find_best_factorization(gridDim.x,gridDim.y,nblocks);
 
 		dim3 threadDim;
@@ -196,6 +199,7 @@ struct launch_template_choose {
 		if(!check_cuda_limits(blocksize, shmemSize )){
 			throw runtime_error("The block size settings exceed CUDA requirements");
 		}
+		
 
 		generic_kernel<<<gridDim, threadDim, shmemSize>>>(p.second, ctp);
 	}
