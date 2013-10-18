@@ -150,7 +150,7 @@ public: //! Construct for class hermite integrator
 				{ sys[b][c].pos() = pos; sys[b][c].vel() = vel; }
 			if( thread_in_system()==0 ) 
 				sys.time() += h;
-            montest(thread_in_system(), b, c, c_pos,c_vel);
+
 			if( sys.is_active() && thread_in_system()==0 )  {
 			    if( sys.time() >= _destination_time ) 
 			    {	sys.set_inactive(); }

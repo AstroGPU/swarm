@@ -40,12 +40,12 @@ using swarm::integrator_plugin_initializer;
 integrator_plugin_initializer<hermite< mce_stat<L> , GravitationAccJerk > > hermite_plugin("hermite");
 
 //! Initialize the hermite integrator plugin for stop_on_ejection_or_close_encounter and gravitation acceleration
-integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
-	hermite_close_encounter_plugin("hermite_close_encounter");
+//integrator_plugin_initializer<hermite< stop_on_ejection_or_close_encounter<L>  , GravitationAccJerk > >
+//	hermite_close_encounter_plugin("hermite_close_encounter");
 
 //! Initialize the hermite integrator plugin for log_time_interval and gravitation acceleration
-integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
-	hermite_log_plugin("hermite_log");
+//integrator_plugin_initializer<hermite< log_time_interval<L>  , GravitationAccJerk > >
+//	hermite_log_plugin("hermite_log");
 
 //! Initialize the hermite integrator plugin for log_transition and gravitation acceleration
 //integrator_plugin_initializer<hermite< log_transit<L>  , GravitationAccJerk > >
