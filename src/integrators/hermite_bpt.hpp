@@ -28,8 +28,6 @@
 
 namespace swarm { namespace gpu {
 
-using bppt::sysid;
-using bppt::thread_in_system;
 
 GENERIC double3 operator+(const double3 &a,const double3 &b) {
   return make_double3(a.x+b.x, a.y+b.y, a.z+b.z);

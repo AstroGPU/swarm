@@ -27,7 +27,6 @@
 #include "device_settings.hpp"
 #include "utilities.hpp"
 
-
 /**
  * \brief Template helper for unrolling of loops
  * This template helper is used for unrolling loops
@@ -106,7 +105,7 @@ B operator ()(const int& n, const P& x){
 }
 };
 
-namespace swarm {
+namespace swarm { namespace gpu {
 
 
 //! This is a wrapper for a compile time integere value.
@@ -176,10 +175,10 @@ struct launch_template_choose {
 		const int nsys = integ->get_ensemble().nsys();
 		const int tps = integ->thread_per_system(ctp);
 		const int shm = integ->shmem_per_system(ctp);
-        
+                int bb = 1;
 
                 if(sys_p_block == 0){
-			sys_p_block = optimized_system_per_block(SHMEM_CHUNK_SIZE, tps, shm);
+			sys_p_block = optimized_system_per_block(SHMEM_CHUNK_SIZE, tps, shm, bb);
 		}
         
 
@@ -194,6 +193,7 @@ struct launch_template_choose {
 		dim3 threadDim;
 		threadDim.x = sys_p_block;
 		threadDim.y = tps;
+                threadDim.z = 1;
 
 		int blocksize = threadDim.x * threadDim.y;
 		if(!check_cuda_limits(blocksize, shmemSize )){
@@ -204,6 +204,37 @@ struct launch_template_choose {
 		generic_kernel<<<gridDim, threadDim, shmemSize>>>(p.second, ctp);
 	}
 };
+
+/**
+ * Kernel Helper Function: Extract system ID from CUDA thread ID
+ */
+GPUAPI int sysid(){
+  int blockNumber = (blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x;
+  return (blockNumber * blockDim.z + threadIdx.z) * blockDim.x  + threadIdx.x;
+}
+
+/**
+ * Kernel Helper Function: Extract system sequence number inside current block
+ */
+GPUAPI int sysid_in_block(){
+ return threadIdx.z * blockDim.x + threadIdx.x;
+}
+
+/**
+ * Kernel Helper Function: Extract the worker-thread number for current system
+ */
+GPUAPI int thread_in_system() {
+  return threadIdx.y;
+}
+
+
+/**
+ * Kernel Helper Function: Extract number of systems per a block from CUDA thread information.
+ */
+GPUAPI int system_per_block_gpu() {
+    return blockDim.x * blockDim.z;
+};
+
 
 
 /** \brief Global interface for launching a templatized integrator.
@@ -244,5 +275,4 @@ void launch_templatized_integrator(implementation* integ){
 }
 
 
-	
-}
+} } // end namespace swarm :: gpu

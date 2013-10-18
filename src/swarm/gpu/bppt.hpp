@@ -68,34 +68,6 @@ namespace gpu {
 namespace bppt {
 
 
-/**
- * Kernel Helper Function: Extract system ID from CUDA thread ID
- */
-GPUAPI int sysid(){
-	return ((blockIdx.z * gridDim.y + blockIdx.y) * gridDim.x + blockIdx.x) * blockDim.x + threadIdx.x;
-}
-
-/**
- * Kernel Helper Function: Extract system sequence number inside current block
- */
-GPUAPI int sysid_in_block(){
-	return threadIdx.x;
-}
-
-/**
- * Kernel Helper Function: Extract the worker-thread number for current system
- */
-GPUAPI int thread_in_system() {
-	return threadIdx.y;
-}
-
-
-/**
- * Kernel Helper Function: Extract number of systems per a block from CUDA thread information.
- */
-GPUAPI int system_per_block_gpu() {
-    return blockDim.x;
-  };
 
 /**
  * Kernel Helper Function: Logical coordinate component id [1:x,2:y,3:z] calculated from thread ID info

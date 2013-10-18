@@ -50,10 +50,12 @@ cudaDeviceProp deviceInfo;
  * parameters.
  */
 int optimized_system_per_block(int chunk_size, int thread_per_system
-		, int shmem_per_system){
+		, int shmem_per_system, int& block_count){
 	int limit =  blocks_per_mp( chunk_size * thread_per_system, chunk_size * shmem_per_system) 
 		* chunk_size ;
-    return std::min(deviceInfo.warpSize, limit);
+    int spb = std::min(deviceInfo.warpSize, limit);
+    block_count = limit / spb;
+    return spb;
 }
 
 //! Select cuda device
