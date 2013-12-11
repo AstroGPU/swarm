@@ -53,7 +53,7 @@ When writing papers which made use of Swarm-NG, we strongly encourage you to cit
 DOI: <a href="http://dx.doi.org/10.1016/j.newast.2013.01.002">10.1016/j.newast.2013.01.002</a> <br/>
 arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157</a> [astro-ph.EP]. 
 
-- Website: http://http://www.personal.psu.edu/ebf11/code/swarm/"
+- Website: http://www.personal.psu.edu/ebf11/code/swarm/"
 
 Licensing Information
 - Swarm-NG v1.1 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
@@ -88,11 +88,11 @@ We acknowledge additional support from:
 
 
  @section moreinfo Further Information
- This documentation is avaliable from http://http://www.personal.psu.edu/ebf11/code/swarm/docs/
+ This documentation is avaliable from http://www.personal.psu.edu/ebf11/code/swarm/docs/
 
  For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
  
- For more information see http://http://www.personal.psu.edu/ebf11/code/swarm/
+ For more information see http://www.personal.psu.edu/ebf11/code/swarm/
 
  Source code is hosted on http://github.com/AstroGPU/swarm . 
 

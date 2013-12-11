@@ -440,6 +440,8 @@ Boost_REGEX_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 Boost_REGEX_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //The version number for boost libraries
 Boost_VERSION:INTERNAL=105400
+//ADVANCED property for variable: CMAKE_BUILD_TOOL
+CMAKE_BUILD_TOOL-ADVANCED:INTERNAL=1
 //What is the target build tool cmake is generating for.
 CMAKE_BUILD_TOOL:INTERNAL=/usr/bin/gmake
 //This is the directory where this CMakeCache.txt was created
