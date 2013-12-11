@@ -18,7 +18,7 @@
 
 
 extern "C" int python_hexversion(){ return PY_VERSION_HEX; }
-extern "C" char* python_version(){ return PY_VERSION; }
+extern "C" const char* python_version(){ return PY_VERSION; }
 
 
 using std::string;
@@ -103,6 +103,16 @@ list get_vel_list(const ensemble::Body& b){
 	v.append( b[1].vel() );
 	v.append( b[2].vel() );
 	return v;
+}
+
+#include "swarm/stopwatch.h"
+double integrate_timed(integrator& i){
+    stopwatch s;
+    s.start();
+    i.integrate();
+    SYNC;
+    s.stop();
+    return s.getTime()*1000.;
 }
 
 ensemble::SystemRef ens_getitem(ensemble& ens, const int& i){
@@ -270,7 +280,7 @@ BOOST_PYTHON_MODULE(libswarmng_ext) {
 	class_<integrator, Pintegrator, noncopyable >("Integrator", no_init )
 		.def("create",&integrator::create)
 		.staticmethod("create")
-		.def("integrate", &integrator::integrate )
+		.def("integrate", &integrate_timed)
 		.add_property("ensemble", make_function(&integrator::get_ensemble, return_value_policy<reference_existing_object>() ), &integrator::set_ensemble)
 		.add_property("destination_time", &integrator::get_destination_time, &integrator::set_destination_time)
 		;
