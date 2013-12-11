@@ -34,8 +34,6 @@
 
 namespace swarm { namespace cpu {
 /*! CPU implementation of mixed variables symplectic propagator: template<class Monitor>
- *  *EXPERIMENTAL*: This class is not thoroughly tested.
- *  \ingroup experimental
  *
  * \ingroup integrators
  *

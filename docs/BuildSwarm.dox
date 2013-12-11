@@ -8,7 +8,7 @@ The guidelines on using Swarm-NG.
 Currently we do not have any binary packages available. 
 You can obtain Swarm source codes in two different ways:
 
-- Download the stable version from <a href="http://www.astro.ufl.edu/~eford/code/swarm/download.html">download page</a>
+- Download the stable version from <a href="http://www.personal.psu.edu/ebf11/code/swarm/download.html">download page</a>
 
 - Checkout the latest development version from Git Repository using one of the following commands: \\
 if you are an SSH user and you have set-up SSH with Github, then use:
@@ -153,7 +153,7 @@ If you want to test the computational capacity of your system, do:
 *WARNING:* This requires performing long integrations on both the CPU and GPU, so it may take a long time. Please be patient.
 
 Please report your results at 
-http://www.astro.ufl.edu/~eford/code/swarm/submit_benchmark.html
+http://http://www.personal.psu.edu/ebf11/code/swarm/
 
 \section Feedback
 If for any reasons the compilation does not work or the tests do not pass, please use the following 

@@ -1,13 +1,28 @@
 namespace swarm {
 /** \page ReleaseNotes Release notes
 
+<b>Version 1.1</b>
+This version contains several new features:
+- BDB based logging system for higher performance and ability to read/write very large files,
+- python scripts demonstrating how to efficiently perform complex queries of Swarm-NG output from  BDB log files,
+- Python interface to facilitate rapid development, testing and interactive usage,
+- Mixed-Variable Symplectic Integrator (MVS), including CPU and GPU versions,
+- CPU version of Hermite and MVS integrators can now use OpenMP,
+- Fixed and Adaptive timestep Explicit Runge-Kutta integrators,
+- Implicit Runge-Kutta integrators (4th, 8th and 12th order), 
+- Monitors to identify close encounters and/or collisions, 
+- Monitors to storing just observable properties (e.g., star radial velocity at observation times, transit times),
+- Improved documentation, 
+- Several new tests and tutorials, and 
+- much more.
+
 <b>Version 1.0</b>
 This is the first stable release of Swarm-NG. 
 In addition to optimized GPU kernels, it includes:
 - A user friendly build environment (using CMake), 
 - Comprehensive documentations (using Doxygen), 
 - A test suite to ease development of new features and ensuring Swarm-NG is ready for science, and
-- (TODO: add summary of) much more.
+- much more.
 
 <b>Version 0.9.0</b>
 This is a pre-release prior to the first stable release.

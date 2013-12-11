@@ -1,4 +1,4 @@
-/** @mainpage Overview
+/** @mainpage Swarm-NG Overview
 
  \brief Swarm-NG is a collection of code to help
 scientists and engineers harness the power of GPUs.  In the early
@@ -20,7 +20,7 @@ differential equations.
  - \ref BuildSwarm
  - \ref SwarmExec "Using command-line interface"
  - \ref swarm-query "Running queries on log files from command line"
- - **Using C++ library interface**
+ - *Using C++ library interface*
  	- \ref TutorialBeginner
 	- \ref TutorialGPU
 	- \ref TutorialEnsemble
@@ -53,10 +53,10 @@ When writing papers which made use of Swarm-NG, we strongly encourage you to cit
 DOI: <a href="http://dx.doi.org/10.1016/j.newast.2013.01.002">10.1016/j.newast.2013.01.002</a> <br/>
 arXiv:<a href="http://arxiv.org/abs/1208.1157">1208.1157</a> [astro-ph.EP]. 
 
-- Website: http://www.astro.ufl.edu/~eford/code/swarm/docs
+- Website: http://http://www.personal.psu.edu/ebf11/code/swarm/"
 
 Licensing Information
-- Swarm-NG v1.0 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
+- Swarm-NG v1.1 may be licensed under the GPL v3, that is included in the Swarm-NG release (docs/gpl-3.0.txt).
 
 
  @section Acknowledgements
@@ -69,26 +69,30 @@ The Swarm-NG library includes code reused or adapted from:
 - John Chamber’s Mercury code (http://www.arm.ac.uk/~jec/home.html), which builds on a long history of n-body integrators, including Hal Levison and Martin Duncan’s Swift code (http://www.boulder.swri.edu/~hal/swift.html).
 
 We are happy to acknowledge financial support from:
-- the University of Florida’s Research Opportunity Seed Fund,
+- NASA’s Applied Information Systems Research Program (grant NNX09AM41G; http://aisrp.nasa.gov/).
 - the National Science Foundation (grant CCF-0728797;  http://www.nsf.gov/),
-- NASA’s Hubble Fellowship program (http://www.stsci.edu/institute/org/spd/hubble-fellowship/hubble-fellow-overview), and
-- especially NASA’s Applied Information Systems Research Program (grant NNX09AM41G; http://aisrp.nasa.gov/).
+- the University of Florida’s Research Opportunity Seed Fund,
+- Penn State Institute for CyberScience, and 
+- NASA’s Hubble Fellowship program (http://www.stsci.edu/institute/org/spd/hubble-fellowship/hubble-fellow-overview).
 
 We acknowledge additional support from:
 - the University of Florida Astronomy Department (http://astro.ufl.edu/),
 - UF CISE Prof. Jorg Peters' SurfLab (http://www.cise.ufl.edu/research/SurfLab/)
 - UF High Performance Computing Center (http://www.hpc.ufl.edu/),
+- Penn State Departent of Astronomy & Astrophysics (http://www.astro.psu.edu/),
+- Penn State Institute for CyberScience (http://www.ics.psu.edu/),
+- Penn State Center for Exoplanets & Habitable Worlds (http://www.astro.psu.edu/astro-research/centers-and-institutes/center-for-exoplanets),
 - the Harvard-Smithsonian Center for Astrophysics (http://www.cfa.harvard.edu/) and the Institute for Theory and Computation (http://www.cfa.harvard.edu/itc/),
 - the Institute for Advanced Study (http://sns.ias.edu/), and
 - nVidia Corporation (http://www.nvidia.com).
 
 
  @section moreinfo Further Information
- Additional documentation is avaliable from http://www.astro.ufl.edu/~eford/code/swarm/docs/
+ This documentation is avaliable from http://http://www.personal.psu.edu/ebf11/code/swarm/docs/
 
  For a Google Group with mailing list archives see http://groups.google.com/group/swarm-ng
  
- For more information see http://www.astro.ufl.edu/~eford/code/swarm/
+ For more information see http://http://www.personal.psu.edu/ebf11/code/swarm/
 
  Source code is hosted on http://github.com/AstroGPU/swarm . 
 
