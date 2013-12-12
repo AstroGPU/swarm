@@ -16,26 +16,41 @@ def geometric_progression(base,init,count):
 
 swarmng.init(swarmng.config(verbose=1))
 
+integrators = [ "hermite_bpt_lean", "hermite_omp_lean" ]
 
-def benchmark_integrator(label,cfg):
-    integ = swarmng.Integrator.create(cfg)
+def benchmark_integrator(nb,cfg):
+    """For one specific number of bodies compare different
+    integrators, show a plot and write the results to
+    a file"""
 
-    nslist = list(geometric_progression(math.sqrt(2.0),1024,8))
-    for nb in range(3,7):
-        times = []
+    result = {}
+
+    nslist = list(geometric_progression(math.sqrt(2.0),1024,20))
+    for I in integrators:
+
+        cfg["integrator"] = I
+        integ = swarmng.Integrator.create(cfg)
+
+        times = []; times_map = {}
         for ns in nslist:
+            print("Integrating {0} {1} {2}".format(nb,I,ns))
             integ.ensemble = swarmng.generate_ensemble(swarmng.config(nsys=ns,nbod=nb))
             integ.destination_time = 2.0
 
             t = integ.integrate()
             times.append(t)
+            times_map[ns] = t
 
-        P.plot(nslist,times,label=str(nb));
+        result[I] = times_map
+        P.plot(nslist,times,label=I);
 
     P.legend()
-    P.savefig("benchmark{0}".format(label))
+    P.show()
+    return result
 
-benchmark_integrator("BPT",swarmng.config(integrator="hermite_bpt_lean",time_step=0.001))
-benchmark_integrator("OMP",swarmng.config(integrator="hermite_omp_lean",time_step=0.001))
+r = benchmark_integrator(3,swarmng.config(time_step=0.001))
+
+import json
+print(json.dumps(r, sort_keys = True, indent=2))
 
 
