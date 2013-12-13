@@ -38,7 +38,7 @@ def benchmark_integrator(nb,cfg):
             integ.destination_time = 2.0
 
             t = integ.integrate()
-            times.append(t)
+            times.append(t / ns)
 
         result[I] = times
         #P.plot(nslist,times,label=I);
