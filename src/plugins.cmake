@@ -13,8 +13,8 @@ if(OPENMP_FOUND)
 	ADD_PLUGIN(plugins/mvs_omp.cpp MVS_OMP FALSE "MVS OpenMP Integrator")
 endif()
 
-ADD_PLUGIN(integrators/hermite_lean.cu Hermite_Lean TRUE "Lean Hermite
-integrators")
+ADD_PLUGIN(integrators/hermite_bpt_lean.cu Hermite_BPT_Lean TRUE "Lean body-per-thread Hermite integrators")
+ADD_PLUGIN(integrators/hermite_omp_lean.cpp Hermite_OMP_Lean TRUE "Lean OpenMP Hermite integrators")
 
 # GPU Integrators
 ADD_PLUGIN(plugins/hermite.cu Hermite FALSE  "Hermite w/ Fixed Time step GPU Integrator")

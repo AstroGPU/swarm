@@ -23,9 +23,9 @@ def benchmark_integrator(nb,cfg):
     integrators, show a plot and write the results to
     a file"""
 
-    result = {}
 
-    nslist = list(geometric_progression(math.sqrt(2.0),1024,20))
+    nslist = list(geometric_progression(math.sqrt(2.0),1024,15))
+    result = {"nsys" : nslist, "nbod": nb }
     for I in integrators:
 
         cfg["integrator"] = I
@@ -39,13 +39,12 @@ def benchmark_integrator(nb,cfg):
 
             t = integ.integrate()
             times.append(t)
-            times_map[ns] = t
 
-        result[I] = times_map
-        P.plot(nslist,times,label=I);
+        result[I] = times
+        #P.plot(nslist,times,label=I);
 
-    P.legend()
-    P.show()
+    #P.legend()
+    #P.show()
     return result
 
 r = benchmark_integrator(3,swarmng.config(time_step=0.001))
